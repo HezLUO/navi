@@ -1,7 +1,7 @@
 # Along Memory v2 Design Spec
 
 Date: 2026-05-17
-Status: Proposed design, awaiting user review
+Status: Approved for implementation planning
 Project folder: `/Users/james/Codex Project/General Codex Project/Along`
 
 ## Summary
