@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/server/app";
 
 describe("server app", () => {
-  it("starts a session through the API", async () => {
+  it("starts and resumes a current session through the API", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-api-"));
     const repo = path.join(root, "repo");
     const home = path.join(root, "home");
@@ -17,10 +17,18 @@ describe("server app", () => {
     const server = app.listen(0);
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("Expected TCP address.");
-    const res = await fetch(`http://127.0.0.1:${address.port}/api/session/start`, { method: "POST" });
-    const body = await res.json() as { plan: { learningGoal: string } };
+
+    const initialCurrent = await fetch(`http://127.0.0.1:${address.port}/api/session/current`);
+    const initialBody = await initialCurrent.json() as null;
+    const start = await fetch(`http://127.0.0.1:${address.port}/api/session/start`, { method: "POST" });
+    const startBody = await start.json() as { id: string; plan: { learningGoal: string } };
+    const resumed = await fetch(`http://127.0.0.1:${address.port}/api/session/current`);
+    const resumedBody = await resumed.json() as { id: string; plan: { learningGoal: string } };
     server.close();
 
-    expect(body.plan.learningGoal).toContain("understand");
+    expect(initialBody).toBeNull();
+    expect(startBody.plan.learningGoal).toContain("understand");
+    expect(resumedBody.id).toBe(startBody.id);
+    expect(resumedBody.plan.learningGoal).toBe(startBody.plan.learningGoal);
   });
 });

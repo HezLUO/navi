@@ -115,7 +115,15 @@ h1 {
   margin-top: 12px;
 }
 
+.context-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
 .activity-list span,
+.context-list span,
 .state-pill {
   display: inline-flex;
   width: fit-content;
@@ -133,16 +141,52 @@ h1 {
 }
 
 .timeline span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   text-align: center;
   padding: 10px 8px;
   background: #efe9dc;
+  border: 1px solid transparent;
   border-radius: 6px;
   font-size: 13px;
+  min-height: 20px;
+}
+
+.timeline .complete {
+  background: #f8f5ef;
+  border-color: #cbd8d5;
+  color: #2f5d62;
 }
 
 .timeline .active {
   background: #2f5d62;
   color: #fff;
+}
+
+.wrap-feedback {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  color: #34454f;
+}
+
+.wrap-feedback p {
+  margin: 0;
+}
+
+.wrap-feedback pre {
+  margin: 0;
+  padding: 10px;
+  background: #f7f1e7;
+  border-radius: 6px;
+}
+
+.wrap-feedback code {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: #52616b;
 }
 
 @media (max-width: 760px) {

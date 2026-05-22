@@ -1,5 +1,5 @@
-import { BookOpen, Brain, Coffee, GitBranch, MessageCircle, Music2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { BookOpen, Brain, CheckCircle2, Coffee, GitBranch, MessageCircle, Music2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { createSoundscape } from "./soundscape";
 
 interface SessionResponse {
@@ -13,6 +13,7 @@ interface SessionResponse {
     testHints: string[];
   };
   plan: {
+    state: string;
     learningGoal: string;
     currentActivity: string;
     shareLine?: string;
@@ -20,29 +21,72 @@ interface SessionResponse {
 }
 
 const apiBase = "http://127.0.0.1:4317";
+const presenceStates = ["arriving", "settling", "quiet_focus", "gentle_share", "rest", "wrap_up"];
+let sessionLoadPromise: Promise<SessionResponse | null> | null = null;
+
+interface WrapUpResponse {
+  journalPath: string;
+  remembered: string;
+  state: string;
+  journalPreview?: string;
+}
+
+async function readJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
+  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+  return await response.json() as T;
+}
+
+async function loadCurrentOrStart(): Promise<SessionResponse | null> {
+  const current = await readJson<SessionResponse | null>(`${apiBase}/api/session/current`);
+  if (current) return current;
+  return await readJson<SessionResponse>(`${apiBase}/api/session/start`, { method: "POST" });
+}
+
+function stateLabel(state: string): string {
+  return state.replaceAll("_", " ");
+}
 
 export function App() {
   const [session, setSession] = useState<SessionResponse | null>(null);
   const [wrapNote, setWrapNote] = useState("I stayed with one small thread today.");
+  const [wrapFeedback, setWrapFeedback] = useState<WrapUpResponse | null>(null);
   const [soundOn, setSoundOn] = useState(false);
   const [soundscape] = useState(() => createSoundscape());
-  const hasStartedSession = useRef(false);
 
   useEffect(() => {
-    if (hasStartedSession.current) return;
-    hasStartedSession.current = true;
-    fetch(`${apiBase}/api/session/start`, { method: "POST" })
-      .then((res) => res.json())
-      .then(setSession)
-      .catch(() => setSession(null));
+    let cancelled = false;
+    sessionLoadPromise ??= loadCurrentOrStart();
+    sessionLoadPromise
+      .then((nextSession) => {
+        if (!cancelled) setSession(nextSession);
+      })
+      .catch(() => {
+        if (!cancelled) setSession(null);
+      });
+
+    const interval = window.setInterval(() => {
+      readJson<SessionResponse | null>(`${apiBase}/api/session/current`)
+        .then((nextSession) => {
+          if (!cancelled && nextSession) setSession(nextSession);
+        })
+        .catch(() => undefined);
+    }, 5_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
 
   async function wrapUp() {
-    await fetch(`${apiBase}/api/session/wrap-up`, {
+    const result = await readJson<WrapUpResponse>(`${apiBase}/api/session/wrap-up`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ note: wrapNote }),
     });
+    setWrapFeedback(result);
+    setSession((current) => current ? { ...current, state: result.state, plan: { ...current.plan, state: result.state } } : current);
   }
 
   async function toggleSound() {
@@ -54,6 +98,8 @@ export function App() {
       setSoundOn(true);
     }
   }
+
+  const activeStateIndex = Math.max(0, presenceStates.indexOf(session?.state ?? "arriving"));
 
   return (
     <main className="shell">
@@ -83,12 +129,17 @@ export function App() {
               <span key={item}>{item}</span>
             ))}
           </div>
+          <div className="context-list" aria-label="Project context">
+            {(session?.context.directorySummary ?? []).slice(0, 6).map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
         </article>
 
         <article className="panel companion">
           <Brain size={20} />
           <h2>Along's side</h2>
-          <p className="state-pill">{session?.state ?? "arriving"}</p>
+          <p className="state-pill">{stateLabel(session?.state ?? "arriving")}</p>
           <p>{session?.plan.learningGoal ?? "Arriving at the desk..."}</p>
           <p className="muted">{session?.plan.currentActivity ?? "Loading project memory."}</p>
         </article>
@@ -97,9 +148,20 @@ export function App() {
           <BookOpen size={20} />
           <h2>Shared timeline</h2>
           <div className="timeline">
-            {["arriving", "settling", "quiet_focus", "gentle_share", "rest", "wrap_up"].map((state) => (
-              <span key={state} className={state === session?.state ? "active" : ""}>{state}</span>
-            ))}
+            {presenceStates.map((state, index) => {
+              const isActive = state === session?.state;
+              const isComplete = index < activeStateIndex;
+              return (
+                <span
+                  key={state}
+                  className={isActive ? "active" : isComplete ? "complete" : ""}
+                  aria-current={isActive ? "step" : undefined}
+                >
+                  {isComplete && <CheckCircle2 size={14} aria-hidden="true" />}
+                  {stateLabel(state)}
+                </span>
+              );
+            })}
           </div>
         </article>
 
@@ -114,6 +176,13 @@ export function App() {
           <h2>Wrap-up</h2>
           <textarea value={wrapNote} onChange={(event) => setWrapNote(event.target.value)} />
           <button onClick={wrapUp}>Write today's journal</button>
+          {wrapFeedback && (
+            <div className="wrap-feedback" aria-live="polite">
+              <p><strong>What I remembered:</strong> {wrapFeedback.remembered}</p>
+              {wrapFeedback.journalPreview && <pre>{wrapFeedback.journalPreview}</pre>}
+              <code>{wrapFeedback.journalPath}</code>
+            </div>
+          )}
         </article>
       </section>
     </main>

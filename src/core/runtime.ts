@@ -1,6 +1,6 @@
 import os from "node:os";
 import path from "node:path";
-import type { AlongSession, CuriosityItem, GraphEdge, GraphNode, JournalEntry } from "./types";
+import type { AlongSession, CuriosityItem, GraphEdge, GraphNode, JournalEntry, PresenceState } from "./types";
 import { inspectProject } from "./project-adapter";
 import { MemoryStore } from "./memory-store";
 import { ScriptedCompanionProvider, type CompanionProvider } from "./model-provider";
@@ -14,6 +14,40 @@ export interface RuntimeOptions {
 export interface WrapUpResult {
   journalPath: string;
   remembered: string;
+  state: PresenceState;
+  journalPreview: string;
+}
+
+const rhythmSteps: Array<{ state: PresenceState; maxElapsedMs: number }> = [
+  { state: "arriving", maxElapsedMs: 3_000 },
+  { state: "settling", maxElapsedMs: 12_000 },
+  { state: "quiet_focus", maxElapsedMs: 28_000 },
+  { state: "gentle_share", maxElapsedMs: 44_000 },
+  { state: "rest", maxElapsedMs: Number.POSITIVE_INFINITY },
+];
+
+export function stateForElapsed(elapsedMs: number): PresenceState {
+  return rhythmSteps.find((step) => elapsedMs < step.maxElapsedMs)?.state ?? "rest";
+}
+
+export function formatLocalJournalDate(date = new Date(), timeZone?: string): string {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  if (!year || !month || !day) {
+    const localYear = date.getFullYear();
+    const localMonth = String(date.getMonth() + 1).padStart(2, "0");
+    const localDay = String(date.getDate()).padStart(2, "0");
+    return `${localYear}-${localMonth}-${localDay}`;
+  }
+  return `${year}-${month}-${day}`;
 }
 
 export class AlongRuntime {
@@ -46,10 +80,10 @@ export class AlongRuntime {
       id: sessionId,
       repoPath: this.options.repoPath,
       startedAt: new Date().toISOString(),
-      state: "settling",
+      state: "arriving",
       context,
       plan: {
-        state: "settling",
+        state: "arriving",
         sessionId,
         learningGoal: providerPlan.learningGoal,
         currentActivity: providerPlan.currentActivity,
@@ -65,12 +99,13 @@ export class AlongRuntime {
   }
 
   async current(): Promise<AlongSession | undefined> {
+    await this.refreshPresenceState();
     return this.session;
   }
 
   async wrapUp(note: string): Promise<WrapUpResult> {
     if (!this.session) throw new Error("Cannot wrap up before starting a session.");
-    const date = new Date().toISOString().slice(0, 10);
+    const date = formatLocalJournalDate();
     const entry: JournalEntry = {
       sessionId: this.session.id,
       date,
@@ -83,8 +118,14 @@ export class AlongRuntime {
     };
     const journalPath = await this.memory.writeJournal(entry);
     this.session.state = "wrap_up";
+    this.session.plan.state = "wrap_up";
     await this.memory.writeSession(this.session.id, this.session);
-    return { journalPath, remembered: note };
+    return {
+      journalPath,
+      remembered: note,
+      state: "wrap_up",
+      journalPreview: this.previewJournal(entry),
+    };
   }
 
   private createInitialCuriosity(repoName: string): CuriosityItem {
@@ -110,5 +151,23 @@ export class AlongRuntime {
       { id: `edge:${session.id}:curiosity`, from: `session:${session.id}`, to: curiosity.id, type: "session_produced_curiosity", createdAt },
     ];
     await this.memory.projectGraph.addMany(nodes, edges);
+  }
+
+  private async refreshPresenceState(): Promise<void> {
+    if (!this.session || this.session.state === "wrap_up") return;
+    const elapsedMs = Date.now() - Date.parse(this.session.startedAt);
+    const nextState = stateForElapsed(Number.isFinite(elapsedMs) ? elapsedMs : 0);
+    if (nextState === this.session.state) return;
+    this.session.state = nextState;
+    this.session.plan.state = nextState;
+    await this.memory.writeSession(this.session.id, this.session);
+  }
+
+  private previewJournal(entry: JournalEntry): string {
+    return [
+      `I remembered: ${entry.nowBelieves[0]}`,
+      `I looked at: ${entry.lookedAt.slice(0, 3).join(", ") || "the project shape"}.`,
+      `Next time: ${entry.nextTime}`,
+    ].join("\n");
   }
 }

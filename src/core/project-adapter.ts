@@ -35,6 +35,16 @@ async function directorySummary(repoPath: string): Promise<string[]> {
     .sort();
 }
 
+export function filterUserFacingGitStatus(status: string): string {
+  return status
+    .split("\n")
+    .filter((line) => {
+      const changedPaths = line.slice(3).split(" -> ").map((item) => item.trim()).filter(Boolean);
+      return !changedPaths.some((changedPath) => isSensitivePath(changedPath));
+    })
+    .join("\n");
+}
+
 function testHintsFromPackageJson(content: string | undefined): string[] {
   if (!content) return [];
   try {
@@ -63,7 +73,7 @@ export async function inspectProject(repoPath: string): Promise<ProjectContext> 
   return {
     repoPath,
     repoName,
-    gitStatus: await safeGit(repoPath, ["status", "--short"]),
+    gitStatus: filterUserFacingGitStatus(await safeGit(repoPath, ["status", "--short"])),
     recentCommits: (await safeGit(repoPath, ["log", "--oneline", "-5"]))
       .split("\n")
       .filter(Boolean),

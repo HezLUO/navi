@@ -5,6 +5,8 @@ const sensitiveMatchers = [
   /(^|\/).*private.*key/i,
   /(^|\/).*token.*/i,
   /(^|\/)credentials($|\/|\.)/i,
+  /(^|\/)\.along($|\/)/,
+  /(^|\/)\.superpowers($|\/)/,
   /(^|\/)node_modules($|\/)/,
   /(^|\/)dist($|\/)/,
   /(^|\/)build($|\/)/,
