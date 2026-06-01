@@ -214,8 +214,11 @@ Approved sections:
    `docs/superpowers/specs/2026-06-01-along-runtime-control-plane-lifecycle-design.md`
 
 2. If changes are requested, revise the spec and run the spec self-review again.
-3. After user approval, create an implementation plan with the writing-plans workflow.
-4. Only after the plan is approved, begin implementation.
+3. User chooses execution mode for the implementation plan:
+
+   `docs/superpowers/plans/2026-06-01-along-runtime-control-plane-lifecycle.md`
+
+4. Only after execution mode is chosen, begin implementation.
 
 ## Update Policy
 
@@ -246,3 +249,5 @@ Use short entries in the change log below rather than relying on chat memory.
 - 2026-06-01: Section 7 approved: Review Gate, Trace, Doctor, review item scope, trace entries, and debug visibility boundaries.
 - 2026-06-01: Section 8 approved: first-version scope, end-to-end runtime flows, test coverage, and explicit non-goals.
 - 2026-06-01: Written spec created at `docs/superpowers/specs/2026-06-01-along-runtime-control-plane-lifecycle-design.md` and moved to user-review stage.
+- 2026-06-01: User approved the written spec for implementation planning.
+- 2026-06-01: Implementation plan created at `docs/superpowers/plans/2026-06-01-along-runtime-control-plane-lifecycle.md`; next decision is Subagent-Driven versus Inline Execution.

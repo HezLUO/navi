@@ -1,7 +1,7 @@
 # Along Runtime Control Plane and Lifecycle Design Spec
 
 Date: 2026-06-01
-Status: Approved section design, pending written-spec review
+Status: Approved for implementation planning
 Project folder: `/Users/james/Codex Project/General Codex Project/Along`
 
 ## Summary
