@@ -44,6 +44,17 @@ export class WriteCoordinator {
     }
   }
 
+  async updateJson<T>(filePath: string, fallback: T, transform: (current: T) => T | Promise<T>): Promise<T> {
+    return this.runExclusiveFileWrite(filePath, () => (
+      this.runWithRuntimeLockIfNeeded("update-json", async () => {
+        const current = await this.readJson(filePath, fallback);
+        const next = await transform(current);
+        await this.atomicWriteJsonUnlocked(filePath, next);
+        return next;
+      })
+    ));
+  }
+
   async atomicWriteJson(filePath: string, value: unknown): Promise<void> {
     return this.runExclusiveFileWrite(filePath, () => (
       this.runWithRuntimeLockIfNeeded("atomic-write-json", () => this.atomicWriteJsonUnlocked(filePath, value))

@@ -35,6 +35,18 @@ describe("WriteCoordinator", () => {
     await expect(coordinator.readJson(filePath, { ok: false })).resolves.toEqual({ ok: true });
   });
 
+  it("updates JSON with concurrent read-transform-write operations serialized", async () => {
+    const repo = await makeRepo();
+    const coordinator = new WriteCoordinator(repo);
+    const filePath = path.join(repo, ".along", "state.json");
+
+    await Promise.all(Array.from({ length: 20 }, () => (
+      coordinator.updateJson(filePath, { count: 0 }, (current) => ({ count: current.count + 1 }))
+    )));
+
+    await expect(coordinator.readJson(filePath, { count: 0 })).resolves.toEqual({ count: 20 });
+  });
+
   it("deduplicates JSONL appends by idempotency key", async () => {
     const repo = await makeRepo();
     const coordinator = new WriteCoordinator(repo);
