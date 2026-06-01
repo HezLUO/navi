@@ -29,4 +29,19 @@ describe("memory store", () => {
     await expect(fs.readFile(path.join(repo, ".along", "companion.md"), "utf8")).resolves.toContain("Along");
     await expect(fs.readFile(path.join(home, ".along", "companion-profile.md"), "utf8")).resolves.toContain("learns along");
   });
+
+  it("initializes runtime settings with conservative defaults", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-memory-"));
+    const repo = path.join(root, "repo");
+    const home = path.join(root, "home");
+    await fs.mkdir(repo);
+    await fs.mkdir(home);
+
+    const store = new MemoryStore(repo, home);
+    await store.ensureInitialized();
+
+    const settings = JSON.parse(await fs.readFile(path.join(repo, ".along", "settings.json"), "utf8"));
+    expect(settings.memoryMode).toBe("project_reviewed");
+    expect(settings.canModifyProjectFiles).toBeUndefined();
+  });
 });

@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { CuriosityItem, JournalEntry } from "./types";
+import { defaultRuntimeProfile } from "./types";
 import { getGlobalAlongDir, getProjectAlongDir, getProjectGraphDir } from "./paths";
 import { GraphStore } from "./graph-store";
 
@@ -27,6 +28,11 @@ export class MemoryStore {
       fs.mkdir(path.join(this.projectDir, "drafts", "review-notes"), { recursive: true }),
       fs.mkdir(path.join(this.projectDir, "drafts", "issue-drafts"), { recursive: true }),
       fs.mkdir(path.join(this.projectDir, "sessions"), { recursive: true }),
+      fs.mkdir(path.join(this.projectDir, "events"), { recursive: true }),
+      fs.mkdir(path.join(this.projectDir, "context"), { recursive: true }),
+      fs.mkdir(path.join(this.projectDir, "review"), { recursive: true }),
+      fs.mkdir(path.join(this.projectDir, "traces"), { recursive: true }),
+      fs.mkdir(path.join(this.projectDir, "locks"), { recursive: true }),
       fs.mkdir(path.join(this.projectDir, "graph"), { recursive: true }),
       fs.mkdir(path.join(this.globalDir, "graph"), { recursive: true }),
     ]);
@@ -37,6 +43,16 @@ export class MemoryStore {
     await this.writeIfMissing(path.join(this.projectDir, "memory", "learned-facts.json"), "[]\n");
     await this.writeIfMissing(path.join(this.projectDir, "curiosity", "queue.json"), "[]\n");
     await this.writeIfMissing(path.join(this.projectDir, "curiosity", "resolved.md"), "# Resolved Curiosities\n\n");
+    await this.writeIfMissing(path.join(this.projectDir, "settings.json"), `${JSON.stringify(defaultRuntimeProfile, null, 2)}\n`);
+    await this.writeIfMissing(path.join(this.projectDir, "state.json"), `${JSON.stringify({
+      schemaVersion: 1,
+      runtimeVersion: "control-plane-v1",
+      lastActiveSessionId: undefined,
+      lastOpenedAt: undefined,
+      health: "writable",
+      effectiveProfile: defaultRuntimeProfile,
+    }, null, 2)}\n`);
+    await this.writeIfMissing(path.join(this.projectDir, "sessions", "index.json"), "[]\n");
     await this.writeIfMissing(path.join(this.globalDir, "companion-profile.md"), "# Along\n\nAlong is a lo-fi coding companion that learns along with the user.\n");
     await this.writeIfMissing(path.join(this.globalDir, "user-patterns.md"), "# User Patterns\n\nNo cross-project patterns recorded yet.\n");
     await this.writeIfMissing(path.join(this.globalDir, "global-curiosity.md"), "# Global Curiosity\n\n");
