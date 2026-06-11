@@ -251,3 +251,7 @@ Use short entries in the change log below rather than relying on chat memory.
 - 2026-06-01: Written spec created at `docs/superpowers/specs/2026-06-01-along-runtime-control-plane-lifecycle-design.md` and moved to user-review stage.
 - 2026-06-01: User approved the written spec for implementation planning.
 - 2026-06-01: Implementation plan created at `docs/superpowers/plans/2026-06-01-along-runtime-control-plane-lifecycle.md`; next decision is Subagent-Driven versus Inline Execution.
+- 2026-06-11: Implementation progress checked. Worktree `../Along-worktrees/runtime-control-plane-implementation` on branch `runtime-control-plane-implementation` is at `7f838de feat: integrate runtime control plane`.
+  Tasks 1-8 have implementation commits: contracts, Write Coordinator, Runtime Profile, Event/Trace stores, Review Gate, Context Engine, Session Lifecycle, and Runtime integration.
+  Tasks 9-10 are not yet implemented: no `src/core/doctor.ts`, no Doctor/review/pause API endpoints in `src/server/app.ts`, and no final frontend/API regression task commit.
+  Verification in the implementation worktree: `npm test` passed outside the sandbox with 13 files / 154 tests; `npm run typecheck` passed; `npm run build` passed.
