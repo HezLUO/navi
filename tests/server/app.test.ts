@@ -58,6 +58,14 @@ describe("server app", () => {
     const doctorBody = await doctor.json() as { lifecycleState: string; permissionEnvelope: { canModifyProjectFiles: boolean } };
     const inbox = await fetch(`http://127.0.0.1:${address.port}/api/review/inbox`);
     const inboxBody = await inbox.json() as Array<{ id: string; status: string }>;
+    const items = await fetch(`http://127.0.0.1:${address.port}/api/review/items`);
+    const itemsBody = await items.json() as Array<{ id: string; status: string }>;
+    const decision = await fetch(`http://127.0.0.1:${address.port}/api/review/items/${itemsBody[0].id}/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: "reject" }),
+    });
+    const decisionBody = await decision.json() as { status: string };
     const reject = await fetch(`http://127.0.0.1:${address.port}/api/review/${inboxBody[0].id}/reject`, { method: "POST" });
     const rejectBody = await reject.json() as { status: string };
     server.close();
@@ -66,6 +74,9 @@ describe("server app", () => {
     expect(doctorBody.permissionEnvelope.canModifyProjectFiles).toBe(false);
     expect(pauseBody.lifecycleState).toBe("paused");
     expect(inboxBody).toHaveLength(1);
+    expect(itemsBody).toHaveLength(1);
+    expect(itemsBody[0].id).toBe(inboxBody[0].id);
+    expect(decisionBody.status).toBe("rejected");
     expect(rejectBody.status).toBe("rejected");
   });
 });

@@ -78,6 +78,38 @@ export function createApp(options: AppOptions) {
     }
   });
 
+  app.get("/api/review/items", async (_req, res, next) => {
+    try {
+      res.json(await reviewGate.readInbox());
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/review/items/:id/decision", async (req, res, next) => {
+    try {
+      const parsed = z.object({
+        decision: z.enum(["accepted", "accept", "rejected", "reject", "edited", "edit"]),
+        proposedChange: z.string().min(1).optional(),
+      }).parse(req.body);
+
+      if (parsed.decision === "accepted" || parsed.decision === "accept") {
+        res.json(await reviewGate.accept(req.params.id));
+        return;
+      }
+
+      if (parsed.decision === "rejected" || parsed.decision === "reject") {
+        res.json(await reviewGate.reject(req.params.id));
+        return;
+      }
+
+      const proposedChange = z.string().min(1).parse(parsed.proposedChange);
+      res.json(await reviewGate.edit(req.params.id, proposedChange));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/review/:id/accept", async (req, res, next) => {
     try {
       res.json(await reviewGate.accept(req.params.id));
