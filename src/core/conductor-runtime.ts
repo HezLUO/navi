@@ -128,29 +128,24 @@ export class ConductorRuntime {
   async ingestDelegationResult(result: ReadOnlyDelegationResult): Promise<JudgmentMergeResult> {
     const thread = this.requireThread(await this.threads.readAll(), result.threadId);
     const request = await this.transitionDelegationRequest(result);
-
-    await this.threads.recordDelegation(result.threadId, {
+    const delegation = {
       delegationId: result.requestId,
       target: result.target,
       status: result.status,
       createdAt: request.createdAt,
       resultRef: `delegation:${result.requestId}:result`,
-    });
+    };
+
     if (result.status !== "completed") {
+      await this.threads.recordDelegation(result.threadId, delegation);
       return this.buildNoopTerminalMerge(thread, result);
     }
 
-    const merge = mergeDelegationResultIntoJudgment(thread, result);
-    for (const evidence of merge.evidenceAdded) {
-      await this.threads.appendEvidence(result.threadId, evidence);
-    }
-    await this.threads.updateJudgment(result.threadId, {
-      currentJudgment: merge.nextJudgment,
-      status: merge.shouldNotifyUser ? "needs_user" : "watching",
-      updatedAt: result.completedAt,
-    });
-
-    return merge;
+    return await this.threads.mergeDelegationResult(
+      result.threadId,
+      delegation,
+      (currentThread) => mergeDelegationResultIntoJudgment(currentThread, result),
+    );
   }
 
   async snapshot(): Promise<ConductorSnapshot> {

@@ -4,6 +4,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { ConductorRuntime } from "../../src/core/conductor-runtime";
 import { OpenThreadStore } from "../../src/core/open-thread-store";
+import { getDelegationRequestsPath } from "../../src/core/paths";
+import type { ReadOnlyDelegationRequest } from "../../src/core/types";
 
 async function makeRepo() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-conductor-"));
@@ -68,6 +70,60 @@ describe("ConductorRuntime", () => {
     const [thread] = await threads.readAll();
     expect(merge.shouldNotifyUser).toBe(true);
     expect(thread.currentJudgment).toContain("Doctor API is missing");
+  });
+
+  it("preserves both judgment updates when completed results for one thread arrive concurrently", async () => {
+    const repo = await makeRepo();
+    const threads = new OpenThreadStore(repo);
+    await threads.createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Runtime plan drift blocks conductor work.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    const requests: ReadOnlyDelegationRequest[] = [
+      makePendingRequest("delegation-1"),
+      makePendingRequest("delegation-2"),
+    ];
+    await fs.mkdir(path.dirname(getDelegationRequestsPath(repo)), { recursive: true });
+    await fs.writeFile(getDelegationRequestsPath(repo), `${JSON.stringify(requests, null, 2)}\n`);
+    const conductor = new ConductorRuntime({ repoPath: repo });
+
+    await Promise.all([
+      conductor.ingestDelegationResult({
+        requestId: "delegation-1",
+        threadId: "thread-1",
+        target: "codex",
+        status: "completed",
+        summary: "Doctor API is missing.",
+        evidence: ["No doctor endpoint."],
+        risks: ["Runtime plan incomplete."],
+        recommendations: ["Finish Doctor."],
+        confidence: "high",
+        completedAt: "2026-06-12T00:05:00.000Z",
+      }),
+      conductor.ingestDelegationResult({
+        requestId: "delegation-2",
+        threadId: "thread-1",
+        target: "codex",
+        status: "completed",
+        summary: "Trace API is stale.",
+        evidence: ["Trace path still uses old state."],
+        risks: [],
+        recommendations: ["Refresh trace wiring."],
+        confidence: "high",
+        completedAt: "2026-06-12T00:06:00.000Z",
+      }),
+    ]);
+
+    const [thread] = await threads.readAll();
+    expect(thread.currentJudgment).toContain("Doctor API is missing.");
+    expect(thread.currentJudgment).toContain("Trace API is stale.");
+    expect(thread.evidence.map((item) => item.summary).sort()).toEqual([
+      "No doctor endpoint.",
+      "Trace path still uses old state.",
+    ]);
+    expect(thread.delegationHistory).toHaveLength(2);
   });
 
   it("rejects delegation results with no matching request before mutating the thread", async () => {
@@ -302,3 +358,20 @@ describe("ConductorRuntime", () => {
     expect(thread.delegationHistory).toHaveLength(1);
   });
 });
+
+function makePendingRequest(id: string): ReadOnlyDelegationRequest {
+  return {
+    id,
+    threadId: "thread-1",
+    reason: "Need review.",
+    target: "codex",
+    scope: ["src/core"],
+    forbiddenActions: ["Do not modify files."],
+    question: "Check runtime progress.",
+    expectedOutput: ["summary", "evidence", "risks", "recommendations", "confidence"],
+    budget: { timeoutMs: 120_000, maxOutputChars: 12_000 },
+    returnFormat: "judgment_merge_json",
+    status: "requested",
+    createdAt: `2026-06-12T00:0${id.endsWith("1") ? "1" : "2"}:00.000Z`,
+  };
+}

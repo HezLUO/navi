@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
-import type { OpenThread, OpenThreadDelegationRef, OpenThreadEvidence } from "./types";
+import type { JudgmentMergeResult, OpenThread, OpenThreadDelegationRef, OpenThreadEvidence } from "./types";
 import { getOpenThreadsPath } from "./paths";
 import { WriteCoordinator } from "./write-coordinator";
 
@@ -84,21 +84,43 @@ export class OpenThreadStore {
     let nextThread: OpenThread | undefined;
     await this.updateThreads((threads) => {
       const thread = this.requireThreadFrom(threads, threadId);
-      const existing = thread.delegationHistory.find((item) => item.delegationId === delegation.delegationId);
-      const history = existing
-        ? thread.delegationHistory.map((item) => (
-          item.delegationId === delegation.delegationId ? { ...item, ...delegation } : item
-        ))
-        : [...thread.delegationHistory, delegation];
+      const history = this.upsertDelegationHistory(thread, delegation);
       nextThread = {
         ...thread,
-        status: delegation.status === "completed" ? "watching" : delegation.status === "failed" ? "needs_user" : "delegated",
+        status: this.statusForDelegation(delegation),
         delegationHistory: history,
         updatedAt: maxIsoTimestamp(thread.updatedAt, delegation.createdAt),
       };
       return this.upsertInto(threads, nextThread);
     });
     return nextThread!;
+  }
+
+  async mergeDelegationResult(
+    threadId: string,
+    delegation: OpenThreadDelegationRef,
+    mergeForThread: (thread: OpenThread) => JudgmentMergeResult,
+  ): Promise<JudgmentMergeResult> {
+    let merge: JudgmentMergeResult | undefined;
+    await this.updateThreads((threads) => {
+      const thread = this.requireThreadFrom(threads, threadId);
+      merge = mergeForThread(thread);
+      const evidence = this.appendNewEvidence(thread.evidence, merge.evidenceAdded);
+      const nextThread: OpenThread = {
+        ...thread,
+        status: merge.shouldNotifyUser ? "needs_user" : "watching",
+        currentJudgment: merge.nextJudgment,
+        evidence,
+        delegationHistory: this.upsertDelegationHistory(thread, delegation),
+        updatedAt: maxIsoTimestamp(
+          maxIsoTimestamp(thread.updatedAt, delegation.createdAt),
+          merge.createdAt,
+        ),
+      };
+      return this.upsertInto(threads, nextThread);
+    });
+    if (!merge) throw new Error(`Open Thread merge failed: ${threadId}`);
+    return merge;
   }
 
   async updateJudgment(threadId: string, input: {
@@ -130,6 +152,29 @@ export class OpenThreadStore {
 
   private upsertInto(threads: OpenThread[], thread: OpenThread): OpenThread[] {
     return this.sortThreads([thread, ...threads.filter((item) => item.id !== thread.id)]);
+  }
+
+  private upsertDelegationHistory(thread: OpenThread, delegation: OpenThreadDelegationRef): OpenThreadDelegationRef[] {
+    const existing = thread.delegationHistory.find((item) => item.delegationId === delegation.delegationId);
+    return existing
+      ? thread.delegationHistory.map((item) => (
+        item.delegationId === delegation.delegationId ? { ...item, ...delegation } : item
+      ))
+      : [...thread.delegationHistory, delegation];
+  }
+
+  private appendNewEvidence(existing: OpenThreadEvidence[], incoming: OpenThreadEvidence[]): OpenThreadEvidence[] {
+    const evidenceIds = new Set(existing.map((item) => item.id));
+    return [
+      ...existing,
+      ...incoming.filter((item) => !evidenceIds.has(item.id)),
+    ];
+  }
+
+  private statusForDelegation(delegation: OpenThreadDelegationRef): OpenThread["status"] {
+    if (delegation.status === "failed") return "needs_user";
+    if (delegation.status === "completed" || delegation.status === "cancelled") return "watching";
+    return "delegated";
   }
 
   private requireThreadFrom(threads: OpenThread[], threadId: string): OpenThread {
