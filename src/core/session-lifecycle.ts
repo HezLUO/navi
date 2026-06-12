@@ -243,6 +243,14 @@ export class SessionLifecycle {
     });
   }
 
+  async currentLifecycleState(): Promise<SessionLifecycleState | "none"> {
+    const rawPointer = await this.coordinator.readJson<unknown | null>(getCurrentSessionPath(this.repoPath), null);
+    if (rawPointer === null) return "none";
+    if (!isCurrentSessionPointer(rawPointer)) return "none";
+    if (rawPointer.projectPath !== this.repoPath) return "none";
+    return rawPointer.state;
+  }
+
   private async recoverExpiredPointer(pointer: CurrentSessionPointer): Promise<SessionRecoveryResult> {
     const rawSession = await this.readSessionValue(pointer.sessionId);
     if (rawSession === undefined) return { lifecycleState: "none", reason: "current session file missing" };

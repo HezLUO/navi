@@ -240,6 +240,16 @@ export class AlongRuntime {
   }
 
   async conductorHeartbeat(trigger: HeartbeatTrigger): Promise<ConductorSnapshot> {
+    const lifecycleState = await this.lifecycle.currentLifecycleState();
+    if (lifecycleState === "none") {
+      throw new Error("Cannot run conductor heartbeat without a current session.");
+    }
+    if (lifecycleState === "wrapped") {
+      throw new Error("Cannot run conductor heartbeat after session wrap-up.");
+    }
+    if (lifecycleState !== "active" && lifecycleState !== "recovered") {
+      throw new Error("Cannot run conductor heartbeat unless current session is active.");
+    }
     const currentSession = await this.current();
     if (!currentSession) {
       throw new Error("Cannot run conductor heartbeat without a current session.");

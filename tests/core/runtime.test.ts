@@ -135,6 +135,24 @@ describe("Along runtime", () => {
     await expect(runtime.conductorSnapshot()).resolves.toMatchObject({ delegations: [] });
   });
 
+  it("rejects conductor heartbeat while the current session is paused", async () => {
+    const { repo, home } = await makeRuntimeWorkspace();
+    const runtime = new AlongRuntime({ repoPath: repo, homeDir: home });
+    await runtime.start();
+    await new OpenThreadStore(repo).createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Along should not proceed to Memory v2 before runtime foundations are done.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    await runtime.pause();
+
+    await expect(runtime.conductorHeartbeat("resume")).rejects.toThrow(
+      "Cannot run conductor heartbeat unless current session is active.",
+    );
+    await expect(runtime.conductorSnapshot()).resolves.toMatchObject({ delegations: [] });
+  });
+
   it("progresses through a bounded rhythm before wrap-up", () => {
     expect(stateForElapsed(0)).toBe("arriving");
     expect(stateForElapsed(4_000)).toBe("settling");
