@@ -44,10 +44,32 @@ export class WriteCoordinator {
     }
   }
 
+  async readJsonStrict<T>(filePath: string, fallback: T): Promise<T> {
+    let raw: string;
+    try {
+      raw = await fs.readFile(filePath, "utf8");
+    } catch (error) {
+      if (isNotFoundError(error)) return fallback;
+      throw error;
+    }
+    return JSON.parse(raw) as T;
+  }
+
   async updateJson<T>(filePath: string, fallback: T, transform: (current: T) => T | Promise<T>): Promise<T> {
     return this.runExclusiveFileWrite(filePath, () => (
       this.runWithRuntimeLockIfNeeded("update-json", async () => {
         const current = await this.readJson(filePath, fallback);
+        const next = await transform(current);
+        await this.atomicWriteJsonUnlocked(filePath, next);
+        return next;
+      })
+    ));
+  }
+
+  async updateJsonStrict<T>(filePath: string, fallback: T, transform: (current: T) => T | Promise<T>): Promise<T> {
+    return this.runExclusiveFileWrite(filePath, () => (
+      this.runWithRuntimeLockIfNeeded("update-json-strict", async () => {
+        const current = await this.readJsonStrict(filePath, fallback);
         const next = await transform(current);
         await this.atomicWriteJsonUnlocked(filePath, next);
         return next;
@@ -505,4 +527,11 @@ export class WriteCoordinator {
   private async delay(ms: number): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return typeof error === "object"
+    && error !== null
+    && "code" in error
+    && (error as { code?: unknown }).code === "ENOENT";
 }

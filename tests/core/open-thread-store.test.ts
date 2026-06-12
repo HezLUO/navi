@@ -138,6 +138,22 @@ describe("OpenThreadStore", () => {
     expect(thread.evidence).toHaveLength(1);
     expect(thread.updatedAt).toBe("2026-06-12T00:15:00.000Z");
   });
+
+  it("serializes concurrent open thread mutations", async () => {
+    const repo = await makeRepo();
+    const store = new OpenThreadStore(repo);
+
+    await Promise.all(Array.from({ length: 20 }, (_, index) => (
+      store.upsert(makeThread({
+        id: `thread-${index}`,
+        updatedAt: `2026-06-12T00:${String(index).padStart(2, "0")}:00.000Z`,
+      }))
+    )));
+
+    const threads = await store.readAll();
+    expect(threads).toHaveLength(20);
+    expect(new Set(threads.map((thread) => thread.id)).size).toBe(20);
+  });
 });
 
 function makeThread(input: Partial<OpenThread> & { id: string }): OpenThread {

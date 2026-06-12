@@ -125,22 +125,7 @@ export class OpenThreadStore {
   }
 
   private async updateThreads(transform: (threads: OpenThread[]) => OpenThread[]): Promise<OpenThread[]> {
-    return this.writes.withRuntimeLock("update-open-threads", async () => {
-      const next = transform(await this.readThreadsForMutation());
-      await this.writes.atomicWriteJson(getOpenThreadsPath(this.repoPath), next);
-      return next;
-    });
-  }
-
-  private async readThreadsForMutation(): Promise<OpenThread[]> {
-    let raw: string;
-    try {
-      raw = await fs.readFile(getOpenThreadsPath(this.repoPath), "utf8");
-    } catch (error) {
-      if (isNotFoundError(error)) return [];
-      throw error;
-    }
-    return JSON.parse(raw) as OpenThread[];
+    return this.writes.updateJsonStrict<OpenThread[]>(getOpenThreadsPath(this.repoPath), [], transform);
   }
 
   private upsertInto(threads: OpenThread[], thread: OpenThread): OpenThread[] {
