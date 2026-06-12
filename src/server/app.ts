@@ -23,6 +23,13 @@ function isSafeSessionId(value: string): boolean {
     && /^[A-Za-z0-9_-]+$/.test(value);
 }
 
+function isBadRequestError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const status = "status" in error ? error.status : undefined;
+  const statusCode = "statusCode" in error ? error.statusCode : undefined;
+  return status === 400 || statusCode === 400;
+}
+
 export function createApp(options: AppOptions) {
   const app = express();
   const runtime = new AlongRuntime(options);
@@ -187,7 +194,7 @@ export function createApp(options: AppOptions) {
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unknown error";
-    if (error instanceof z.ZodError) {
+    if (error instanceof z.ZodError || isBadRequestError(error)) {
       res.status(400).json({ error: message });
       return;
     }

@@ -62,4 +62,23 @@ describe("conductor API", () => {
       await closeServer(server);
     }
   });
+
+  it("returns 400 for malformed delegation result JSON", async () => {
+    let server: Server | undefined;
+
+    try {
+      const running = await makeServer();
+      server = running.server;
+
+      const response = await fetch(`${running.base}/api/conductor/delegation-result`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{",
+      });
+
+      expect(response.status).toBe(400);
+    } finally {
+      await closeServer(server);
+    }
+  });
 });
