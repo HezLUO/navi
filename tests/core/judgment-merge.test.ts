@@ -21,20 +21,25 @@ function thread(): OpenThread {
   };
 }
 
+function completedResult(overrides: Partial<ReadOnlyDelegationResult> = {}): ReadOnlyDelegationResult {
+  return {
+    requestId: "delegation-1",
+    threadId: "thread-1",
+    target: "codex",
+    status: "completed",
+    summary: "Doctor API is missing.",
+    evidence: ["No src/core/doctor.ts exists."],
+    risks: ["Runtime plan remains incomplete."],
+    recommendations: ["Finish Doctor and review endpoints before Memory v2."],
+    confidence: "high",
+    completedAt: "2026-06-12T00:05:00.000Z",
+    ...overrides,
+  };
+}
+
 describe("mergeDelegationResultIntoJudgment", () => {
   it("adds evidence and risk when a delegation finds a gap", () => {
-    const result: ReadOnlyDelegationResult = {
-      requestId: "delegation-1",
-      threadId: "thread-1",
-      target: "codex",
-      status: "completed",
-      summary: "Doctor API is missing.",
-      evidence: ["No src/core/doctor.ts exists."],
-      risks: ["Runtime plan remains incomplete."],
-      recommendations: ["Finish Doctor and review endpoints before Memory v2."],
-      confidence: "high",
-      completedAt: "2026-06-12T00:05:00.000Z",
-    };
+    const result = completedResult();
 
     const merge = mergeDelegationResultIntoJudgment(thread(), result);
     expect(merge.classification).toBe("adds_new_risk");
@@ -59,5 +64,30 @@ describe("mergeDelegationResultIntoJudgment", () => {
 
     expect(merge.classification).toBe("irrelevant_or_low_signal");
     expect(merge.shouldNotifyUser).toBe(false);
+  });
+
+  it("rejects delegation results for a different thread", () => {
+    expect(() => mergeDelegationResultIntoJudgment(thread(), completedResult({ threadId: "thread-2" }))).toThrow(
+      /thread mismatch.*thread-1.*thread-2/i,
+    );
+  });
+
+  it("rejects failed delegation results before merging evidence or risk", () => {
+    expect(() => mergeDelegationResultIntoJudgment(thread(), completedResult({ status: "failed" }))).toThrow(
+      /completed.*failed/i,
+    );
+  });
+
+  it("rejects cancelled delegation results before merging evidence or risk", () => {
+    expect(() => mergeDelegationResultIntoJudgment(thread(), completedResult({ status: "cancelled" }))).toThrow(
+      /completed.*cancelled/i,
+    );
+  });
+
+  it("uses a fallback risk summary when delegation summary is blank", () => {
+    const merge = mergeDelegationResultIntoJudgment(thread(), completedResult({ summary: "   " }));
+
+    expect(merge.nextJudgment).toContain("Delegation returned risk signal.");
+    expect(merge.nextJudgment).not.toContain("Delegation update:    ");
   });
 });

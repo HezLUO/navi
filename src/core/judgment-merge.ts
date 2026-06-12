@@ -4,6 +4,8 @@ export function mergeDelegationResultIntoJudgment(
   thread: OpenThread,
   result: ReadOnlyDelegationResult,
 ): JudgmentMergeResult {
+  assertMergeable(thread, result);
+
   const at = result.completedAt;
   const evidenceAdded: OpenThreadEvidence[] = result.evidence.map((summary, index) => ({
     id: `evidence:${result.requestId}:${index}`,
@@ -30,6 +32,15 @@ export function mergeDelegationResultIntoJudgment(
   };
 }
 
+function assertMergeable(thread: OpenThread, result: ReadOnlyDelegationResult): void {
+  if (result.threadId !== thread.id) {
+    throw new Error(`Cannot merge delegation result: thread mismatch (${thread.id} !== ${result.threadId}).`);
+  }
+  if (result.status !== "completed") {
+    throw new Error(`Cannot merge delegation result: expected completed status, received ${result.status}.`);
+  }
+}
+
 function classify(result: ReadOnlyDelegationResult): JudgmentMergeResult["classification"] {
   if (result.risks.length > 0) return "adds_new_risk";
   if (result.evidence.length > 0 && result.recommendations.length > 0) return "closes_evidence_gap";
@@ -38,13 +49,21 @@ function classify(result: ReadOnlyDelegationResult): JudgmentMergeResult["classi
 }
 
 function buildNextJudgment(thread: OpenThread, result: ReadOnlyDelegationResult): string {
+  const summary = summaryForJudgment(result);
   if (result.risks.length > 0) {
-    return `${thread.currentJudgment} Delegation update: ${result.summary} Recommended next step: ${result.recommendations[0] ?? "review the new risk."}`;
+    return `${thread.currentJudgment} Delegation update: ${summary} Recommended next step: ${result.recommendations[0] ?? "review the new risk."}`;
   }
   if (result.evidence.length > 0) {
-    return `${thread.currentJudgment} Delegation added evidence: ${result.summary}`;
+    return `${thread.currentJudgment} Delegation added evidence: ${summary}`;
   }
   return thread.currentJudgment;
+}
+
+function summaryForJudgment(result: ReadOnlyDelegationResult): string {
+  const summary = result.summary.trim();
+  if (summary.length > 0) return summary;
+  if (result.risks.length > 0) return "Delegation returned risk signal.";
+  return "Delegation returned evidence signal.";
 }
 
 function reasonFor(classification: JudgmentMergeResult["classification"], result: ReadOnlyDelegationResult): string {
