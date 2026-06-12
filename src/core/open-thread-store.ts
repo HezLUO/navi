@@ -55,7 +55,7 @@ export class OpenThreadStore {
   }
 
   async upsert(thread: OpenThread): Promise<OpenThread> {
-    await this.writes.updateJson<OpenThread[]>(getOpenThreadsPath(this.repoPath), [], (threads) => (
+    await this.updateThreads((threads) => (
       this.sortThreads([thread, ...threads.filter((item) => item.id !== thread.id)])
     ));
     return thread;
@@ -63,13 +63,17 @@ export class OpenThreadStore {
 
   async appendEvidence(threadId: string, evidence: OpenThreadEvidence): Promise<OpenThread> {
     let nextThread: OpenThread | undefined;
-    await this.writes.updateJson<OpenThread[]>(getOpenThreadsPath(this.repoPath), [], (threads) => {
+    await this.updateThreads((threads) => {
       const thread = this.requireThreadFrom(threads, threadId);
       const exists = thread.evidence.some((item) => item.id === evidence.id);
+      if (exists) {
+        nextThread = thread;
+        return threads;
+      }
       nextThread = {
         ...thread,
-        evidence: exists ? thread.evidence : [...thread.evidence, evidence],
-        updatedAt: evidence.at,
+        evidence: [...thread.evidence, evidence],
+        updatedAt: maxIsoTimestamp(thread.updatedAt, evidence.at),
       };
       return this.upsertInto(threads, nextThread);
     });
@@ -78,7 +82,7 @@ export class OpenThreadStore {
 
   async recordDelegation(threadId: string, delegation: OpenThreadDelegationRef): Promise<OpenThread> {
     let nextThread: OpenThread | undefined;
-    await this.writes.updateJson<OpenThread[]>(getOpenThreadsPath(this.repoPath), [], (threads) => {
+    await this.updateThreads((threads) => {
       const thread = this.requireThreadFrom(threads, threadId);
       const existing = thread.delegationHistory.find((item) => item.delegationId === delegation.delegationId);
       const history = existing
@@ -90,7 +94,7 @@ export class OpenThreadStore {
         ...thread,
         status: delegation.status === "completed" ? "watching" : delegation.status === "failed" ? "needs_user" : "delegated",
         delegationHistory: history,
-        updatedAt: delegation.createdAt,
+        updatedAt: maxIsoTimestamp(thread.updatedAt, delegation.createdAt),
       };
       return this.upsertInto(threads, nextThread);
     });
@@ -104,7 +108,7 @@ export class OpenThreadStore {
     updatedAt?: string;
   }): Promise<OpenThread> {
     let nextThread: OpenThread | undefined;
-    await this.writes.updateJson<OpenThread[]>(getOpenThreadsPath(this.repoPath), [], (threads) => {
+    await this.updateThreads((threads) => {
       const thread = this.requireThreadFrom(threads, threadId);
       nextThread = {
         ...thread,
@@ -118,6 +122,25 @@ export class OpenThreadStore {
       return this.upsertInto(threads, nextThread);
     });
     return nextThread!;
+  }
+
+  private async updateThreads(transform: (threads: OpenThread[]) => OpenThread[]): Promise<OpenThread[]> {
+    return this.writes.withRuntimeLock("update-open-threads", async () => {
+      const next = transform(await this.readThreadsForMutation());
+      await this.writes.atomicWriteJson(getOpenThreadsPath(this.repoPath), next);
+      return next;
+    });
+  }
+
+  private async readThreadsForMutation(): Promise<OpenThread[]> {
+    let raw: string;
+    try {
+      raw = await fs.readFile(getOpenThreadsPath(this.repoPath), "utf8");
+    } catch (error) {
+      if (isNotFoundError(error)) return [];
+      throw error;
+    }
+    return JSON.parse(raw) as OpenThread[];
   }
 
   private upsertInto(threads: OpenThread[], thread: OpenThread): OpenThread[] {
@@ -140,4 +163,8 @@ function isNotFoundError(error: unknown): boolean {
     && error !== null
     && "code" in error
     && (error as { code?: unknown }).code === "ENOENT";
+}
+
+function maxIsoTimestamp(left: string, right: string): string {
+  return left.localeCompare(right) >= 0 ? left : right;
 }

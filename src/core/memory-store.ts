@@ -117,9 +117,9 @@ export class MemoryStore {
 
   private async writeIfMissing(filePath: string, content: string): Promise<void> {
     try {
-      await fs.access(filePath);
-    } catch {
-      await fs.writeFile(filePath, content);
+      await fs.writeFile(filePath, content, { flag: "wx" });
+    } catch (error) {
+      if (!isAlreadyExistsError(error)) throw error;
     }
   }
 
@@ -230,4 +230,11 @@ function isNotFoundError(error: unknown): boolean {
     && error !== null
     && "code" in error
     && (error as { code?: unknown }).code === "ENOENT";
+}
+
+function isAlreadyExistsError(error: unknown): boolean {
+  return typeof error === "object"
+    && error !== null
+    && "code" in error
+    && (error as { code?: unknown }).code === "EEXIST";
 }

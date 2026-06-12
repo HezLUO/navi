@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { OpenThreadStore } from "../../src/core/open-thread-store";
+import { getOpenThreadsPath } from "../../src/core/paths";
+import type { OpenThread } from "../../src/core/types";
 
 async function makeRepo() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-threads-"));
@@ -22,22 +24,14 @@ describe("OpenThreadStore", () => {
   it("upserts and sorts threads by update time", async () => {
     const repo = await makeRepo();
     const store = new OpenThreadStore(repo);
-    await store.upsert({
+    await store.upsert(makeThread({
       id: "thread-1",
       title: "Runtime plan drift",
-      status: "open",
       whyItMatters: "Implementation order affects Along's foundation.",
       currentJudgment: "Runtime Doctor should be finished before Memory v2.",
-      evidence: [],
-      risks: [],
       nextAttentionTrigger: "Runtime implementation progress changes.",
       interventionThreshold: "Approved plan and implementation diverge.",
-      delegationHistory: [],
-      memoryLinks: [],
-      traceRefs: [],
-      createdAt: "2026-06-12T00:00:00.000Z",
-      updatedAt: "2026-06-12T00:00:00.000Z",
-    });
+    }));
 
     await store.appendEvidence("thread-1", {
       id: "evidence-1",
@@ -80,4 +74,87 @@ describe("OpenThreadStore", () => {
     const [thread] = await store.readAll();
     expect(thread.delegationHistory).toHaveLength(1);
   });
+
+  it("does not clobber malformed open thread storage on mutation", async () => {
+    const repo = await makeRepo();
+    const store = new OpenThreadStore(repo);
+    const threadsPath = getOpenThreadsPath(repo);
+    const invalidContent = "{ invalid json\n";
+    await fs.mkdir(path.dirname(threadsPath), { recursive: true });
+    await fs.writeFile(threadsPath, invalidContent);
+
+    await expect(store.upsert(makeThread({ id: "thread-1" }))).rejects.toThrow();
+    await expect(fs.readFile(threadsPath, "utf8")).resolves.toBe(invalidContent);
+  });
+
+  it("does not move updatedAt backward when appending older evidence", async () => {
+    const repo = await makeRepo();
+    const store = new OpenThreadStore(repo);
+    await store.upsert(makeThread({
+      id: "thread-1",
+      updatedAt: "2026-06-12T00:10:00.000Z",
+    }));
+
+    await store.appendEvidence("thread-1", {
+      id: "evidence-1",
+      at: "2026-06-12T00:05:00.000Z",
+      kind: "implementation_signal",
+      sourceRef: "docs:runtime-progress",
+      summary: "Older imported evidence.",
+      strength: "medium",
+    });
+
+    const [thread] = await store.readAll();
+    expect(thread.updatedAt).toBe("2026-06-12T00:10:00.000Z");
+    expect(thread.evidence).toHaveLength(1);
+  });
+
+  it("does not duplicate evidence or update timestamp for duplicate evidence ids", async () => {
+    const repo = await makeRepo();
+    const store = new OpenThreadStore(repo);
+    await store.upsert(makeThread({
+      id: "thread-1",
+      updatedAt: "2026-06-12T00:10:00.000Z",
+    }));
+
+    await store.appendEvidence("thread-1", {
+      id: "evidence-1",
+      at: "2026-06-12T00:15:00.000Z",
+      kind: "implementation_signal",
+      sourceRef: "docs:runtime-progress",
+      summary: "First evidence.",
+      strength: "strong",
+    });
+    await store.appendEvidence("thread-1", {
+      id: "evidence-1",
+      at: "2026-06-12T00:20:00.000Z",
+      kind: "implementation_signal",
+      sourceRef: "docs:runtime-progress",
+      summary: "Duplicate evidence.",
+      strength: "strong",
+    });
+
+    const [thread] = await store.readAll();
+    expect(thread.evidence).toHaveLength(1);
+    expect(thread.updatedAt).toBe("2026-06-12T00:15:00.000Z");
+  });
 });
+
+function makeThread(input: Partial<OpenThread> & { id: string }): OpenThread {
+  return {
+    title: "Runtime plan drift",
+    status: "open",
+    whyItMatters: "Implementation order affects Along's foundation.",
+    currentJudgment: "Runtime Doctor should be finished before Memory v2.",
+    evidence: [],
+    risks: [],
+    nextAttentionTrigger: "Runtime implementation progress changes.",
+    interventionThreshold: "Approved plan and implementation diverge.",
+    delegationHistory: [],
+    memoryLinks: [],
+    traceRefs: [],
+    createdAt: "2026-06-12T00:00:00.000Z",
+    updatedAt: "2026-06-12T00:00:00.000Z",
+    ...input,
+  };
+}

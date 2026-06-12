@@ -44,4 +44,22 @@ describe("memory store", () => {
     expect(settings.memoryMode).toBe("project_reviewed");
     expect(settings.canModifyProjectFiles).toBeUndefined();
   });
+
+  it("does not overwrite existing open thread storage during initialization", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-memory-"));
+    const repo = path.join(root, "repo");
+    const home = path.join(root, "home");
+    await fs.mkdir(repo);
+    await fs.mkdir(home);
+
+    const store = new MemoryStore(repo, home);
+    await store.ensureInitialized();
+    const threadsPath = path.join(repo, ".along", "threads", "open-threads.json");
+    const customContent = "[{\"id\":\"custom\"}]\n";
+    await fs.writeFile(threadsPath, customContent);
+
+    await store.ensureInitialized();
+
+    await expect(fs.readFile(threadsPath, "utf8")).resolves.toBe(customContent);
+  });
 });
