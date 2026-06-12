@@ -136,6 +136,24 @@ describe("ReviewGate", () => {
     expect((await gate.readInbox())[0]).toMatchObject({ id: item.id, status: "pending" });
   });
 
+  it("rejects malformed inbox updates without rewriting the inbox", async () => {
+    const repo = await makeRepo();
+    const gate = new ReviewGate(repo);
+    const inboxPath = path.join(repo, ".along", "review", "inbox.json");
+    const malformed = "{not json";
+    await fs.mkdir(path.dirname(inboxPath), { recursive: true });
+    await fs.writeFile(inboxPath, malformed);
+    const renameSpy = vi.spyOn(fs, "rename");
+
+    await expect(gate.addReviewItem({
+      ...baseInput,
+      proposedChange: "Do not clobber malformed inbox.",
+    })).rejects.toThrow();
+
+    expect(renameSpy).not.toHaveBeenCalled();
+    await expect(fs.readFile(inboxPath, "utf8")).resolves.toBe(malformed);
+  });
+
   it("preserves all distinct candidates added concurrently", async () => {
     const repo = await makeRepo();
     const gate = new ReviewGate(repo);

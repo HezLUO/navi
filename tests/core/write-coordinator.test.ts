@@ -47,6 +47,23 @@ describe("WriteCoordinator", () => {
     await expect(coordinator.readJson(filePath, { count: 0 })).resolves.toEqual({ count: 20 });
   });
 
+  it("fails closed when updating malformed JSON without rewriting the file", async () => {
+    const repo = await makeRepo();
+    const coordinator = new WriteCoordinator(repo);
+    const filePath = path.join(repo, ".along", "state.json");
+    const malformed = "{not json";
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, malformed);
+    const renameSpy = vi.spyOn(fs, "rename");
+
+    await expect(coordinator.updateJson(filePath, { count: 0 }, (current) => ({
+      count: current.count + 1,
+    }))).rejects.toThrow();
+
+    expect(renameSpy).not.toHaveBeenCalled();
+    await expect(fs.readFile(filePath, "utf8")).resolves.toBe(malformed);
+  });
+
   it("deduplicates JSONL appends by idempotency key", async () => {
     const repo = await makeRepo();
     const coordinator = new WriteCoordinator(repo);
