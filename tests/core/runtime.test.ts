@@ -174,6 +174,40 @@ describe("Along runtime", () => {
     expect(traces.some((trace) => trace.operation === "conductorHeartbeat")).toBe(false);
   });
 
+  it("rejects conductor heartbeat if pause lands between lifecycle check and current recovery", async () => {
+    const { repo, home } = await makeRuntimeWorkspace();
+    const runtime = new AlongRuntime({ repoPath: repo, homeDir: home });
+    const session = await runtime.start();
+    await new OpenThreadStore(repo).createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Along should not proceed to Memory v2 before runtime foundations are done.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    const lifecycle = (runtime as unknown as { lifecycle: SessionLifecycle }).lifecycle;
+    const originalCurrentLifecycleState = lifecycle.currentLifecycleState.bind(lifecycle);
+    let pausedAfterPrecheck = false;
+    const lifecycleState = vi.spyOn(lifecycle, "currentLifecycleState").mockImplementation(async () => {
+      const state = await originalCurrentLifecycleState();
+      if (!pausedAfterPrecheck) {
+        pausedAfterPrecheck = true;
+        await lifecycle.markPaused(session.id);
+      }
+      return state;
+    });
+
+    try {
+      await expect(runtime.conductorHeartbeat("resume")).rejects.toThrow(
+        "Cannot run conductor heartbeat unless current session is active.",
+      );
+    } finally {
+      lifecycleState.mockRestore();
+    }
+    await expect(runtime.conductorSnapshot()).resolves.toMatchObject({ delegations: [] });
+    const traces = await new TraceStore(repo).readTraces(session.id);
+    expect(traces.some((trace) => trace.operation === "conductorHeartbeat")).toBe(false);
+  });
+
   it("progresses through a bounded rhythm before wrap-up", () => {
     expect(stateForElapsed(0)).toBe("arriving");
     expect(stateForElapsed(4_000)).toBe("settling");

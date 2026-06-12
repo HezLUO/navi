@@ -113,7 +113,7 @@ export class OpenThreadStore {
       const evidence = this.appendNewEvidence(thread.evidence, merge.evidenceAdded);
       const nextThread: OpenThread = {
         ...thread,
-        status: merge.shouldNotifyUser ? "needs_user" : "watching",
+        status: this.statusForMerge(thread.status, merge),
         currentJudgment: merge.nextJudgment,
         evidence,
         delegationHistory: this.upsertDelegationHistory(thread, delegation),
@@ -183,6 +183,11 @@ export class OpenThreadStore {
     if (delegation.status === "failed") return "needs_user";
     if (delegation.status === "completed" || delegation.status === "cancelled") return "watching";
     return "delegated";
+  }
+
+  private statusForMerge(currentStatus: OpenThread["status"], merge: JudgmentMergeResult): OpenThread["status"] {
+    if (merge.shouldNotifyUser || currentStatus === "needs_user") return "needs_user";
+    return "watching";
   }
 
   private requireThreadFrom(threads: OpenThread[], threadId: string): OpenThread {

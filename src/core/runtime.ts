@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import type { AlongEvent, AlongSession, CuriosityItem, GraphEdge, GraphNode, JournalEntry, PermissionEnvelope, PresenceState, ReviewItem, TraceEntry } from "./types";
+import type { AlongEvent, AlongSession, CuriosityItem, GraphEdge, GraphNode, JournalEntry, PermissionEnvelope, PresenceState, ReviewItem, SessionLifecycleState, TraceEntry } from "./types";
 import type { ConductorSnapshot, HeartbeatTrigger, ReadOnlyDelegationResult } from "./types";
 import { ConductorRuntime } from "./conductor-runtime";
 import { buildContextPacket } from "./context-engine";
@@ -241,19 +241,12 @@ export class AlongRuntime {
 
   async conductorHeartbeat(trigger: HeartbeatTrigger): Promise<ConductorSnapshot> {
     const lifecycleState = await this.lifecycle.currentLifecycleState();
-    if (lifecycleState === "none") {
-      throw new Error("Cannot run conductor heartbeat without a current session.");
-    }
-    if (lifecycleState === "wrapped") {
-      throw new Error("Cannot run conductor heartbeat after session wrap-up.");
-    }
-    if (lifecycleState !== "active" && lifecycleState !== "recovered") {
-      throw new Error("Cannot run conductor heartbeat unless current session is active.");
-    }
+    this.assertCanRunConductorHeartbeat(lifecycleState);
     const currentSession = await this.current();
     if (!currentSession) {
       throw new Error("Cannot run conductor heartbeat without a current session.");
     }
+    this.assertCanRunConductorHeartbeat(await this.lifecycle.currentLifecycleState());
     if (currentSession.state === "wrap_up") {
       throw new Error("Cannot run conductor heartbeat after session wrap-up.");
     }
@@ -477,6 +470,18 @@ export class AlongRuntime {
       }
     }
     throw new Error("Runtime lock is active");
+  }
+
+  private assertCanRunConductorHeartbeat(lifecycleState: SessionLifecycleState | "none"): void {
+    if (lifecycleState === "none") {
+      throw new Error("Cannot run conductor heartbeat without a current session.");
+    }
+    if (lifecycleState === "wrapped") {
+      throw new Error("Cannot run conductor heartbeat after session wrap-up.");
+    }
+    if (lifecycleState !== "active" && lifecycleState !== "recovered") {
+      throw new Error("Cannot run conductor heartbeat unless current session is active.");
+    }
   }
 
   private async withRuntimeLockContentionRetry<T>(operation: string, fn: () => Promise<T>): Promise<T> {

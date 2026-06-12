@@ -126,6 +126,57 @@ describe("ConductorRuntime", () => {
     expect(thread.delegationHistory).toHaveLength(2);
   });
 
+  it("preserves needs_user after a later non-notifying completed delegation result", async () => {
+    const repo = await makeRepo();
+    const threads = new OpenThreadStore(repo);
+    await threads.createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Runtime plan drift blocks conductor work.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    await writeDelegationRequests(repo, [
+      makePendingRequest("delegation-1"),
+      makePendingRequest("delegation-2"),
+    ]);
+    const conductor = new ConductorRuntime({ repoPath: repo });
+
+    await conductor.ingestDelegationResult({
+      requestId: "delegation-1",
+      threadId: "thread-1",
+      target: "codex",
+      status: "completed",
+      summary: "Doctor API is missing.",
+      evidence: ["No doctor endpoint."],
+      risks: ["Runtime plan incomplete."],
+      recommendations: ["Finish Doctor."],
+      confidence: "high",
+      completedAt: "2026-06-12T00:05:00.000Z",
+    });
+    await conductor.ingestDelegationResult({
+      requestId: "delegation-2",
+      threadId: "thread-1",
+      target: "codex",
+      status: "completed",
+      summary: "Trace wiring has supporting evidence.",
+      evidence: ["Trace path review produced a supporting signal."],
+      risks: [],
+      recommendations: ["Keep watching trace wiring."],
+      confidence: "medium",
+      completedAt: "2026-06-12T00:06:00.000Z",
+    });
+
+    const [thread] = await threads.readAll();
+    expect(thread.status).toBe("needs_user");
+    expect(thread.currentJudgment).toContain("Doctor API is missing.");
+    expect(thread.currentJudgment).toContain("Trace wiring has supporting evidence.");
+    expect(thread.evidence.map((item) => item.summary).sort()).toEqual([
+      "No doctor endpoint.",
+      "Trace path review produced a supporting signal.",
+    ]);
+    expect(thread.delegationHistory.map((item) => item.status)).toEqual(["completed", "completed"]);
+  });
+
   it("rejects delegation results with no matching request before mutating the thread", async () => {
     const repo = await makeRepo();
     const threads = new OpenThreadStore(repo);
