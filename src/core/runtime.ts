@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import type { AlongEvent, AlongSession, CuriosityItem, GraphEdge, GraphNode, JournalEntry, PermissionEnvelope, PresenceState, ReviewItem, TraceEntry } from "./types";
+import type { ConductorSnapshot, HeartbeatTrigger, ReadOnlyDelegationResult } from "./types";
+import { ConductorRuntime } from "./conductor-runtime";
 import { buildContextPacket } from "./context-engine";
 import { EventStore } from "./event-store";
 import { inspectProject } from "./project-adapter";
@@ -78,6 +80,7 @@ export class AlongRuntime {
   private readonly events: EventStore;
   private readonly traces: TraceStore;
   private readonly writes: WriteCoordinator;
+  private readonly conductor: ConductorRuntime;
   private wrappedResult?: WrapUpResult;
   private wrappedResultSessionId?: string;
   private wrapUpInFlight?: Promise<WrapUpResult>;
@@ -89,6 +92,7 @@ export class AlongRuntime {
     this.events = new EventStore(options.repoPath);
     this.traces = new TraceStore(options.repoPath);
     this.writes = new WriteCoordinator(options.repoPath);
+    this.conductor = new ConductorRuntime({ repoPath: options.repoPath });
     this.wrappedResult = undefined;
     this.wrappedResultSessionId = undefined;
     this.wrapUpInFlight = undefined;
@@ -229,6 +233,22 @@ export class AlongRuntime {
 
     await this.refreshPresenceState();
     return this.session;
+  }
+
+  async conductorSnapshot(): Promise<ConductorSnapshot> {
+    return await this.conductor.snapshot();
+  }
+
+  async conductorHeartbeat(trigger: HeartbeatTrigger): Promise<ConductorSnapshot> {
+    const currentSession = await this.current();
+    if (!currentSession) {
+      throw new Error("Cannot run conductor heartbeat without a current session.");
+    }
+    return await this.conductor.runHeartbeat({ trigger, sessionId: currentSession.id });
+  }
+
+  async ingestDelegationResult(result: ReadOnlyDelegationResult) {
+    return await this.conductor.ingestDelegationResult(result);
   }
 
   async wrapUp(note: string): Promise<WrapUpResult> {

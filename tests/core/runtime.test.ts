@@ -4,6 +4,7 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { EventStore } from "../../src/core/event-store";
 import { ScriptedCompanionProvider } from "../../src/core/model-provider";
+import { OpenThreadStore } from "../../src/core/open-thread-store";
 import { getCurrentSessionPath, getContextPacketPath, getEventsFilePath, getSessionFilePath } from "../../src/core/paths";
 import { ReviewGate } from "../../src/core/review-gate";
 import { AlongRuntime, formatLocalJournalDate, stateForElapsed } from "../../src/core/runtime";
@@ -78,6 +79,42 @@ describe("Along runtime", () => {
     expect(wrap.remembered).toContain("I learned where to look first.");
     expect(wrap.state).toBe("wrap_up");
     expect(wrap.journalPreview).toContain("I learned where to look first.");
+  });
+
+  it("runs conductor heartbeat and delegation ingestion through the current session", async () => {
+    const { repo, home } = await makeRuntimeWorkspace();
+    const runtime = new AlongRuntime({ repoPath: repo, homeDir: home });
+    await runtime.start();
+    const threads = new OpenThreadStore(repo);
+    await threads.createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Along should not proceed to Memory v2 before runtime foundations are done.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+
+    const heartbeat = await runtime.conductorHeartbeat("resume");
+    const snapshot = await runtime.conductorSnapshot();
+    expect(heartbeat.delegations[0]).toMatchObject({ threadId: "thread-1", target: "codex", status: "requested" });
+    expect(snapshot.delegations).toHaveLength(1);
+
+    const merge = await runtime.ingestDelegationResult({
+      requestId: heartbeat.delegations[0].id,
+      threadId: "thread-1",
+      target: "codex",
+      status: "completed",
+      summary: "Doctor API is missing.",
+      evidence: ["No doctor endpoint."],
+      risks: ["Runtime plan incomplete."],
+      recommendations: ["Finish Doctor."],
+      confidence: "high",
+      completedAt: "2026-06-12T00:05:00.000Z",
+    });
+
+    const [thread] = await threads.readAll();
+    expect(merge.shouldNotifyUser).toBe(true);
+    expect(thread.status).toBe("needs_user");
+    expect(thread.currentJudgment).toContain("Doctor API is missing.");
   });
 
   it("progresses through a bounded rhythm before wrap-up", () => {
