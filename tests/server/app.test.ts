@@ -31,4 +31,41 @@ describe("server app", () => {
     expect(resumedBody.id).toBe(startBody.id);
     expect(resumedBody.plan.learningGoal).toBe(startBody.plan.learningGoal);
   });
+
+  it("exposes Doctor and review endpoints", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-api-"));
+    const repo = path.join(root, "repo");
+    const home = path.join(root, "home");
+    await fs.mkdir(repo);
+    await fs.mkdir(home);
+    await fs.writeFile(path.join(repo, "README.md"), "# Demo\n");
+
+    const app = createApp({ repoPath: repo, homeDir: home });
+    const server = app.listen(0);
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Expected TCP address.");
+
+    await fetch(`http://127.0.0.1:${address.port}/api/session/start`, { method: "POST" });
+    const pause = await fetch(`http://127.0.0.1:${address.port}/api/session/pause`, { method: "POST" });
+    const pauseBody = await pause.json() as { lifecycleState: string };
+    await fetch(`http://127.0.0.1:${address.port}/api/session/wrap-up`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: "Review me." }),
+    });
+
+    const doctor = await fetch(`http://127.0.0.1:${address.port}/api/runtime/doctor`);
+    const doctorBody = await doctor.json() as { lifecycleState: string; permissionEnvelope: { canModifyProjectFiles: boolean } };
+    const inbox = await fetch(`http://127.0.0.1:${address.port}/api/review/inbox`);
+    const inboxBody = await inbox.json() as Array<{ id: string; status: string }>;
+    const reject = await fetch(`http://127.0.0.1:${address.port}/api/review/${inboxBody[0].id}/reject`, { method: "POST" });
+    const rejectBody = await reject.json() as { status: string };
+    server.close();
+
+    expect(doctorBody.lifecycleState).toBe("wrapped");
+    expect(doctorBody.permissionEnvelope.canModifyProjectFiles).toBe(false);
+    expect(pauseBody.lifecycleState).toBe("paused");
+    expect(inboxBody).toHaveLength(1);
+    expect(rejectBody.status).toBe("rejected");
+  });
 });
