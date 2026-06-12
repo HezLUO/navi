@@ -15,9 +15,9 @@ Use this file in future sessions before continuing product design, implementatio
 
 ## Current Goal
 
-Living Conductor Foundation is merged locally into `main`, verified, and product-calibrated against Along itself. The current goal is to decide whether to run a focused Product Expression Tightening Pass before any new capability expansion.
+Living Conductor Foundation is merged locally into `main`, verified, and product-calibrated against Along itself. The current goal is Product Expression Tightening before any new capability expansion.
 
-Default next step: tighten how Along expresses self-initiation, companionship, delegation intent, user control, and quietness. Do not start Memory v2, Hermes adapter, Conductor Packs, or write delegation until that product-feel decision is explicit.
+Default next step: user review of the Product Expression Tightening spec. Do not start Memory v2, Hermes adapter, Conductor Packs, write delegation, or implementation planning until that spec is approved.
 
 ## Core Product Definition
 
@@ -285,6 +285,40 @@ Focus areas:
 - explain attention decisions through user-relevant stakes, not only scoring factors;
 - decide whether `Project intelligence` is a primary product surface or an advanced/debug surface.
 
+## Product Expression Tightening Record
+
+Product Expression Tightening design was drafted on 2026-06-12.
+
+Spec:
+
+`docs/superpowers/specs/2026-06-12-product-expression-tightening-design.md`
+
+Status:
+
+- written from approved design conversation;
+- pending user review;
+- not yet implementation-planned.
+
+Approved direction:
+
+- Shared Desk First is the V1 direction.
+- First screen should answer "what are we holding together right now?" instead of "which modules exist?"
+- Along defaults to choosing the Main Thread, and the user can override.
+- V1 default attention density is Focused: up to one Main Thread plus up to two Watch Threads.
+- This count is a V1 default, not a permanent product limit.
+- Lightweight controls are preferred: `Not now`, `Hide`, `Ask why`, `Make this main`, and read-only delegation actions.
+- Intervention voice defaults to Judgment First, with Soft Notice and Quiet Offer as variants.
+- Delegation remains read-only and should appear as Along's controlled action suggestion, not as a background task list.
+- Quiet State is required when no thread deserves attention.
+
+Deferred but interesting future directions:
+
+- Ambient Presence First;
+- Living Desktop;
+- LLM-assisted attention judgment;
+- configurable voice;
+- configurable attention density.
+
 ## Pending Decisions
 
 - how to migrate or reinterpret Curiosity Queue beyond this foundation;
@@ -294,6 +328,8 @@ Focus areas:
 - how to batch, prioritize, or suppress multiple equally eligible Open Threads;
 - how stop, edit, rerun, and takeover controls should appear in Delegation Live View;
 - whether persisted conductor snapshots should update after delegation-result ingestion or remain heartbeat snapshots only;
+- how Shared Desk should persist user overrides such as `Not now`, `Hide`, and `Make this main`;
+- whether Project Intelligence should become an advanced library surface after Shared Desk becomes primary;
 - how user feedback updates Intervention Style Profile beyond the current preference model;
 - whether Open Threads becomes a visible primary UI surface or remains a debug/product-intelligence surface;
 - whether Delegation Live View becomes a standalone surface or remains part of the current UI/debug model;
@@ -317,3 +353,4 @@ Focus areas:
 - 2026-06-12: Main session independently reviewed implementation worktree, reran focused tests, typecheck, build, and full test suite.
 - 2026-06-12: Merged `runtime-control-plane-implementation` into `main` locally at `445b1b3`, then reran typecheck, build, and full test suite on merged `main`; all passed.
 - 2026-06-12: First Along-self product calibration completed; recommendation is Product Expression Tightening before capability expansion.
+- 2026-06-12: Drafted Product Expression Tightening spec around Shared Desk First; pending user review before implementation planning.
