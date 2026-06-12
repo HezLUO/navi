@@ -15,7 +15,7 @@ Use this file in future sessions before continuing product design, implementatio
 
 ## Current Goal
 
-Living Conductor Foundation implementation is complete on the runtime control plane implementation branch. The current goal is preservation and handoff: keep the implementation worktree intact, keep the execution record current, and let the main session review, merge, push, or otherwise integrate when explicitly requested.
+Living Conductor Foundation is merged locally into `main` and verified. The current goal is post-merge stewardship: keep the implementation worktree intact until cleanup is explicitly requested, preserve the execution record, and decide later whether to push, create a PR, or continue locally.
 
 ## Core Product Definition
 
@@ -89,7 +89,7 @@ Implementation plan written:
 
 The plan superseded directly executing the older Memory v2 and Autonomy plans for this implementation pass. It absorbed their useful pieces through Open Threads, attention scoring, Judgment Merge, and runtime-triggered heartbeats.
 
-Current next step: main-session review and integration decision. Do not push, merge, delete the worktree, or rewrite branch history unless explicitly requested.
+Current next step: decide whether to push, create a PR, keep the local branch/worktree for reference, or clean it up. Do not push, delete the worktree, or rewrite branch history unless explicitly requested.
 
 ## Focused Execution Record
 
@@ -212,13 +212,33 @@ Post-remediation verification results:
 
 Current pending question:
 
-- No implementation blocker remains after post-remediation review and verification. The next decision is integration strategy: keep branch, main-session review, local merge, PR, or later cleanup.
+- No implementation blocker remains after post-remediation review, main-session verification, and local merge to `main`.
+- Next decision: keep the implementation branch/worktree as reference, push, create a PR, or clean up later.
 
 Next execution steps:
 
-1. Preserve implementation worktree and branch as-is.
-2. Hand off to the main session for review and integration decision.
-3. If asked to finish the branch, use `superpowers:finishing-a-development-branch` and present merge/PR/keep/discard options after fresh verification.
+1. Preserve implementation worktree and branch as-is until cleanup is explicitly requested.
+2. Continue future Along design or implementation work from merged `main`.
+3. If asked to push or open a PR, verify branch state first and use the GitHub workflow.
+4. If asked to clean up, remove the worktree and delete the branch only after confirmation.
+
+## Main Merge Record
+
+Merged locally into `main` on 2026-06-12.
+
+Merge commit:
+
+`445b1b3` `Merge branch 'runtime-control-plane-implementation'`
+
+Post-merge verification on `main`:
+
+- `npm run typecheck` passed.
+- `npm run build` passed.
+- Full `npm test` passed after sandbox escalation for Express server listening: 21 test files, 225 tests.
+
+Implementation worktree remains preserved:
+
+`/Users/james/Codex Project/General Codex Project/Along-worktrees/runtime-control-plane-implementation`
 
 ## Pending Decisions
 
@@ -245,3 +265,5 @@ Next execution steps:
 - 2026-06-12: Final validation passed: focused suite, full tests, typecheck, build, API smoke, and browser verification.
 - 2026-06-12: Final whole-branch review found and remediated a malformed review inbox data-loss blocker in `feda20a`; post-remediation tests, typecheck, and build passed.
 - 2026-06-12: Final whole-branch re-review passed at `feda20a`; no blockers remain.
+- 2026-06-12: Main session independently reviewed implementation worktree, reran focused tests, typecheck, build, and full test suite.
+- 2026-06-12: Merged `runtime-control-plane-implementation` into `main` locally at `445b1b3`, then reran typecheck, build, and full test suite on merged `main`; all passed.
