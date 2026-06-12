@@ -101,9 +101,7 @@ export function App() {
         .then((nextConductor) => {
           if (!cancelled) setConductor(nextConductor);
         })
-        .catch(() => {
-          if (!cancelled) setConductor(null);
-        });
+        .catch(() => undefined);
     };
 
     sessionLoadPromise ??= loadCurrentOrStart();
