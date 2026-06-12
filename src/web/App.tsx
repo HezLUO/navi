@@ -5,6 +5,8 @@ import { createSoundscape } from "./soundscape";
 interface SessionResponse {
   id: string;
   state: string;
+  lifecycleState?: string;
+  recoveredReason?: string;
   context: {
     repoName: string;
     gitStatus: string;
@@ -17,6 +19,43 @@ interface SessionResponse {
     learningGoal: string;
     currentActivity: string;
     shareLine?: string;
+  };
+}
+
+interface OpenThreadResponse {
+  id: string;
+  title: string;
+  status: string;
+  whyItMatters: string;
+  currentJudgment: string;
+  risks: Array<{ id: string; summary: string; severity: string }>;
+  evidence: Array<{ id: string; summary: string; strength: string }>;
+}
+
+interface AttentionResponse {
+  threadId: string;
+  action: string;
+  score: number;
+  reasons: string[];
+}
+
+interface DelegationResponse {
+  id: string;
+  threadId: string;
+  target: string;
+  status: string;
+  reason: string;
+  scope: string[];
+}
+
+interface ConductorSnapshotResponse {
+  threads: OpenThreadResponse[];
+  attention: AttentionResponse[];
+  delegations: DelegationResponse[];
+  preferences: {
+    delegationModeLabel: string;
+    projectWritePermission: boolean;
+    [key: string]: unknown;
   };
 }
 
@@ -49,6 +88,7 @@ function stateLabel(state: string): string {
 
 export function App() {
   const [session, setSession] = useState<SessionResponse | null>(null);
+  const [conductor, setConductor] = useState<ConductorSnapshotResponse | null>(null);
   const [wrapNote, setWrapNote] = useState("I stayed with one small thread today.");
   const [wrapFeedback, setWrapFeedback] = useState<WrapUpResponse | null>(null);
   const [soundOn, setSoundOn] = useState(false);
@@ -56,6 +96,14 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
+    const loadConductorSnapshot = () => {
+      readJson<ConductorSnapshotResponse>(`${apiBase}/api/conductor/snapshot`)
+        .then((nextConductor) => {
+          if (!cancelled) setConductor(nextConductor);
+        })
+        .catch(() => undefined);
+    };
+
     sessionLoadPromise ??= loadCurrentOrStart();
     sessionLoadPromise
       .then((nextSession) => {
@@ -64,6 +112,7 @@ export function App() {
       .catch(() => {
         if (!cancelled) setSession(null);
       });
+    loadConductorSnapshot();
 
     const interval = window.setInterval(() => {
       readJson<SessionResponse | null>(`${apiBase}/api/session/current`)
@@ -71,6 +120,7 @@ export function App() {
           if (!cancelled && nextSession) setSession(nextSession);
         })
         .catch(() => undefined);
+      loadConductorSnapshot();
     }, 5_000);
 
     return () => {
@@ -78,6 +128,19 @@ export function App() {
       window.clearInterval(interval);
     };
   }, []);
+
+  async function runConductorHeartbeat() {
+    try {
+      const nextConductor = await readJson<ConductorSnapshotResponse>(`${apiBase}/api/conductor/heartbeat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trigger: "user_event" }),
+      });
+      setConductor(nextConductor);
+    } catch {
+      // Keep the current snapshot visible if the heartbeat is unavailable.
+    }
+  }
 
   async function wrapUp() {
     const result = await readJson<WrapUpResponse>(`${apiBase}/api/session/wrap-up`, {
@@ -100,6 +163,8 @@ export function App() {
   }
 
   const activeStateIndex = Math.max(0, presenceStates.indexOf(session?.state ?? "arriving"));
+  const openThreads = (conductor?.threads ?? []).slice(0, 5);
+  const delegations = (conductor?.delegations ?? []).slice(0, 5);
 
   return (
     <main className="shell">
@@ -142,6 +207,55 @@ export function App() {
           <p className="state-pill">{stateLabel(session?.state ?? "arriving")}</p>
           <p>{session?.plan.learningGoal ?? "Arriving at the desk..."}</p>
           <p className="muted">{session?.plan.currentActivity ?? "Loading project memory."}</p>
+        </article>
+
+        <article className="panel project-intelligence">
+          <div className="panel-heading">
+            <Brain size={20} />
+            <div>
+              <h2>Project intelligence</h2>
+              <p className="muted">Open Threads Along is watching from the conductor layer.</p>
+            </div>
+          </div>
+          <button onClick={runConductorHeartbeat}>Check threads</button>
+          <div className="thread-list" aria-label="Open Threads">
+            {openThreads.length > 0 ? openThreads.map((thread) => (
+              <div className="thread-row" key={thread.id}>
+                <div className="row-title">
+                  <strong>{thread.title}</strong>
+                  <span className="row-status">{stateLabel(thread.status)}</span>
+                </div>
+                <p>{thread.currentJudgment}</p>
+                <p className="muted">{thread.whyItMatters}</p>
+              </div>
+            )) : (
+              <p className="empty-state">No Open Threads yet.</p>
+            )}
+          </div>
+        </article>
+
+        <article className="panel delegation-live">
+          <div className="panel-heading">
+            <MessageCircle size={20} />
+            <div>
+              <h2>Delegation live view</h2>
+              <p className="muted">Read-only requests, kept visible without granting write control.</p>
+            </div>
+          </div>
+          <div className="delegation-list" aria-label="Read-only delegations">
+            {delegations.length > 0 ? delegations.map((delegation) => (
+              <div className="delegation-row" key={delegation.id}>
+                <div className="row-title">
+                  <strong>{stateLabel(delegation.target)}</strong>
+                  <span className="row-status">{stateLabel(delegation.status)}</span>
+                </div>
+                <p>{delegation.reason}</p>
+                <p className="muted delegation-scope">{delegation.scope.join(", ")}</p>
+              </div>
+            )) : (
+              <p className="empty-state">No read-only delegations requested.</p>
+            )}
+          </div>
         </article>
 
         <article className="panel wide">

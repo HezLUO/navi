@@ -97,6 +97,95 @@ h1 {
   cursor: pointer;
 }
 
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.panel-heading svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #2f5d62;
+}
+
+.panel-heading h2 {
+  margin: 0 0 4px;
+}
+
+.panel-heading .muted {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.project-intelligence button {
+  margin-top: 14px;
+}
+
+.thread-list,
+.delegation-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.thread-row,
+.delegation-row {
+  border: 1px solid #e1ddd2;
+  border-radius: 8px;
+  background: #fbf8f1;
+  padding: 12px;
+}
+
+.row-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.row-title strong {
+  min-width: 0;
+  color: #1f2933;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.row-status {
+  flex: 0 0 auto;
+  border: 1px solid #e1ddd2;
+  border-radius: 999px;
+  background: #f4efe6;
+  color: #52616b;
+  padding: 3px 7px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.thread-row p,
+.delegation-row p {
+  margin: 7px 0 0;
+  color: #34454f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.thread-row .muted,
+.delegation-row .muted {
+  color: #687782;
+}
+
+.delegation-scope {
+  overflow-wrap: anywhere;
+}
+
+.empty-state {
+  margin: 0;
+  color: #687782;
+  font-size: 14px;
+}
+
 .wide {
   grid-column: 1 / -1;
 }
