@@ -5,6 +5,8 @@ import { createSoundscape } from "./soundscape";
 interface SessionResponse {
   id: string;
   state: string;
+  lifecycleState?: string;
+  recoveredReason?: string;
   context: {
     repoName: string;
     gitStatus: string;

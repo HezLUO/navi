@@ -93,4 +93,31 @@ describe("server app", () => {
     expect(invalidDecision.status).toBe(400);
     expect(missingReview.status).toBe(404);
   });
+
+  it("recovers current session after creating a new app instance", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "along-api-"));
+    const repo = path.join(root, "repo");
+    const home = path.join(root, "home");
+    await fs.mkdir(repo);
+    await fs.mkdir(home);
+    await fs.writeFile(path.join(repo, "README.md"), "# Demo\n");
+
+    const firstApp = createApp({ repoPath: repo, homeDir: home });
+    const firstServer = firstApp.listen(0);
+    const firstAddress = firstServer.address();
+    if (!firstAddress || typeof firstAddress === "string") throw new Error("Expected TCP address.");
+    const start = await fetch(`http://127.0.0.1:${firstAddress.port}/api/session/start`, { method: "POST" });
+    const started = await start.json() as { id: string };
+    firstServer.close();
+
+    const secondApp = createApp({ repoPath: repo, homeDir: home });
+    const secondServer = secondApp.listen(0);
+    const secondAddress = secondServer.address();
+    if (!secondAddress || typeof secondAddress === "string") throw new Error("Expected TCP address.");
+    const current = await fetch(`http://127.0.0.1:${secondAddress.port}/api/session/current`);
+    const recovered = await current.json() as { id: string };
+    secondServer.close();
+
+    expect(recovered.id).toBe(started.id);
+  });
 });
