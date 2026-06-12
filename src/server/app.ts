@@ -5,6 +5,7 @@ import { getRuntimeDoctorReport } from "../core/doctor";
 import { ReviewGate } from "../core/review-gate";
 import { AlongRuntime } from "../core/runtime";
 import { TraceStore } from "../core/trace-store";
+import { heartbeatTriggers } from "../core/types";
 
 export interface AppOptions {
   repoPath: string;
@@ -141,6 +142,44 @@ export function createApp(options: AppOptions) {
     try {
       const parsed = z.object({ proposedChange: z.string().min(1) }).parse(req.body);
       res.json(await reviewGate.edit(req.params.id, parsed.proposedChange));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/conductor/snapshot", async (_req, res, next) => {
+    try {
+      res.json(await runtime.conductorSnapshot());
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/conductor/heartbeat", async (req, res, next) => {
+    try {
+      const parsed = z.object({ trigger: z.enum(heartbeatTriggers) }).parse(req.body);
+      res.json(await runtime.conductorHeartbeat(parsed.trigger));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/conductor/delegation-result", async (req, res, next) => {
+    try {
+      const parsed = z.object({
+        requestId: z.string().min(1),
+        threadId: z.string().min(1),
+        target: z.enum(["codex", "hermes", "local_subagent", "manual"]),
+        status: z.enum(["completed", "failed", "cancelled"]),
+        summary: z.string(),
+        evidence: z.array(z.string()),
+        risks: z.array(z.string()),
+        recommendations: z.array(z.string()),
+        confidence: z.enum(["low", "medium", "high"]),
+        rawOutput: z.string().optional(),
+        completedAt: z.string().datetime(),
+      }).parse(req.body);
+      res.json(await runtime.ingestDelegationResult(parsed));
     } catch (error) {
       next(error);
     }
