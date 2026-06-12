@@ -137,14 +137,14 @@ export class ConductorRuntime {
     };
 
     if (result.status !== "completed") {
-      await this.threads.recordDelegation(result.threadId, delegation);
+      await this.threads.recordDelegation(result.threadId, delegation, result.completedAt);
       return this.buildNoopTerminalMerge(thread, result);
     }
 
     return await this.threads.mergeDelegationResult(
       result.threadId,
       delegation,
-      (currentThread) => mergeDelegationResultIntoJudgment(currentThread, result),
+      (currentThread) => this.mergeCompletedResultIntoCurrentThread(currentThread, result),
     );
   }
 
@@ -198,7 +198,7 @@ export class ConductorRuntime {
         this.assertValidDelegationTransition(request, result);
         selected = request;
         return requests.map((item) => (
-          item.id === result.requestId
+          item.id === result.requestId && this.isPendingDelegationStatus(item.status)
             ? { ...item, status: result.status, completedAt: result.completedAt }
             : item
         ));
@@ -219,9 +219,24 @@ export class ConductorRuntime {
     if (request.target !== result.target) {
       throw new Error(`Delegation result target mismatch: request ${request.target} !== result ${result.target}.`);
     }
+    if (this.isPendingDelegationStatus(request.status)) return;
+    if (request.status === result.status && request.completedAt === result.completedAt) return;
     if (!this.isPendingDelegationStatus(request.status)) {
       throw new Error(`Delegation request already terminal: ${request.id}`);
     }
+  }
+
+  private mergeCompletedResultIntoCurrentThread(
+    thread: OpenThread,
+    result: ReadOnlyDelegationResult,
+  ): JudgmentMergeResult {
+    const merge = mergeDelegationResultIntoJudgment(thread, result);
+    const summary = result.summary.trim();
+    if (summary.length === 0 || !thread.currentJudgment.includes(summary)) return merge;
+    return {
+      ...merge,
+      nextJudgment: thread.currentJudgment,
+    };
   }
 
   private buildNoopTerminalMerge(thread: OpenThread, result: ReadOnlyDelegationResult): JudgmentMergeResult {

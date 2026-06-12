@@ -285,7 +285,133 @@ describe("ConductorRuntime", () => {
     expect(storedRequest.status).toBe(status);
   });
 
-  it("rejects delegation results for requests that already reached a terminal status", async () => {
+  it.each(["failed", "cancelled"] as const)(
+    "advances thread updatedAt to completedAt for %s delegation results",
+    async (status) => {
+      const repo = await makeRepo();
+      const threads = new OpenThreadStore(repo);
+      await threads.createSeedThread({
+        id: "thread-1",
+        title: "Runtime plan drift",
+        whyItMatters: "Runtime plan drift blocks conductor work.",
+        currentJudgment: "Runtime implementation may be incomplete.",
+      });
+      await threads.updateJudgment("thread-1", {
+        currentJudgment: "Runtime implementation may be incomplete.",
+        updatedAt: "2026-06-12T00:00:00.000Z",
+      });
+      await writeDelegationRequests(repo, [makePendingRequest("delegation-1")]);
+      const conductor = new ConductorRuntime({ repoPath: repo });
+
+      await conductor.ingestDelegationResult({
+        requestId: "delegation-1",
+        threadId: "thread-1",
+        target: "codex",
+        status,
+        summary: "Delegate could not complete.",
+        evidence: [],
+        risks: [],
+        recommendations: [],
+        confidence: "low",
+        completedAt: "2026-06-12T00:05:00.000Z",
+      });
+
+      const [thread] = await threads.readAll();
+      expect(thread.updatedAt).toBe("2026-06-12T00:05:00.000Z");
+      expect(thread.delegationHistory[0]).toMatchObject({
+        delegationId: "delegation-1",
+        createdAt: "2026-06-12T00:01:00.000Z",
+      });
+    },
+  );
+
+  it("retries a completed terminal request to converge missing thread state without duplicating judgment", async () => {
+    const repo = await makeRepo();
+    const threads = new OpenThreadStore(repo);
+    await threads.createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Runtime plan drift blocks conductor work.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    await writeDelegationRequests(repo, [{
+      ...makePendingRequest("delegation-1"),
+      status: "completed",
+      completedAt: "2026-06-12T00:05:00.000Z",
+    }]);
+    const conductor = new ConductorRuntime({ repoPath: repo });
+    const result = {
+      requestId: "delegation-1",
+      threadId: "thread-1",
+      target: "codex" as const,
+      status: "completed" as const,
+      summary: "Doctor API is missing.",
+      evidence: ["No doctor endpoint."],
+      risks: ["Runtime plan incomplete."],
+      recommendations: ["Finish Doctor."],
+      confidence: "high" as const,
+      completedAt: "2026-06-12T00:05:00.000Z",
+    };
+
+    await conductor.ingestDelegationResult(result);
+    await conductor.ingestDelegationResult(result);
+
+    const [thread] = await threads.readAll();
+    expect(thread.currentJudgment.match(/Doctor API is missing\./g)).toHaveLength(1);
+    expect(thread.evidence).toHaveLength(1);
+    expect(thread.delegationHistory).toHaveLength(1);
+    expect(thread.delegationHistory[0]).toMatchObject({
+      delegationId: "delegation-1",
+      status: "completed",
+      resultRef: "delegation:delegation-1:result",
+    });
+  });
+
+  it.each(["failed", "cancelled"] as const)(
+    "retries a %s terminal request without duplicating history",
+    async (status) => {
+      const repo = await makeRepo();
+      const threads = new OpenThreadStore(repo);
+      await threads.createSeedThread({
+        id: "thread-1",
+        title: "Runtime plan drift",
+        whyItMatters: "Runtime plan drift blocks conductor work.",
+        currentJudgment: "Runtime implementation may be incomplete.",
+      });
+      await writeDelegationRequests(repo, [{
+        ...makePendingRequest("delegation-1"),
+        status,
+        completedAt: "2026-06-12T00:05:00.000Z",
+      }]);
+      const conductor = new ConductorRuntime({ repoPath: repo });
+      const result = {
+        requestId: "delegation-1",
+        threadId: "thread-1",
+        target: "codex" as const,
+        status,
+        summary: "Delegate could not complete.",
+        evidence: [],
+        risks: [],
+        recommendations: [],
+        confidence: "low" as const,
+        completedAt: "2026-06-12T00:05:00.000Z",
+      };
+
+      await conductor.ingestDelegationResult(result);
+      await conductor.ingestDelegationResult(result);
+
+      const [thread] = await threads.readAll();
+      expect(thread.delegationHistory).toHaveLength(1);
+      expect(thread.delegationHistory[0]).toMatchObject({
+        delegationId: "delegation-1",
+        status,
+        resultRef: "delegation:delegation-1:result",
+      });
+      expect(thread.status).toBe(status === "failed" ? "needs_user" : "watching");
+    },
+  );
+
+  it("rejects conflicting results for requests that already reached a terminal status", async () => {
     const repo = await makeRepo();
     const threads = new OpenThreadStore(repo);
     await threads.createSeedThread({
@@ -316,7 +442,14 @@ describe("ConductorRuntime", () => {
     };
 
     await conductor.ingestDelegationResult(result);
-    await expect(conductor.ingestDelegationResult(result)).rejects.toThrow("already terminal");
+    await expect(conductor.ingestDelegationResult({
+      ...result,
+      status: "failed",
+    })).rejects.toThrow("already terminal");
+    await expect(conductor.ingestDelegationResult({
+      ...result,
+      completedAt: "2026-06-12T00:06:00.000Z",
+    })).rejects.toThrow("already terminal");
 
     const [thread] = await threads.readAll();
     expect(thread.evidence).toHaveLength(1);
@@ -374,4 +507,9 @@ function makePendingRequest(id: string): ReadOnlyDelegationRequest {
     status: "requested",
     createdAt: `2026-06-12T00:0${id.endsWith("1") ? "1" : "2"}:00.000Z`,
   };
+}
+
+async function writeDelegationRequests(repo: string, requests: ReadOnlyDelegationRequest[]): Promise<void> {
+  await fs.mkdir(path.dirname(getDelegationRequestsPath(repo)), { recursive: true });
+  await fs.writeFile(getDelegationRequestsPath(repo), `${JSON.stringify(requests, null, 2)}\n`);
 }

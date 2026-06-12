@@ -80,7 +80,11 @@ export class OpenThreadStore {
     return nextThread!;
   }
 
-  async recordDelegation(threadId: string, delegation: OpenThreadDelegationRef): Promise<OpenThread> {
+  async recordDelegation(
+    threadId: string,
+    delegation: OpenThreadDelegationRef,
+    updatedAt = delegation.createdAt,
+  ): Promise<OpenThread> {
     let nextThread: OpenThread | undefined;
     await this.updateThreads((threads) => {
       const thread = this.requireThreadFrom(threads, threadId);
@@ -89,7 +93,7 @@ export class OpenThreadStore {
         ...thread,
         status: this.statusForDelegation(delegation),
         delegationHistory: history,
-        updatedAt: maxIsoTimestamp(thread.updatedAt, delegation.createdAt),
+        updatedAt: maxIsoTimestamp(thread.updatedAt, updatedAt),
       };
       return this.upsertInto(threads, nextThread);
     });
