@@ -83,7 +83,13 @@ Formal spec:
 
 The living conductor spec is approved, including the 2026-06-12 Marvis-inspired product-expression addendum.
 
-Next step: write an implementation plan. The plan should decide whether to revise the existing Memory v2 and Autonomy plans or supersede them with a living-conductor plan.
+Implementation plan written:
+
+`docs/superpowers/plans/2026-06-12-living-conductor-foundation.md`
+
+The plan supersedes directly executing the older Memory v2 and Autonomy plans for the next implementation pass. It absorbs their useful pieces through Open Threads, attention scoring, Judgment Merge, and runtime-triggered heartbeats.
+
+Next step: execute the living conductor foundation plan in a separate implementation session, preferably with the subagent-driven workflow.
 
 Likely implementation order:
 
@@ -115,3 +121,4 @@ Likely implementation order:
 - 2026-06-11: User approved runtime-triggered heartbeat, deterministic attention scoring, LLM-assisted judgment, Judgment Merge, Permission Profile, Intervention Style Profile, and V1 MVP scope.
 - 2026-06-12: User approved the written living conductor spec.
 - 2026-06-12: Marvis reviewed as product-expression reference. Added privacy/delegation modes, Delegation Live View, Project Intelligence Library, and Conductor Packs as supporting surfaces while preserving self-initiation and companionship as the core.
+- 2026-06-12: Wrote the Living Conductor Foundation implementation plan for Open Threads, attention scoring, read-only delegation, Judgment Merge, runtime/API integration, and minimal project-intelligence UI.
