@@ -367,6 +367,63 @@ describe("ConductorRuntime", () => {
     });
   });
 
+  it("rejects digestless terminal replay when thread already recorded the result", async () => {
+    const repo = await makeRepo();
+    const threads = new OpenThreadStore(repo);
+    await threads.createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Runtime plan drift blocks conductor work.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    await writeDelegationRequests(repo, [{
+      ...makePendingRequest("delegation-1"),
+      status: "completed",
+      completedAt: "2026-06-12T00:05:00.000Z",
+    }]);
+    await threads.recordDelegation("thread-1", {
+      delegationId: "delegation-1",
+      target: "codex",
+      status: "completed",
+      createdAt: "2026-06-12T00:01:00.000Z",
+      resultRef: "delegation:delegation-1:result",
+    }, "2026-06-12T00:05:00.000Z");
+    await threads.appendEvidence("thread-1", {
+      id: "evidence:delegation-1:0",
+      at: "2026-06-12T00:05:00.000Z",
+      kind: "delegation_result",
+      sourceRef: "delegation:delegation-1",
+      summary: "No doctor endpoint.",
+      strength: "strong",
+    });
+    await threads.updateJudgment("thread-1", {
+      currentJudgment: "Runtime implementation may be incomplete. Delegation update: Doctor API is missing. Recommended next step: Finish Doctor.",
+      status: "needs_user",
+      updatedAt: "2026-06-12T00:05:00.000Z",
+    });
+    const conductor = new ConductorRuntime({ repoPath: repo });
+
+    await expect(conductor.ingestDelegationResult({
+      requestId: "delegation-1",
+      threadId: "thread-1",
+      target: "codex",
+      status: "completed",
+      summary: "Trace API is stale.",
+      evidence: ["Trace path still uses old state."],
+      risks: ["Runtime plan incomplete."],
+      recommendations: ["Refresh trace wiring."],
+      confidence: "high",
+      completedAt: "2026-06-12T00:05:00.000Z",
+    })).rejects.toThrow("terminal result payload mismatch");
+
+    const [thread] = await threads.readAll();
+    const [request] = await conductor.readDelegationRequests();
+    expect(thread.currentJudgment).toContain("Doctor API is missing.");
+    expect(thread.currentJudgment).not.toContain("Trace API is stale.");
+    expect(thread.evidence).toHaveLength(1);
+    expect(request.resultDigest).toBeUndefined();
+  });
+
   it.each(["failed", "cancelled"] as const)(
     "retries a %s terminal request without duplicating history",
     async (status) => {

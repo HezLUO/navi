@@ -127,7 +127,7 @@ export class ConductorRuntime {
 
   async ingestDelegationResult(result: ReadOnlyDelegationResult): Promise<JudgmentMergeResult> {
     const thread = this.requireThread(await this.threads.readAll(), result.threadId);
-    const request = await this.transitionDelegationRequest(result);
+    const request = await this.transitionDelegationRequest(result, thread);
     const delegation = {
       delegationId: result.requestId,
       target: result.target,
@@ -188,14 +188,17 @@ export class ConductorRuntime {
     };
   }
 
-  private async transitionDelegationRequest(result: ReadOnlyDelegationResult): Promise<ReadOnlyDelegationRequest> {
+  private async transitionDelegationRequest(
+    result: ReadOnlyDelegationResult,
+    thread: OpenThread,
+  ): Promise<ReadOnlyDelegationRequest> {
     let selected: ReadOnlyDelegationRequest | undefined;
     await this.writes.updateJsonStrict<ReadOnlyDelegationRequest[]>(
       getDelegationRequestsPath(this.options.repoPath),
       [],
       (requests) => {
         const request = requests.find((item) => item.id === result.requestId);
-        this.assertValidDelegationTransition(request, result);
+        this.assertValidDelegationTransition(request, result, thread);
         selected = request;
         const resultDigest = this.digestDelegationResult(result);
         return requests.map((item) => (
@@ -214,6 +217,7 @@ export class ConductorRuntime {
   private assertValidDelegationTransition(
     request: ReadOnlyDelegationRequest | undefined,
     result: ReadOnlyDelegationResult,
+    thread: OpenThread,
   ): asserts request is ReadOnlyDelegationRequest {
     if (!request) throw new Error(`Delegation request not found: ${result.requestId}`);
     if (request.threadId !== result.threadId) {
@@ -224,14 +228,9 @@ export class ConductorRuntime {
     }
     if (this.isPendingDelegationStatus(request.status)) return;
     const resultDigest = this.digestDelegationResult(result);
-    if (
-      request.status === result.status
-      && request.completedAt === result.completedAt
-      && (request.resultDigest === undefined || request.resultDigest === resultDigest)
-    ) {
-      return;
-    }
     if (request.status === result.status && request.completedAt === result.completedAt) {
+      if (request.resultDigest === resultDigest) return;
+      if (request.resultDigest === undefined && !this.hasRecordedTerminalResult(thread, result)) return;
       throw new Error(`Delegation terminal result payload mismatch: ${request.id}`);
     }
     if (!this.isPendingDelegationStatus(request.status)) {
@@ -249,6 +248,14 @@ export class ConductorRuntime {
       rawOutput: result.rawOutput ?? null,
     };
     return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+  }
+
+  private hasRecordedTerminalResult(thread: OpenThread, result: ReadOnlyDelegationResult): boolean {
+    const resultRef = `delegation:${result.requestId}:result`;
+    const sourceRef = `delegation:${result.requestId}`;
+    return thread.delegationHistory.some((item) => (
+      item.delegationId === result.requestId && item.resultRef === resultRef
+    )) || thread.evidence.some((item) => item.sourceRef === sourceRef);
   }
 
   private mergeCompletedResultIntoCurrentThread(
