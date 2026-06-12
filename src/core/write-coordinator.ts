@@ -13,6 +13,7 @@ interface RuntimeLockFile {
 
 interface RuntimeLockToken {
   active: boolean;
+  repoPath: string;
 }
 
 type StaleFileCandidate =
@@ -30,8 +31,7 @@ export class WriteCoordinator {
 
   private static readonly fileQueues = new Map<string, Promise<unknown>>();
   private static readonly runtimeQueues = new Map<string, Promise<unknown>>();
-
-  private readonly runtimeLockContext = new AsyncLocalStorage<RuntimeLockToken>();
+  private static readonly runtimeLockContext = new AsyncLocalStorage<RuntimeLockToken>();
 
   constructor(private readonly repoPath: string) {}
 
@@ -115,9 +115,9 @@ export class WriteCoordinator {
     }
 
     const stopHeartbeat = this.startLockHeartbeat(lockPath, lock.owner);
-    const token: RuntimeLockToken = { active: true };
+    const token: RuntimeLockToken = { active: true, repoPath: this.repoPath };
     try {
-      return await this.runtimeLockContext.run(token, () => fn({ operation, recoveredStaleLock }));
+      return await WriteCoordinator.runtimeLockContext.run(token, () => fn({ operation, recoveredStaleLock }));
     } finally {
       token.active = false;
       await stopHeartbeat();
@@ -156,7 +156,8 @@ export class WriteCoordinator {
   }
 
   private isInsideRuntimeLock(): boolean {
-    return this.runtimeLockContext.getStore()?.active === true;
+    const token = WriteCoordinator.runtimeLockContext.getStore();
+    return token?.active === true && token.repoPath === this.repoPath;
   }
 
   private async runWithRuntimeLockIfNeeded<T>(operation: string, fn: () => Promise<T>): Promise<T> {

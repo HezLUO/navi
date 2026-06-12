@@ -250,7 +250,13 @@ export class AlongRuntime {
     if (currentSession.state === "wrap_up") {
       throw new Error("Cannot run conductor heartbeat after session wrap-up.");
     }
-    return await this.conductor.runHeartbeat({ trigger, sessionId: currentSession.id });
+    return await this.withRuntimeLockContentionRetry(`runtime:conductor-heartbeat:${currentSession.id}`, async () => {
+      this.assertCanRunConductorHeartbeat(await this.lifecycle.currentLifecycleState());
+      if (currentSession.state === "wrap_up") {
+        throw new Error("Cannot run conductor heartbeat after session wrap-up.");
+      }
+      return await this.conductor.runHeartbeat({ trigger, sessionId: currentSession.id });
+    });
   }
 
   async ingestDelegationResult(result: ReadOnlyDelegationResult) {

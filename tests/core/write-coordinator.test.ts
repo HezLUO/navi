@@ -98,6 +98,19 @@ describe("WriteCoordinator", () => {
     expect(lines[0]).toMatchObject({ idempotencyKey: "same-key" });
   });
 
+  it("shares active runtime lock context across coordinators for the same repo", async () => {
+    const repo = await makeRepo();
+    const owner = new WriteCoordinator(repo);
+    const nested = new WriteCoordinator(repo);
+    const filePath = path.join(repo, ".along", "state.json");
+
+    await owner.withRuntimeLock("outer", async () => {
+      await nested.atomicWriteJson(filePath, { ok: true });
+    });
+
+    await expect(owner.readJson(filePath, { ok: false })).resolves.toEqual({ ok: true });
+  });
+
   it("uses unique temp paths for same-millisecond atomic writes", async () => {
     const repo = await makeRepo();
     const coordinator = new WriteCoordinator(repo);

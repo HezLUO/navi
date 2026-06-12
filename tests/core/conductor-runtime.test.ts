@@ -569,6 +569,50 @@ describe("ConductorRuntime", () => {
     expect(thread.currentJudgment).not.toContain("Trace API is stale.");
   });
 
+  it("does not duplicate fallback judgment text when replaying a blank-summary completed result", async () => {
+    const repo = await makeRepo();
+    const threads = new OpenThreadStore(repo);
+    await threads.createSeedThread({
+      id: "thread-1",
+      title: "Runtime plan drift",
+      whyItMatters: "Runtime plan drift blocks conductor work.",
+      currentJudgment: "Runtime implementation may be incomplete.",
+    });
+    const conductor = new ConductorRuntime({ repoPath: repo });
+    const request = await conductor.createReadOnlyDelegation({
+      threadId: "thread-1",
+      sessionId: "session-1",
+      reason: "Need review.",
+      question: "Check runtime progress.",
+      scope: ["src/core"],
+    });
+    const result = {
+      requestId: request.id,
+      threadId: "thread-1",
+      target: "codex" as const,
+      status: "completed" as const,
+      summary: "   ",
+      evidence: [],
+      risks: ["Runtime plan incomplete."],
+      recommendations: ["Finish Doctor."],
+      confidence: "high" as const,
+      completedAt: "2026-06-12T00:05:00.000Z",
+    };
+
+    await conductor.ingestDelegationResult(result);
+    await conductor.ingestDelegationResult(result);
+
+    const [thread] = await threads.readAll();
+    expect(thread.currentJudgment.match(/Delegation returned risk signal\./g)).toHaveLength(1);
+    expect(thread.evidence).toEqual([]);
+    expect(thread.delegationHistory).toHaveLength(1);
+    expect(thread.delegationHistory[0]).toMatchObject({
+      delegationId: request.id,
+      status: "completed",
+      resultRef: `delegation:${request.id}:result`,
+    });
+  });
+
   it("reuses an existing pending delegation instead of appending duplicates", async () => {
     const repo = await makeRepo();
     const threads = new OpenThreadStore(repo);

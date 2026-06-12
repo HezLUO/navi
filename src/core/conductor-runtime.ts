@@ -263,12 +263,30 @@ export class ConductorRuntime {
     result: ReadOnlyDelegationResult,
   ): JudgmentMergeResult {
     const merge = mergeDelegationResultIntoJudgment(thread, result);
+    if (this.hasRecordedTerminalHistory(thread, result)) {
+      return {
+        ...merge,
+        nextJudgment: thread.currentJudgment,
+        riskChanges: [],
+        evidenceAdded: [],
+        newThreadSuggestions: [],
+        shouldNotifyUser: false,
+        reason: `Delegation result already recorded: ${result.requestId}`,
+      };
+    }
     const summary = result.summary.trim();
     if (summary.length === 0 || !thread.currentJudgment.includes(summary)) return merge;
     return {
       ...merge,
       nextJudgment: thread.currentJudgment,
     };
+  }
+
+  private hasRecordedTerminalHistory(thread: OpenThread, result: ReadOnlyDelegationResult): boolean {
+    const resultRef = `delegation:${result.requestId}:result`;
+    return thread.delegationHistory.some((item) => (
+      item.delegationId === result.requestId && item.resultRef === resultRef
+    ));
   }
 
   private buildNoopTerminalMerge(thread: OpenThread, result: ReadOnlyDelegationResult): JudgmentMergeResult {
