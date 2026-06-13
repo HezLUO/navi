@@ -39,14 +39,14 @@ export function SharedDesk({ session, model, onRunHeartbeat, onThreadAction }: S
     ? session.context.recentCommits.slice(0, 3)
     : waitingCommitFallback;
   const repoName = session?.context.repoName || "Waiting for local session";
-  const learningGoal = session?.plan.learningGoal || "Learning goal will appear once Along settles in.";
-  const currentActivity = session?.plan.currentActivity || "Waiting for Along's next quiet read.";
-  const sideHeadline = model.mode === "active" ? "Along is watching the current thread." : "Along is staying quiet.";
+  const learningGoal = session?.plan.learningGoal || "Arriving at the desk...";
+  const currentActivity = session?.plan.currentActivity || "Loading project memory.";
+  const sideHeadline = model.mode === "active" ? "I am holding this with you." : "I am here quietly.";
 
   return (
     <section className="desk-shell" aria-label="Shared Desk">
       <div className="desk-context-grid">
-        <article className="desk-panel your-side">
+        <article className="desk-context-panel">
           <GitBranch size={20} aria-hidden="true" />
           <p className="desk-label">Your side</p>
           <h2>{repoName}</h2>
@@ -65,7 +65,7 @@ export function SharedDesk({ session, model, onRunHeartbeat, onThreadAction }: S
           ) : null}
         </article>
 
-        <article className="desk-panel along-side">
+        <article className="desk-context-panel desk-along-side">
           <Brain size={20} aria-hidden="true" />
           <p className="desk-label">Along's side</p>
           <h2>{sideHeadline}</h2>
@@ -85,10 +85,12 @@ export function SharedDesk({ session, model, onRunHeartbeat, onThreadAction }: S
           <p className="desk-label">Quiet state</p>
           <h2>No thread needs to interrupt you right now.</h2>
           <p>{model.quietMessage}</p>
-          <button type="button" onClick={onRunHeartbeat}>
-            <Search size={16} aria-hidden="true" />
-            Check gently
-          </button>
+          <div className="desk-actions">
+            <button type="button" onClick={onRunHeartbeat}>
+              <Search size={16} aria-hidden="true" />
+              Check gently
+            </button>
+          </div>
         </article>
       )}
 
@@ -96,7 +98,7 @@ export function SharedDesk({ session, model, onRunHeartbeat, onThreadAction }: S
         <section className="watch-thread-grid" aria-label="Watch Threads">
           {model.watchThreads.map((thread) => (
             <article className="watch-thread-card" key={thread.id}>
-              <div className="thread-card-heading">
+              <div className="row-title">
                 <h3>{thread.title}</h3>
                 <span className="row-status">{stateLabel(thread.status)}</span>
               </div>
@@ -125,16 +127,16 @@ function MainThreadCard({
     <article className="main-thread-card">
       <p className="desk-label">Along's judgment</p>
       <h2>{thread.title}</h2>
-      <p>{thread.currentJudgment}</p>
+      <p className="judgment-copy">{thread.currentJudgment}</p>
 
       <div className="why-now">
-        <p className="desk-label">Why now</p>
+        <strong>Why now</strong>
         <p>{thread.selectionReason}</p>
       </div>
 
       {thread.delegation ? <DelegationSuggestion thread={thread} /> : null}
 
-      <div className="thread-controls">
+      <div className="desk-actions">
         <button type="button" onClick={() => onThreadAction({ type: "ask_why", threadId: thread.id })}>
           <MessageCircle size={16} aria-hidden="true" />
           Ask why
@@ -175,7 +177,7 @@ function DelegationSuggestion({ thread }: { thread: SharedDeskThread }) {
         </div>
         <div>
           <dt>Scope</dt>
-          <dd>{delegation.scope.join(" ")}</dd>
+          <dd>{delegation.scope.join(", ")}</dd>
         </div>
       </dl>
       {delegation.forbiddenActions?.length ? (
