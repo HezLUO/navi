@@ -1,5 +1,7 @@
-import { BookOpen, Brain, CheckCircle2, Coffee, GitBranch, MessageCircle, Music2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BookOpen, CheckCircle2, Coffee, MessageCircle, Music2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { SharedDesk, type SharedDeskThreadAction } from "./SharedDesk";
+import { buildSharedDeskModel, type ConductorSnapshotInput, type SharedDeskOverrides } from "./shared-desk-model";
 import { createSoundscape } from "./soundscape";
 
 interface SessionResponse {
@@ -19,43 +21,6 @@ interface SessionResponse {
     learningGoal: string;
     currentActivity: string;
     shareLine?: string;
-  };
-}
-
-interface OpenThreadResponse {
-  id: string;
-  title: string;
-  status: string;
-  whyItMatters: string;
-  currentJudgment: string;
-  risks: Array<{ id: string; summary: string; severity: string }>;
-  evidence: Array<{ id: string; summary: string; strength: string }>;
-}
-
-interface AttentionResponse {
-  threadId: string;
-  action: string;
-  score: number;
-  reasons: string[];
-}
-
-interface DelegationResponse {
-  id: string;
-  threadId: string;
-  target: string;
-  status: string;
-  reason: string;
-  scope: string[];
-}
-
-interface ConductorSnapshotResponse {
-  threads: OpenThreadResponse[];
-  attention: AttentionResponse[];
-  delegations: DelegationResponse[];
-  preferences: {
-    delegationModeLabel: string;
-    projectWritePermission: boolean;
-    [key: string]: unknown;
   };
 }
 
@@ -88,16 +53,20 @@ function stateLabel(state: string): string {
 
 export function App() {
   const [session, setSession] = useState<SessionResponse | null>(null);
-  const [conductor, setConductor] = useState<ConductorSnapshotResponse | null>(null);
+  const [conductor, setConductor] = useState<ConductorSnapshotInput | null>(null);
   const [wrapNote, setWrapNote] = useState("I stayed with one small thread today.");
   const [wrapFeedback, setWrapFeedback] = useState<WrapUpResponse | null>(null);
+  const [threadOverrides, setThreadOverrides] = useState<SharedDeskOverrides>({
+    hiddenThreadIds: [],
+    notNowThreadIds: [],
+  });
   const [soundOn, setSoundOn] = useState(false);
   const [soundscape] = useState(() => createSoundscape());
 
   useEffect(() => {
     let cancelled = false;
     const loadConductorSnapshot = () => {
-      readJson<ConductorSnapshotResponse>(`${apiBase}/api/conductor/snapshot`)
+      readJson<ConductorSnapshotInput>(`${apiBase}/api/conductor/snapshot`)
         .then((nextConductor) => {
           if (!cancelled) setConductor(nextConductor);
         })
@@ -131,7 +100,7 @@ export function App() {
 
   async function runConductorHeartbeat() {
     try {
-      const nextConductor = await readJson<ConductorSnapshotResponse>(`${apiBase}/api/conductor/heartbeat`, {
+      const nextConductor = await readJson<ConductorSnapshotInput>(`${apiBase}/api/conductor/heartbeat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trigger: "user_event" }),
@@ -152,6 +121,41 @@ export function App() {
     setSession((current) => current ? { ...current, state: result.state, plan: { ...current.plan, state: result.state } } : current);
   }
 
+  function handleThreadAction(action: SharedDeskThreadAction) {
+    setThreadOverrides((current) => {
+      if (action.type === "not_now") {
+        return {
+          ...current,
+          forcedMainThreadId: current.forcedMainThreadId === action.threadId ? undefined : current.forcedMainThreadId,
+          notNowThreadIds: unique([...current.notNowThreadIds, action.threadId]),
+        };
+      }
+
+      if (action.type === "hide") {
+        return {
+          ...current,
+          forcedMainThreadId: current.forcedMainThreadId === action.threadId ? undefined : current.forcedMainThreadId,
+          hiddenThreadIds: unique([...current.hiddenThreadIds, action.threadId]),
+        };
+      }
+
+      if (action.type === "make_main") {
+        return {
+          ...current,
+          forcedMainThreadId: action.threadId,
+          hiddenThreadIds: current.hiddenThreadIds.filter((id) => id !== action.threadId),
+          notNowThreadIds: current.notNowThreadIds.filter((id) => id !== action.threadId),
+        };
+      }
+
+      return current;
+    });
+  }
+
+  function unique(values: string[]): string[] {
+    return Array.from(new Set(values));
+  }
+
   async function toggleSound() {
     if (soundOn) {
       soundscape.stop();
@@ -165,6 +169,10 @@ export function App() {
   const activeStateIndex = Math.max(0, presenceStates.indexOf(session?.state ?? "arriving"));
   const openThreads = (conductor?.threads ?? []).slice(0, 5);
   const delegations = (conductor?.delegations ?? []).slice(0, 5);
+  const sharedDesk = useMemo(() => buildSharedDeskModel({
+    conductor,
+    overrides: threadOverrides,
+  }), [conductor, threadOverrides]);
 
   return (
     <main className="shell">
@@ -183,41 +191,17 @@ export function App() {
         </button>
       </section>
 
-      <section className="grid">
-        <article className="panel">
-          <GitBranch size={20} />
-          <h2>Your side</h2>
-          <p className="muted">{session?.context.repoName ?? "Waiting for local session"}</p>
-          <pre>{session?.context.gitStatus || "No git changes detected."}</pre>
-          <div className="activity-list">
-            {(session?.context.recentCommits ?? ["Recent activity will appear after Along reads the repo."]).slice(0, 3).map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-          <div className="context-list" aria-label="Project context">
-            {(session?.context.directorySummary ?? []).slice(0, 6).map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-        </article>
+      <SharedDesk
+        session={session}
+        model={sharedDesk}
+        onRunHeartbeat={runConductorHeartbeat}
+        onThreadAction={handleThreadAction}
+      />
 
-        <article className="panel companion">
-          <Brain size={20} />
-          <h2>Along's side</h2>
-          <p className="state-pill">{stateLabel(session?.state ?? "arriving")}</p>
-          <p>{session?.plan.learningGoal ?? "Arriving at the desk..."}</p>
-          <p className="muted">{session?.plan.currentActivity ?? "Loading project memory."}</p>
-        </article>
-
-        <article className="panel project-intelligence">
-          <div className="panel-heading">
-            <Brain size={20} />
-            <div>
-              <h2>Project intelligence</h2>
-              <p className="muted">Open Threads Along is watching from the conductor layer.</p>
-            </div>
-          </div>
-          <button onClick={runConductorHeartbeat}>Check threads</button>
+      <section className="secondary-grid" aria-label="Advanced project intelligence">
+        <details className="panel secondary-surface">
+          <summary>Project intelligence</summary>
+          <p className="muted">Top Open Threads Along is watching from the conductor layer.</p>
           <div className="thread-list" aria-label="Open Threads">
             {openThreads.length > 0 ? openThreads.map((thread) => (
               <div className="thread-row" key={thread.id}>
@@ -232,16 +216,11 @@ export function App() {
               <p className="empty-state">No Open Threads yet.</p>
             )}
           </div>
-        </article>
+        </details>
 
-        <article className="panel delegation-live">
-          <div className="panel-heading">
-            <MessageCircle size={20} />
-            <div>
-              <h2>Delegation live view</h2>
-              <p className="muted">Read-only requests, kept visible without granting write control.</p>
-            </div>
-          </div>
+        <details className="panel secondary-surface">
+          <summary>Delegation live view</summary>
+          <p className="muted">Read-only requests, kept visible without granting write control.</p>
           <div className="delegation-list" aria-label="Read-only delegations">
             {delegations.length > 0 ? delegations.map((delegation) => (
               <div className="delegation-row" key={delegation.id}>
@@ -256,8 +235,10 @@ export function App() {
               <p className="empty-state">No read-only delegations requested.</p>
             )}
           </div>
-        </article>
+        </details>
+      </section>
 
+      <section className="grid">
         <article className="panel wide">
           <BookOpen size={20} />
           <h2>Shared timeline</h2>

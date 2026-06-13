@@ -150,10 +150,12 @@ h1 {
   color: #1f2933;
   font-size: 14px;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .row-status {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   border: 1px solid #e1ddd2;
   border-radius: 999px;
   background: #f4efe6;
@@ -161,6 +163,7 @@ h1 {
   padding: 3px 7px;
   font-size: 12px;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .thread-row p,
@@ -216,11 +219,13 @@ h1 {
 .state-pill {
   display: inline-flex;
   width: fit-content;
+  max-width: 100%;
   border-radius: 999px;
   background: #e4f0ed;
   color: #244748;
   padding: 5px 9px;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .timeline {
@@ -278,18 +283,213 @@ h1 {
   color: #52616b;
 }
 
+.desk-shell {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.desk-context-grid,
+.secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.secondary-grid {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+}
+
+.desk-context-panel,
+.main-thread-card,
+.watch-thread-card,
+.secondary-surface {
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid #e1ddd2;
+  border-radius: 8px;
+  padding: 18px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.secondary-surface {
+  min-height: auto;
+}
+
+.desk-context-panel h2,
+.main-thread-card h2 {
+  margin: 6px 0 10px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.desk-context-panel p,
+.main-thread-card p {
+  line-height: 1.5;
+}
+
+.desk-context-panel pre,
+.desk-git-status {
+  white-space: pre-wrap;
+  color: #52616b;
+  overflow-wrap: anywhere;
+}
+
+.desk-along-side {
+  border-color: #d9b99c;
+}
+
+.desk-label {
+  margin: 8px 0 0;
+  color: #7c3f2c;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.main-thread-card {
+  border-color: #b8cec8;
+  background: #fbfcf9;
+}
+
+.main-thread-card.quiet-state {
+  border-color: #e1ddd2;
+  background: #fbf8f1;
+}
+
+.judgment-copy {
+  max-width: 760px;
+  min-width: 0;
+  color: #1f2933;
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.why-now {
+  min-width: 0;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #eef6f3;
+  color: #244748;
+  overflow-wrap: anywhere;
+}
+
+.why-now p {
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+.desk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.desk-actions button,
+.watch-thread-card button {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #c9b8a5;
+  background: #fffaf1;
+  color: #1f2933;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.desk-actions button svg,
+.watch-thread-card button svg {
+  flex: 0 0 auto;
+}
+
+.watch-thread-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.watch-thread-card p {
+  color: #52616b;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.watch-thread-card button {
+  margin-top: 10px;
+}
+
+.delegation-suggestion {
+  min-width: 0;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #e1ddd2;
+  border-radius: 8px;
+  background: #fffaf1;
+  overflow-wrap: anywhere;
+}
+
+.delegation-suggestion p {
+  margin: 8px 0 0;
+}
+
+.delegation-suggestion dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.delegation-suggestion dt {
+  color: #687782;
+  font-size: 12px;
+}
+
+.delegation-suggestion dd {
+  min-width: 0;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.delegation-suggestion .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.secondary-surface summary {
+  cursor: pointer;
+  color: #1f2933;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .shell {
     padding: 20px;
   }
 
   .shared-desk,
-  .grid {
+  .grid,
+  .desk-context-grid,
+  .secondary-grid,
+  .watch-thread-grid {
     display: block;
   }
 
   .panel,
-  .sound-button {
+  .sound-button,
+  .desk-context-panel,
+  .main-thread-card,
+  .watch-thread-card,
+  .secondary-surface {
     margin-bottom: 16px;
   }
 
@@ -299,5 +499,19 @@ h1 {
 
   .timeline {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .delegation-suggestion dl {
+    grid-template-columns: 1fr;
+  }
+
+  .desk-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .desk-actions button,
+  .watch-thread-card button {
+    justify-content: center;
   }
 }
