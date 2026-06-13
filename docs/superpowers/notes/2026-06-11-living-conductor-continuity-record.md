@@ -17,7 +17,7 @@ Use this file in future sessions before continuing product design, implementatio
 
 Living Conductor Foundation is merged locally into `main`, verified, and product-calibrated against Along itself. The current goal is Product Expression Tightening before any new capability expansion.
 
-Default next step: user review of the Product Expression Tightening spec. Do not start Memory v2, Hermes adapter, Conductor Packs, write delegation, or implementation planning until that spec is approved.
+Default next step: choose execution approach for the Product Expression Tightening implementation plan. Do not start Memory v2, Hermes adapter, Conductor Packs, or write delegation while executing this plan.
 
 ## Core Product Definition
 
@@ -295,9 +295,9 @@ Spec:
 
 Status:
 
-- written from approved design conversation;
-- pending user review;
-- not yet implementation-planned.
+- spec approved by user on 2026-06-13;
+- implementation plan written;
+- not yet implemented.
 
 Approved direction:
 
@@ -318,6 +318,18 @@ Deferred but interesting future directions:
 - LLM-assisted attention judgment;
 - configurable voice;
 - configurable attention density.
+
+Implementation plan:
+
+`docs/superpowers/plans/2026-06-13-product-expression-tightening.md`
+
+Plan summary:
+
+- add a pure `shared-desk-model` for Main Thread, Watch Threads, Quiet State, overrides, and delegation attachment;
+- add a presentational `SharedDesk` component;
+- wire `App.tsx` to use Shared Desk first and demote Project Intelligence / Delegation Live View to secondary surfaces;
+- add Shared Desk responsive styling;
+- verify with focused view-model tests, typecheck, build, runtime smoke, and desktop/mobile browser checks.
 
 ## Pending Decisions
 
@@ -354,3 +366,4 @@ Deferred but interesting future directions:
 - 2026-06-12: Merged `runtime-control-plane-implementation` into `main` locally at `445b1b3`, then reran typecheck, build, and full test suite on merged `main`; all passed.
 - 2026-06-12: First Along-self product calibration completed; recommendation is Product Expression Tightening before capability expansion.
 - 2026-06-12: Drafted Product Expression Tightening spec around Shared Desk First; pending user review before implementation planning.
+- 2026-06-13: User approved the Product Expression Tightening spec; wrote implementation plan for Shared Desk First.
