@@ -50,7 +50,9 @@ export function SharedDesk({ session, model, onRunHeartbeat, onThreadAction }: S
           <GitBranch size={20} aria-hidden="true" />
           <p className="desk-label">Your side</p>
           <h2>{repoName}</h2>
-          <pre>{session?.context.gitStatus || "No git changes detected."}</pre>
+          <pre className="desk-git-status" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {session?.context.gitStatus || "No git changes detected."}
+          </pre>
           <div className="activity-list">
             {recentCommits.map((item) => (
               <span key={item}>{item}</span>
@@ -99,7 +101,7 @@ export function SharedDesk({ session, model, onRunHeartbeat, onThreadAction }: S
           {model.watchThreads.map((thread) => (
             <article className="watch-thread-card" key={thread.id}>
               <div className="row-title">
-                <h3>{thread.title}</h3>
+                <strong>{thread.title}</strong>
                 <span className="row-status">{stateLabel(thread.status)}</span>
               </div>
               <p>{thread.selectionReason}</p>
