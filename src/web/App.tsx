@@ -201,7 +201,7 @@ export function App() {
       <section className="secondary-grid" aria-label="Advanced project intelligence">
         <details className="panel secondary-surface">
           <summary>Project intelligence</summary>
-          <p className="muted">All Open Threads Along is watching from the conductor layer.</p>
+          <p className="muted">Top Open Threads Along is watching from the conductor layer.</p>
           <div className="thread-list" aria-label="Open Threads">
             {openThreads.length > 0 ? openThreads.map((thread) => (
               <div className="thread-row" key={thread.id}>
