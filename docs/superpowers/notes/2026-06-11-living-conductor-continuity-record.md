@@ -2,7 +2,7 @@
 
 Date: 2026-06-11
 Status: Active cross-session record
-Last updated: 2026-06-13
+Last updated: 2026-06-15
 Project folder: `/Users/james/Codex Project/General Codex Project/Along`
 
 ## Purpose
@@ -17,7 +17,7 @@ Use this file in future sessions before continuing product design, implementatio
 
 Living Conductor Foundation and Product Expression Tightening are both merged locally into `main`, verified, and calibrated against Along itself. The current goal is to continue product-feel calibration around living presence and explanation before any new capability expansion.
 
-Default next step: design a focused Living Presence and Explanation Pass. Do not start Memory v2, Hermes adapter, Conductor Packs, or write delegation before deciding this pass.
+Default next step: continue the Living Presence and Explanation brainstorming record, then draft a focused Living Presence and Explanation Pass spec after the remaining conceptual questions are resolved. Do not start Memory v2, Hermes adapter, Conductor Packs, or write delegation before deciding this pass.
 
 ## Core Product Definition
 
@@ -385,12 +385,46 @@ Recommended next design topic:
 
 Living Presence and Explanation Pass.
 
+## Living Presence Brainstorming Record
+
+Active brainstorming continuity record:
+
+`docs/superpowers/notes/2026-06-15-living-presence-brainstorm-continuity.md`
+
+Current status:
+
+- not an approved spec;
+- no implementation plan yet;
+- continue asking one clarifying question at a time using `superpowers:brainstorming`;
+- user explicitly requested that current goals, constraints, conclusions, open questions, and next steps be kept in a document and updated across future rounds.
+
+Important current conclusions:
+
+- Direction is **Conversational Working Thread**, not generic chat-first agent and not static dashboard.
+- User-initiated input should create a temporary Working Thread, not immediately long-term memory.
+- Along should first build shared understanding when a Working Thread starts.
+- Along remains one persistent identity; threads are attention contexts, not sub-personalities.
+- Delegated Codex/Hermes/subagents are tools or collaborators, not Along sub-selves.
+- Default personality for the next pass is **Co-creator Companion**.
+- Relationship Modes and emotional simulation are valid future directions, but not part of this pass.
+- Presence levels should not be implemented yet; design default Balanced presence first.
+- Along's proactive attention should default to a **presence signal**, not direct chat pollution.
+- User accepted the presence signal hierarchy: quiet holding -> noticed -> judgment -> needs confirmation.
+- Outer presence should be a **Tiny Presence Capsule**: minimal like a presence line, actionable when Along has noticed something, never a thread list or inbox.
+- Remaining immediate question: how Tiny Presence Capsule expands into popover, Working Thread, or future side panel.
+
 ## Pending Decisions
 
 - how to migrate or reinterpret Curiosity Queue beyond this foundation;
 - Hermes adapter execution method;
 - thresholds for digest and intervention beyond deterministic V1 defaults;
 - how to express self-initiation as ambient presence rather than a manual dashboard action;
+- exact Tiny Presence Capsule expansion behavior;
+- minimum Working Thread UI needed to avoid generic chat while preserving agent-like interaction;
+- user-initiated Working Thread entry point;
+- "cute but not desk pet" visual and behavioral boundaries for presence;
+- explanation shape for why Along noticed something;
+- escalation threshold from presence signal to confirmation challenge;
 - how resumed-session freshness and snapshot age should be exposed to users;
 - how `Ask why` should explain attention, evidence, delegation, and silence choices;
 - whether the main curiosity should be derived from the selected Open Thread when one exists;
@@ -427,3 +461,4 @@ Living Presence and Explanation Pass.
 - 2026-06-13: Focused execution session completed Product Expression Tightening at `dfdf3a5`; main session independently reviewed, verified, and browser-calibrated the branch.
 - 2026-06-13: Merged `product-expression-tightening` into `main` locally at `a829be6`; post-merge targeted test, typecheck, build, and full test suite passed.
 - 2026-06-13: Completed post-merge product calibration; Shared Desk should stay merged, and next recommended design topic is Living Presence and Explanation Pass.
+- 2026-06-15: Started Living Presence brainstorming continuity record. Current direction is Conversational Working Thread with Tiny Presence Capsule, default Balanced presence, Co-creator Companion personality, and Relationship Modes deferred as future direction.
