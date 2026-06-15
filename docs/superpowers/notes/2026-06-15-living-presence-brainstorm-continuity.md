@@ -290,6 +290,22 @@ Hold it quietly
 
 Earlier candidate wording such as `Ask why`, `Open thread`, and `Not now` felt too dead, fake, and tool-like. The underlying intents remain useful, but the final interaction copy should feel like a co-creator response, not a dashboard toolbar.
 
+Accepted `Hold it quietly` semantics:
+
+- default behavior is lower presence priority, not dismiss/delete/close;
+- Along keeps the thread alive and quietly held;
+- the thread should resurface only when the user re-enters it or Along has a meaningfully new judgment;
+- if finer control is needed, offer a secondary `Adjust quietness` control;
+- `Adjust quietness` can later expose options such as today, this week, until user reopens, or until Along has a meaningful new judgment;
+- do not show duration choices every time, because that would feel like reminder software and add friction.
+
+Suggested interaction:
+
+```text
+Hold it quietly
+-> I will keep it quiet for now. Adjust
+```
+
 Working Thread is the deeper layer. Full reasoning, evidence, conversation, delegation suggestions, and wrap-up belong there, not in the outer popover.
 
 Side panel remains a possible future desktop enhancement, not the default. Scroll-to-section is not preferred as the default.
@@ -369,7 +385,8 @@ Continue from these questions, one at a time:
 
 1. How exactly should Tiny Presence Capsule expand?
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
-   - Still needs concrete design for the peek content, action wording, and transition into Working Thread.
+   - `Hold it quietly` semantics are broadly accepted.
+   - Still needs concrete design for peek content, final action wording, and transition into Working Thread.
 
 2. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat?
 
@@ -404,7 +421,7 @@ The next immediate discussion should continue clarifying **Tiny Presence Capsule
 - what the Presence Peek should contain;
 - exact co-creator action wording;
 - how `Stay with this` transitions into Working Thread;
-- how `Hold it quietly` affects future visibility;
+- how `Adjust quietness` should work later, without making the default flow feel like reminders;
 - how this differs from chat messages and automation reminders.
 
 After the user approves the conceptual design, draft a formal spec:
