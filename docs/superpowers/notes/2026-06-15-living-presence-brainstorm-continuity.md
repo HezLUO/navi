@@ -324,6 +324,35 @@ Accepted minimum Thread Brief contents:
 
 The brief should not become a report or mini-dashboard. It is a compact transition from presence into conversation.
 
+Accepted Thread Brief expression rules:
+
+- keep the four required elements structurally, but do not render them as a rigid table or grid of cards;
+- do not default-show evidence in the brief;
+- let one concise co-creator framing carry the four elements naturally;
+- make the brief read like Along orienting the user, not like a system report;
+- evidence, trace, detailed reasoning, delegation history, and broader controls belong inside the Working Thread after the brief.
+
+Preferred feel:
+
+```text
+Along still feels more static than alive.
+
+I think the next issue is presence and explanation, not Hermes adapter.
+This matters now because your calibration stayed low after Product Expression merged.
+For this pass, I would keep this in product design and avoid implementation until we agree on the feeling.
+```
+
+Avoid:
+
+```text
+Title:
+Judgment:
+Why now:
+Boundary:
+Evidence:
+Actions:
+```
+
 Preferred flow:
 
 ```text
@@ -422,6 +451,7 @@ Continue from these questions, one at a time:
    - `Hold it quietly` semantics are broadly accepted.
    - `Stay with this` semantics are broadly accepted: open a concise Thread Brief before conversation.
    - Thread Brief minimum contents are broadly accepted: title, current judgment, why now, boundary/next move.
+   - Thread Brief expression is broadly accepted: short co-creator briefing, not dashboard/table/report.
    - Still needs concrete design for peek content and final action wording.
 
 2. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat?
@@ -456,7 +486,7 @@ The next immediate discussion should continue clarifying **Tiny Presence Capsule
 
 - what the Presence Peek should contain;
 - exact co-creator action wording;
-- how the short Thread Brief avoids report/dashboard feeling;
+- concrete Working Thread conversation entry after the short briefing;
 - how `Adjust quietness` should work later, without making the default flow feel like reminders;
 - how this differs from chat messages and automation reminders.
 
