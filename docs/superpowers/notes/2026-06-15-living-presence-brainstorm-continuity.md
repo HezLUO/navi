@@ -268,13 +268,33 @@ Needs confirmation:
 Current recommended behavior:
 
 ```text
-Light state / observation -> small popover
-Clear judgment / conversation needed -> open Working Thread
-Complex desktop explanation -> side panel as future direction
-Scroll-to-section -> not default
+Tiny Presence Capsule
+-> Presence Peek
+-> Working Thread
 ```
 
-User accepts this direction in broad strokes but does not fully understand the options yet. Continue discussing before freezing it.
+This is the simplified **two-step progressive attention** model.
+
+Presence Peek should be small and low-friction:
+
+- one sentence about what Along noticed;
+- one sentence of lightweight reasoning;
+- at most two co-creator actions.
+
+Preferred action language should avoid stiff tool-button wording. User preferred a co-creator tone:
+
+```text
+Stay with this
+Hold it quietly
+```
+
+Earlier candidate wording such as `Ask why`, `Open thread`, and `Not now` felt too dead, fake, and tool-like. The underlying intents remain useful, but the final interaction copy should feel like a co-creator response, not a dashboard toolbar.
+
+Working Thread is the deeper layer. Full reasoning, evidence, conversation, delegation suggestions, and wrap-up belong there, not in the outer popover.
+
+Side panel remains a possible future desktop enhancement, not the default. Scroll-to-section is not preferred as the default.
+
+User broadly accepts this simplification, while noting that concrete interaction design will need further optimization.
 
 ## Co-Creator Companion Personality
 
@@ -348,9 +368,8 @@ Current pass should implement or design only default Balanced behavior:
 Continue from these questions, one at a time:
 
 1. How exactly should Tiny Presence Capsule expand?
-   - popover first, then Working Thread?
-   - direct Working Thread for judgment?
-   - side panel only as future direction?
+   - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
+   - Still needs concrete design for the peek content, action wording, and transition into Working Thread.
 
 2. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat?
 
@@ -367,9 +386,8 @@ Continue from these questions, one at a time:
    - warmth without decorative mascot?
 
 5. How should Along explain why it noticed something?
-   - short explanation in popover?
-   - thread note?
-   - expandable trace?
+   - Current broad direction: one lightweight reasoning sentence in Presence Peek; full reasoning/evidence in Working Thread.
+   - Still needs concrete design for how much evidence appears by default inside the Working Thread.
 
 6. When should a presence signal escalate to confirmation challenge?
 
@@ -381,12 +399,12 @@ Continue from these questions, one at a time:
 
 Continue brainstorming before writing a formal spec.
 
-The next immediate discussion should clarify **Tiny Presence Capsule expansion semantics**:
+The next immediate discussion should continue clarifying **Tiny Presence Capsule -> Presence Peek -> Working Thread**:
 
-- when it opens a popover;
-- when it opens a Working Thread;
-- what information appears in the popover;
-- how the user can ignore, pause, ask why, or continue;
+- what the Presence Peek should contain;
+- exact co-creator action wording;
+- how `Stay with this` transitions into Working Thread;
+- how `Hold it quietly` affects future visibility;
 - how this differs from chat messages and automation reminders.
 
 After the user approves the conceptual design, draft a formal spec:
