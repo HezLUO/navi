@@ -499,6 +499,8 @@ Current working answer:
 
 > Along should not be framed as "another coding agent" first. It should be framed as a self-initiation and companionship layer that can sit around existing agents.
 
+User accepted this direction on 2026-06-17.
+
 Provisional architecture vocabulary:
 
 ```text
@@ -536,7 +538,7 @@ Risk of a separate surface:
 - The product could split identity between "agent I work with" and "Along dashboard beside it."
 - This risk is especially high if the surface becomes a dashboard, inbox, reminder panel, or task manager.
 
-Revised product principle:
+Accepted product principle:
 
 > Local/desktop presence should be treated as an optional expression and validation harness, not as the essence of Along.
 
