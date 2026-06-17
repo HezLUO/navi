@@ -836,13 +836,60 @@ Avoid:
 - asking "do you want me to restore this?" every time, because that adds friction and weakens initiative;
 - presenting multiple threads like an inbox.
 
+Accepted drift challenge threshold:
+
+Use **impact-based drift challenge**.
+
+Codex should not challenge every direction change. It should challenge only when the user's new direction appears likely to affect:
+
+- the current Working Thread goal;
+- an accepted boundary;
+- a previously accepted product judgment;
+- the project/product core intention;
+- the current phase, such as moving from design into implementation before approval;
+- a deferred direction that was intentionally parked.
+
+Judgment mechanism:
+
+- V1 may use the LLM to judge drift impact, but not as an unconstrained subjective guess.
+- The LLM should compare the user's new request against the Working Thread record, especially `Current judgment`, `Boundary`, `Drift triggers`, `Next likely move`, and `Open questions`.
+- The skill should treat the Working Thread record as the source of truth for what counts as meaningful drift.
+- The LLM should produce a lightweight classification: `none`, `low`, `medium`, or `high`.
+- Only `high` drift should trigger a confirmation challenge by default.
+- `medium` drift may produce a soft note if useful, but should not block the user's request.
+- `low` or `none` should stay silent.
+
+High-impact drift examples:
+
+- moving into implementation while the active boundary says design/spec only;
+- reviving a deferred direction such as full Core/MCP, plugin packaging, local/desktop presence, or Hermes adapter before the current V1 behavior is validated;
+- shifting back toward building a new general agent after accepting the existing-agent layer direction;
+- bypassing user review/approval gates that the Working Thread explicitly preserves;
+- changing the product identity or core purpose without acknowledging the change.
+
+Preferred challenge shape:
+
+```text
+I notice this may shift the Working Thread.
+Current boundary: V1 is skill-first and docs-backed; Core/MCP implementation is deferred.
+Your new request moves toward implementing Core/MCP now.
+Do you want to intentionally switch direction, or continue with the current V1 behavior design?
+```
+
+Reasoning:
+
+- This preserves self-initiation and continuity without making Codex feel supervisory.
+- The challenge is explainable because it points to the stored Working Thread boundary.
+- The user remains in control because the challenge asks for confirmation rather than refusing.
+- Using the LLM is appropriate for semantic drift, but the LLM must be constrained by explicit thread records and conservative thresholds.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. When should Codex issue a drift challenge instead of silently following the user's new direction?
-   - Need to define the threshold and expression for the second V1 behavior.
-   - The challenge should feel like Along protecting continuity, not like nagging or overriding.
+1. What should the wrap-up behavior write back to the Working Thread record?
+   - Need to define the third V1 behavior.
+   - The wrap-up should preserve judgment and continuity without becoming a verbose log.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
