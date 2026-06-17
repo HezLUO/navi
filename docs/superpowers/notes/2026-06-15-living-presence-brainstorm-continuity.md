@@ -647,31 +647,60 @@ Risk to avoid:
 - Do not overbuild Core/MCP before the Along-like behavior is subjectively validated.
 - Do not package a plugin before the behavior has clear boundaries and repeatable value.
 
+Accepted V1 behavior scope:
+
+- **Session start / resume**: when an existing agent session begins or resumes, the Along-like behavior should proactively recover the relevant Working Thread, current judgment, and likely next step.
+- **Drift challenge**: when the user appears to move away from an accepted direction, the agent should calmly point out the shift and ask for confirmation before following the drift.
+- **Wrap-up**: when a phase ends, the agent should record the shared judgment, changed assumptions, unresolved questions, and what should be carried forward.
+
+This is the V1 minimum loop:
+
+```text
+start / resume
+-> work together
+-> challenge meaningful drift
+-> wrap up and carry forward
+```
+
+Delegation candidate is no longer part of the V1 behavior scope.
+
+Reasoning:
+
+- The project goal has changed from "build a new agent/conductor" to "make existing agents more self-initiated and companion-like."
+- The earlier conductor/delegation direction came from the previous new-agent framing.
+- Delegation may remain a future capability, but it should not define the current V1.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. How exactly should Tiny Presence Capsule expand?
+1. Where should the skill-first V1 store and read Working Thread continuity?
+   - Current goal: make existing Codex sessions behave Along-like without a full Along Core/MCP implementation.
+   - Need to decide whether V1 uses docs, a local ignored state file, Codex memory, or another lightweight store.
+   - This is now the most important unresolved design issue because start/resume and wrap-up depend on persistent state.
+
+2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
    - `Hold it quietly` semantics are broadly accepted.
    - `Stay with this` semantics are broadly accepted: open a concise Thread Brief before conversation.
    - Thread Brief minimum contents are broadly accepted: title, current judgment, why now, boundary/next move.
    - Thread Brief expression is broadly accepted: short co-creator briefing, not dashboard/table/report.
    - Conversation entry after Thread Brief is broadly accepted: Along asks a co-creator prompt rather than showing a generic blank chat first.
-   - Still needs concrete design for peek content and final action wording.
+   - Deferred because local/desktop presence is no longer the first-stage product center.
 
-2. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat?
+3. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat? **Deferred**
    - Current direction: conversation is anchored by Thread Brief and starts from a co-creator prompt.
    - Ongoing conversation should default to a lightweight top thread anchor plus occasional in-stream state updates.
-   - Still needs concrete design for controls and delegation affordances.
+   - Deferred because V1 is now skill-first inside existing agent conversation, not a new Along UI.
 
-3. How should user-initiated Working Thread creation appear?
+4. How should user-initiated Working Thread creation appear? **Reframed**
    - input field?
    - `Start thread` action?
    - project/session entry?
    - conversation-first page?
+   - Reframe this as: how does a user start a Working Thread inside an existing Codex session?
 
-4. What does "cute but not desk pet" mean for presence?
+5. What does "cute but not desk pet" mean for presence? **Deferred**
    - visual motion?
    - soft copy?
    - small icon/state?
