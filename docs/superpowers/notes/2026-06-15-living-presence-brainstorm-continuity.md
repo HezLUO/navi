@@ -766,13 +766,48 @@ Reasoning:
 - High-signal triggers align with Along's purpose: preserving judgment, direction, and continuity rather than tracking every task.
 - The confirmation gate protects quietness and user control.
 
+Accepted Working Thread definition:
+
+> A Working Thread is a cross-session judgment container for an unfinished question, direction, doubt, or creative line that will keep affecting future decisions.
+
+It is used to preserve:
+
+- why this topic matters;
+- the current shared judgment;
+- the accepted boundary;
+- signals that indicate meaningful drift;
+- the likely next move;
+- the last wrap-up;
+- unresolved questions that should carry forward.
+
+It is not:
+
+- a chat transcript, because it should survive across multiple chats or Codex sessions;
+- a todo list, because it tracks judgment and continuity rather than task completion;
+- an issue ticket, because it may be exploratory, subjective, or product-directional rather than implementation-ready;
+- a spec, because it can exist before formal design approval and can help a spec emerge;
+- generic memory, because it is project-owned, explicit, reviewable, and intentionally maintained.
+
+V1 usage:
+
+- On start/resume, Codex reads the relevant Working Thread and proactively restates where the shared judgment currently stands.
+- During work, Codex uses the record to decide whether a drift challenge is appropriate.
+- During wrap-up, Codex updates the record with changed judgment, changed boundary, unresolved questions, and the next likely move.
+
+Core distinction:
+
+```text
+Chat = where conversation happens.
+Working Thread = what important unfinished judgment the conversation is helping carry forward.
+```
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. What exactly is a Working Thread, and how should it be explained in the spec?
-   - Need to make clear that it is not a chat transcript, todo, issue, spec, or generic memory.
-   - Need a precise definition usable by a Codex skill and future Along Core.
+1. What should Codex say or do at session start/resume when it finds a relevant Working Thread?
+   - Need to define the smallest proactive behavior that feels useful and companion-like without becoming verbose or dashboard-like.
+   - This is the first concrete behavior in the V1 loop.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
