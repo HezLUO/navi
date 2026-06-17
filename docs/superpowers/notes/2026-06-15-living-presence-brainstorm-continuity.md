@@ -612,6 +612,41 @@ Risk to avoid:
 - Do not encode the core model around Codex-specific UI concepts, thread labels, or product affordances.
 - Do not design the first pass as a Codex-only prompt pack if that prevents MCP/Hermes/other agents from later reusing the same Along Core semantics.
 
+Accepted V1 validation method:
+
+- **Skill-first experience validation**: first define and test the Along-like behavior as a Codex skill / prompt workflow.
+- **Core interface sketch only**: document the future Along Core / MCP operations, but do not make the first pass depend on implementing the full interface.
+- **Plugin deferred**: package the workflow as a plugin only after the behavior proves useful and stable enough to distribute.
+
+Current source-aligned rationale:
+
+- Codex skills are the right authoring format for reusable workflows and can be used locally while behavior is still being shaped.
+- Plugins are the distribution/package layer for stable reusable workflows, bundled skills, apps, and MCP configuration.
+- MCP is the right future integration layer when Codex or another agent needs tools/context to read or update Along Core state.
+
+Implication:
+
+```text
+V1:
+  Codex skill / prompt workflow
+  proves Along-like turn-bound self-initiation
+  names concepts generically
+  records future Core/MCP operations as a contract sketch
+
+Later:
+  Along Core
+  MCP server
+  plugin packaging
+  Hermes adapter
+  optional local/desktop presence surface
+```
+
+Risk to avoid:
+
+- Do not mistake a skill for the whole product.
+- Do not overbuild Core/MCP before the Along-like behavior is subjectively validated.
+- Do not package a plugin before the behavior has clear boundaries and repeatable value.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
