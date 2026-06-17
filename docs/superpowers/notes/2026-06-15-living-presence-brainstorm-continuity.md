@@ -670,14 +670,34 @@ Reasoning:
 - The earlier conductor/delegation direction came from the previous new-agent framing.
 - Delegation may remain a future capability, but it should not define the current V1.
 
+Accepted V1 continuity storage:
+
+- **V1 uses project documentation as the continuity store.**
+- Stable Working Thread state, accepted judgments, important wrap-ups, and unresolved questions should live in reviewable project docs.
+- The first implementation/spec should not rely only on Codex memory or current chat context.
+- The first implementation/spec should not require a complete `.along/` local state system.
+
+Future evolution:
+
+- Preserve a **two-layer continuity model** as the later direction:
+  - project docs for stable, user-reviewable judgments and decisions;
+  - `.along/` ignored local state for temporary, private, unconfirmed, or high-churn thread state.
+
+Reasoning:
+
+- Docs best match the current design/review phase because the user explicitly wants cross-session decisions preserved and inspectable.
+- Docs are easy for Codex to read at session start and update during wrap-up.
+- `.along/` remains useful later, but using it first would hide too much of the product judgment during calibration.
+- Codex memory alone is insufficient because it is not explicit, reviewable, or project-owned enough for Along's intended continuity.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. Where should the skill-first V1 store and read Working Thread continuity?
-   - Current goal: make existing Codex sessions behave Along-like without a full Along Core/MCP implementation.
-   - Need to decide whether V1 uses docs, a local ignored state file, Codex memory, or another lightweight store.
-   - This is now the most important unresolved design issue because start/resume and wrap-up depend on persistent state.
+1. What should a docs-backed Working Thread record contain in V1?
+   - Current goal: make start/resume, drift challenge, and wrap-up work from a readable project document.
+   - Need to decide the smallest fields that preserve continuity without turning the document into a dashboard or task tracker.
+   - Candidate fields: title, current judgment, why it matters, boundary, last wrap-up, unresolved questions, next likely move, drift triggers.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
@@ -706,27 +726,28 @@ Continue from these questions, one at a time:
    - small icon/state?
    - warmth without decorative mascot?
 
-5. How should Along explain why it noticed something?
+6. How should Along explain why it noticed something? **Partly reframed**
    - Current broad direction: one lightweight reasoning sentence in Presence Peek; full reasoning/evidence in Working Thread.
-   - Still needs concrete design for how much evidence appears by default inside the Working Thread.
+   - Reframe for V1 as: how much reasoning should the Codex skill show when it restores a Working Thread or issues a drift challenge?
 
-6. When should a presence signal escalate to confirmation challenge?
+7. When should a presence signal escalate to confirmation challenge? **Reframed**
+   - Reframe for V1 as: when should the Codex skill actively challenge user drift rather than silently follow the user's new request?
 
-7. How should Along avoid notification/inbox/task-manager feeling?
+8. How should Along avoid notification/inbox/task-manager feeling?
 
-8. How should relationship modes be documented as future direction without pulling this pass into emotional simulation implementation?
+9. How should relationship modes be documented as future direction without pulling this pass into emotional simulation implementation?
 
 ## Recommended Next Step
 
 Continue brainstorming before writing a formal spec.
 
-The next immediate discussion should continue clarifying **Tiny Presence Capsule -> Presence Peek -> Working Thread**:
+The next immediate discussion should clarify the **docs-backed Working Thread record** for the skill-first V1:
 
-- what the Presence Peek should contain;
-- exact co-creator action wording;
-- concrete Working Thread controls and delegation affordances after the co-creator prompt;
-- how `Adjust quietness` should work later, without making the default flow feel like reminders;
-- how this differs from chat messages and automation reminders.
+- what fields the record must contain;
+- how short the record should stay;
+- what the Codex skill reads at session start/resume;
+- what the Codex skill writes during wrap-up;
+- what belongs in future `.along/` local state instead of project docs.
 
 After the user approves the conceptual design, draft a formal spec:
 
