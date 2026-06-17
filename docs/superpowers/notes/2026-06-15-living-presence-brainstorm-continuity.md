@@ -550,11 +550,16 @@ The essence of Along is:
 - memory of what matters;
 - ability to hand work to existing agents and absorb their results back into Along's judgment.
 
-Open strategic choice:
+Accepted first-stage focus:
 
-- If the first milestone is **felt presence**, use a small local surface as the fastest subjective test.
-- If the first milestone is **existing agents gaining self-initiation**, prioritize MCP/plugin/skill integration and treat the surface as secondary.
-- If the first milestone is **conductor behavior**, build the minimum integration path where Along can decide when and how to involve Codex/Hermes.
+- **A as primary**: make existing agents behave in an Along-like way inside their existing conversation flow.
+- **B as foundation**: keep Along Core / MCP-style interfaces as the substrate for working threads, judgments, memory, and attention state.
+- **C as later capability**: conductor delegation remains important, but should come after the basic self-initiation layer is clear.
+- **D deferred**: local/desktop presence remains optional and secondary, not the first-stage product center.
+
+Current interpretation:
+
+> The first milestone should prove that an existing agent can carry Along's self-initiation, companionship, and thread continuity inside normal work, without requiring Along to become a separate coding agent or a separate dashboard.
 
 ## Key Open Questions
 
