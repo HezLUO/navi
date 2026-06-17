@@ -720,13 +720,36 @@ Future direction to preserve:
 - Future expanded fields may include context, timeline, evidence, decisions, and more detailed history.
 - Do not implement the expanded form in V1 unless the lightweight record proves insufficient.
 
+Accepted Working Thread creation model:
+
+Use a **dual-entry model** inside existing Codex sessions.
+
+- **Explicit user entry**: the user can say that a topic should become a Working Thread, should be recorded, or should continue as an existing thread.
+- **Agent-suggested entry**: Codex can proactively suggest that a topic should become a Working Thread when the discussion appears long-running, judgment-heavy, repeatedly recurring, or important to future continuity.
+- **Confirmation before first creation**: Codex should not silently create durable Working Thread docs. It should ask for confirmation before the first record is created.
+
+Reasoning:
+
+- This preserves user control and avoids noisy auto-recording.
+- It still allows Along-like initiative because Codex may notice when something deserves continuity.
+- It fits the V1 goal: self-initiated but restrained, not a passive note-taker and not an automatic tracker.
+
+Example:
+
+```text
+I think this is becoming a Working Thread rather than a one-off question.
+Do you want me to record it as one so future sessions can carry it forward?
+```
+
+After a Working Thread already exists, Codex may update it during wrap-up under the accepted V1 behavior loop, while still summarizing the intended update before writing durable docs.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. How should a user start or identify a Working Thread inside an existing Codex session?
-   - Current goal: make the skill-first V1 usable inside normal Codex conversation.
-   - Need to decide whether the user explicitly says "start a thread", whether Codex infers it, or whether both are allowed.
+1. When should Codex suggest creating a Working Thread rather than treating the exchange as a normal one-off conversation?
+   - Current direction: dual-entry model with confirmation before first creation.
+   - Need to define the minimal suggestion triggers so the skill feels proactive but not noisy.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
