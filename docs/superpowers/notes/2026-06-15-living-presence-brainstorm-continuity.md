@@ -561,6 +561,31 @@ Current interpretation:
 
 > The first milestone should prove that an existing agent can carry Along's self-initiation, companionship, and thread continuity inside normal work, without requiring Along to become a separate coding agent or a separate dashboard.
 
+Accepted self-initiation staging:
+
+- **V1 uses turn-bound self-initiation**: Along-like initiative appears while the user is already starting, resuming, transitioning, delegating, or wrapping up work inside an existing agent.
+- **V1 does not require background self-initiation**: Along does not need to wake independently, watch in the background, or surface notifications when no agent session is active.
+- **Future direction preserves background self-initiation**: later versions may add runtime watchers, schedulers, notifications, local presence surfaces, or cross-session proactive surfacing.
+
+Definition:
+
+> Turn-bound self-initiation means the agent does not wait for an explicit user question before applying Along's judgment, but the initiative still occurs inside an active user-agent interaction turn or session.
+
+Example V1 moments:
+
+- session start: the agent proactively recalls the relevant Working Thread and current Along judgment;
+- resume: the agent states where the thread left off before answering;
+- drift: the agent asks for confirmation when the user appears to move away from an accepted direction;
+- transition: the agent recommends whether to continue discussion, write a spec, delegate analysis, or wrap up;
+- wrap-up: the agent records what changed in judgment and what should be carried forward.
+
+Reasoning:
+
+- This keeps the first milestone realistic.
+- It tests whether existing agents can feel Along-like without requiring a standalone desktop surface.
+- It avoids conflating self-initiation with background automation too early.
+- It keeps true "living presence" as a later product layer rather than blocking the first usable integration.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
