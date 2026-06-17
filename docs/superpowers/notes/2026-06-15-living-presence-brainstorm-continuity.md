@@ -801,13 +801,48 @@ Chat = where conversation happens.
 Working Thread = what important unfinished judgment the conversation is helping carry forward.
 ```
 
+Accepted start/resume behavior:
+
+When Codex finds a relevant Working Thread at session start or resume, it should use a **short briefing**.
+
+The briefing should:
+
+- proactively name the relevant Working Thread;
+- restate the current shared judgment;
+- restate the active boundary if it affects the next action;
+- suggest the next likely move;
+- avoid full history unless the user asks.
+
+Preferred feel:
+
+```text
+I brought this thread back:
+we last confirmed V1 is Codex-first, skill-first, and docs-backed.
+Current judgment: validate start/resume, drift challenge, and wrap-up before building Core/MCP.
+I suggest we define the drift challenge behavior next, without entering implementation yet.
+```
+
+Why this behavior:
+
+- It shows self-initiation because Codex brings the thread back without waiting for the user to ask.
+- It supports companionship because Codex remembers where the work emotionally and directionally paused.
+- It stays quiet enough to avoid becoming a report, dashboard, or task manager.
+- It leaves the user in control because it suggests a next move rather than forcing one.
+
+Avoid:
+
+- a single vague sentence that lacks useful continuity;
+- a full timeline/history dump;
+- asking "do you want me to restore this?" every time, because that adds friction and weakens initiative;
+- presenting multiple threads like an inbox.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. What should Codex say or do at session start/resume when it finds a relevant Working Thread?
-   - Need to define the smallest proactive behavior that feels useful and companion-like without becoming verbose or dashboard-like.
-   - This is the first concrete behavior in the V1 loop.
+1. When should Codex issue a drift challenge instead of silently following the user's new direction?
+   - Need to define the threshold and expression for the second V1 behavior.
+   - The challenge should feel like Along protecting continuity, not like nagging or overriding.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
