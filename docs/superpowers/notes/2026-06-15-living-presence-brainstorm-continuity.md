@@ -690,14 +690,43 @@ Reasoning:
 - `.along/` remains useful later, but using it first would hide too much of the product judgment during calibration.
 - Codex memory alone is insufficient because it is not explicit, reviewable, or project-owned enough for Along's intended continuity.
 
+Accepted V1 Working Thread record shape:
+
+Use a **judgment-oriented record** rather than an ultra-minimal record or a full thread report.
+
+V1 fields:
+
+```text
+Title
+Why this matters
+Current judgment
+Boundary
+Drift triggers
+Next likely move
+Last wrap-up
+Open questions
+```
+
+Reasoning:
+
+- This preserves what Codex needs for start/resume, drift challenge, and wrap-up.
+- It keeps the record centered on judgment and continuity, not tasks or dashboard state.
+- It gives enough context for a future session to understand why the thread exists and when the agent should intervene.
+- It avoids the heaviness of evidence timelines, full context dumps, or report-like thread histories.
+
+Future direction to preserve:
+
+- A fuller thread record may become useful later for other purposes, such as evidence review, auditability, debugging, longer-running research, or multi-agent handoff.
+- Future expanded fields may include context, timeline, evidence, decisions, and more detailed history.
+- Do not implement the expanded form in V1 unless the lightweight record proves insufficient.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. What should a docs-backed Working Thread record contain in V1?
-   - Current goal: make start/resume, drift challenge, and wrap-up work from a readable project document.
-   - Need to decide the smallest fields that preserve continuity without turning the document into a dashboard or task tracker.
-   - Candidate fields: title, current judgment, why it matters, boundary, last wrap-up, unresolved questions, next likely move, drift triggers.
+1. How should a user start or identify a Working Thread inside an existing Codex session?
+   - Current goal: make the skill-first V1 usable inside normal Codex conversation.
+   - Need to decide whether the user explicitly says "start a thread", whether Codex infers it, or whether both are allowed.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
