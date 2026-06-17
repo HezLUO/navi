@@ -883,13 +883,73 @@ Reasoning:
 - The user remains in control because the challenge asks for confirmation rather than refusing.
 - Using the LLM is appropriate for semantic drift, but the LLM must be constrained by explicit thread records and conservative thresholds.
 
+Accepted wrap-up write-back strategy:
+
+Use **layered wrap-up write-back**.
+
+Default wrap-up writes only the fields needed to preserve judgment continuity:
+
+```text
+Last wrap-up
+Current judgment
+Boundary changes
+Open questions
+Next likely move
+```
+
+When the session contains a major direction change, rejected path, or decision that future sessions may need to understand, append lightweight decision context:
+
+```text
+Decision notes
+Rejected options
+Reason for change
+```
+
+Avoid:
+
+- full chat summaries;
+- minute-by-minute timelines;
+- task-management logs;
+- updating every field when only one judgment changed;
+- treating wrap-up as a report.
+
+Reasoning:
+
+- Normal sessions should stay quiet and compact.
+- Significant turns should preserve enough context to prevent future drift or repeated debate.
+- This keeps Working Thread records judgment-oriented instead of log-oriented.
+- It supports both resume briefing and drift challenge without overloading future sessions.
+
+Example normal wrap-up:
+
+```text
+Last wrap-up:
+Confirmed impact-based drift challenge.
+
+Current judgment:
+LLM may judge semantic drift, but only against explicit Working Thread fields.
+
+Next likely move:
+Define wrap-up trigger behavior.
+```
+
+Example major-turn addition:
+
+```text
+Decision notes:
+The project shifted from standalone agent/conductor toward an existing-agent self-initiation layer.
+
+Rejected options:
+V1 does not include delegation candidate, full Core/MCP, plugin packaging, Hermes adapter, or local/desktop surface.
+```
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. What should the wrap-up behavior write back to the Working Thread record?
-   - Need to define the third V1 behavior.
-   - The wrap-up should preserve judgment and continuity without becoming a verbose log.
+1. When should Codex trigger or suggest wrap-up?
+   - Need to decide whether wrap-up is user-requested, agent-suggested, or automatic at phase boundaries.
+   - This affects whether wrap-up feels companion-like or like another process checklist.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
