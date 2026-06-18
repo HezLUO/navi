@@ -970,13 +970,52 @@ Reasoning:
 - Fully automatic write-back risks noisy or incorrect durable records.
 - Layered trigger preserves self-initiation while keeping user control over committed continuity.
 
+Accepted V1 skill invocation strategy:
+
+Use **project-level default consideration plus confirmation for first/persistent actions**.
+
+Interpretation:
+
+- In the Along project, Codex may consider the Along-like skill by default when the user's request matches Working Thread behavior.
+- The skill should not silently create durable thread docs.
+- The skill should not silently write persistent continuity records.
+- The skill should not silently perform high-impact drift challenges as hard blocks.
+- First Working Thread creation, durable write-back, and major direction changes require user confirmation.
+
+Why skill-first:
+
+- A Codex skill is a reusable workflow instruction surface, not an autonomous background runtime.
+- Skill-first does **not** give Codex true background self-initiation.
+- Skill-first can validate **turn-bound self-initiation**: when Codex is already active, it can proactively restore a Working Thread, suggest creating one, issue an explainable drift challenge, or suggest wrap-up.
+- This is the smallest practical way to test whether existing agents can feel Along-like before building Core/MCP, plugin packaging, background runtime, or local presence UI.
+
+What skill-first can validate:
+
+- Does resume briefing feel like companionship rather than a report?
+- Does drift challenge feel helpful rather than supervisory?
+- Does wrap-up create useful continuity without becoming a log?
+- Does docs-backed Working Thread state carry judgment across Codex sessions?
+
+What skill-first cannot provide:
+
+- background observation when Codex is closed or inactive;
+- notifications or proactive surfacing outside an active agent session;
+- reliable structured state beyond what the skill reads/writes in docs;
+- cross-agent orchestration;
+- the full Along Core runtime.
+
+Future layers:
+
+- Core/MCP can provide structured state and tool access.
+- A plugin can package skills, MCP config, and related assets after the behavior stabilizes.
+- A background runtime or local/desktop surface can later provide true background self-initiation.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. How should the Codex skill be invoked in V1?
-   - Need to decide whether Along-like behavior is explicit-only, implicit, or project-scoped with user confirmation.
-   - This affects how self-initiated the V1 feels and how much accidental triggering risk it has.
+1. Is the skill-first V1 conceptually complete enough to draft a formal spec, or are there still blocking conceptual questions?
+   - Current V1 now has accepted direction, host, validation method, continuity store, record shape, creation model, resume behavior, drift challenge, wrap-up write-back, wrap-up trigger, and skill invocation strategy.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
