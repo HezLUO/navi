@@ -1022,7 +1022,8 @@ Implementation status:
 
 - Repo-scoped Codex skill implemented under `.agents/skills/along-working-thread/`.
 - Docs-backed Working Thread continuity implemented under `docs/along/working-threads/`.
-- Verification completed with `npm test -- tests/skills/along-working-thread-skill.test.ts`, `npm run typecheck`, `npm run build`, and full `npm test`.
+- Verification completed with `npm test -- tests/skills/along-working-thread-skill.test.ts`, `npm run typecheck`, and `npm run build`.
+- Full `npm test` failed in the Codex sandbox only because Express `listen` hit `EPERM`; escalated full `npm test` passed.
 - V1 remains skill-first and does not include Core/MCP, plugin packaging, Hermes adapter, local/desktop presence, background runtime, delegation, or write delegation.
 - Next gate is subjective validation of real Codex sessions using the Working Thread skill.
 
