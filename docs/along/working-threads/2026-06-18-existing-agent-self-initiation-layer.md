@@ -1,7 +1,7 @@
 # Existing-Agent Self-Initiation Layer
 
 Status: active
-Last updated: 2026-06-18
+Last updated: 2026-06-19
 
 ## Why This Matters
 
@@ -32,11 +32,11 @@ V1 should be Codex-first, skill-first, and docs-backed. It should validate turn-
 
 ## Next Likely Move
 
-Implement and validate the repo-scoped Codex skill, docs-backed Working Thread template, and seed record. Then run subjective validation in real Codex sessions before considering Core/MCP or plugin packaging.
+Run subjective validation in real Codex sessions: check whether resume briefing feels useful rather than report-like, whether impact-based drift challenge is clear and non-blocking, and whether layered wrap-up preserves judgment continuity without becoming a log. Defer Core/MCP and plugin packaging until this behavior is validated.
 
 ## Last Wrap-Up
 
-The formal V1 spec was approved for implementation planning. The accepted path is Codex-first, skill-first, docs-backed continuity with project-level default consideration and confirmation for first or persistent actions.
+The repo-scoped Codex skill, Working Thread reference, docs-backed record template, seed record, and Vitest coverage are implemented. Verification passed for the focused skill test, typecheck, build, and escalated full test after sandbox Express `listen` hit `EPERM`.
 
 ## Open Questions
 
