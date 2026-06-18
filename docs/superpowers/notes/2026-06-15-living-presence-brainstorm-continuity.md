@@ -1013,18 +1013,24 @@ Future layers:
 Formal spec status:
 
 - User approved entering formal spec drafting on 2026-06-18.
-- Draft spec created at `docs/superpowers/specs/2026-06-18-along-codex-skill-first-v1-design.md`.
-- Next gate is user review of that spec. Do not proceed to implementation planning until the user approves the written spec.
+- Formal spec created at `docs/superpowers/specs/2026-06-18-along-codex-skill-first-v1-design.md`.
+- User approved the spec and requested an implementation plan.
+- Implementation plan created at `docs/superpowers/plans/2026-06-18-along-codex-skill-first-v1.md`.
+- Next gate is user review of the implementation plan and execution-mode choice. Do not start implementation until the user confirms Subagent-Driven execution or Inline Execution.
 
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. User review of the formal skill-first V1 spec.
-   - Spec path: `docs/superpowers/specs/2026-06-18-along-codex-skill-first-v1-design.md`.
-   - Await user approval or requested changes before writing an implementation plan.
+1. User review of the skill-first V1 implementation plan.
+   - Plan path: `docs/superpowers/plans/2026-06-18-along-codex-skill-first-v1.md`.
+   - Await user approval and execution-mode choice before creating the skill files or Working Thread records.
 
-2. How exactly should Tiny Presence Capsule expand? **Deferred**
+2. User review of the formal skill-first V1 spec. **Completed**
+   - Spec path: `docs/superpowers/specs/2026-06-18-along-codex-skill-first-v1-design.md`.
+   - User approved the spec and moved to implementation planning.
+
+3. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
    - `Hold it quietly` semantics are broadly accepted.
    - `Stay with this` semantics are broadly accepted: open a concise Thread Brief before conversation.
@@ -1033,52 +1039,47 @@ Continue from these questions, one at a time:
    - Conversation entry after Thread Brief is broadly accepted: Along asks a co-creator prompt rather than showing a generic blank chat first.
    - Deferred because local/desktop presence is no longer the first-stage product center.
 
-3. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat? **Deferred**
+4. What is the minimum Working Thread UI needed to make conversation feel thread-based rather than generic chat? **Deferred**
    - Current direction: conversation is anchored by Thread Brief and starts from a co-creator prompt.
    - Ongoing conversation should default to a lightweight top thread anchor plus occasional in-stream state updates.
    - Deferred because V1 is now skill-first inside existing agent conversation, not a new Along UI.
 
-4. How should user-initiated Working Thread creation appear? **Reframed**
+5. How should user-initiated Working Thread creation appear? **Reframed**
    - input field?
    - `Start thread` action?
    - project/session entry?
    - conversation-first page?
    - Reframe this as: how does a user start a Working Thread inside an existing Codex session?
 
-5. What does "cute but not desk pet" mean for presence? **Deferred**
+6. What does "cute but not desk pet" mean for presence? **Deferred**
    - visual motion?
    - soft copy?
    - small icon/state?
    - warmth without decorative mascot?
 
-6. How should Along explain why it noticed something? **Partly reframed**
+7. How should Along explain why it noticed something? **Partly reframed**
    - Current broad direction: one lightweight reasoning sentence in Presence Peek; full reasoning/evidence in Working Thread.
    - Reframe for V1 as: how much reasoning should the Codex skill show when it restores a Working Thread or issues a drift challenge?
 
-7. When should a presence signal escalate to confirmation challenge? **Reframed**
+8. When should a presence signal escalate to confirmation challenge? **Reframed**
    - Reframe for V1 as: when should the Codex skill actively challenge user drift rather than silently follow the user's new request?
 
-8. How should Along avoid notification/inbox/task-manager feeling?
+9. How should Along avoid notification/inbox/task-manager feeling?
 
-9. How should relationship modes be documented as future direction without pulling this pass into emotional simulation implementation?
+10. How should relationship modes be documented as future direction without pulling this pass into emotional simulation implementation?
 
 ## Recommended Next Step
 
-Continue brainstorming before writing a formal spec.
+Review the implementation plan:
 
-The next immediate discussion should clarify the **docs-backed Working Thread record** for the skill-first V1:
+`docs/superpowers/plans/2026-06-18-along-codex-skill-first-v1.md`
 
-- what fields the record must contain;
-- how short the record should stay;
-- what the Codex skill reads at session start/resume;
-- what the Codex skill writes during wrap-up;
-- what belongs in future `.along/` local state instead of project docs.
+Then choose execution mode:
 
-After the user approves the conceptual design, draft a formal spec:
+- **Subagent-Driven**: recommended for the focused execution session.
+- **Inline Execution**: use only if the user wants the current session to implement directly.
 
-`docs/superpowers/specs/2026-06-15-living-presence-and-explanation-design.md`
-
-Do not write the spec until the remaining conceptual questions are sufficiently resolved.
+Do not implement Core/MCP, plugin packaging, Hermes adapter, local/desktop presence, background runtime, delegation, write delegation, or relationship modes in this V1 plan.
 
 ## Visual Companion Sessions
 
