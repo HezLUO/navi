@@ -943,13 +943,40 @@ Rejected options:
 V1 does not include delegation candidate, full Core/MCP, plugin packaging, Hermes adapter, or local/desktop surface.
 ```
 
+Accepted wrap-up trigger strategy:
+
+Use **layered trigger plus confirmation before durable write**.
+
+Trigger behavior:
+
+- Small or routine changes should not trigger proactive wrap-up.
+- User can explicitly request wrap-up at any time.
+- At a meaningful phase boundary, Codex may proactively suggest wrap-up.
+- At a major judgment or boundary change, Codex should proactively suggest wrap-up.
+- If the user clearly ends the session or says to pause/stop after meaningful progress, Codex may prepare a wrap-up draft.
+- Durable Working Thread docs should be updated only after user confirmation.
+
+Meaningful phase boundary examples:
+
+- a design choice is accepted;
+- a subjective calibration round ends;
+- the user says "approved", "recognized", "let's continue next time", or "stop here";
+- the conversation is about to switch to a different Working Thread;
+- the current turn changes the Working Thread's `Current judgment`, `Boundary`, `Open questions`, or `Next likely move`.
+
+Reasoning:
+
+- Pure user-requested wrap-up is too passive for Along-like self-initiation.
+- Fully automatic write-back risks noisy or incorrect durable records.
+- Layered trigger preserves self-initiation while keeping user control over committed continuity.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. When should Codex trigger or suggest wrap-up?
-   - Need to decide whether wrap-up is user-requested, agent-suggested, or automatic at phase boundaries.
-   - This affects whether wrap-up feels companion-like or like another process checklist.
+1. How should the Codex skill be invoked in V1?
+   - Need to decide whether Along-like behavior is explicit-only, implicit, or project-scoped with user confirmation.
+   - This affects how self-initiated the V1 feels and how much accidental triggering risk it has.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
