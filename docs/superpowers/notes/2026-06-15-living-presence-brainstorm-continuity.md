@@ -1010,12 +1010,19 @@ Future layers:
 - A plugin can package skills, MCP config, and related assets after the behavior stabilizes.
 - A background runtime or local/desktop surface can later provide true background self-initiation.
 
+Formal spec status:
+
+- User approved entering formal spec drafting on 2026-06-18.
+- Draft spec created at `docs/superpowers/specs/2026-06-18-along-codex-skill-first-v1-design.md`.
+- Next gate is user review of that spec. Do not proceed to implementation planning until the user approves the written spec.
+
 ## Key Open Questions
 
 Continue from these questions, one at a time:
 
-1. Is the skill-first V1 conceptually complete enough to draft a formal spec, or are there still blocking conceptual questions?
-   - Current V1 now has accepted direction, host, validation method, continuity store, record shape, creation model, resume behavior, drift challenge, wrap-up write-back, wrap-up trigger, and skill invocation strategy.
+1. User review of the formal skill-first V1 spec.
+   - Spec path: `docs/superpowers/specs/2026-06-18-along-codex-skill-first-v1-design.md`.
+   - Await user approval or requested changes before writing an implementation plan.
 
 2. How exactly should Tiny Presence Capsule expand? **Deferred**
    - Current broad direction: Tiny Presence Capsule -> Presence Peek -> Working Thread.
