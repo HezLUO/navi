@@ -1078,14 +1078,11 @@ Continue from these questions, one at a time:
 
 ## Recommended Next Step
 
-Review the implementation plan:
+Run subjective validation of the implemented skill-first V1 in real Codex sessions:
 
-`docs/superpowers/plans/2026-06-18-along-codex-skill-first-v1.md`
-
-Then choose execution mode:
-
-- **Subagent-Driven**: recommended for the focused execution session.
-- **Inline Execution**: use only if the user wants the current session to implement directly.
+- Open a Codex session in the Along project and confirm the Working Thread resume briefing feels useful rather than report-like.
+- Ask for a direction that crosses the active Working Thread boundary and confirm the drift challenge is clear and non-blocking.
+- End a meaningful phase and confirm layered wrap-up preserves judgment continuity without becoming a log.
 
 Do not implement Core/MCP, plugin packaging, Hermes adapter, local/desktop presence, background runtime, delegation, write delegation, or relationship modes in this V1 plan.
 
