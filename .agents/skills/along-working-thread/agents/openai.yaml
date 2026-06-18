@@ -1,0 +1,7 @@
+interface:
+  display_name: Along Working Thread
+  short_description: Resume, protect, and wrap Along Working Threads inside Codex sessions.
+  default_prompt: Use Along Working Thread to resume or update project continuity.
+
+policy:
+  allow_implicit_invocation: true
