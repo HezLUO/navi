@@ -15,6 +15,8 @@ Personal local plugin packaging, installability, and subjective fresh-session be
 
 The main session has now approved a real direction switch from packaged-plugin validation to the next packaging stage. Treat repo/team marketplace packaging as the next design target, while keeping the scope limited to packaging, distribution, installability, documentation, and validation.
 
+Long-term positioning is now approved: Along should become a local-first, open-source, existing-agent companion layer. It should help the agents users already rely on gain continuity, turn-bound self-initiation, drift awareness, wrap-up discipline, and eventually deeper companionship. It should not present itself as another general coding agent.
+
 ## Boundary
 
 - Do not build a new standalone Along agent in V1.
@@ -40,6 +42,8 @@ The main session has now approved a real direction switch from packaged-plugin v
 ## Next Likely Move
 
 Design the next staged packaging scope for repo/team marketplace packaging. Keep the design focused on package shape, metadata, README, versioning, install/update flow, source drift checks, and validation. Keep Core/MCP, background runtime or presence, Hermes or Claude Code adapters, and source-of-truth migration out of scope unless explicitly re-approved.
+
+Use the open-source positioning as packaging context: this stage should make the plugin understandable, reproducible, and shareable from the repo, without pretending it is a complete public product release.
 
 ## Last Wrap-Up
 
@@ -75,6 +79,13 @@ After reviewing the fresh-session validation, the main session approved continui
 - The main session approved moving from validation into the next packaging-stage design.
 - Scope remains repo/team marketplace packaging design.
 - This does not approve implementation, Core/MCP, background runtime or presence, Hermes or Claude Code adapters, delegation, Memory v2, relationship modes, or source-of-truth migration.
+
+2026-06-21 long-term positioning decision:
+
+- Along should evolve toward a local-first open-source companion layer for existing agents.
+- The open-source promise should be: bring self-initiation and continuity to the agents users already use.
+- The staged shape is: Codex plugin/skill first, then reusable Working Thread toolkit, then Along Core/MCP, then optional local companion runtime, then optional desktop/presence surface.
+- The project should avoid positioning itself as a standalone general coding agent competitor.
 
 ## Plan Audit
 
