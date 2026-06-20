@@ -68,6 +68,17 @@ The current staged plan can deliver a narrow but real version of self-initiation
 
 Packaging copy must therefore promise "turn-bound self-initiation for existing agents" and "continuity-aware co-creation", not a background autonomous companion.
 
+## Deferred Capability Map
+
+The parts that V1 cannot deliver are still valid future directions, but they belong to later layers:
+
+- Background self-initiation belongs to a later runtime/autonomy layer: watcher, scheduler, notification, out-of-session attention, and local state transitions.
+- True presence belongs to a later local/desktop or browser presence layer: ambient state, presence signal, lightweight surface, and optional living desktop expression.
+- Deep companionship belongs to later memory and relationship layers: Memory v2, relationship memory, tone/presence preferences, emotional simulation modes, and long-term personalization.
+- Cross-agent self-initiation belongs to a later Along Core / MCP / adapter layer: shared Working Thread operations that Codex, Hermes, Claude Code, or other agents can call.
+
+Minimal plugin packaging is a distribution step for the current skill-first behavior. It should not be treated as the implementation of these deferred capabilities.
+
 ## Open Questions
 
 - Is the medium-drift answer length acceptable, or should the skill push more concise first replies?
