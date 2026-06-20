@@ -9,9 +9,9 @@ Along should not try to compete directly with Codex, Hermes, or Claude Code as a
 
 ## Current Judgment
 
-V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self-initiation. Skill-First V1 validation passed resume, wrap-up, and quietness, but high-impact drift confirmation needed tightening. The Skill Behavior Tightening Pass has now been implemented and fast-forward merged into `main`.
+V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self-initiation. Skill-First V1 validation passed resume, wrap-up, and quietness, and the follow-up Skill Behavior Tightening Pass fixed the high-impact drift confirmation gap well enough for V1.
 
-The next step is to finish subjective real-session validation of the tightened behavior, not Core/MCP or plugin packaging.
+The next step is a direction decision: either proceed to a minimal plugin packaging design pass, or run one more behavior polish pass if the interaction still feels too verbose or artificial.
 
 ## Boundary
 
@@ -36,7 +36,7 @@ The next step is to finish subjective real-session validation of the tightened b
 
 ## Next Likely Move
 
-Repeat real-session validation for resume, drift, wrap-up, quietness, and ordinary tool-answer behavior. Use normal Codex sessions rather than a focused execution session, then decide whether the tightened skill behavior is good enough to move toward plugin packaging or whether another behavior pass is needed first.
+Decide whether Skill-First V1 is stable enough to package. If yes, start a minimal plugin packaging design pass that preserves the skill-first behavior and does not add Core/MCP, Hermes, background runtime, delegation, or local presence. If not, run a small behavior polish pass focused on response length, tone, and making medium-drift guidance feel less procedural.
 
 ## Last Wrap-Up
 
@@ -49,12 +49,13 @@ The Skill Behavior Tightening Pass was implemented on branch `skill-behavior-tig
 - Resume passed: a fresh ordinary session restored the Working Thread and correctly identified real-session validation as the next step.
 - High-impact drift challenge passed so far: when asked to jump into Core/MCP or plugin packaging, the session paused, explained the validation gate, and asked whether to consciously switch direction instead of planning the drifted work.
 - Quiet ordinary request passed: an npm scripts question was answered directly without unnecessary Working Thread ceremony.
-- Still untested: medium-drift behavior and confirmed high-impact direction switch write-back drafting.
+
+2026-06-20 follow-up screenshot-based validation passed:
+
+- Medium drift passed: a fresh session answered what plugin packaging might look like without switching the active plan or triggering heavy Working Thread ceremony. Minor caveat: the answer was useful but somewhat long.
+- Confirmed high-impact direction switch write-back passed: after the user explicitly confirmed a simulated switch to plugin packaging, the session drafted Working Thread update fields, kept implementation out of scope, and waited for user confirmation before writing.
 
 ## Open Questions
 
-- Does the tightened high-drift challenge stop planning Core/MCP or plugin packaging until confirmation?
-- Does the medium-drift note feel helpful rather than noisy?
-- Does ordinary request quietness remain intact?
-- Does automatic write-back drafting after confirmed high-impact drift feel useful, or does it still feel like paperwork?
-- After tightening and revalidation, should the next layer be plugin packaging or a minimal Core/MCP contract slice?
+- Is the medium-drift answer length acceptable, or should the skill push more concise first replies?
+- Should the next layer be minimal plugin packaging design, or one small behavior polish pass first?
