@@ -37,7 +37,7 @@ The next step is a minimal plugin packaging design pass. This should preserve th
 
 ## Next Likely Move
 
-Design the smallest useful Codex plugin package for the Along Working Thread skill: manifest, skills placement, personal local install/update path, metadata, validation, staged repo/team marketplace follow-up, and explicit non-goals. Do not scaffold or implement until the packaging design is approved.
+Run subjective fresh-session behavior validation for the packaged personal local plugin. Keep the pass limited to packaged Working Thread behavior; do not expand into Core/MCP, background runtime or presence, Hermes or Claude Code adapters, or source-of-truth migration.
 
 ## Last Wrap-Up
 
