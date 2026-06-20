@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
@@ -5,7 +6,64 @@ async function readRepoText(relativePath: string): Promise<string> {
   return fs.readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
 }
 
+function extractFrontmatter(markdown: string): string {
+  expect(markdown.startsWith("---\n")).toBe(true);
+
+  const end = markdown.indexOf("\n---", 4);
+  expect(end).toBeGreaterThan(4);
+
+  return markdown.slice(4, end);
+}
+
+async function parseWithPyYaml(source: string): Promise<Record<string, unknown>> {
+  const script = [
+    "import json",
+    "import sys",
+    "import yaml",
+    "payload = yaml.safe_load(sys.stdin.read())",
+    "if not isinstance(payload, dict):",
+    "    raise SystemExit('frontmatter must parse to a mapping')",
+    "print(json.dumps(payload))",
+  ].join("\n");
+
+  return new Promise((resolve, reject) => {
+    const child = spawn("python3", ["-c", script], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(stderr || `python3 exited with code ${code}`));
+        return;
+      }
+      resolve(JSON.parse(stdout) as Record<string, unknown>);
+    });
+    child.stdin.end(source);
+  });
+}
+
 describe("Along Working Thread Codex skill", () => {
+  it("uses plugin-validator-compatible YAML frontmatter", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const frontmatter = extractFrontmatter(skill);
+
+    const parsed = await parseWithPyYaml(frontmatter);
+
+    expect(parsed.name).toBe("along-working-thread");
+    expect(parsed.description).toEqual(expect.stringContaining("Working Thread continuity"));
+  });
+
   it("defines a repo-scoped skill with explicit V1 boundaries", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const metadata = await readRepoText(".agents/skills/along-working-thread/agents/openai.yaml");
