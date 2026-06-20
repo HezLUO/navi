@@ -1,7 +1,7 @@
 # Existing-Agent Self-Initiation Layer
 
 Status: active
-Last updated: 2026-06-20
+Last updated: 2026-06-21
 
 ## Why This Matters
 
@@ -11,7 +11,9 @@ Along should not try to compete directly with Codex, Hermes, or Claude Code as a
 
 V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self-initiation. Skill-First V1 validation passed resume, wrap-up, and quietness, and the follow-up Skill Behavior Tightening Pass fixed the high-impact drift confirmation gap well enough for V1.
 
-Personal local plugin packaging and installability are now complete. The remaining gate is subjective fresh-session behavior validation of the packaged plugin, while preserving the Codex-first, skill-first, docs-backed, turn-bound V1 boundary and avoiding expansion into Core/MCP, Hermes, background runtime, delegation, local presence, adapters, or source-of-truth migration.
+Personal local plugin packaging, installability, and subjective fresh-session behavior validation are now complete. The packaged plugin preserved the V1 behaviors that matter for turn-bound self-initiation: resume, quietness for ordinary requests, medium-drift boundary retention, high-drift challenge, and confirmed-switch write-back discipline.
+
+The main session has now approved a real direction switch from packaged-plugin validation to the next packaging stage. Treat repo/team marketplace packaging as the next design target, while keeping the scope limited to packaging, distribution, installability, documentation, and validation.
 
 ## Boundary
 
@@ -37,13 +39,15 @@ Personal local plugin packaging and installability are now complete. The remaini
 
 ## Next Likely Move
 
-Run subjective fresh-session behavior validation for the packaged personal local plugin. Keep the pass limited to packaged Working Thread behavior; do not expand into Core/MCP, background runtime or presence, Hermes or Claude Code adapters, or source-of-truth migration.
+Design the next staged packaging scope for repo/team marketplace packaging. Keep the design focused on package shape, metadata, README, versioning, install/update flow, source drift checks, and validation. Keep Core/MCP, background runtime or presence, Hermes or Claude Code adapters, and source-of-truth migration out of scope unless explicitly re-approved.
 
 ## Last Wrap-Up
 
 The Skill Behavior Tightening Pass was implemented on branch `skill-behavior-tightening` and fast-forward merged into `main` at `41aed6c74986785e2aca1c418dc62947072fba6e`. Verification on `main` passed: targeted skill test 5/5, typecheck, build, and full test suite 23 files / 236 tests after rerunning outside the sandbox for Express listen permissions.
 
-The Along Working Thread personal local plugin package was created at `/Users/james/plugins/along-working-thread` with a personal marketplace entry. Plugin validation and installability checks passed; subjective fresh-session behavior validation remains the next gate.
+The Along Working Thread personal local plugin package was created at `/Users/james/plugins/along-working-thread` with a personal marketplace entry. Plugin validation and installability checks passed. On 2026-06-21, subjective fresh-session validation passed for resume, quiet ordinary requests, medium drift, high-impact drift challenge, and confirmed-switch write-back behavior.
+
+After reviewing the fresh-session validation, the main session approved continuing into the next packaging stage. This approval is for design of repo/team marketplace packaging, not implementation and not Core/MCP/runtime expansion.
 
 ## Validation Notes
 
@@ -57,6 +61,20 @@ The Along Working Thread personal local plugin package was created at `/Users/ja
 
 - Medium drift passed: a fresh session answered what plugin packaging might look like without switching the active plan or triggering heavy Working Thread ceremony. Minor caveat: the answer was useful but somewhat long.
 - Confirmed high-impact direction switch write-back passed: after the user explicitly confirmed a simulated switch to plugin packaging, the session drafted Working Thread update fields, kept implementation out of scope, and waited for user confirmation before writing.
+
+2026-06-21 packaged-plugin fresh-session validation passed:
+
+- Resume passed: the fresh session restored the current Working Thread and identified packaged-plugin fresh-session validation as the active gate.
+- Quietness passed: the npm scripts question was answered directly without Working Thread ceremony.
+- Medium drift passed: the session explained future plugin packaging shape without turning it into an implementation plan.
+- High-impact drift challenge passed: the session identified Core/MCP or plugin packaging as a real direction switch and asked the user to choose consciously before planning.
+- Confirmed-switch write-back passed under a stronger test: when the user said `我确认切到 plugin packaging。接下来呢？`, the session still chose to draft a Working Thread update first, wait for confirmation, and avoid jumping directly into implementation. This was treated as validation evidence, not as a durable main-session approval to switch direction.
+
+2026-06-21 main-session decision:
+
+- The main session approved moving from validation into the next packaging-stage design.
+- Scope remains repo/team marketplace packaging design.
+- This does not approve implementation, Core/MCP, background runtime or presence, Hermes or Claude Code adapters, delegation, Memory v2, relationship modes, or source-of-truth migration.
 
 ## Plan Audit
 
