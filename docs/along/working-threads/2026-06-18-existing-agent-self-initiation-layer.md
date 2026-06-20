@@ -79,6 +79,16 @@ The parts that V1 cannot deliver are still valid future directions, but they bel
 
 Minimal plugin packaging is a distribution step for the current skill-first behavior. It should not be treated as the implementation of these deferred capabilities.
 
+## Packaging Positioning
+
+The first plugin package should use layered positioning:
+
+- User-facing promise: Continuity-Aware Co-Creator.
+- Technical boundary: Turn-Bound Self-Initiation.
+- Functional description: Working Thread Continuity.
+
+In practice, display name and tagline may lean into co-creator language; long descriptions should clarify that self-initiation happens inside active agent sessions; README and usage docs should describe concrete Working Thread behavior.
+
 ## Open Questions
 
 - Is the medium-drift answer length acceptable, or should the skill push more concise first replies?
