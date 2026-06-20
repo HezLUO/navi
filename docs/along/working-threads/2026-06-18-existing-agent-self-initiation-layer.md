@@ -99,6 +99,21 @@ Minimal plugin packaging is successful only if it proves more than file rearrang
 - Honest positioning: metadata and docs promise continuity-aware co-creation, turn-bound self-initiation, and Working Thread continuity without implying background autonomy or always-on presence.
 - Staged path: README describes personal local plugin as stage one and defers repo/team marketplace, MCP, presence, runtime, Memory v2, relationship modes, and adapters.
 
+## Packaging Metadata
+
+Approved plugin metadata direction:
+
+- Plugin folder/name: `along-working-thread`.
+- Display name: `Along Working Thread`.
+- Short description: `A continuity-aware co-creator for active Codex sessions.`
+- Long description core: `Along Working Thread helps Codex carry project judgment across sessions, notice meaningful drift, and draft wrap-ups with your confirmation. It provides turn-bound self-initiation, not background autonomy or always-on presence.`
+- Category: `Productivity`.
+- Keywords: `along`, `working-thread`, `continuity`, `codex`, `self-initiation`.
+- Default prompts:
+  - `Resume the current Working Thread.`
+  - `Help me wrap up this phase.`
+  - `Check whether this direction drifts from our thread.`
+
 ## Open Questions
 
 - Is the medium-drift answer length acceptable, or should the skill push more concise first replies?
