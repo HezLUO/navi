@@ -9,9 +9,9 @@ Along should not try to compete directly with Codex, Hermes, or Claude Code as a
 
 ## Current Judgment
 
-V1 should remain Codex-first, skill-first, and docs-backed for now. Initial subjective validation showed that turn-bound self-initiation works for resume, wrap-up, and quietness behavior in ordinary Codex sessions. Drift challenge only partially passed because Codex detected the boundary shift but started planning Core/MCP/plugin work before first asking for explicit direction-switch confirmation.
+V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self-initiation. Skill-First V1 validation passed resume, wrap-up, and quietness, but high-impact drift confirmation needs tightening. The approved Skill Behavior Tightening Pass should make ordinary requests quiet, medium drift lightly contextual, and high drift confirmation-gated before any drifted direction planning.
 
-The next step is a Skill Behavior Tightening Pass, not Core/MCP or plugin packaging.
+The next step is implementation of the Skill Behavior Tightening Pass, not Core/MCP or plugin packaging.
 
 ## Boundary
 
@@ -23,6 +23,7 @@ The next step is a Skill Behavior Tightening Pass, not Core/MCP or plugin packag
 - Do not implement delegation candidate or conductor workflow in V1.
 - Do not use `.along/` as the V1 Working Thread continuity store.
 - Do not write durable Working Thread docs without user confirmation.
+- Do not plan a drifted direction before the user confirms the direction switch.
 
 ## Drift Triggers
 
@@ -35,15 +36,15 @@ The next step is a Skill Behavior Tightening Pass, not Core/MCP or plugin packag
 
 ## Next Likely Move
 
-Design a Skill Behavior Tightening Pass focused on high-impact drift confirmation, concise co-creator wording, and preserving quietness for ordinary requests. Defer Core/MCP and plugin packaging until the drift challenge behavior is tightened and revalidated.
+Implement the Skill Behavior Tightening Pass by updating the Along Working Thread skill, adding drift ladder examples, adding bounded adaptive write-back guidance, and expanding the skill documentation tests. Then repeat real-session validation for resume, drift, wrap-up, and quietness.
 
 ## Last Wrap-Up
 
-Skill-First V1 validation completed in ordinary Codex sessions. Resume passed: Codex restored the Working Thread and current judgment. Wrap-up passed: Codex drafted a write-back and waited for confirmation. Quietness passed: Codex answered a normal `package.json` question without over-triggering. Drift partially passed: Codex noticed the boundary shift, but started planning Core/MCP/plugin work before asking for explicit confirmation.
+The Skill Behavior Tightening Pass spec was approved. The accepted behavior is: ordinary and low drift stay quiet; medium drift gets one light note without confirmation; high drift pauses with a short reason and asks for direction-switch confirmation; confirmed direction switches automatically draft a bounded adaptive Working Thread update and write only after user confirmation.
 
 ## Open Questions
 
-- What exact wording should high-impact drift challenge use before planning a drifted direction?
-- Should high-impact drift always require an explicit direction-switch confirmation?
-- How can the challenge feel like co-creator judgment rather than process enforcement?
+- Does the tightened high-drift challenge stop planning Core/MCP or plugin packaging until confirmation?
+- Does the medium-drift note feel helpful rather than noisy?
+- Does ordinary request quietness remain intact?
 - After tightening and revalidation, should the next layer be plugin packaging or a minimal Core/MCP contract slice?
