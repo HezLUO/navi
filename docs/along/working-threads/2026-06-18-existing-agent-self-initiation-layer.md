@@ -11,7 +11,7 @@ Along should not try to compete directly with Codex, Hermes, or Claude Code as a
 
 V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self-initiation. Skill-First V1 validation passed resume, wrap-up, and quietness, and the follow-up Skill Behavior Tightening Pass fixed the high-impact drift confirmation gap well enough for V1.
 
-The next step is a minimal plugin packaging design pass. This should preserve the skill-first behavior and avoid expanding into Core/MCP, Hermes, background runtime, delegation, or local presence.
+Personal local plugin packaging and installability are now complete. The remaining gate is subjective fresh-session behavior validation of the packaged plugin, while preserving the Codex-first, skill-first, docs-backed, turn-bound V1 boundary and avoiding expansion into Core/MCP, Hermes, background runtime, delegation, local presence, adapters, or source-of-truth migration.
 
 ## Boundary
 
