@@ -114,6 +114,16 @@ Approved plugin metadata direction:
   - `Help me wrap up this phase.`
   - `Check whether this direction drifts from our thread.`
 
+## Packaging Source Strategy
+
+V1 packaging should be a distribution copy, not a source-of-truth migration:
+
+- Keep the existing repo-scoped `.agents/skills/along-working-thread/` skill in place.
+- Copy the same skill content into the personal local plugin.
+- Preserve current validated repo behavior while testing plugin install and discovery.
+- Add validation or review steps to detect meaningful drift between the repo skill and packaged skill.
+- Revisit source-of-truth consolidation only after personal plugin validation passes.
+
 ## Open Questions
 
 - Is the medium-drift answer length acceptable, or should the skill push more concise first replies?
