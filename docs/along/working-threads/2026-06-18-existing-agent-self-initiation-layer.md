@@ -11,7 +11,7 @@ Along should not try to compete directly with Codex, Hermes, or Claude Code as a
 
 V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self-initiation. Skill-First V1 validation passed resume, wrap-up, and quietness, but high-impact drift confirmation needed tightening. The Skill Behavior Tightening Pass has now been implemented and fast-forward merged into `main`.
 
-The next step is subjective real-session validation of the tightened behavior, not Core/MCP or plugin packaging.
+The next step is to finish subjective real-session validation of the tightened behavior, not Core/MCP or plugin packaging.
 
 ## Boundary
 
@@ -41,6 +41,15 @@ Repeat real-session validation for resume, drift, wrap-up, quietness, and ordina
 ## Last Wrap-Up
 
 The Skill Behavior Tightening Pass was implemented on branch `skill-behavior-tightening` and fast-forward merged into `main` at `41aed6c74986785e2aca1c418dc62947072fba6e`. Verification on `main` passed: targeted skill test 5/5, typecheck, build, and full test suite 23 files / 236 tests after rerunning outside the sandbox for Express listen permissions.
+
+## Validation Notes
+
+2026-06-20 first screenshot-based validation partially passed:
+
+- Resume passed: a fresh ordinary session restored the Working Thread and correctly identified real-session validation as the next step.
+- High-impact drift challenge passed so far: when asked to jump into Core/MCP or plugin packaging, the session paused, explained the validation gate, and asked whether to consciously switch direction instead of planning the drifted work.
+- Quiet ordinary request passed: an npm scripts question was answered directly without unnecessary Working Thread ceremony.
+- Still untested: medium-drift behavior and confirmed high-impact direction switch write-back drafting.
 
 ## Open Questions
 
