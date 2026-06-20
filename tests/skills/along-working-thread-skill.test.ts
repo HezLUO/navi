@@ -37,6 +37,30 @@ describe("Along Working Thread Codex skill", () => {
     expect(reference).toContain("Do not implement Core/MCP");
   });
 
+  it("documents tightened drift behavior and bounded write-back rules", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    expect(skill).toContain("ordinary requests stay quiet");
+    expect(skill).toContain("Do not plan the drifted direction before user confirmation");
+    expect(skill).toContain("automatically draft a Working Thread update");
+    expect(skill).toContain("bounded adaptive write-back");
+
+    expect(reference).toContain("Ordinary / Low Drift");
+    expect(reference).toContain("Medium Drift");
+    expect(reference).toContain("High Drift");
+    expect(reference).toContain("ordinary requests stay quiet");
+    expect(reference).toContain("medium drift uses a light note and does not require confirmation");
+    expect(reference).toContain("Before the user confirms the direction switch, do not plan the drifted direction.");
+    expect(reference).toContain("I will treat this as future-direction exploration");
+    expect(reference).toContain("I think this is a real direction switch.");
+    expect(reference).toContain("Direction Switch Flow");
+    expect(reference).toContain("Automatically draft a Working Thread update");
+    expect(reference).toContain("Bounded Adaptive Write-Back");
+    expect(reference).toContain("Different long-term problem");
+    expect(reference).toContain("Do not add real model invocation tests");
+  });
+
   it("ships a product-owned Working Thread directory with the required record template", async () => {
     const readme = await readRepoText("docs/along/working-threads/README.md");
 
@@ -77,6 +101,8 @@ describe("Along Working Thread Codex skill", () => {
     expect(record).toContain("skill-first");
     expect(record).toContain("docs-backed");
     expect(record).toContain("turn-bound self-initiation");
+    expect(record).toContain("Skill Behavior Tightening Pass");
+    expect(record).toContain("high-impact drift confirmation");
     expect(record).toContain("Do not build a new standalone Along agent");
     expect(record).toContain("Do not implement Core/MCP");
     expect(record).toContain("Do not package a plugin");
