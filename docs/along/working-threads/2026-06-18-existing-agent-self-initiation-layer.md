@@ -89,6 +89,16 @@ The first plugin package should use layered positioning:
 
 In practice, display name and tagline may lean into co-creator language; long descriptions should clarify that self-initiation happens inside active agent sessions; README and usage docs should describe concrete Working Thread behavior.
 
+## Packaging Success Criteria
+
+Minimal plugin packaging is successful only if it proves more than file rearrangement:
+
+- Installability: the personal local plugin installs, appears in the local marketplace flow, and passes manifest validation.
+- Skill discovery: Codex can discover the packaged `along-working-thread` skill in Along-relevant sessions.
+- Behavior preservation: packaged behavior still passes resume, ordinary quietness, medium drift, high drift confirmation, and confirmed-switch write-back checks.
+- Honest positioning: metadata and docs promise continuity-aware co-creation, turn-bound self-initiation, and Working Thread continuity without implying background autonomy or always-on presence.
+- Staged path: README describes personal local plugin as stage one and defers repo/team marketplace, MCP, presence, runtime, Memory v2, relationship modes, and adapters.
+
 ## Open Questions
 
 - Is the medium-drift answer length acceptable, or should the skill push more concise first replies?
