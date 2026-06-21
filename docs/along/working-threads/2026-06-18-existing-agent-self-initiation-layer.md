@@ -170,6 +170,14 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not use an event-sourced model in the minimal contract pass because it would pull the design toward storage/runtime architecture too early.
 - Preserve a future path where an event log can be derived from section changes if later runtime or audit needs justify it.
 
+2026-06-21 Core/MCP minimal contract WorkingThreadSummary decision:
+
+- Use a brief-but-actionable `WorkingThreadSummary` model for list, resume, and lightweight attention decisions.
+- Summary fields should include `id`, `title`, `status`, `lastUpdated`, `currentJudgmentBrief`, `nextLikelyMove`, `riskLevel`, and `needsUserDecision`.
+- Do not use an extreme minimal index as the primary summary because agents would lack enough context to decide whether a thread matters now.
+- Do not return near-complete thread content in summaries because it would make resume and listing too heavy and noisy.
+- `WorkingThreadSummary` is not a durable record replacement; it is a compact view over the full `WorkingThread`.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
