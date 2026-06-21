@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit && vite build"
+    "build": "tsc --noEmit && vite build",
+    "verify:plugin-package": "node scripts/verify-plugin-package.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
