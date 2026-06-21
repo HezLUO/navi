@@ -188,6 +188,14 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not use a binary drift/not-drift result because it cannot distinguish ordinary quietness, medium drift, and high-impact direction changes.
 - Do not use a numeric score in the minimal contract because it would create false precision without improving the next action.
 
+2026-06-21 Core/MCP minimal contract wrap-up draft decision:
+
+- `draftWrapUp` should return a structured wrap-up draft rather than plain text or a full thread replacement.
+- Draft fields should include `summary`, `judgmentChange`, `boundaryChange`, `nextLikelyMove`, `openQuestionsChange`, and `requiresConfirmation: true`.
+- The output should be suitable input for `proposeWorkingThreadUpdate`, so the user can see which Working Thread sections may change before any durable write.
+- Do not use plain text as the primary output because later callers would need ad hoc parsing to update specific sections.
+- Do not generate a complete replacement `WorkingThread` because it risks overwriting existing judgment or boundaries and would weaken confirmed write-back discipline.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
