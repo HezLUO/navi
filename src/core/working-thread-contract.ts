@@ -121,9 +121,12 @@ export interface ConfirmationEnvelope {
   baseVersion?: string;
 }
 
-export interface OperationResult<TData = unknown> {
+export interface OperationResult<
+  TData = unknown,
+  TOperation extends WorkingThreadOperation = WorkingThreadOperation,
+> {
   status: OperationResultStatus;
-  operation: WorkingThreadOperation;
+  operation: TOperation;
   threadId?: string;
   data?: TData;
   message?: string;
@@ -135,13 +138,13 @@ export interface ReadWorkingThreadInput {
   threadId: string;
 }
 
-export type ReadWorkingThreadResult = OperationResult<WorkingThread>;
+export type ReadWorkingThreadResult = OperationResult<WorkingThread, "readWorkingThread">;
 
 export interface ListWorkingThreadsInput {
   status?: WorkingThreadStatus;
 }
 
-export type ListWorkingThreadsResult = OperationResult<WorkingThreadSummary[]>;
+export type ListWorkingThreadsResult = OperationResult<WorkingThreadSummary[], "listWorkingThreads">;
 
 export interface ClassifyDriftInput {
   thread: WorkingThread | WorkingThreadSummary;
@@ -149,7 +152,7 @@ export interface ClassifyDriftInput {
   proposedDirection?: string;
 }
 
-export type ClassifyDriftResult = OperationResult<DriftClassification>;
+export type ClassifyDriftResult = OperationResult<DriftClassification, "classifyDrift">;
 
 export interface DraftWrapUpInput {
   thread: WorkingThread;
@@ -160,14 +163,17 @@ export interface DraftWrapUpInput {
   openQuestionsChange?: string;
 }
 
-export type DraftWrapUpResult = OperationResult<WrapUpDraft>;
+export type DraftWrapUpResult = OperationResult<WrapUpDraft, "draftWrapUp">;
 
 export interface ProposeWorkingThreadUpdateInput {
   thread: WorkingThread;
   draft: WrapUpDraft;
 }
 
-export type ProposeWorkingThreadUpdateResult = OperationResult<WorkingThreadUpdateProposal>;
+export type ProposeWorkingThreadUpdateResult = OperationResult<
+  WorkingThreadUpdateProposal,
+  "proposeWorkingThreadUpdate"
+>;
 
 export interface ApplyConfirmedWorkingThreadUpdateInput {
   proposal: WorkingThreadUpdateProposal;
@@ -188,16 +194,19 @@ export interface StaleProposalConflict {
 }
 
 export type ApplyConfirmedWorkingThreadUpdateResult =
-  | (OperationResult<ApplyConfirmedWorkingThreadUpdateSuccess> & {
+  | (OperationResult<
+    ApplyConfirmedWorkingThreadUpdateSuccess,
+    "applyConfirmedWorkingThreadUpdate"
+  > & {
     status: "ok";
     data: ApplyConfirmedWorkingThreadUpdateSuccess;
   })
-  | (OperationResult<StaleProposalConflict> & {
+  | (OperationResult<StaleProposalConflict, "applyConfirmedWorkingThreadUpdate"> & {
     status: "conflict";
     data: StaleProposalConflict;
     recommendedAction: "regenerateProposal";
   })
-  | (OperationResult & {
+  | (OperationResult<unknown, "applyConfirmedWorkingThreadUpdate"> & {
     status: "rejected" | "error";
   });
 

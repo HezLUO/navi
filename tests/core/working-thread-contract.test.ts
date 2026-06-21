@@ -12,7 +12,7 @@ import {
   type ApplyConfirmedWorkingThreadUpdateResult,
   type ConfirmationEnvelope,
   type DriftClassification,
-  type OperationResult,
+  type ReadWorkingThreadResult,
   type StaleProposalConflict,
   type WorkingThread,
   type WorkingThreadContractOperations,
@@ -183,12 +183,20 @@ describe("Working Thread contract", () => {
   });
 
   it("models operation results, successful writes, and stale proposal conflicts", () => {
+    const mismatchedReadOperation = {
+      status: "ok",
+      // @ts-expect-error Read results must use the readWorkingThread operation discriminator.
+      operation: "listWorkingThreads",
+      threadId: baseThread.id,
+      data: baseThread,
+    } satisfies ReadWorkingThreadResult;
+
     const okRead = {
       status: "ok",
       operation: "readWorkingThread",
       threadId: baseThread.id,
       data: baseThread,
-    } satisfies OperationResult<WorkingThread>;
+    } satisfies ReadWorkingThreadResult;
 
     const confirmationInput = {
       proposal: baseProposal,
