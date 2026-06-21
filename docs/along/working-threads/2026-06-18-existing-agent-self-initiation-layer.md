@@ -102,6 +102,14 @@ After reviewing the fresh-session validation, the main session approved continui
 - Do not make the next pass a heavy built-artifact pipeline, formal release pipeline, or public marketplace publication.
 - This shape keeps the package transparent for early open-source use while leaving room for later team marketplace packaging.
 
+2026-06-21 repo package contents decision:
+
+- Use Minimal Source Package as the first repo-contained package scope.
+- Include plugin manifest, `skills/along-working-thread/SKILL.md`, README, version note, validation instructions, and source/package drift check.
+- Validation or install guidance may explain how to align with a local plugin package, but the first pass should not add an automatic install/sync script.
+- Defer changelog, full contributor notes, formal roadmap, examples gallery, and public-release metadata.
+- This keeps the next implementation small, reproducible, and focused on honest packaging rather than public product launch.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
