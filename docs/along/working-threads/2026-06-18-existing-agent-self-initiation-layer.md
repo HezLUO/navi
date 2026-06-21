@@ -178,6 +178,16 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not return near-complete thread content in summaries because it would make resume and listing too heavy and noisy.
 - `WorkingThreadSummary` is not a durable record replacement; it is a compact view over the full `WorkingThread`.
 
+2026-06-21 Core/MCP minimal contract drift classification decision:
+
+- `classifyDrift` should return a level, reason, recommended action, and explicit confirmation requirement.
+- Use `driftLevel: none | low | medium | high`.
+- Use `recommendedAction: answerDirectly | answerWithBoundary | askConfirmation | proposeWrapUp`.
+- Include `reason` so the caller can explain the judgment without inventing a rationale after the fact.
+- Include `needsUserConfirmation: boolean` so high-impact direction switches can be gated consistently.
+- Do not use a binary drift/not-drift result because it cannot distinguish ordinary quietness, medium drift, and high-impact direction changes.
+- Do not use a numeric score in the minimal contract because it would create false precision without improving the next action.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
