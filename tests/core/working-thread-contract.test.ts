@@ -252,12 +252,12 @@ describe("Working Thread contract", () => {
         threadId: baseThread.id,
         data: baseThread,
       }),
-      listWorkingThreads: async () => ({
+      listWorkingThreads: async (_input) => ({
         status: "ok",
         operation: "listWorkingThreads",
         data: [baseSummary],
       }),
-      classifyDrift: async () => ({
+      classifyDrift: async (_input) => ({
         status: "ok",
         operation: "classifyDrift",
         threadId: baseThread.id,
