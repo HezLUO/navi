@@ -214,6 +214,14 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not use free-text confirmation as the primary proof shape because future adapters could not reliably validate it.
 - This preserves the confirmed write-back principle while leaving room for future configurable write policies.
 
+2026-06-21 Core/MCP minimal contract stale proposal conflict decision:
+
+- If `applyConfirmedWorkingThreadUpdate` receives a stale `baseVersion` or `baseLastUpdated`, it should return a conflict and must not apply the update.
+- Conflict results should include `status: conflict`, `reason`, `currentThreadSummary`, `staleProposal`, and `recommendedAction: regenerateProposal`.
+- Do not force-apply stale proposals because the user approved changes against an older thread state.
+- Do not auto-merge stale proposals in the minimal contract because merge semantics would introduce runtime/storage complexity and could silently alter judgment or boundary sections.
+- The caller should regenerate a fresh proposal against the current thread state and ask for user confirmation again when needed.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
