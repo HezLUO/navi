@@ -133,6 +133,14 @@ After reviewing the fresh-session validation, the main session approved continui
 - The README must clearly distinguish turn-bound self-initiation from background autonomy, always-on presence, emotional companionship, cross-agent memory, or a replacement for Codex/Hermes/Claude Code.
 - Use "What it is" and "What it is not" sections to prevent overclaiming.
 
+2026-06-21 repo package version decision:
+
+- Keep the repo-contained source package version at `0.1.0`.
+- Treat this pass as a packaging-shape improvement, not a capability upgrade.
+- `VERSION.md` should explain that `0.1.0` now has a repo-contained source package form.
+- Do not use a pre-release suffix or bump to `0.2.0` for this pass.
+- Reserve minor version bumps for meaningful capability changes such as Core/MCP, runtime, presence, or cross-agent behavior.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
