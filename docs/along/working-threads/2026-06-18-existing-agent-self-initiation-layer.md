@@ -205,6 +205,15 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not use a plain-text proposal as the primary shape because future tools and adapters could not reliably inspect or validate it.
 - Do not use full replacement updates by default because they risk overwriting existing judgment, boundaries, or open questions.
 
+2026-06-21 Core/MCP minimal contract confirmation envelope decision:
+
+- `applyConfirmedWorkingThreadUpdate` should require an explicit confirmation envelope rather than a weak boolean or free-text confirmation.
+- Confirmation fields should include `proposalId`, `approved: true`, `approvedAt`, `approvedBy: user`, `sourceSessionId`, `sourceTurnId`, `approvedIntent`, and `baseVersion` or `baseLastUpdated`.
+- The envelope should prove that the user approved this specific proposal, in this source context, against this known thread version.
+- Do not accept `confirmed: true` alone because it cannot prove what the user approved.
+- Do not use free-text confirmation as the primary proof shape because future adapters could not reliably validate it.
+- This preserves the confirmed write-back principle while leaving room for future configurable write policies.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
