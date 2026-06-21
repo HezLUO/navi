@@ -125,6 +125,14 @@ After reviewing the fresh-session validation, the main session approved continui
 - Keep fresh-session behavior validation as a manual checklist because it evaluates LLM behavior and product feel, not deterministic package shape.
 - Treat validation failure as a packaging blocker.
 
+2026-06-21 README positioning decision:
+
+- Use a restrained two-layer README: one short vision line, then practical technical explanation.
+- The vision line may say Along brings self-initiation and continuity to the agents users already use.
+- The body should emphasize that Along Working Thread is a Codex plugin source package for active Codex sessions.
+- The README must clearly distinguish turn-bound self-initiation from background autonomy, always-on presence, emotional companionship, cross-agent memory, or a replacement for Codex/Hermes/Claude Code.
+- Use "What it is" and "What it is not" sections to prevent overclaiming.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
