@@ -13,7 +13,9 @@ V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self
 
 Personal local plugin packaging, installability, and subjective fresh-session behavior validation are now complete. The packaged plugin preserved the V1 behaviors that matter for turn-bound self-initiation: resume, quietness for ordinary requests, medium-drift boundary retention, high-drift challenge, and confirmed-switch write-back discipline.
 
-Repo-contained source packaging is also complete. The type-only Along Core/MCP Minimal Contract has been implemented and fast-forward merged into `main` at `f49a576e0613b3251294d004c1e7db00ad4b8439`. The contract now provides shared Working Thread types, operation signatures, behavior-critical examples, and tests, but it does not provide a real MCP server, runtime, storage, adapter, background autonomy, or presence. The next stage should be a separately approved Core/MCP Minimal Server Design discussion, not immediate server implementation.
+Repo-contained source packaging is also complete. The type-only Along Core/MCP Minimal Contract has been implemented and fast-forward merged into `main` at `f49a576e0613b3251294d004c1e7db00ad4b8439`. The contract now provides shared Working Thread types, operation signatures, behavior-critical examples, and tests, but it does not provide a real MCP server, runtime, storage, adapter, background autonomy, or presence.
+
+The next design direction is now approved: Core/MCP Minimal Server Design should target a real but extremely small MCP server shape, not another contract-only simulation. The intended server should expose the approved Working Thread behavior to existing agents while remaining docs-backed and non-autonomous. This approval is for design direction only, not implementation.
 
 Long-term positioning is now approved: Along should become a local-first, open-source, existing-agent companion layer. It should help the agents users already rely on gain continuity, turn-bound self-initiation, drift awareness, wrap-up discipline, and eventually deeper companionship. It should not present itself as another general coding agent.
 
@@ -22,6 +24,8 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 - Do not build a new standalone Along agent in V1.
 - Do not implement Core/MCP runtime, server, storage, watcher, adapter, delegation, or write delegation behavior beyond the approved type-only minimal contract.
 - Do not implement a real Core/MCP server in the minimal contract design pass.
+- Do not implement a real Core/MCP server until a dedicated Minimal Server Design spec and implementation plan are approved.
+- The Minimal Server direction must stay docs-backed and non-autonomous unless the user explicitly approves a later storage/runtime change.
 - Do not turn plugin packaging into a broad productization effort in V1.
 - The first packaging path is staged: personal local plugin first, then repo/team marketplace plugin after validation.
 - Do not implement Hermes adapter in V1.
@@ -42,7 +46,7 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 
 ## Next Likely Move
 
-Discuss the Core/MCP Minimal Server Design as the next candidate stage. Keep the next pass in design mode first: define the smallest server boundary that can expose the already-approved Working Thread contract without adding runtime autonomy, background scheduling, presence, adapters, Memory v2, relationship modes, delegation, or write delegation. Do not implement a real MCP server until that design is approved.
+Continue Core/MCP Minimal Server Design in design mode. The first approved shape is a real but minimal MCP server that exposes the already-approved Working Thread contract to existing agents without adding runtime autonomy, background scheduling, presence, adapters, Memory v2, relationship modes, delegation, or write delegation. The next open decision is the data-source boundary: keep the server docs-backed first, or introduce `.along/` local state.
 
 ## Last Wrap-Up
 
@@ -57,6 +61,8 @@ After repo-contained packaging passed, the main session approved continuing into
 The Along Core/MCP Minimal Contract was implemented as a type-only contract in `src/core/working-thread-contract.ts`, with behavior-critical examples in the design spec and tests in `tests/core/working-thread-contract.test.ts`. Verification covers operation names, section-shaped Working Thread schemas, actionable summaries, drift classification, structured wrap-up drafts, section patch proposals, explicit confirmation envelopes, stale proposal conflicts, and shared operation result envelopes. This pass did not implement a real MCP server, storage, runtime, watcher, scheduler, notification, presence surface, LLM call, adapter, Memory v2, relationship mode, delegation, or write delegation.
 
 The type-only Along Core/MCP Minimal Contract was fast-forward merged into `main` at `f49a576e0613b3251294d004c1e7db00ad4b8439`. Verification on merged `main` passed: targeted contract test 7/7, typecheck, build, and full test suite 24 files / 247 tests after rerunning outside the sandbox for Express listen permissions. The next recommended stage is Core/MCP Minimal Server Design, with implementation still requiring a separate approved pass.
+
+The main session approved the Core/MCP Minimal Server Design direction: design a real but extremely small MCP server shape rather than another contract-only layer. The server should expose Working Thread behavior to existing agents while staying docs-backed, non-autonomous, and free of background runtime, scheduling, presence, adapters, Memory v2, relationship modes, delegation, and write delegation. Implementation is not approved yet.
 
 ## Validation Notes
 
