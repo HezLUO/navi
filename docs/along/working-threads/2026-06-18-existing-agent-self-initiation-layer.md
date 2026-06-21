@@ -247,6 +247,20 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not rely on document review alone because the TypeScript contract and written spec could drift.
 - Do not add end-to-end MCP smoke tests in this pass because that would require real MCP server implementation and exceed the minimal contract boundary.
 
+2026-06-21 Core/MCP minimal contract behavior examples decision:
+
+- Spec examples should focus on behavior-critical cases rather than only happy paths or exhaustive operation combinations.
+- Cover resume/list behavior where `listWorkingThreads` returns actionable summaries.
+- Cover quietness where `classifyDrift` returns `none` with `answerDirectly`.
+- Cover medium drift where `classifyDrift` returns `medium` with `answerWithBoundary`.
+- Cover high-impact drift where `classifyDrift` returns `high` with `askConfirmation`.
+- Cover wrap-up drafting where `draftWrapUp` returns a structured draft.
+- Cover update proposal generation where `proposeWorkingThreadUpdate` returns a section patch proposal.
+- Cover confirmed write-back where `applyConfirmedWorkingThreadUpdate` succeeds with a valid confirmation envelope.
+- Cover stale write-back where `applyConfirmedWorkingThreadUpdate` returns `conflict` and does not write.
+- Do not limit examples to happy paths because that would miss the boundaries that define Along's self-initiation and companionship behavior.
+- Do not make examples exhaustive because the minimal contract should stay readable and focused.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
