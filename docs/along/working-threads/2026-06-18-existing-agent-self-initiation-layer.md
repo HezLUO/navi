@@ -15,7 +15,7 @@ Personal local plugin packaging, installability, and subjective fresh-session be
 
 Repo-contained source packaging is also complete. The type-only Along Core/MCP Minimal Contract has been implemented and fast-forward merged into `main` at `f49a576e0613b3251294d004c1e7db00ad4b8439`. The contract now provides shared Working Thread types, operation signatures, behavior-critical examples, and tests, but it does not provide a real MCP server, runtime, storage, adapter, background autonomy, or presence.
 
-The next design direction is now approved: Core/MCP Minimal Server Design should target a real but extremely small MCP server shape, not another contract-only simulation. The intended server should expose the approved Working Thread behavior to existing agents while remaining docs-backed and non-autonomous. The Minimal Server V1 data source is also approved as docs-backed: it should read and write `docs/along/working-threads/*.md` rather than introducing `.along/` local state. The MCP exposure shape is approved as Resources + Tools: Working Thread records and summaries should be exposed as resources, while drift classification, wrap-up drafting, update proposals, and confirmed write-back should be exposed as tools. Prompts are deferred to avoid overlapping with the existing skill/plugin behavior. This approval is for design direction only, not implementation.
+The next design direction is now approved: Core/MCP Minimal Server Design should target a real but extremely small MCP server shape, not another contract-only simulation. The intended server should expose the approved Working Thread behavior to existing agents while remaining docs-backed and non-autonomous. The Minimal Server V1 data source is also approved as docs-backed: it should read and write `docs/along/working-threads/*.md` rather than introducing `.along/` local state. The MCP exposure shape is approved as Resources + Tools: Working Thread summaries and full records should both be exposed as resources, while drift classification, wrap-up drafting, update proposals, and confirmed write-back should be exposed as tools. Prompts are deferred to avoid overlapping with the existing skill/plugin behavior. This approval is for design direction only, not implementation.
 
 Long-term positioning is now approved: Along should become a local-first, open-source, existing-agent companion layer. It should help the agents users already rely on gain continuity, turn-bound self-initiation, drift awareness, wrap-up discipline, and eventually deeper companionship. It should not present itself as another general coding agent.
 
@@ -48,7 +48,7 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 
 ## Next Likely Move
 
-Continue Core/MCP Minimal Server Design in design mode. The approved shape is a real but minimal, docs-backed MCP server that exposes the already-approved Working Thread contract to existing agents through Resources + Tools, without adding runtime autonomy, background scheduling, presence, adapters, Memory v2, relationship modes, delegation, write delegation, or MCP prompts. The next open decision is the exact resource boundary: whether resources expose full records, summaries, or both.
+Continue Core/MCP Minimal Server Design in design mode. The approved shape is a real but minimal, docs-backed MCP server that exposes the already-approved Working Thread contract to existing agents through Resources + Tools, without adding runtime autonomy, background scheduling, presence, adapters, Memory v2, relationship modes, delegation, write delegation, or MCP prompts. The resource boundary is approved as summary + full record: summaries support lightweight attention and overview; full records support judgment, drift classification, wrap-up drafting, and confirmed write-back. The next open decision is the exact tool boundary.
 
 ## Last Wrap-Up
 
@@ -68,7 +68,7 @@ The main session approved the Core/MCP Minimal Server Design direction: design a
 
 The main session approved docs-backed storage for the Minimal MCP Server V1 data source. The server should read and write `docs/along/working-threads/*.md` directly, preserving reviewability and git diff visibility. `.along/` local state remains deferred until a later runtime or presence layer genuinely needs structured local state.
 
-The main session approved a Resources + Tools MCP exposure shape for Minimal Server V1. Working Thread documents and summaries should be exposed as MCP resources. Judgment actions such as drift classification, wrap-up drafting, update proposal creation, and confirmed write-back should be MCP tools. MCP prompts are deferred because they risk duplicating or blurring the current skill/plugin behavior.
+The main session approved a Resources + Tools MCP exposure shape for Minimal Server V1. Working Thread summaries and full records should both be exposed as MCP resources. Summary resources support quiet overview and lightweight attention; full record resources support deeper judgment, drift classification, wrap-up drafting, and confirmed write-back. Judgment actions such as drift classification, wrap-up drafting, update proposal creation, and confirmed write-back should be MCP tools. MCP prompts are deferred because they risk duplicating or blurring the current skill/plugin behavior.
 
 ## Validation Notes
 
