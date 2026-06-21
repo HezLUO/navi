@@ -162,6 +162,14 @@ After repo-contained packaging passed, the main session approved continuing into
 - `applyConfirmedWorkingThreadUpdate` must require explicit confirmation evidence and must not allow silent durable writes.
 - This keeps the contract focused on Working Thread continuity, drift handling, wrap-up drafting, and confirmed write-back.
 
+2026-06-21 Core/MCP minimal contract WorkingThread schema decision:
+
+- Use a section-shaped `WorkingThread` model as the primary schema.
+- Core fields should map to the current Working Thread record sections: `id`, `title`, `status`, `lastUpdated`, `whyThisMatters`, `currentJudgment`, `boundary`, `driftTriggers`, `nextLikelyMove`, `lastWrapUp`, and `openQuestions`.
+- Do not use a generic body-only document model as the primary schema because it would lose the judgment, boundary, and next-step semantics that make Along useful.
+- Do not use an event-sourced model in the minimal contract pass because it would pull the design toward storage/runtime architecture too early.
+- Preserve a future path where an event log can be derived from section changes if later runtime or audit needs justify it.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
