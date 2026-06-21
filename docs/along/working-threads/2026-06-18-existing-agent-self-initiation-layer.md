@@ -110,6 +110,13 @@ After reviewing the fresh-session validation, the main session approved continui
 - Defer changelog, full contributor notes, formal roadmap, examples gallery, and public-release metadata.
 - This keeps the next implementation small, reproducible, and focused on honest packaging rather than public product launch.
 
+2026-06-21 source-of-truth decision:
+
+- Keep `.agents/skills/along-working-thread` as the V1 source of truth.
+- Treat the repo-contained plugin package as a distribution copy, not the canonical authoring location.
+- Require validation to fail on meaningful drift between the source skill and packaged skill.
+- Defer any source-of-truth migration until the repo/team packaging shape has proven stable.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
