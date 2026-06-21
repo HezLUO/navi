@@ -94,6 +94,14 @@ After reviewing the fresh-session validation, the main session approved continui
 - Contributor-facing architecture, governance, roadmap, issue templates, and broad community packaging are deferred.
 - This keeps the next packaging pass focused on reproducibility, installability, validation, and honest positioning.
 
+2026-06-21 repo-contained package shape decision:
+
+- Use a lightweight hybrid package shape.
+- The repo should primarily contain the source package: plugin manifest, skill source, README, metadata, validation instructions, and version notes.
+- It may include a small verification or sync mechanism that proves the repo source can align with a local plugin package.
+- Do not make the next pass a heavy built-artifact pipeline, formal release pipeline, or public marketplace publication.
+- This shape keeps the package transparent for early open-source use while leaving room for later team marketplace packaging.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
