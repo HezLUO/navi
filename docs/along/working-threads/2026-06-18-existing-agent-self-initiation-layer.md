@@ -51,6 +51,8 @@ The Skill Behavior Tightening Pass was implemented on branch `skill-behavior-tig
 
 The Along Working Thread personal local plugin package was created at `/Users/james/plugins/along-working-thread` with a personal marketplace entry. Plugin validation and installability checks passed. On 2026-06-21, subjective fresh-session validation passed for resume, quiet ordinary requests, medium drift, high-impact drift challenge, and confirmed-switch write-back behavior.
 
+The repo-contained Along Working Thread source package was added under `plugins/along-working-thread` while preserving `.agents/skills/along-working-thread` as the V1 source of truth. Verification covers targeted skill/package tests, plugin manifest validation, and exact source/package drift checking through `npm run verify:plugin-package`. This pass did not add automatic installation, public marketplace release, Core/MCP, runtime, presence, adapters, Memory v2, relationship modes, or delegation.
+
 After reviewing the fresh-session validation, the main session approved continuing into the next packaging stage. This approval is for design of repo/team marketplace packaging, not implementation and not Core/MCP/runtime expansion.
 
 ## Validation Notes
