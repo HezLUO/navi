@@ -13,7 +13,7 @@ V1 remains Codex-first, skill-first, docs-backed, and focused on turn-bound self
 
 Personal local plugin packaging, installability, and subjective fresh-session behavior validation are now complete. The packaged plugin preserved the V1 behaviors that matter for turn-bound self-initiation: resume, quietness for ordinary requests, medium-drift boundary retention, high-drift challenge, and confirmed-switch write-back discipline.
 
-Repo-contained source packaging is also complete. The next approved design target is Along Core/MCP Minimal Contract. This should define the smallest stable contract that future Codex plugins, other agent adapters, and local runtime layers can use for Working Thread continuity, drift classification, wrap-up drafting, and confirmation gates.
+Repo-contained source packaging is also complete. The type-only Along Core/MCP Minimal Contract has now been implemented on branch `along-core-mcp-minimal-contract`; the immediate next decision is branch review and integration readiness. Future real MCP server, runtime, storage, adapter, and local layers remain deferred until separately approved.
 
 Long-term positioning is now approved: Along should become a local-first, open-source, existing-agent companion layer. It should help the agents users already rely on gain continuity, turn-bound self-initiation, drift awareness, wrap-up discipline, and eventually deeper companionship. It should not present itself as another general coding agent.
 
@@ -33,7 +33,7 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 
 ## Drift Triggers
 
-- The work shifts from skill-first validation into Core/MCP implementation.
+- The work shifts into real Core/MCP runtime, server, storage, adapter, or local-layer implementation beyond the approved type-only contract.
 - The work shifts toward plugin packaging before behavior is validated.
 - The agent starts planning a drifted direction before asking the user to confirm the direction switch.
 - The work revives Hermes adapter, delegation, or local/desktop presence as V1 scope.
@@ -276,8 +276,7 @@ The Along Core/MCP Minimal Contract was implemented as a type-only contract in `
 
 - The user approved the formal design spec.
 - The implementation plan path is `docs/superpowers/plans/2026-06-21-along-core-mcp-minimal-contract.md`.
-- The plan is ready for user review and execution choice.
-- The plan has now been executed on branch `along-core-mcp-minimal-contract` as a type-only implementation.
+- The approved plan has been executed on this branch as the type-only implementation.
 
 ## Plan Audit
 
