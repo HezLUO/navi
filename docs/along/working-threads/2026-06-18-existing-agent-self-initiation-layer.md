@@ -155,6 +155,13 @@ After repo-contained packaging passed, the main session approved continuing into
 - Silent durable writes remain disallowed by default.
 - Future versions may allow users to configure write policy, but that configurability is not part of the minimal contract design pass.
 
+2026-06-21 Core/MCP minimal contract operations decision:
+
+- First-pass operations are `readWorkingThread`, `listWorkingThreads`, `classifyDrift`, `draftWrapUp`, `proposeWorkingThreadUpdate`, and `applyConfirmedWorkingThreadUpdate`.
+- Exclude destructive, memory, notification, scheduling, and delegation operations such as `deleteWorkingThread`, `archiveWorkingThread`, `mergeWorkingThreads`, `searchMemory`, `notifyUser`, `scheduleAttention`, and `delegateToAgent`.
+- `applyConfirmedWorkingThreadUpdate` must require explicit confirmation evidence and must not allow silent durable writes.
+- This keeps the contract focused on Working Thread continuity, drift handling, wrap-up drafting, and confirmed write-back.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
