@@ -261,6 +261,13 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not limit examples to happy paths because that would miss the boundaries that define Along's self-initiation and companionship behavior.
 - Do not make examples exhaustive because the minimal contract should stay readable and focused.
 
+2026-06-21 Core/MCP minimal contract spec status:
+
+- The main session approved writing the formal design spec.
+- The spec path is `docs/superpowers/specs/2026-06-21-along-core-mcp-minimal-contract-design.md`.
+- The spec is for user review before implementation planning.
+- No implementation plan, real MCP server, runtime, adapter, storage, or presence work has been approved yet.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
