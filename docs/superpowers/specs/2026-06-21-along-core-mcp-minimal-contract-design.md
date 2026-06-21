@@ -1,7 +1,7 @@
 # Along Core/MCP Minimal Contract Design
 
 Date: 2026-06-21
-Status: Draft for user review
+Status: Approved and implemented as type-only contract
 
 ## Summary
 
