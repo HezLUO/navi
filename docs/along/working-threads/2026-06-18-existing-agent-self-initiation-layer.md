@@ -230,6 +230,15 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not let each operation invent unrelated result shapes because future adapters would become harder to implement and test.
 - Do not add rich trace, confidence, timing, or debug telemetry in the minimal contract because that belongs to later runtime or observability layers.
 
+2026-06-21 Core/MCP minimal contract file organization decision:
+
+- The first contract implementation should use one standalone TypeScript contract file plus a Markdown spec.
+- The TypeScript file should be `src/core/working-thread-contract.ts`.
+- The TypeScript file should contain only types, operation signatures, and constants; it must not implement storage, an MCP server, runtime behavior, LLM calls, watchers, or adapters.
+- The Markdown spec should explain semantics, boundaries, examples, and non-goals.
+- Do not use a docs-only contract because future implementation could drift from the written design too easily.
+- Do not introduce a new package such as `packages/along-core-contract` in the minimal pass because that would push the work toward SDK/package management before the contract proves stable.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
