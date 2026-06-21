@@ -239,6 +239,14 @@ After repo-contained packaging passed, the main session approved continuing into
 - Do not use a docs-only contract because future implementation could drift from the written design too easily.
 - Do not introduce a new package such as `packages/along-core-contract` in the minimal pass because that would push the work toward SDK/package management before the contract proves stable.
 
+2026-06-21 Core/MCP minimal contract validation strategy decision:
+
+- Validate the minimal contract with type-level tests plus spec examples.
+- Tests should cover contract types, operation result shape, confirmation envelope examples, conflict examples, and behavior-critical operation examples.
+- The Markdown spec should include readable examples that explain expected contract behavior without requiring an MCP server.
+- Do not rely on document review alone because the TypeScript contract and written spec could drift.
+- Do not add end-to-end MCP smoke tests in this pass because that would require real MCP server implementation and exceed the minimal contract boundary.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
