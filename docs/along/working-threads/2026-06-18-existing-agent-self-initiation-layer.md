@@ -268,6 +268,13 @@ After repo-contained packaging passed, the main session approved continuing into
 - The spec is for user review before implementation planning.
 - No implementation plan, real MCP server, runtime, adapter, storage, or presence work has been approved yet.
 
+2026-06-21 Core/MCP minimal contract implementation plan status:
+
+- The user approved the formal design spec.
+- The implementation plan path is `docs/superpowers/plans/2026-06-21-along-core-mcp-minimal-contract.md`.
+- The plan is ready for user review and execution choice.
+- No implementation work has started yet.
+
 ## Plan Audit
 
 The current staged plan can deliver a narrow but real version of self-initiation and companionship:
