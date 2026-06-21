@@ -254,7 +254,7 @@ describe("Working Thread contract", () => {
 
   it("allows adapters to type against operation signatures without providing implementation", async () => {
     const operations = {
-      readWorkingThread: async () => ({
+      readWorkingThread: async (_input) => ({
         status: "ok",
         operation: "readWorkingThread",
         threadId: baseThread.id,
@@ -276,7 +276,7 @@ describe("Working Thread contract", () => {
           needsUserConfirmation: true,
         },
       }),
-      draftWrapUp: async () => ({
+      draftWrapUp: async (_input) => ({
         status: "ok",
         operation: "draftWrapUp",
         threadId: baseThread.id,
@@ -289,14 +289,14 @@ describe("Working Thread contract", () => {
           requiresConfirmation: true,
         },
       }),
-      proposeWorkingThreadUpdate: async () => ({
+      proposeWorkingThreadUpdate: async (_input) => ({
         status: "needsConfirmation",
         operation: "proposeWorkingThreadUpdate",
         threadId: baseThread.id,
         data: baseProposal,
         message: baseProposal.confirmationPrompt,
       }),
-      applyConfirmedWorkingThreadUpdate: async () => ({
+      applyConfirmedWorkingThreadUpdate: async (_input) => ({
         status: "conflict",
         operation: "applyConfirmedWorkingThreadUpdate",
         threadId: baseThread.id,
