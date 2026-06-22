@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { lstat, open, readdir, readFile, type FileHandle } from "node:fs/promises";
+import { lstat, open, readdir, unlink, type FileHandle } from "node:fs/promises";
 import path from "node:path";
 import type {
   WorkingThreadSummary,
@@ -124,54 +124,67 @@ function resolveRecordPath(recordsDir: string, threadId: string): string {
 
 async function readRecordFile(recordsDir: string, threadId: string): Promise<string> {
   const recordPath = await ensureRecordFileSafe(recordsDir, threadId);
-  return readFile(recordPath, "utf8");
+  const file = await open(recordPath, getNoFollowReadFlags());
+
+  try {
+    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, threadId);
+    return await readOpenFile(file);
+  } finally {
+    await file.close();
+  }
 }
 
 async function applyPatchProposalToRecordFile(
   recordsDir: string,
   proposal: WorkingThreadUpdateProposal,
 ): Promise<ParsedWorkingThreadDocument> {
-  const recordPath = await ensureRecordFileSafe(recordsDir, proposal.threadId);
-  const file = await open(recordPath, getNoFollowReadWriteFlags());
+  const releaseLock = await acquireRecordLock(recordsDir, proposal.threadId);
 
   try {
-    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
+    const recordPath = await ensureRecordFileSafe(recordsDir, proposal.threadId);
+    const file = await open(recordPath, getNoFollowReadWriteFlags());
 
-    const currentMarkdown = await readOpenFile(file);
-    const parsed = parseWorkingThreadMarkdown({
-      id: proposal.threadId,
-      sourcePath: recordPath,
-      markdown: currentMarkdown,
-    });
+    try {
+      await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
 
-    validateProposalBase(parsed, proposal);
+      const currentMarkdown = await readOpenFile(file);
+      const parsed = parseWorkingThreadMarkdown({
+        id: proposal.threadId,
+        sourcePath: recordPath,
+        markdown: currentMarkdown,
+      });
 
-    const patchedMarkdown = applyWorkingThreadSectionPatches(
-      currentMarkdown,
-      proposal.changes,
-    );
-    const patched = parseWorkingThreadMarkdown({
-      id: proposal.threadId,
-      sourcePath: recordPath,
-      markdown: patchedMarkdown,
-    });
+      validateProposalBase(parsed, proposal);
 
-    if (patched.malformed || !patched.thread) {
-      throw new Error(`Cannot apply Working Thread proposal because patched record is malformed: ${proposal.threadId}.`);
+      const patchedMarkdown = applyWorkingThreadSectionPatches(
+        currentMarkdown,
+        proposal.changes,
+      );
+      const patched = parseWorkingThreadMarkdown({
+        id: proposal.threadId,
+        sourcePath: recordPath,
+        markdown: patchedMarkdown,
+      });
+
+      if (patched.malformed || !patched.thread) {
+        throw new Error(`Cannot apply Working Thread proposal because patched record is malformed: ${proposal.threadId}.`);
+      }
+
+      await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
+      const latestMarkdown = await readOpenFile(file);
+      if (latestMarkdown !== currentMarkdown) {
+        throw new Error(`Stale Working Thread proposal ${proposal.proposalId}: record changed before write.`);
+      }
+
+      await file.truncate(0);
+      await writeOpenFile(file, patchedMarkdown);
+
+      return patched;
+    } finally {
+      await file.close();
     }
-
-    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
-    const latestMarkdown = await readOpenFile(file);
-    if (latestMarkdown !== currentMarkdown) {
-      throw new Error(`Stale Working Thread proposal ${proposal.proposalId}: record changed before write.`);
-    }
-
-    await file.truncate(0);
-    await writeOpenFile(file, patchedMarkdown);
-
-    return patched;
   } finally {
-    await file.close();
+    await releaseLock();
   }
 }
 
@@ -225,6 +238,53 @@ async function ensureRecordsDirSafe(
   }
 
   return true;
+}
+
+async function acquireRecordLock(
+  recordsDir: string,
+  threadId: string,
+): Promise<() => Promise<void>> {
+  await ensureRecordsDirSafe(recordsDir, { allowMissing: false });
+  const lockPath = resolveLockPath(recordsDir, threadId);
+  let lockFile: FileHandle;
+
+  try {
+    lockFile = await open(lockPath, getNoFollowExclusiveCreateFlags());
+  } catch (error) {
+    if (isNodeError(error) && error.code === "EEXIST") {
+      throw new Error(`Working Thread record is locked by another concurrent write: ${threadId}.`);
+    }
+
+    throw error;
+  }
+
+  await lockFile.close();
+
+  return async () => {
+    await unlink(lockPath).catch((error: unknown) => {
+      if (isNodeError(error) && error.code === "ENOENT") {
+        return;
+      }
+
+      throw error;
+    });
+  };
+}
+
+function resolveLockPath(recordsDir: string, threadId: string): string {
+  if (!safeThreadIdPattern.test(threadId) || path.isAbsolute(threadId)) {
+    throw new Error(`Invalid thread id: ${threadId}.`);
+  }
+
+  const resolvedRecordsDir = path.resolve(recordsDir);
+  const lockPath = path.resolve(resolvedRecordsDir, `${threadId}.lock`);
+  const relativePath = path.relative(resolvedRecordsDir, lockPath);
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error(`Invalid thread id: ${threadId}.`);
+  }
+
+  return lockPath;
 }
 
 function validateProposalBase(
@@ -305,10 +365,26 @@ async function writeOpenFile(file: FileHandle, markdown: string): Promise<void> 
   }
 }
 
+function getNoFollowReadFlags(): number {
+  if (typeof constants.O_NOFOLLOW !== "number") {
+    throw new Error("Cannot safely read Working Thread record: O_NOFOLLOW is unavailable.");
+  }
+
+  return constants.O_RDONLY | constants.O_NOFOLLOW;
+}
+
 function getNoFollowReadWriteFlags(): number {
   if (typeof constants.O_NOFOLLOW !== "number") {
     throw new Error("Cannot safely write Working Thread record: O_NOFOLLOW is unavailable.");
   }
 
   return constants.O_RDWR | constants.O_NOFOLLOW;
+}
+
+function getNoFollowExclusiveCreateFlags(): number {
+  if (typeof constants.O_NOFOLLOW !== "number") {
+    throw new Error("Cannot safely lock Working Thread record: O_NOFOLLOW is unavailable.");
+  }
+
+  return constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW;
 }

@@ -204,6 +204,27 @@ This duplicate heading makes the patched record malformed.`,
     await expect(readFile(recordPath, "utf8")).resolves.toBe(validRecord);
   });
 
+  it("rejects writes when a record lock already exists", async () => {
+    const { recordsDir, store } = await createTempStore();
+    const recordPath = path.join(recordsDir, "store-test-thread.md");
+    await writeFile(path.join(recordsDir, "store-test-thread.lock"), "locked");
+
+    await expect(store.applySectionPatchProposal({
+      proposalId: "proposal-locked",
+      threadId: "store-test-thread",
+      baseLastUpdated: "2026-06-22",
+      changes: [{
+        section: "currentJudgment",
+        currentValue: "The store test is running.",
+        proposedValue: "This locked patch should not apply.",
+        rationale: "Another writer holds the record lock.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "medium",
+    })).rejects.toThrow(/lock|concurrent/i);
+    await expect(readFile(recordPath, "utf8")).resolves.toBe(validRecord);
+  });
+
   it("rejects malformed record writes", async () => {
     const { recordsDir, store } = await createTempStore();
     await writeFile(path.join(recordsDir, "broken.md"), malformedRecord);
