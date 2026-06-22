@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { lstat, open, readdir, readFile } from "node:fs/promises";
+import { lstat, open, readdir, readFile, type FileHandle } from "node:fs/promises";
 import path from "node:path";
 import type {
   WorkingThreadSummary,
@@ -70,36 +70,7 @@ export function createWorkingThreadDocsStore(
     },
 
     async applySectionPatchProposal(proposal) {
-      const parsed = await readParsedThread(recordsDir, proposal.threadId);
-
-      if (parsed.malformed || !parsed.thread) {
-        throw new Error(`Cannot apply Working Thread proposal to malformed record: ${proposal.threadId}.`);
-      }
-
-      if (parsed.thread.lastUpdated !== proposal.baseLastUpdated) {
-        throw new Error(
-          `Stale Working Thread proposal ${proposal.proposalId}: base last updated ${proposal.baseLastUpdated} does not match current ${parsed.thread.lastUpdated}.`,
-        );
-      }
-
-      const patchedMarkdown = applyWorkingThreadSectionPatches(
-        parsed.rawMarkdown,
-        proposal.changes,
-      );
-      const recordPath = resolveRecordPath(recordsDir, proposal.threadId);
-      const patched = parseWorkingThreadMarkdown({
-        id: proposal.threadId,
-        sourcePath: recordPath,
-        markdown: patchedMarkdown,
-      });
-
-      if (patched.malformed || !patched.thread) {
-        throw new Error(`Cannot apply Working Thread proposal because patched record is malformed: ${proposal.threadId}.`);
-      }
-
-      await writeRecordFile(recordsDir, proposal.threadId, patchedMarkdown);
-
-      return patched;
+      return applyPatchProposalToRecordFile(recordsDir, proposal);
     },
   };
 }
@@ -156,37 +127,49 @@ async function readRecordFile(recordsDir: string, threadId: string): Promise<str
   return readFile(recordPath, "utf8");
 }
 
-async function writeRecordFile(
+async function applyPatchProposalToRecordFile(
   recordsDir: string,
-  threadId: string,
-  markdown: string,
-): Promise<void> {
-  const recordPath = await ensureRecordFileSafe(recordsDir, threadId);
-  const file = await open(recordPath, getNoFollowWriteFlags());
+  proposal: WorkingThreadUpdateProposal,
+): Promise<ParsedWorkingThreadDocument> {
+  const recordPath = await ensureRecordFileSafe(recordsDir, proposal.threadId);
+  const file = await open(recordPath, getNoFollowReadWriteFlags());
 
   try {
-    const openedStats = await file.stat();
-    await ensureRecordsDirSafe(recordsDir, { allowMissing: false });
-    const pathStats = await lstat(recordPath);
+    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
 
-    if (!openedStats.isFile()) {
-      throw new Error(`Opened Working Thread record is not a regular file: ${threadId}.`);
+    const currentMarkdown = await readOpenFile(file);
+    const parsed = parseWorkingThreadMarkdown({
+      id: proposal.threadId,
+      sourcePath: recordPath,
+      markdown: currentMarkdown,
+    });
+
+    validateProposalBase(parsed, proposal);
+
+    const patchedMarkdown = applyWorkingThreadSectionPatches(
+      currentMarkdown,
+      proposal.changes,
+    );
+    const patched = parseWorkingThreadMarkdown({
+      id: proposal.threadId,
+      sourcePath: recordPath,
+      markdown: patchedMarkdown,
+    });
+
+    if (patched.malformed || !patched.thread) {
+      throw new Error(`Cannot apply Working Thread proposal because patched record is malformed: ${proposal.threadId}.`);
     }
 
-    if (pathStats.isSymbolicLink()) {
-      throw new Error(`Refusing to write symbolic link Working Thread record: ${threadId}.`);
-    }
-
-    if (!pathStats.isFile()) {
-      throw new Error(`Working Thread record is not a regular file: ${threadId}.`);
-    }
-
-    if (openedStats.dev !== pathStats.dev || openedStats.ino !== pathStats.ino) {
-      throw new Error(`Refusing to write swapped Working Thread record: ${threadId}.`);
+    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
+    const latestMarkdown = await readOpenFile(file);
+    if (latestMarkdown !== currentMarkdown) {
+      throw new Error(`Stale Working Thread proposal ${proposal.proposalId}: record changed before write.`);
     }
 
     await file.truncate(0);
-    await file.writeFile(markdown, "utf8");
+    await writeOpenFile(file, patchedMarkdown);
+
+    return patched;
   } finally {
     await file.close();
   }
@@ -244,10 +227,88 @@ async function ensureRecordsDirSafe(
   return true;
 }
 
-function getNoFollowWriteFlags(): number {
+function validateProposalBase(
+  parsed: ParsedWorkingThreadDocument,
+  proposal: WorkingThreadUpdateProposal,
+): void {
+  if (parsed.malformed || !parsed.thread) {
+    throw new Error(`Cannot apply Working Thread proposal to malformed record: ${proposal.threadId}.`);
+  }
+
+  if (parsed.thread.lastUpdated !== proposal.baseLastUpdated) {
+    throw new Error(
+      `Stale Working Thread proposal ${proposal.proposalId}: base last updated ${proposal.baseLastUpdated} does not match current ${parsed.thread.lastUpdated}.`,
+    );
+  }
+}
+
+async function ensureOpenedRecordFileStillSafe(
+  file: FileHandle,
+  recordsDir: string,
+  recordPath: string,
+  threadId: string,
+): Promise<void> {
+  const openedStats = await file.stat();
+  await ensureRecordsDirSafe(recordsDir, { allowMissing: false });
+  const pathStats = await lstat(recordPath);
+
+  if (!openedStats.isFile()) {
+    throw new Error(`Opened Working Thread record is not a regular file: ${threadId}.`);
+  }
+
+  if (pathStats.isSymbolicLink()) {
+    throw new Error(`Refusing to write symbolic link Working Thread record: ${threadId}.`);
+  }
+
+  if (!pathStats.isFile()) {
+    throw new Error(`Working Thread record is not a regular file: ${threadId}.`);
+  }
+
+  if (openedStats.dev !== pathStats.dev || openedStats.ino !== pathStats.ino) {
+    throw new Error(`Refusing to write swapped Working Thread record: ${threadId}.`);
+  }
+}
+
+async function readOpenFile(file: FileHandle): Promise<string> {
+  const stats = await file.stat();
+  const buffer = Buffer.alloc(stats.size);
+  let offset = 0;
+
+  while (offset < buffer.length) {
+    const result = await file.read(
+      buffer,
+      offset,
+      buffer.length - offset,
+      offset,
+    );
+    if (result.bytesRead === 0) {
+      break;
+    }
+    offset += result.bytesRead;
+  }
+
+  return buffer.subarray(0, offset).toString("utf8");
+}
+
+async function writeOpenFile(file: FileHandle, markdown: string): Promise<void> {
+  const buffer = Buffer.from(markdown, "utf8");
+  let offset = 0;
+
+  while (offset < buffer.length) {
+    const result = await file.write(
+      buffer,
+      offset,
+      buffer.length - offset,
+      offset,
+    );
+    offset += result.bytesWritten;
+  }
+}
+
+function getNoFollowReadWriteFlags(): number {
   if (typeof constants.O_NOFOLLOW !== "number") {
     throw new Error("Cannot safely write Working Thread record: O_NOFOLLOW is unavailable.");
   }
 
-  return constants.O_WRONLY | constants.O_NOFOLLOW;
+  return constants.O_RDWR | constants.O_NOFOLLOW;
 }

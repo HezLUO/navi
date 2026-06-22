@@ -184,6 +184,26 @@ This duplicate heading makes the patched record malformed.`,
     })).rejects.toThrow(/stale/i);
   });
 
+  it("rejects stale section values before mutating the record", async () => {
+    const { recordsDir, store } = await createTempStore();
+    const recordPath = path.join(recordsDir, "store-test-thread.md");
+
+    await expect(store.applySectionPatchProposal({
+      proposalId: "proposal-stale-section",
+      threadId: "store-test-thread",
+      baseLastUpdated: "2026-06-22",
+      changes: [{
+        section: "currentJudgment",
+        currentValue: "A stale current judgment.",
+        proposedValue: "This stale section patch should not apply.",
+        rationale: "The proposal is based on stale section content.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "medium",
+    })).rejects.toThrow(/current value/i);
+    await expect(readFile(recordPath, "utf8")).resolves.toBe(validRecord);
+  });
+
   it("rejects malformed record writes", async () => {
     const { recordsDir, store } = await createTempStore();
     await writeFile(path.join(recordsDir, "broken.md"), malformedRecord);
