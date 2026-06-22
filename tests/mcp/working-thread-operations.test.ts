@@ -245,6 +245,34 @@ describe("Working Thread operation handlers", () => {
     });
   });
 
+  it("rejects write-back when proposal changes no longer match the proposal id", async () => {
+    const { operations, proposal, store } = await createTempProposal();
+    const tamperedProposal = {
+      ...proposal,
+      changes: proposal.changes.map((change, index) => (
+        index === 0
+          ? { ...change, proposedValue: "A tampered judgment after confirmation." }
+          : change
+      )),
+    };
+
+    const result = await operations.applyConfirmedWorkingThreadUpdate({
+      proposal: tamperedProposal,
+      confirmation: validConfirmation(tamperedProposal),
+    });
+    const persisted = await store.readThread(threadId);
+
+    expect(result).toMatchObject({
+      status: "rejected",
+      operation: "applyConfirmedWorkingThreadUpdate",
+      threadId,
+    });
+    expect(result.reason).toMatch(/proposal id|content/i);
+    expect(persisted.thread?.currentJudgment).toBe(
+      "The operation handler task is ready for implementation.",
+    );
+  });
+
   it("applies confirmed section patches and returns the updated thread", async () => {
     const { operations, proposal, store } = await createTempProposal();
 

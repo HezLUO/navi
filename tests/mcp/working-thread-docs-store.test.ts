@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { link, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createWorkingThreadDocsStore } from "../../src/mcp/working-thread-docs-store";
@@ -66,9 +66,22 @@ describe("Working Thread docs store", () => {
 
   it("exposes the resolved workspace root and records directory", async () => {
     const { recordsDir, store, workspaceRoot } = await createTempStore();
+    const expectedWorkspaceRoot = await realpath(workspaceRoot);
 
-    expect(store.workspaceRoot).toBe(path.resolve(workspaceRoot));
-    expect(store.recordsDir).toBe(recordsDir);
+    expect(store.workspaceRoot).toBe(expectedWorkspaceRoot);
+    expect(store.recordsDir).toBe(path.join(expectedWorkspaceRoot, "docs/along/working-threads"));
+    expect(recordsDir).toBe(store.recordsDir);
+  });
+
+  it("rejects a symlinked workspace root", async () => {
+    const realWorkspaceRoot = await mkdtemp(path.join(os.tmpdir(), "working-thread-real-root-"));
+    const symlinkWorkspaceRoot = `${realWorkspaceRoot}-link`;
+    tempRoots.push(realWorkspaceRoot, symlinkWorkspaceRoot);
+    await symlink(realWorkspaceRoot, symlinkWorkspaceRoot);
+
+    expect(() => createWorkingThreadDocsStore({
+      workspaceRoot: symlinkWorkspaceRoot,
+    })).toThrow(/symlink|symbolic/i);
   });
 
   it("returns an empty summary list when the records directory is missing", async () => {
@@ -280,10 +293,11 @@ async function createTempStore() {
   const recordsDir = path.join(workspaceRoot, "docs/along/working-threads");
   await mkdir(recordsDir, { recursive: true });
   await writeFile(path.join(recordsDir, "store-test-thread.md"), validRecord);
+  const store = createWorkingThreadDocsStore({ workspaceRoot });
 
   return {
-    recordsDir,
-    store: createWorkingThreadDocsStore({ workspaceRoot }),
+    recordsDir: store.recordsDir,
+    store,
     workspaceRoot,
   };
 }

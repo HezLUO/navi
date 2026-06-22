@@ -1,4 +1,4 @@
-import { constants } from "node:fs";
+import { constants, lstatSync, realpathSync } from "node:fs";
 import { lstat, open, readdir, unlink, type FileHandle } from "node:fs/promises";
 import path from "node:path";
 import type {
@@ -89,7 +89,15 @@ function resolveWorkspaceRoot(workspaceRoot: string): string {
     throw new Error("Workspace root must not be the filesystem root.");
   }
 
-  return resolved;
+  const stats = lstatSync(resolved);
+  if (stats.isSymbolicLink()) {
+    throw new Error(`Refusing to use symbolic link workspace root: ${resolved}.`);
+  }
+  if (!stats.isDirectory()) {
+    throw new Error(`Workspace root is not a directory: ${resolved}.`);
+  }
+
+  return realpathSync(resolved);
 }
 
 async function readParsedThread(

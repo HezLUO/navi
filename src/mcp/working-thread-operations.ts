@@ -276,9 +276,13 @@ function getInvalidConfirmationReason(
   input: ApplyConfirmedWorkingThreadUpdateInput,
 ): string | undefined {
   const { confirmation, proposal } = input;
+  const expectedProposalId = buildProposalIdForProposal(proposal);
 
   if (confirmation.approved !== true) {
     return "Confirmation must explicitly approve the proposal.";
+  }
+  if (proposal.proposalId !== expectedProposalId) {
+    return "Proposal id does not match the proposal content.";
   }
   if (confirmation.proposalId !== proposal.proposalId) {
     return "Confirmation proposalId does not match the proposal.";
@@ -332,12 +336,30 @@ function buildProposalId(
   thread: WorkingThread,
   changes: WorkingThreadSectionChange[],
 ): string {
+  return buildProposalIdFromParts(thread.id, thread.lastUpdated, changes);
+}
+
+function buildProposalIdForProposal(
+  proposal: WorkingThreadUpdateProposal,
+): string {
+  return buildProposalIdFromParts(
+    proposal.threadId,
+    proposal.baseLastUpdated,
+    proposal.changes,
+  );
+}
+
+function buildProposalIdFromParts(
+  threadId: string,
+  baseLastUpdated: string,
+  changes: WorkingThreadSectionChange[],
+): string {
   const digest = createHash("sha256")
     .update(canonicalizeProposalChanges(changes))
     .digest("hex")
     .slice(0, 12);
 
-  return `${thread.id}-${thread.lastUpdated}-${digest}`;
+  return `${threadId}-${baseLastUpdated}-${digest}`;
 }
 
 function canonicalizeProposalChanges(changes: WorkingThreadSectionChange[]): string {

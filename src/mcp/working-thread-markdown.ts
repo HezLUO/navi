@@ -15,6 +15,7 @@ export interface WorkingThreadParseWarning {
     | "missing-status"
     | "invalid-status"
     | "missing-last-updated"
+    | "invalid-last-updated"
     | "missing-section"
     | "duplicate-section";
   message: string;
@@ -89,6 +90,12 @@ export function parseWorkingThreadMarkdown(
 
   if (lastUpdated) {
     partial.lastUpdated = lastUpdated;
+    if (!isValidIsoDate(lastUpdated)) {
+      warnings.push({
+        code: "invalid-last-updated",
+        message: `Invalid last updated date: ${lastUpdated}.`,
+      });
+    }
   } else {
     warnings.push({ code: "missing-last-updated", message: "Missing last updated date." });
   }
@@ -361,6 +368,24 @@ function isWorkingThreadStatus(value: string): value is WorkingThreadStatus {
 
 function toWorkingThreadStatus(value: string | undefined): WorkingThreadStatus {
   return value && isWorkingThreadStatus(value) ? value : "active";
+}
+
+function isValidIsoDate(value: string): boolean {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return false;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
+  );
 }
 
 function normalizeHeading(value: string): string {

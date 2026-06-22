@@ -131,6 +131,21 @@ Only one section exists.
     expect(summary.status).toBe("active");
   });
 
+  it("marks records with invalid last-updated dates as malformed", () => {
+    const parsed = parseWorkingThreadMarkdown({
+      id: "invalid-date-thread",
+      sourcePath: "docs/along/working-threads/invalid-date-thread.md",
+      markdown: validRecord.replace("Last updated: 2026-06-22", "Last updated: 2026-02-31"),
+    });
+    const summary = summarizeWorkingThread(parsed);
+
+    expect(parsed.malformed).toBe(true);
+    expect(parsed.thread).toBeUndefined();
+    expect(parsed.partial.lastUpdated).toBe("2026-02-31");
+    expect(parsed.warnings.map((warning) => warning.code)).toContain("invalid-last-updated");
+    expect(summary.lastUpdated).toBe("2026-02-31");
+  });
+
   it("builds a high-risk repair summary for malformed Markdown", () => {
     const summary = summarizeWorkingThread(parseWorkingThreadMarkdown({
       id: "broken-thread",
