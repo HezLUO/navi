@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { spawn } from "node:child_process";
 import { link, lstat, mkdtemp, mkdir, readFile, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import os from "node:os";
 import path from "node:path";
+import type { WorkingThreadUpdateProposal } from "../../src/core/working-thread-contract";
 import { createWorkingThreadDocsStore } from "../../src/mcp/working-thread-docs-store";
 import { parseWorkingThreadMarkdown } from "../../src/mcp/working-thread-markdown";
 import { buildWorkingThreadBaseVersion } from "../../src/mcp/working-thread-version";
@@ -309,7 +312,7 @@ This duplicate heading makes the patched record malformed.`,
     await expect(readFile(recordPath, "utf8")).resolves.toBe(validRecord);
   });
 
-  it("serializes concurrent writes and rejects the stale proposal", async () => {
+  it("rejects one of two same-base concurrent writes without lock files", async () => {
     const { recordsDir, store } = await createTempStore();
     const recordPath = path.join(recordsDir, "store-test-thread.md");
     const lockPath = path.join(recordsDir, "store-test-thread.lock");
@@ -343,18 +346,102 @@ This duplicate heading makes the patched record malformed.`,
       riskLevel: "medium",
     });
 
-    await expect(firstWrite).resolves.toMatchObject({
-      thread: {
-        currentJudgment: "The first concurrent patch was applied.",
-      },
-    });
-    await expect(staleWrite).rejects.toThrow(/stale/i);
+    const results = await Promise.allSettled([firstWrite, staleWrite]);
+    const fulfilled = results.filter((result) => result.status === "fulfilled");
+    const rejected = results.filter((result) => result.status === "rejected");
+
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(Error);
+    expect((rejected[0] as PromiseRejectedResult).reason.message).toMatch(/stale|concurrent/i);
 
     const persisted = await readFile(recordPath, "utf8");
-    expect(persisted).toContain("The first concurrent patch was applied.");
-    expect(persisted).toContain("Apply the docs-backed store patch.");
+    expect([
+      persisted.includes("The first concurrent patch was applied."),
+      persisted.includes("This stale queued patch should not apply."),
+    ].filter(Boolean)).toHaveLength(1);
     await expect(lstat(lockPath)).rejects.toMatchObject({ code: "ENOENT" });
   });
+
+  it("rejects one of two same-base writes from separate processes", async () => {
+    const { recordsDir, workspaceRoot } = await createTempStore();
+    const recordPath = path.join(recordsDir, "store-test-thread.md");
+    const goPath = path.join(workspaceRoot, "go");
+    const firstProposalPath = path.join(workspaceRoot, "first-proposal.json");
+    const secondProposalPath = path.join(workspaceRoot, "second-proposal.json");
+    const firstReadyPath = path.join(workspaceRoot, "first-ready");
+    const secondReadyPath = path.join(workspaceRoot, "second-ready");
+    const firstResultPath = path.join(workspaceRoot, "first-result.json");
+    const secondResultPath = path.join(workspaceRoot, "second-result.json");
+
+    await writeFile(firstProposalPath, JSON.stringify({
+      proposalId: "proposal-cross-process-first",
+      threadId: "store-test-thread",
+      baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
+      changes: [{
+        section: "currentJudgment",
+        currentValue: "The store test is running.",
+        proposedValue: "The first cross-process patch was applied.",
+        rationale: "Only one process should commit a same-base proposal.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "medium",
+    } satisfies WorkingThreadUpdateProposal));
+    await writeFile(secondProposalPath, JSON.stringify({
+      proposalId: "proposal-cross-process-second",
+      threadId: "store-test-thread",
+      baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
+      changes: [{
+        section: "nextLikelyMove",
+        currentValue: "Apply the docs-backed store patch.",
+        proposedValue: "The second cross-process patch was applied.",
+        rationale: "Only one process should commit a same-base proposal.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "medium",
+    } satisfies WorkingThreadUpdateProposal));
+
+    const firstWorker = spawnProposalWorker(
+      workspaceRoot,
+      firstProposalPath,
+      firstReadyPath,
+      goPath,
+      firstResultPath,
+    );
+    const secondWorker = spawnProposalWorker(
+      workspaceRoot,
+      secondProposalPath,
+      secondReadyPath,
+      goPath,
+      secondResultPath,
+    );
+
+    await Promise.all([waitForFile(firstReadyPath), waitForFile(secondReadyPath)]);
+    await writeFile(goPath, "go\n");
+
+    const [firstExit, secondExit] = await Promise.all([firstWorker.done, secondWorker.done]);
+    expect(firstExit).toMatchObject({ code: 0, stderr: "" });
+    expect(secondExit).toMatchObject({ code: 0, stderr: "" });
+
+    const results = [
+      JSON.parse(await readFile(firstResultPath, "utf8")) as ProposalWorkerResult,
+      JSON.parse(await readFile(secondResultPath, "utf8")) as ProposalWorkerResult,
+    ];
+    const fulfilled = results.filter((result) => result.status === "fulfilled");
+    const rejected = results.filter((result) => result.status === "rejected");
+
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]?.message).toMatch(/stale|concurrent|conflict/i);
+
+    const persisted = await readFile(recordPath, "utf8");
+    expect([
+      persisted.includes("The first cross-process patch was applied."),
+      persisted.includes("The second cross-process patch was applied."),
+    ].filter(Boolean)).toHaveLength(1);
+  }, 20_000);
 
   it("rejects malformed record writes", async () => {
     const { recordsDir, store } = await createTempStore();
@@ -382,6 +469,17 @@ This duplicate heading makes the patched record malformed.`,
   });
 });
 
+type ProposalWorkerResult =
+  | {
+    status: "fulfilled";
+    currentJudgment?: string;
+    nextLikelyMove?: string;
+  }
+  | {
+    status: "rejected";
+    message: string;
+  };
+
 async function createTempStore() {
   const workspaceRoot = await mkdtemp(path.join(os.tmpdir(), "working-thread-docs-store-"));
   tempRoots.push(workspaceRoot);
@@ -408,4 +506,59 @@ function getBaseVersion(threadId: string, markdown: string): string {
   }
 
   return buildWorkingThreadBaseVersion(parsed.thread);
+}
+
+function spawnProposalWorker(
+  workspaceRoot: string,
+  proposalPath: string,
+  readyPath: string,
+  goPath: string,
+  resultPath: string,
+): { done: Promise<{ code: number | null; stderr: string; stdout: string }> } {
+  const fixturePath = fileURLToPath(new URL("./fixtures/apply-working-thread-proposal.ts", import.meta.url));
+  const child = spawn(process.execPath, [
+    "--import",
+    "tsx",
+    fixturePath,
+    workspaceRoot,
+    proposalPath,
+    readyPath,
+    goPath,
+    resultPath,
+  ], {
+    cwd: process.cwd(),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => {
+    stdout += chunk;
+  });
+  child.stderr.on("data", (chunk: string) => {
+    stderr += chunk;
+  });
+
+  return {
+    done: new Promise((resolve, reject) => {
+      child.on("error", reject);
+      child.on("close", (code) => resolve({ code, stderr, stdout }));
+    }),
+  };
+}
+
+async function waitForFile(filePath: string): Promise<void> {
+  const startedAt = Date.now();
+  for (;;) {
+    try {
+      await lstat(filePath);
+      return;
+    } catch {
+      if (Date.now() - startedAt > 10_000) {
+        throw new Error(`Timed out waiting for file: ${filePath}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+  }
 }

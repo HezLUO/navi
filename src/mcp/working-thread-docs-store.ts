@@ -30,7 +30,7 @@ export interface WorkingThreadDocsStore {
 
 const recordsDirSegments = ["docs", "along", "working-threads"];
 const safeThreadIdPattern = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-const recordWriteQueues = new Map<string, Promise<unknown>>();
+const baseVersionPattern = /^[a-f0-9]{64}$/;
 
 export function createWorkingThreadDocsStore(
   options: WorkingThreadDocsStoreOptions,
@@ -149,50 +149,109 @@ async function applyPatchProposalToRecordFile(
   recordsDir: string,
   proposal: WorkingThreadUpdateProposal,
 ): Promise<ParsedWorkingThreadDocument> {
-  return runWithRecordWriteQueue(recordsDir, proposal.threadId, async () => {
-    const recordPath = await ensureRecordFileSafe(recordsDir, proposal.threadId);
-    const file = await open(recordPath, getNoFollowReadWriteFlags());
+  const recordPath = await ensureRecordFileSafe(recordsDir, proposal.threadId);
+  const file = await open(recordPath, getNoFollowReadWriteFlags());
 
-    try {
-      await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
+  try {
+    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
 
-      const currentMarkdown = await readOpenFile(file);
-      const parsed = parseWorkingThreadMarkdown({
-        id: proposal.threadId,
-        sourcePath: recordPath,
-        markdown: currentMarkdown,
-      });
+    const currentMarkdown = await readOpenFile(file);
+    const parsed = parseWorkingThreadMarkdown({
+      id: proposal.threadId,
+      sourcePath: recordPath,
+      markdown: currentMarkdown,
+    });
 
-      validateProposalBase(parsed, proposal);
+    validateProposalBase(parsed, proposal);
 
-      const patch = createWorkingThreadSectionPatch(
-        currentMarkdown,
-        proposal.changes,
-      );
-      const patchedMarkdown = patch.markdown;
-      const patched = parseWorkingThreadMarkdown({
-        id: proposal.threadId,
-        sourcePath: recordPath,
-        markdown: patchedMarkdown,
-      });
+    const patch = createWorkingThreadSectionPatch(
+      currentMarkdown,
+      proposal.changes,
+    );
+    const patchedMarkdown = patch.markdown;
+    const patched = parseWorkingThreadMarkdown({
+      id: proposal.threadId,
+      sourcePath: recordPath,
+      markdown: patchedMarkdown,
+    });
 
-      if (patched.malformed || !patched.thread) {
-        throw new Error(`Cannot apply Working Thread proposal because patched record is malformed: ${proposal.threadId}.`);
-      }
-
-      await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
-      const latestMarkdown = await readOpenFile(file);
-      if (latestMarkdown !== currentMarkdown) {
-        throw new Error(`Stale Working Thread proposal ${proposal.proposalId}: record changed before write.`);
-      }
-
-      await writeOpenFilePatch(file, currentMarkdown, patch);
-
-      return patched;
-    } finally {
-      await file.close();
+    if (patched.malformed || !patched.thread) {
+      throw new Error(`Cannot apply Working Thread proposal because patched record is malformed: ${proposal.threadId}.`);
     }
-  });
+
+    await createBaseVersionWriteClaim(recordsDir, proposal);
+
+    await ensureOpenedRecordFileStillSafe(file, recordsDir, recordPath, proposal.threadId);
+    const latestMarkdown = await readOpenFile(file);
+    if (latestMarkdown !== currentMarkdown) {
+      throw new Error(`Stale Working Thread proposal ${proposal.proposalId}: record changed before write.`);
+    }
+
+    await writeOpenFilePatch(file, currentMarkdown, patch);
+
+    return patched;
+  } finally {
+    await file.close();
+  }
+}
+
+async function createBaseVersionWriteClaim(
+  recordsDir: string,
+  proposal: WorkingThreadUpdateProposal,
+): Promise<void> {
+  await ensureRecordsDirSafe(recordsDir, { allowMissing: false });
+  const claimPath = resolveWriteClaimPath(recordsDir, proposal);
+  let claimFile: FileHandle;
+
+  try {
+    claimFile = await open(claimPath, getNoFollowExclusiveCreateFlags());
+  } catch (error) {
+    if (isNodeError(error) && error.code === "EEXIST") {
+      throw new Error(
+        `Stale Working Thread proposal ${proposal.proposalId}: base version is already claimed by another concurrent write.`,
+      );
+    }
+
+    throw error;
+  }
+
+  try {
+    await claimFile.writeFile(`${JSON.stringify({
+      proposalId: proposal.proposalId,
+      threadId: proposal.threadId,
+      baseVersion: proposal.baseVersion,
+      createdAt: new Date().toISOString(),
+    })}\n`);
+    await claimFile.sync();
+  } finally {
+    await claimFile.close();
+  }
+}
+
+function resolveWriteClaimPath(
+  recordsDir: string,
+  proposal: WorkingThreadUpdateProposal,
+): string {
+  if (!safeThreadIdPattern.test(proposal.threadId) || path.isAbsolute(proposal.threadId)) {
+    throw new Error(`Invalid thread id: ${proposal.threadId}.`);
+  }
+
+  if (!proposal.baseVersion || !baseVersionPattern.test(proposal.baseVersion)) {
+    throw new Error(`Invalid Working Thread proposal base version: ${proposal.proposalId}.`);
+  }
+
+  const resolvedRecordsDir = path.resolve(recordsDir);
+  const claimPath = path.resolve(
+    resolvedRecordsDir,
+    `.${proposal.threadId}.${proposal.baseVersion}.write-claim`,
+  );
+  const relativePath = path.relative(resolvedRecordsDir, claimPath);
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error(`Invalid Working Thread proposal claim path: ${proposal.proposalId}.`);
+  }
+
+  return claimPath;
 }
 
 async function ensureRecordFileSafe(
@@ -380,27 +439,10 @@ function getNoFollowReadWriteFlags(): number {
   return constants.O_RDWR | constants.O_NOFOLLOW;
 }
 
-async function runWithRecordWriteQueue<T>(
-  recordsDir: string,
-  threadId: string,
-  operation: () => Promise<T>,
-): Promise<T> {
-  const queueKey = `${path.resolve(recordsDir)}:${threadId}`;
-  const previous = recordWriteQueues.get(queueKey) ?? Promise.resolve();
-  let releaseCurrent!: () => void;
-  const current = new Promise<void>((resolve) => {
-    releaseCurrent = resolve;
-  });
-  const queued = previous.then(() => current, () => current);
-  recordWriteQueues.set(queueKey, queued);
-
-  try {
-    await previous.catch(() => undefined);
-    return await operation();
-  } finally {
-    releaseCurrent();
-    if (recordWriteQueues.get(queueKey) === queued) {
-      recordWriteQueues.delete(queueKey);
-    }
+function getNoFollowExclusiveCreateFlags(): number {
+  if (typeof constants.O_NOFOLLOW !== "number") {
+    throw new Error("Cannot safely claim Working Thread record write: O_NOFOLLOW is unavailable.");
   }
+
+  return constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW;
 }
