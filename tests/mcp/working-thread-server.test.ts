@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { z, type ZodRawShape } from "zod";
 import type {
   WorkingThread,
   WorkingThreadSummary,
@@ -113,7 +114,10 @@ describe("Working Thread MCP server surface", () => {
   it("returns structured rejection for malformed propose tool input", async () => {
     const registrar = createFakeRegistrar();
     registerWorkingThreadMcpSurface(registrar, createFakeStore());
+    const schema = getToolSchema(registrar, "proposeWorkingThreadUpdate");
 
+    expect(schema.safeParse({}).success).toBe(true);
+    expect(schema.safeParse({ thread: "bad", draft: {} }).success).toBe(true);
     const result = await registrar.tools.proposeWorkingThreadUpdate.handler({
       thread: { id: "thread-1" },
       draft: {},
@@ -126,6 +130,40 @@ describe("Working Thread MCP server surface", () => {
       operation: "proposeWorkingThreadUpdate",
       threadId: "thread-1",
       reason: expect.stringMatching(/thread|draft/i),
+    });
+  });
+
+  it("returns structured rejection for malformed apply tool input", async () => {
+    const registrar = createFakeRegistrar();
+    registerWorkingThreadMcpSurface(registrar, createFakeStore());
+    const schema = getToolSchema(registrar, "applyConfirmedWorkingThreadUpdate");
+    const proposalResult = await registrar.tools.proposeWorkingThreadUpdate.handler({
+      thread,
+      draft: {
+        summary: "A valid proposed wrap-up.",
+        judgmentChange: "A valid proposed judgment.",
+        boundaryChange: "",
+        nextLikelyMove: "",
+        openQuestionsChange: "",
+        requiresConfirmation: true,
+      },
+    });
+    const proposal = JSON.parse(proposalResult.content[0].text).data;
+
+    expect(schema.safeParse({}).success).toBe(true);
+    expect(schema.safeParse({ proposal, confirmation: "bad" }).success).toBe(true);
+    const result = await registrar.tools.applyConfirmedWorkingThreadUpdate.handler({
+      proposal,
+      confirmation: "bad",
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.parse(result.content[0].text)).toEqual(result.structuredContent);
+    expect(result.structuredContent).toMatchObject({
+      status: "rejected",
+      operation: "applyConfirmedWorkingThreadUpdate",
+      threadId: "thread-1",
+      reason: expect.stringMatching(/confirmation/i),
     });
   });
 
@@ -244,6 +282,14 @@ function createRegisteredSurface() {
   registerWorkingThreadMcpSurface(registrar, store, operations);
 
   return { operations, registrar, store };
+}
+
+function getToolSchema(
+  registrar: ReturnType<typeof createFakeRegistrar>,
+  toolName: string,
+) {
+  const config = registrar.tools[toolName].config as { inputSchema: ZodRawShape };
+  return z.object(config.inputSchema);
 }
 
 function createFakeStore() {

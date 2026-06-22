@@ -228,6 +228,20 @@ This heading must not be introduced through a section patch.`,
     ])).toThrow(/heading/i);
   });
 
+  it("rejects section patches that would introduce Setext Markdown headings", () => {
+    expect(() => applyWorkingThreadSectionPatches(validRecord, [
+      {
+        section: "currentJudgment",
+        currentValue: "The Minimal MCP Server spec is approved and awaiting implementation.",
+        proposedValue: `Injected heading
+---
+
+This Setext heading must not be introduced through a section patch.`,
+        rationale: "Setext heading injection should fail.",
+      },
+    ])).toThrow(/heading/i);
+  });
+
   it("rejects patches for missing sections", () => {
     const withoutOpenQuestions = validRecord.replace(/\n## Open Questions[\s\S]*$/, "");
 

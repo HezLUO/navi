@@ -337,7 +337,15 @@ function formatSectionValue(value: string | string[]): string {
 }
 
 function containsMarkdownHeading(value: string): boolean {
-  return /^#{1,6}\s+\S/m.test(value);
+  const lines = value.split(/\r?\n/);
+
+  return lines.some((line, index) => {
+    if (/^#{1,6}\s+\S/.test(line)) {
+      return true;
+    }
+
+    return /^\s*(?:=+|-+)\s*$/.test(line) && Boolean(lines[index - 1]?.trim());
+  });
 }
 
 function parseBulletList(value: string): string[] {

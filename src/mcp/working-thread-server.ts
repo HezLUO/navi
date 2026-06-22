@@ -49,12 +49,12 @@ const draftWrapUpInputSchema = {
   openQuestionsChange: z.string().optional(),
 };
 const proposeWorkingThreadUpdateInputSchema = {
-  thread: unknownRecord,
-  draft: unknownRecord,
+  thread: z.unknown().optional(),
+  draft: z.unknown().optional(),
 };
 const applyConfirmedWorkingThreadUpdateInputSchema = {
-  proposal: unknownRecord,
-  confirmation: unknownRecord,
+  proposal: z.unknown().optional(),
+  confirmation: z.unknown().optional(),
 };
 
 export interface WorkingThreadMcpRegistrar {
