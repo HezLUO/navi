@@ -199,7 +199,7 @@ describe("Along Working Thread Codex skill", () => {
     expect(record).toContain("Skill Behavior Tightening Pass");
     expect(record).toContain("high-impact drift confirmation");
     expect(record).toContain("Do not build a new standalone Along agent");
-    expect(record).toContain("Do not implement Core/MCP");
+    expect(record).toContain("Do not expand the completed Minimal Server V1");
     expect(record).toContain("Do not turn plugin packaging into a broad productization effort");
     expect(record).toContain("personal local plugin first");
   });
