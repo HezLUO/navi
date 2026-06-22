@@ -204,6 +204,10 @@ async function ensureRecordFileSafe(
     throw new Error(`Working Thread record is not a regular file: ${threadId}.`);
   }
 
+  if (stats.nlink > 1) {
+    throw new Error(`Refusing to access hard-linked Working Thread record alias outside the trusted scope: ${threadId}.`);
+  }
+
   return recordPath;
 }
 
@@ -316,12 +320,20 @@ async function ensureOpenedRecordFileStillSafe(
     throw new Error(`Opened Working Thread record is not a regular file: ${threadId}.`);
   }
 
+  if (openedStats.nlink > 1) {
+    throw new Error(`Refusing to write hard-linked Working Thread record alias outside the trusted scope: ${threadId}.`);
+  }
+
   if (pathStats.isSymbolicLink()) {
     throw new Error(`Refusing to write symbolic link Working Thread record: ${threadId}.`);
   }
 
   if (!pathStats.isFile()) {
     throw new Error(`Working Thread record is not a regular file: ${threadId}.`);
+  }
+
+  if (pathStats.nlink > 1) {
+    throw new Error(`Refusing to write hard-linked Working Thread record alias outside the trusted scope: ${threadId}.`);
   }
 
   if (openedStats.dev !== pathStats.dev || openedStats.ino !== pathStats.ino) {

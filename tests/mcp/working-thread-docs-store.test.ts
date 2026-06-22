@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createWorkingThreadDocsStore } from "../../src/mcp/working-thread-docs-store";
@@ -139,6 +139,29 @@ describe("Working Thread docs store", () => {
       confirmationPrompt: "Apply this Working Thread update?",
       riskLevel: "high",
     })).rejects.toThrow(/symlink|symbolic/i);
+    await expect(readFile(outsideFile, "utf8")).resolves.toBe(validRecord);
+  });
+
+  it("rejects hard-linked record files and leaves outside aliases unchanged", async () => {
+    const { recordsDir, store, workspaceRoot } = await createTempStore();
+    const outsideFile = path.join(workspaceRoot, "outside-hardlink-thread.md");
+    await writeFile(outsideFile, validRecord);
+    await link(outsideFile, path.join(recordsDir, "hardlink-thread.md"));
+
+    await expect(store.readThread("hardlink-thread")).rejects.toThrow(/link|alias|scope/i);
+    await expect(store.applySectionPatchProposal({
+      proposalId: "proposal-hardlink",
+      threadId: "hardlink-thread",
+      baseLastUpdated: "2026-06-22",
+      changes: [{
+        section: "currentJudgment",
+        currentValue: "The store test is running.",
+        proposedValue: "This write escaped through a hard link.",
+        rationale: "Hard-linked records must be rejected.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "high",
+    })).rejects.toThrow(/link|alias|scope/i);
     await expect(readFile(outsideFile, "utf8")).resolves.toBe(validRecord);
   });
 
