@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  riskLevels,
   workingThreadSections,
   workingThreadStatuses,
 } from "../core/working-thread-contract";
@@ -69,6 +70,17 @@ export function createWorkingThreadOperations(
 }
 
 function classifyDrift(input: ClassifyDriftInput): ClassifyDriftResult {
+  const invalidReason = getInvalidClassifyInputReason(input);
+  const threadId = getClassifyInputThreadId(input);
+  if (invalidReason) {
+    return {
+      status: "rejected",
+      operation: "classifyDrift",
+      threadId,
+      reason: invalidReason,
+    };
+  }
+
   const drift = buildDriftClassification(input);
 
   return {
@@ -77,6 +89,33 @@ function classifyDrift(input: ClassifyDriftInput): ClassifyDriftResult {
     threadId: input.thread.id,
     data: drift,
   };
+}
+
+function getInvalidClassifyInputReason(input: ClassifyDriftInput): string | undefined {
+  const value = input as unknown;
+  if (!isRecord(value)) {
+    return "Classify input is required.";
+  }
+  if (!isRecord(value.thread)) {
+    return "Thread is required.";
+  }
+  if (typeof value.thread.id !== "string") {
+    return "Thread id is required.";
+  }
+  if (typeof value.userRequest !== "string" || !value.userRequest.trim()) {
+    return "User request is required.";
+  }
+  if ("proposedDirection" in value && typeof value.proposedDirection !== "string") {
+    return "Proposed direction must be a string.";
+  }
+  if ("boundary" in value.thread && !isStringArray(value.thread.boundary)) {
+    return "Thread boundary must be a string array.";
+  }
+  if ("driftTriggers" in value.thread && !isStringArray(value.thread.driftTriggers)) {
+    return "Thread driftTriggers must be a string array.";
+  }
+
+  return undefined;
 }
 
 function buildDriftClassification(input: ClassifyDriftInput): DriftClassification {
@@ -449,6 +488,15 @@ function getInvalidProposalReason(
   if (!Array.isArray(proposal.changes)) {
     return "Proposal changes are required.";
   }
+  if (!isNonEmptyString(proposal.confirmationPrompt)) {
+    return "Proposal confirmationPrompt is required.";
+  }
+  if (
+    typeof proposal.riskLevel !== "string"
+    || !riskLevels.includes(proposal.riskLevel as WorkingThreadUpdateProposal["riskLevel"])
+  ) {
+    return "Proposal riskLevel is invalid.";
+  }
 
   for (const [index, change] of proposal.changes.entries()) {
     const invalidChangeReason = getInvalidSectionChangeReason(change, index);
@@ -602,6 +650,17 @@ function getApplyInputThreadId(
   const proposal = input.proposal as unknown;
   if (isRecord(proposal) && typeof proposal.threadId === "string") {
     return proposal.threadId;
+  }
+
+  return undefined;
+}
+
+function getClassifyInputThreadId(
+  input: ClassifyDriftInput,
+): string | undefined {
+  const value = input as unknown;
+  if (isRecord(value) && isRecord(value.thread) && typeof value.thread.id === "string") {
+    return value.thread.id;
   }
 
   return undefined;

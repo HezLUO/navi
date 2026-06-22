@@ -133,6 +133,28 @@ describe("Working Thread MCP server surface", () => {
     });
   });
 
+  it("returns structured rejection for malformed classify tool input", async () => {
+    const registrar = createFakeRegistrar();
+    registerWorkingThreadMcpSurface(registrar, createFakeStore());
+
+    const result = await registrar.tools.classifyDrift.handler({
+      thread: {
+        id: "thread-1",
+        boundary: "No HTTP transport.",
+      },
+      userRequest: "Add HTTP transport.",
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.parse(result.content[0].text)).toEqual(result.structuredContent);
+    expect(result.structuredContent).toMatchObject({
+      status: "rejected",
+      operation: "classifyDrift",
+      threadId: "thread-1",
+      reason: expect.stringMatching(/boundary/i),
+    });
+  });
+
   it("returns structured rejection for malformed apply tool input", async () => {
     const registrar = createFakeRegistrar();
     registerWorkingThreadMcpSurface(registrar, createFakeStore());

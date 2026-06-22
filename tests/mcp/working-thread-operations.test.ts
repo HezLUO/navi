@@ -96,6 +96,25 @@ describe("Working Thread operation handlers", () => {
     });
   });
 
+  it("rejects malformed classify inputs without throwing", async () => {
+    const { operations } = await createTempOperations();
+
+    const result = await operations.classifyDrift({
+      thread: {
+        id: threadId,
+        boundary: "Do not add HTTP transport.",
+      },
+      userRequest: "Add HTTP transport.",
+    } as never);
+
+    expect(result).toMatchObject({
+      status: "rejected",
+      operation: "classifyDrift",
+      threadId,
+      reason: expect.stringMatching(/boundary/i),
+    });
+  });
+
   it("drafts wrap-up fields and proposes ordered confirmation changes", async () => {
     const { operations, thread } = await createTempOperations();
 
@@ -279,6 +298,31 @@ describe("Working Thread operation handlers", () => {
       threadId,
       reason: expect.stringMatching(/approvedAt/i),
     });
+  });
+
+  it("rejects malformed proposals that omit required display fields", async () => {
+    const { operations, proposal, store } = await createTempProposal();
+    const malformedProposal = {
+      ...proposal,
+      confirmationPrompt: undefined,
+      riskLevel: undefined,
+    };
+
+    const result = await operations.applyConfirmedWorkingThreadUpdate({
+      proposal: malformedProposal as never,
+      confirmation: validConfirmation(proposal),
+    });
+    const persisted = await store.readThread(threadId);
+
+    expect(result).toMatchObject({
+      status: "rejected",
+      operation: "applyConfirmedWorkingThreadUpdate",
+      threadId,
+      reason: expect.stringMatching(/confirmationPrompt|riskLevel/i),
+    });
+    expect(persisted.thread?.currentJudgment).toBe(
+      "The operation handler task is ready for implementation.",
+    );
   });
 
   it("rejects write-back when proposal changes no longer match the proposal id", async () => {

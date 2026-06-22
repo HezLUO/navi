@@ -6,9 +6,10 @@ import type {
   WorkingThreadUpdateProposal,
 } from "../core/working-thread-contract";
 import {
-  applyWorkingThreadSectionPatches,
+  createWorkingThreadSectionPatch,
   parseWorkingThreadMarkdown,
   type ParsedWorkingThreadDocument,
+  type WorkingThreadSectionPatchResult,
   summarizeWorkingThread,
 } from "./working-thread-markdown";
 import { buildWorkingThreadBaseVersion } from "./working-thread-version";
@@ -165,10 +166,11 @@ async function applyPatchProposalToRecordFile(
 
       validateProposalBase(parsed, proposal);
 
-      const patchedMarkdown = applyWorkingThreadSectionPatches(
+      const patch = createWorkingThreadSectionPatch(
         currentMarkdown,
         proposal.changes,
       );
+      const patchedMarkdown = patch.markdown;
       const patched = parseWorkingThreadMarkdown({
         id: proposal.threadId,
         sourcePath: recordPath,
@@ -185,8 +187,7 @@ async function applyPatchProposalToRecordFile(
         throw new Error(`Stale Working Thread proposal ${proposal.proposalId}: record changed before write.`);
       }
 
-      await file.truncate(0);
-      await writeOpenFile(file, patchedMarkdown);
+      await writeOpenFilePatch(file, currentMarkdown, patch);
 
       return patched;
     } finally {
@@ -378,7 +379,26 @@ async function readOpenFile(file: FileHandle): Promise<string> {
   return buffer.subarray(0, offset).toString("utf8");
 }
 
-async function writeOpenFile(file: FileHandle, markdown: string): Promise<void> {
+async function writeOpenFilePatch(
+  file: FileHandle,
+  currentMarkdown: string,
+  patch: WorkingThreadSectionPatchResult,
+): Promise<void> {
+  const unchangedPrefix = currentMarkdown.slice(0, patch.firstChangedOffset);
+  if (!patch.markdown.startsWith(unchangedPrefix)) {
+    throw new Error("Cannot apply Working Thread patch because the unchanged prefix shifted.");
+  }
+
+  const writePosition = Buffer.byteLength(unchangedPrefix, "utf8");
+  await file.truncate(writePosition);
+  await writeOpenFile(file, patch.markdown.slice(patch.firstChangedOffset), writePosition);
+}
+
+async function writeOpenFile(
+  file: FileHandle,
+  markdown: string,
+  position = 0,
+): Promise<void> {
   const buffer = Buffer.from(markdown, "utf8");
   let offset = 0;
 
@@ -387,7 +407,7 @@ async function writeOpenFile(file: FileHandle, markdown: string): Promise<void> 
       buffer,
       offset,
       buffer.length - offset,
-      offset,
+      position + offset,
     );
     offset += result.bytesWritten;
   }

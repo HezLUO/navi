@@ -46,6 +46,11 @@ export interface ParseWorkingThreadMarkdownInput {
   markdown: string;
 }
 
+export interface WorkingThreadSectionPatchResult {
+  markdown: string;
+  firstChangedOffset: number;
+}
+
 const sectionHeadings = {
   whyThisMatters: "Why This Matters",
   currentJudgment: "Current Judgment",
@@ -183,19 +188,32 @@ export function applyWorkingThreadSectionPatches(
   markdown: string,
   changes: WorkingThreadSectionChange[],
 ): string {
+  return createWorkingThreadSectionPatch(markdown, changes).markdown;
+}
+
+export function createWorkingThreadSectionPatch(
+  markdown: string,
+  changes: WorkingThreadSectionChange[],
+): WorkingThreadSectionPatchResult {
   let patched = markdown;
+  let firstChangedOffset = markdown.length;
 
   for (const change of changes) {
-    patched = applySingleSectionPatch(patched, change);
+    const result = applySingleSectionPatch(patched, change);
+    patched = result.markdown;
+    firstChangedOffset = Math.min(firstChangedOffset, result.changedOffset);
   }
 
-  return patched;
+  return {
+    markdown: patched,
+    firstChangedOffset,
+  };
 }
 
 function applySingleSectionPatch(
   markdown: string,
   change: WorkingThreadSectionChange,
-): string {
+): { markdown: string; changedOffset: number } {
   const sectionRange = findSectionRange(markdown, change.section);
   if (sectionRange.length === 0) {
     throw new Error(`Cannot patch missing section: ${sectionHeadings[change.section]}.`);
@@ -223,12 +241,15 @@ function applySingleSectionPatch(
   }
 
   const suffix = targetRange.bodyEnd < markdown.length ? "\n\n" : "\n";
-  return [
-    markdown.slice(0, targetRange.bodyStart),
-    replacementBody,
-    suffix,
-    markdown.slice(targetRange.bodyEnd).replace(/^\n+/, ""),
-  ].join("");
+  return {
+    markdown: [
+      markdown.slice(0, targetRange.bodyStart),
+      replacementBody,
+      suffix,
+      markdown.slice(targetRange.bodyEnd).replace(/^\n+/, ""),
+    ].join(""),
+    changedOffset: targetRange.bodyStart,
+  };
 }
 
 function parseSections(markdown: string): Map<WorkingThreadSection, string[]> {
@@ -341,6 +362,9 @@ function containsMarkdownHeading(value: string): boolean {
 
   return lines.some((line, index) => {
     if (/^#{1,6}\s+\S/.test(line)) {
+      return true;
+    }
+    if (/^\s*[-*]\s+#{1,6}\s+\S/.test(line)) {
       return true;
     }
 

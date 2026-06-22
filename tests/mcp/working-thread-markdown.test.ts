@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyWorkingThreadSectionPatches,
+  createWorkingThreadSectionPatch,
   parseWorkingThreadMarkdown,
   summarizeWorkingThread,
 } from "../../src/mcp/working-thread-markdown";
@@ -202,6 +203,24 @@ Only one section exists.
 The user approved the Minimal MCP Server spec.`);
   });
 
+  it("reports the first changed offset so stores can avoid truncate-to-zero rewrites", () => {
+    const result = createWorkingThreadSectionPatch(validRecord, [
+      {
+        section: "nextLikelyMove",
+        currentValue: "Implement the docs-backed stdio MCP server.",
+        proposedValue: "Run the final verification suite.",
+        rationale: "The implementation is ready for verification.",
+      },
+    ]);
+    const nextLikelyMoveBodyOffset = validRecord.indexOf("Implement the docs-backed stdio MCP server.");
+
+    expect(result.firstChangedOffset).toBe(nextLikelyMoveBodyOffset);
+    expect(result.firstChangedOffset).toBeGreaterThan(0);
+    expect(result.markdown.slice(0, result.firstChangedOffset)).toBe(
+      validRecord.slice(0, result.firstChangedOffset),
+    );
+  });
+
   it("rejects stale patches when the current value does not match", () => {
     expect(() => applyWorkingThreadSectionPatches(validRecord, [
       {
@@ -238,6 +257,24 @@ This heading must not be introduced through a section patch.`,
 
 This Setext heading must not be introduced through a section patch.`,
         rationale: "Setext heading injection should fail.",
+      },
+    ])).toThrow(/heading/i);
+  });
+
+  it("rejects list-valued section patches that would introduce Markdown headings", () => {
+    expect(() => applyWorkingThreadSectionPatches(validRecord, [
+      {
+        section: "boundary",
+        currentValue: [
+          "Do not add background runtime.",
+          "Do not add HTTP/SSE transport.",
+        ],
+        proposedValue: [
+          "Do not add background runtime.",
+          "Do not add HTTP/SSE transport.",
+          "## List Heading",
+        ],
+        rationale: "List heading injection should fail.",
       },
     ])).toThrow(/heading/i);
   });
