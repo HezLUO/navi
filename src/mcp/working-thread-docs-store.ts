@@ -165,6 +165,27 @@ async function writeRecordFile(
   const file = await open(recordPath, getNoFollowWriteFlags());
 
   try {
+    const openedStats = await file.stat();
+    await ensureRecordsDirSafe(recordsDir, { allowMissing: false });
+    const pathStats = await lstat(recordPath);
+
+    if (!openedStats.isFile()) {
+      throw new Error(`Opened Working Thread record is not a regular file: ${threadId}.`);
+    }
+
+    if (pathStats.isSymbolicLink()) {
+      throw new Error(`Refusing to write symbolic link Working Thread record: ${threadId}.`);
+    }
+
+    if (!pathStats.isFile()) {
+      throw new Error(`Working Thread record is not a regular file: ${threadId}.`);
+    }
+
+    if (openedStats.dev !== pathStats.dev || openedStats.ino !== pathStats.ino) {
+      throw new Error(`Refusing to write swapped Working Thread record: ${threadId}.`);
+    }
+
+    await file.truncate(0);
     await file.writeFile(markdown, "utf8");
   } finally {
     await file.close();
@@ -228,5 +249,5 @@ function getNoFollowWriteFlags(): number {
     throw new Error("Cannot safely write Working Thread record: O_NOFOLLOW is unavailable.");
   }
 
-  return constants.O_WRONLY | constants.O_TRUNC | constants.O_NOFOLLOW;
+  return constants.O_WRONLY | constants.O_NOFOLLOW;
 }
