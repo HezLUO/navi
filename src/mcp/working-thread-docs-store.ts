@@ -1,4 +1,5 @@
-import { lstat, readdir, readFile, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { lstat, open, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import type {
   WorkingThreadSummary,
@@ -161,7 +162,13 @@ async function writeRecordFile(
   markdown: string,
 ): Promise<void> {
   const recordPath = await ensureRecordFileSafe(recordsDir, threadId);
-  await writeFile(recordPath, markdown, "utf8");
+  const file = await open(recordPath, getNoFollowWriteFlags());
+
+  try {
+    await file.writeFile(markdown, "utf8");
+  } finally {
+    await file.close();
+  }
 }
 
 async function ensureRecordFileSafe(
@@ -214,4 +221,12 @@ async function ensureRecordsDirSafe(
   }
 
   return true;
+}
+
+function getNoFollowWriteFlags(): number {
+  if (typeof constants.O_NOFOLLOW !== "number") {
+    throw new Error("Cannot safely write Working Thread record: O_NOFOLLOW is unavailable.");
+  }
+
+  return constants.O_WRONLY | constants.O_TRUNC | constants.O_NOFOLLOW;
 }
