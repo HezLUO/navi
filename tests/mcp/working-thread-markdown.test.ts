@@ -117,6 +117,54 @@ Only one section exists.
     expect(parsed.warnings.map((warning) => warning.code)).toContain("missing-section");
   });
 
+  it("does not treat metadata inside sections as top-level metadata", () => {
+    const parsed = parseWorkingThreadMarkdown({
+      id: "nested-metadata-thread",
+      sourcePath: "docs/along/working-threads/nested-metadata-thread.md",
+      markdown: `# Nested Metadata Thread
+
+## Why This Matters
+
+Status: active
+Last updated: 2026-06-22
+
+These lines are section content, not record metadata.
+
+## Current Judgment
+
+The parser should reject misplaced metadata.
+
+## Boundary
+
+- Only top-level metadata is valid.
+
+## Drift Triggers
+
+- Metadata appears inside a section.
+
+## Next Likely Move
+
+Repair the top-level metadata.
+
+## Last Wrap-Up
+
+The record lost its metadata block.
+
+## Open Questions
+
+- Who should repair this record?
+`,
+    });
+
+    expect(parsed.malformed).toBe(true);
+    expect(parsed.thread).toBeUndefined();
+    expect(parsed.partial.status).toBeUndefined();
+    expect(parsed.partial.lastUpdated).toBeUndefined();
+    expect(parsed.warnings.map((warning) => warning.code)).toEqual(
+      expect.arrayContaining(["missing-status", "missing-last-updated"]),
+    );
+  });
+
   it("marks records with unknown or nested Markdown headings as malformed", () => {
     const withUnknownHeading = validRecord.replace(
       "## Next Likely Move",

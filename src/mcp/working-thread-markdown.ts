@@ -75,8 +75,9 @@ export function parseWorkingThreadMarkdown(
   const warnings: WorkingThreadParseWarning[] = [];
   const partial: PartialWorkingThreadDocument = { id: input.id, sections: {} };
   const title = input.markdown.match(/^#\s+(.+?)\s*$/m)?.[1]?.trim();
-  const status = input.markdown.match(/^Status:\s*(.+?)\s*$/m)?.[1]?.trim();
-  const lastUpdated = input.markdown.match(/^Last updated:\s*(.+?)\s*$/m)?.[1]?.trim();
+  const metadataBlock = getTopLevelMetadataBlock(input.markdown);
+  const status = metadataBlock.match(/^Status:\s*(.+?)\s*$/m)?.[1]?.trim();
+  const lastUpdated = metadataBlock.match(/^Last updated:\s*(.+?)\s*$/m)?.[1]?.trim();
   const sections = parseSections(input.markdown, warnings);
   addSetextHeadingWarnings(input.markdown, warnings);
 
@@ -252,6 +253,17 @@ function applySingleSectionPatch(
     ].join(""),
     changedOffset: targetRange.bodyStart,
   };
+}
+
+function getTopLevelMetadataBlock(markdown: string): string {
+  const titleMatch = /^#\s+.+?\s*$/m.exec(markdown);
+  const metadataStart = titleMatch ? titleMatch.index + titleMatch[0].length : 0;
+  const firstSectionMatch = /^##\s+.+?\s*$/m.exec(markdown.slice(metadataStart));
+  if (!firstSectionMatch) {
+    return markdown.slice(metadataStart);
+  }
+
+  return markdown.slice(metadataStart, metadataStart + firstSectionMatch.index);
 }
 
 function parseSections(

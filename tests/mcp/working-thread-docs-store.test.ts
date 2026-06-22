@@ -55,6 +55,40 @@ Last updated: 2026-06-22
 This record is missing required sections.
 `;
 
+const misplacedMetadataRecord = `# Misplaced Metadata Thread
+
+## Why This Matters
+
+Status: active
+Last updated: 2026-06-22
+
+The metadata lines are section content, not top-level record metadata.
+
+## Current Judgment
+
+This record has all sections but misplaced metadata.
+
+## Boundary
+
+- Reject malformed metadata placement.
+
+## Drift Triggers
+
+- Metadata appears in a section body.
+
+## Next Likely Move
+
+Repair the metadata block.
+
+## Last Wrap-Up
+
+The metadata block was misplaced.
+
+## Open Questions
+
+- Who should repair this record?
+`;
+
 const storeTestBaseVersion = getBaseVersion("store-test-thread", validRecord);
 const tempRoots: string[] = [];
 
@@ -460,6 +494,27 @@ This duplicate heading makes the patched record malformed.`,
       confirmationPrompt: "Apply this Working Thread update?",
       riskLevel: "high",
     })).rejects.toThrow(/malformed/i);
+  });
+
+  it("rejects writes when metadata appears only inside a section", async () => {
+    const { recordsDir, store } = await createTempStore();
+    const recordPath = path.join(recordsDir, "misplaced-metadata.md");
+    await writeFile(recordPath, misplacedMetadataRecord);
+
+    await expect(store.applySectionPatchProposal({
+      proposalId: "proposal-misplaced-metadata",
+      threadId: "misplaced-metadata",
+      baseLastUpdated: "2026-06-22",
+      changes: [{
+        section: "currentJudgment",
+        currentValue: "This record has all sections but misplaced metadata.",
+        proposedValue: "This malformed metadata record should not be patched.",
+        rationale: "Metadata placement must be repaired before write-back.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "high",
+    })).rejects.toThrow(/malformed/i);
+    await expect(readFile(recordPath, "utf8")).resolves.toBe(misplacedMetadataRecord);
   });
 
   it("rejects thread IDs that escape the Working Thread directory", async () => {
