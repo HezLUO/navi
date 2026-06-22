@@ -158,6 +158,28 @@ describe("Working Thread MCP server surface", () => {
     });
   });
 
+  it("returns structured rejection for malformed draft wrap-up tool input", async () => {
+    const registrar = createFakeRegistrar();
+    registerWorkingThreadMcpSurface(registrar, createFakeStore());
+    const schema = getToolSchema(registrar, "draftWrapUp");
+
+    expect(schema.safeParse({}).success).toBe(true);
+    expect(schema.safeParse({ thread: { id: "thread-1" }, sessionSummary: 123 }).success).toBe(true);
+    const result = await registrar.tools.draftWrapUp.handler({
+      thread: { id: "thread-1" },
+      sessionSummary: 123,
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.parse(result.content[0].text)).toEqual(result.structuredContent);
+    expect(result.structuredContent).toMatchObject({
+      status: "rejected",
+      operation: "draftWrapUp",
+      threadId: "thread-1",
+      reason: expect.stringMatching(/thread|session/i),
+    });
+  });
+
   it("returns structured rejection for malformed apply tool input", async () => {
     const registrar = createFakeRegistrar();
     registerWorkingThreadMcpSurface(registrar, createFakeStore());

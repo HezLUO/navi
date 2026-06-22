@@ -117,6 +117,43 @@ Only one section exists.
     expect(parsed.warnings.map((warning) => warning.code)).toContain("missing-section");
   });
 
+  it("marks records with unknown or nested Markdown headings as malformed", () => {
+    const withUnknownHeading = validRecord.replace(
+      "## Next Likely Move",
+      `   ## Hidden Heading
+
+This heading should make the record malformed.
+
+## Next Likely Move`,
+    );
+    const withNestedHeading = validRecord.replace(
+      "The Minimal MCP Server spec is approved and awaiting implementation.",
+      `The Minimal MCP Server spec is approved and awaiting implementation.
+
+### Nested Heading
+
+This nested heading should make the record malformed.`,
+    );
+
+    const unknownParsed = parseWorkingThreadMarkdown({
+      id: "unknown-heading-thread",
+      sourcePath: "docs/along/working-threads/unknown-heading-thread.md",
+      markdown: withUnknownHeading,
+    });
+    const nestedParsed = parseWorkingThreadMarkdown({
+      id: "nested-heading-thread",
+      sourcePath: "docs/along/working-threads/nested-heading-thread.md",
+      markdown: withNestedHeading,
+    });
+
+    expect(unknownParsed.malformed).toBe(true);
+    expect(unknownParsed.thread).toBeUndefined();
+    expect(unknownParsed.warnings.map((warning) => warning.code)).toContain("unknown-section");
+    expect(nestedParsed.malformed).toBe(true);
+    expect(nestedParsed.thread).toBeUndefined();
+    expect(nestedParsed.warnings.map((warning) => warning.code)).toContain("unknown-section");
+  });
+
   it("preserves invalid raw status in malformed partial records", () => {
     const parsed = parseWorkingThreadMarkdown({
       id: "archived-thread",

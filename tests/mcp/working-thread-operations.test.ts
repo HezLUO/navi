@@ -176,6 +176,22 @@ describe("Working Thread operation handlers", () => {
     });
   });
 
+  it("rejects malformed draft wrap-up inputs without throwing", async () => {
+    const { operations } = await createTempOperations();
+
+    const result = await operations.draftWrapUp({
+      thread: { id: threadId },
+      sessionSummary: 123,
+    } as never);
+
+    expect(result).toMatchObject({
+      status: "rejected",
+      operation: "draftWrapUp",
+      threadId,
+      reason: expect.stringMatching(/thread|session/i),
+    });
+  });
+
   it("generates distinct deterministic proposal ids for different changes", async () => {
     const { operations, thread } = await createTempOperations();
     const firstDraft = await operations.draftWrapUp({

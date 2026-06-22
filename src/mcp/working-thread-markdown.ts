@@ -17,7 +17,8 @@ export interface WorkingThreadParseWarning {
     | "missing-last-updated"
     | "invalid-last-updated"
     | "missing-section"
-    | "duplicate-section";
+    | "duplicate-section"
+    | "unknown-section";
   message: string;
   section?: WorkingThreadSection;
 }
@@ -76,7 +77,7 @@ export function parseWorkingThreadMarkdown(
   const title = input.markdown.match(/^#\s+(.+?)\s*$/m)?.[1]?.trim();
   const status = input.markdown.match(/^Status:\s*(.+?)\s*$/m)?.[1]?.trim();
   const lastUpdated = input.markdown.match(/^Last updated:\s*(.+?)\s*$/m)?.[1]?.trim();
-  const sections = parseSections(input.markdown);
+  const sections = parseSections(input.markdown, warnings);
 
   if (title) {
     partial.title = title;
@@ -252,16 +253,26 @@ function applySingleSectionPatch(
   };
 }
 
-function parseSections(markdown: string): Map<WorkingThreadSection, string[]> {
+function parseSections(
+  markdown: string,
+  warnings: WorkingThreadParseWarning[],
+): Map<WorkingThreadSection, string[]> {
   const sections = new Map<WorkingThreadSection, string[]>();
-  const headingRegex = /^##\s+(.+?)\s*$/gm;
+  const headingRegex = /^ {0,3}(#{2,6})\s+(.+?)\s*$/gm;
   const headings = [...markdown.matchAll(headingRegex)];
 
   for (let index = 0; index < headings.length; index += 1) {
     const heading = headings[index];
-    const headingText = heading[1] ?? "";
-    const section = headingSections.get(normalizeHeading(headingText));
+    const marker = heading[1] ?? "";
+    const headingText = heading[2] ?? "";
+    const section = marker === "##"
+      ? headingSections.get(normalizeHeading(headingText))
+      : undefined;
     if (!section || heading.index === undefined) {
+      warnings.push({
+        code: "unknown-section",
+        message: `Unknown Working Thread section heading: ${headingText.trim()}.`,
+      });
       continue;
     }
 
@@ -310,14 +321,18 @@ function findSectionRange(
   markdown: string,
   section: WorkingThreadSection,
 ): { bodyStart: number; bodyEnd: number }[] {
-  const headingRegex = /^##\s+(.+?)\s*$/gm;
+  const headingRegex = /^ {0,3}(#{2,6})\s+(.+?)\s*$/gm;
   const headings = [...markdown.matchAll(headingRegex)];
   const ranges: { bodyStart: number; bodyEnd: number }[] = [];
 
   for (let index = 0; index < headings.length; index += 1) {
     const heading = headings[index];
-    const headingText = heading[1] ?? "";
-    if (normalizeHeading(headingText) !== normalizeHeading(sectionHeadings[section])) {
+    const marker = heading[1] ?? "";
+    const headingText = heading[2] ?? "";
+    if (
+      marker !== "##"
+      || normalizeHeading(headingText) !== normalizeHeading(sectionHeadings[section])
+    ) {
       continue;
     }
 

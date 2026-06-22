@@ -34,19 +34,18 @@ export const WORKING_THREAD_TOOL_NAMES = [
 export const WORKING_THREAD_PROMPT_NAMES = [] as const;
 
 const jsonMimeType = "application/json";
-const unknownRecord = z.record(z.string(), z.unknown());
 const classifyDriftInputSchema = {
   thread: z.unknown().optional(),
   userRequest: z.unknown().optional(),
   proposedDirection: z.unknown().optional(),
 };
 const draftWrapUpInputSchema = {
-  thread: unknownRecord,
-  sessionSummary: z.string().min(1),
-  judgmentChange: z.string().optional(),
-  boundaryChange: z.string().optional(),
-  nextLikelyMove: z.string().optional(),
-  openQuestionsChange: z.string().optional(),
+  thread: z.unknown().optional(),
+  sessionSummary: z.unknown().optional(),
+  judgmentChange: z.unknown().optional(),
+  boundaryChange: z.unknown().optional(),
+  nextLikelyMove: z.unknown().optional(),
+  openQuestionsChange: z.unknown().optional(),
 };
 const proposeWorkingThreadUpdateInputSchema = {
   thread: z.unknown().optional(),

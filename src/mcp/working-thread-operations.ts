@@ -159,19 +159,31 @@ function buildDriftClassification(input: ClassifyDriftInput): DriftClassificatio
 }
 
 function draftWrapUp(input: DraftWrapUpInput): DraftWrapUpResult {
+  const invalidReason = getInvalidDraftWrapUpInputReason(input);
+  const threadId = getDraftWrapUpInputThreadId(input);
+  if (invalidReason) {
+    return {
+      status: "rejected",
+      operation: "draftWrapUp",
+      threadId,
+      reason: invalidReason,
+    };
+  }
+
+  const typedInput = input as DraftWrapUpInput;
   const draft: WrapUpDraft = {
-    summary: input.sessionSummary,
-    judgmentChange: input.judgmentChange ?? "",
-    boundaryChange: input.boundaryChange ?? "",
-    nextLikelyMove: input.nextLikelyMove ?? "",
-    openQuestionsChange: input.openQuestionsChange ?? "",
+    summary: typedInput.sessionSummary,
+    judgmentChange: typedInput.judgmentChange ?? "",
+    boundaryChange: typedInput.boundaryChange ?? "",
+    nextLikelyMove: typedInput.nextLikelyMove ?? "",
+    openQuestionsChange: typedInput.openQuestionsChange ?? "",
     requiresConfirmation: true,
   };
 
   return {
     status: "ok",
     operation: "draftWrapUp",
-    threadId: input.thread.id,
+    threadId: typedInput.thread.id,
     data: draft,
   };
 }
@@ -408,6 +420,39 @@ function getInvalidProposeInputReason(
   const invalidDraftReason = getInvalidWrapUpDraftReason(value.draft);
   if (invalidDraftReason) {
     return invalidDraftReason;
+  }
+
+  return undefined;
+}
+
+function getInvalidDraftWrapUpInputReason(
+  input: DraftWrapUpInput,
+): string | undefined {
+  const value = input as unknown;
+  if (!isRecord(value)) {
+    return "Draft wrap-up input is required.";
+  }
+
+  const invalidThreadReason = getInvalidWorkingThreadReason(value.thread);
+  if (invalidThreadReason) {
+    return invalidThreadReason;
+  }
+
+  if (typeof value.sessionSummary !== "string" || !value.sessionSummary.trim()) {
+    return "Session summary is required.";
+  }
+
+  for (
+    const field of [
+      "judgmentChange",
+      "boundaryChange",
+      "nextLikelyMove",
+      "openQuestionsChange",
+    ] as const
+  ) {
+    if (field in value && typeof value[field] !== "string") {
+      return `Draft wrap-up ${field} must be a string.`;
+    }
   }
 
   return undefined;
@@ -665,6 +710,17 @@ function getApplyInputThreadId(
 
 function getClassifyInputThreadId(
   input: ClassifyDriftInput,
+): string | undefined {
+  const value = input as unknown;
+  if (isRecord(value) && isRecord(value.thread) && typeof value.thread.id === "string") {
+    return value.thread.id;
+  }
+
+  return undefined;
+}
+
+function getDraftWrapUpInputThreadId(
+  input: DraftWrapUpInput,
 ): string | undefined {
   const value = input as unknown;
   if (isRecord(value) && isRecord(value.thread) && typeof value.thread.id === "string") {
