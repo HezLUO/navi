@@ -80,10 +80,11 @@ export function parseWorkingThreadMarkdown(
 
   if (!status) {
     warnings.push({ code: "missing-status", message: "Missing status." });
-  } else if (isWorkingThreadStatus(status)) {
-    partial.status = status;
   } else {
-    warnings.push({ code: "invalid-status", message: `Invalid status: ${status}.` });
+    partial.status = status;
+    if (!isWorkingThreadStatus(status)) {
+      warnings.push({ code: "invalid-status", message: `Invalid status: ${status}.` });
+    }
   }
 
   if (lastUpdated) {
@@ -189,11 +190,17 @@ function applySingleSectionPatch(
   change: WorkingThreadSectionChange,
 ): string {
   const sectionRange = findSectionRange(markdown, change.section);
-  if (!sectionRange) {
+  if (sectionRange.length === 0) {
     throw new Error(`Cannot patch missing section: ${sectionHeadings[change.section]}.`);
   }
+  if (sectionRange.length > 1) {
+    throw new Error(
+      `Cannot patch duplicate or ambiguous section: ${sectionHeadings[change.section]}.`,
+    );
+  }
 
-  const existing = markdown.slice(sectionRange.bodyStart, sectionRange.bodyEnd).trim();
+  const [targetRange] = sectionRange;
+  const existing = markdown.slice(targetRange.bodyStart, targetRange.bodyEnd).trim();
   const expected = formatSectionValue(change.currentValue).trim();
   if (existing !== expected) {
     throw new Error(
@@ -202,12 +209,12 @@ function applySingleSectionPatch(
   }
 
   const replacementBody = formatSectionValue(change.proposedValue).trim();
-  const suffix = sectionRange.bodyEnd < markdown.length ? "\n\n" : "\n";
+  const suffix = targetRange.bodyEnd < markdown.length ? "\n\n" : "\n";
   return [
-    markdown.slice(0, sectionRange.bodyStart),
+    markdown.slice(0, targetRange.bodyStart),
     replacementBody,
     suffix,
-    markdown.slice(sectionRange.bodyEnd).replace(/^\n+/, ""),
+    markdown.slice(targetRange.bodyEnd).replace(/^\n+/, ""),
   ].join("");
 }
 
@@ -268,9 +275,10 @@ function buildWorkingThread(
 function findSectionRange(
   markdown: string,
   section: WorkingThreadSection,
-): { bodyStart: number; bodyEnd: number } | undefined {
+): { bodyStart: number; bodyEnd: number }[] {
   const headingRegex = /^##\s+(.+?)\s*$/gm;
   const headings = [...markdown.matchAll(headingRegex)];
+  const ranges: { bodyStart: number; bodyEnd: number }[] = [];
 
   for (let index = 0; index < headings.length; index += 1) {
     const heading = headings[index];
@@ -301,10 +309,10 @@ function findSectionRange(
       bodyEnd -= 1;
     }
 
-    return { bodyStart, bodyEnd };
+    ranges.push({ bodyStart, bodyEnd });
   }
 
-  return undefined;
+  return ranges;
 }
 
 function formatSectionValue(value: string | string[]): string {

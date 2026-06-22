@@ -116,6 +116,21 @@ Only one section exists.
     expect(parsed.warnings.map((warning) => warning.code)).toContain("missing-section");
   });
 
+  it("preserves invalid raw status in malformed partial records", () => {
+    const parsed = parseWorkingThreadMarkdown({
+      id: "archived-thread",
+      sourcePath: "docs/along/working-threads/archived-thread.md",
+      markdown: validRecord.replace("Status: active", "Status: archived"),
+    });
+    const summary = summarizeWorkingThread(parsed);
+
+    expect(parsed.malformed).toBe(true);
+    expect(parsed.thread).toBeUndefined();
+    expect(parsed.partial.status).toBe("archived");
+    expect(parsed.warnings.map((warning) => warning.code)).toContain("invalid-status");
+    expect(summary.status).toBe("active");
+  });
+
   it("builds a high-risk repair summary for malformed Markdown", () => {
     const summary = summarizeWorkingThread(parseWorkingThreadMarkdown({
       id: "broken-thread",
@@ -194,5 +209,25 @@ The user approved the Minimal MCP Server spec.`);
         rationale: "Should fail.",
       },
     ])).toThrow(/section/i);
+  });
+
+  it("rejects ambiguous patches when the target section is duplicated", () => {
+    const duplicatedCurrentJudgment = validRecord.replace(
+      "## Boundary",
+      `## Current Judgment
+
+An accidental duplicate judgment.
+
+## Boundary`,
+    );
+
+    expect(() => applyWorkingThreadSectionPatches(duplicatedCurrentJudgment, [
+      {
+        section: "currentJudgment",
+        currentValue: "The Minimal MCP Server spec is approved and awaiting implementation.",
+        proposedValue: "A replacement.",
+        rationale: "Should fail.",
+      },
+    ])).toThrow(/duplicate|ambiguous|section/i);
   });
 });
