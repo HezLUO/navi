@@ -62,7 +62,7 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 
 ## Next Likely Move
 
-The Core/MCP Minimal Server Design spec is approved, and the implementation plan has been written at `docs/superpowers/plans/2026-06-22-along-core-mcp-minimal-server.md`. The next step is user review of that plan. Do not start implementation, dependency installation, worktree creation, or focused execution until the implementation plan is approved.
+The Core/MCP Minimal Server Design spec is approved, and the implementation plan has been written at `docs/superpowers/plans/2026-06-22-along-core-mcp-minimal-server.md`. The user selected a new Subagent-Driven focused execution session for implementation. The main session remains responsible for design, supervision, review, and integration decisions. The focused execution session should execute the plan task-by-task, with spec and quality review after each task, and must stop for explicit approval before installing MCP SDK dependencies.
 
 ## Last Wrap-Up
 
@@ -100,7 +100,7 @@ The main session approved using a standard MCP SDK for Minimal Server V1 impleme
 
 The main session approved a repo-level npm script as the Minimal Server V1 launch entry. The intended shape is something like `npm run mcp:working-thread -- --workspace /path/to/repo`. Do not add a package bin, formal CLI, or public distribution command in V1.
 
-The Core/MCP Minimal Server Design spec at `docs/superpowers/specs/2026-06-21-along-core-mcp-minimal-server-design.md` was approved by the user on 2026-06-22. The implementation plan was written at `docs/superpowers/plans/2026-06-22-along-core-mcp-minimal-server.md` and is awaiting user review. No implementation, dependency installation, worktree creation, focused execution, push, merge, or history rewrite is approved yet.
+The Core/MCP Minimal Server Design spec at `docs/superpowers/specs/2026-06-21-along-core-mcp-minimal-server-design.md` was approved by the user on 2026-06-22. The implementation plan was written at `docs/superpowers/plans/2026-06-22-along-core-mcp-minimal-server.md`. The user approved using a new Subagent-Driven focused execution session. No push, merge, worktree deletion, or history rewrite is approved. Dependency installation for the MCP SDK still requires an explicit request from the focused execution session.
 
 ## Validation Notes
 
