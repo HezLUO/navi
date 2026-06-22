@@ -11,6 +11,7 @@ import {
   type ParsedWorkingThreadDocument,
   summarizeWorkingThread,
 } from "./working-thread-markdown";
+import { buildWorkingThreadBaseVersion } from "./working-thread-version";
 
 export interface WorkingThreadDocsStoreOptions {
   workspaceRoot: string;
@@ -310,6 +311,13 @@ function validateProposalBase(
   if (parsed.thread.lastUpdated !== proposal.baseLastUpdated) {
     throw new Error(
       `Stale Working Thread proposal ${proposal.proposalId}: base last updated ${proposal.baseLastUpdated} does not match current ${parsed.thread.lastUpdated}.`,
+    );
+  }
+
+  const currentBaseVersion = buildWorkingThreadBaseVersion(parsed.thread);
+  if (!proposal.baseVersion || currentBaseVersion !== proposal.baseVersion) {
+    throw new Error(
+      `Stale Working Thread proposal ${proposal.proposalId}: base version does not match current Working Thread content.`,
     );
   }
 }

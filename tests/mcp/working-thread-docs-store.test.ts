@@ -3,6 +3,8 @@ import { link, mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from
 import os from "node:os";
 import path from "node:path";
 import { createWorkingThreadDocsStore } from "../../src/mcp/working-thread-docs-store";
+import { parseWorkingThreadMarkdown } from "../../src/mcp/working-thread-markdown";
+import { buildWorkingThreadBaseVersion } from "../../src/mcp/working-thread-version";
 
 const validRecord = `# Store Test Thread
 
@@ -50,6 +52,7 @@ Last updated: 2026-06-22
 This record is missing required sections.
 `;
 
+const storeTestBaseVersion = getBaseVersion("store-test-thread", validRecord);
 const tempRoots: string[] = [];
 
 describe("Working Thread docs store", () => {
@@ -116,6 +119,7 @@ describe("Working Thread docs store", () => {
       proposalId: "proposal-store",
       threadId: "store-test-thread",
       baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
@@ -143,6 +147,7 @@ describe("Working Thread docs store", () => {
       proposalId: "proposal-symlink",
       threadId: "escape-thread",
       baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
@@ -166,6 +171,7 @@ describe("Working Thread docs store", () => {
       proposalId: "proposal-hardlink",
       threadId: "hardlink-thread",
       baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
@@ -186,6 +192,7 @@ describe("Working Thread docs store", () => {
       proposalId: "proposal-malformed-patch",
       threadId: "store-test-thread",
       baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
@@ -209,6 +216,7 @@ This duplicate heading makes the patched record malformed.`,
       proposalId: "proposal-store",
       threadId: "store-test-thread",
       baseLastUpdated: "2026-01-01",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
@@ -220,6 +228,36 @@ This duplicate heading makes the patched record malformed.`,
     })).rejects.toThrow(/stale/i);
   });
 
+  it("rejects stale base versions even when the patched section still matches", async () => {
+    const { recordsDir, store } = await createTempStore();
+    const recordPath = path.join(recordsDir, "store-test-thread.md");
+    await writeFile(
+      recordPath,
+      validRecord.replace(
+        "Apply the docs-backed store patch.",
+        "This unpatched section changed after proposal creation.",
+      ),
+    );
+
+    await expect(store.applySectionPatchProposal({
+      proposalId: "proposal-stale-base-version",
+      threadId: "store-test-thread",
+      baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
+      changes: [{
+        section: "currentJudgment",
+        currentValue: "The store test is running.",
+        proposedValue: "This stale base-version patch should not apply.",
+        rationale: "The proposal is based on old full-record content.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "medium",
+    })).rejects.toThrow(/stale.*base version/i);
+    const persisted = await readFile(recordPath, "utf8");
+    expect(persisted).toContain("The store test is running.");
+    expect(persisted).toContain("This unpatched section changed after proposal creation.");
+  });
+
   it("rejects stale section values before mutating the record", async () => {
     const { recordsDir, store } = await createTempStore();
     const recordPath = path.join(recordsDir, "store-test-thread.md");
@@ -228,6 +266,7 @@ This duplicate heading makes the patched record malformed.`,
       proposalId: "proposal-stale-section",
       threadId: "store-test-thread",
       baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "A stale current judgment.",
@@ -249,6 +288,7 @@ This duplicate heading makes the patched record malformed.`,
       proposalId: "proposal-locked",
       threadId: "store-test-thread",
       baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
@@ -300,4 +340,17 @@ async function createTempStore() {
     store,
     workspaceRoot,
   };
+}
+
+function getBaseVersion(threadId: string, markdown: string): string {
+  const parsed = parseWorkingThreadMarkdown({
+    id: threadId,
+    sourcePath: `docs/along/working-threads/${threadId}.md`,
+    markdown,
+  });
+  if (!parsed.thread) {
+    throw new Error(`Expected valid Working Thread fixture: ${threadId}.`);
+  }
+
+  return buildWorkingThreadBaseVersion(parsed.thread);
 }

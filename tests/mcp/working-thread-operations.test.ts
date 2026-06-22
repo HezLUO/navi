@@ -134,6 +134,7 @@ describe("Working Thread operation handlers", () => {
       proposalId: expect.stringMatching(/^operation-test-thread-2026-06-22-[a-f0-9]{12}$/),
       threadId,
       baseLastUpdated: "2026-06-22",
+      baseVersion: expect.stringMatching(/^[a-f0-9]{64}$/),
       riskLevel: "medium",
     });
     expect(proposalResult.data?.changes.map((change) => change.section)).toEqual([
@@ -245,6 +246,25 @@ describe("Working Thread operation handlers", () => {
     });
   });
 
+  it("rejects malformed confirmation envelopes without throwing", async () => {
+    const { operations, proposal } = await createTempProposal();
+
+    const result = await operations.applyConfirmedWorkingThreadUpdate({
+      proposal,
+      confirmation: {
+        ...validConfirmation(proposal),
+        approvedAt: 123,
+      } as never,
+    });
+
+    expect(result).toMatchObject({
+      status: "rejected",
+      operation: "applyConfirmedWorkingThreadUpdate",
+      threadId,
+      reason: expect.stringMatching(/approvedAt/i),
+    });
+  });
+
   it("rejects write-back when proposal changes no longer match the proposal id", async () => {
     const { operations, proposal, store } = await createTempProposal();
     const tamperedProposal = {
@@ -271,6 +291,54 @@ describe("Working Thread operation handlers", () => {
     expect(persisted.thread?.currentJudgment).toBe(
       "The operation handler task is ready for implementation.",
     );
+  });
+
+  it("returns a conflict when another confirmed write changed the base record", async () => {
+    const { operations, store, thread } = await createTempOperations();
+    const firstProposalResult = await operations.proposeWorkingThreadUpdate({
+      thread,
+      draft: {
+        summary: "",
+        judgmentChange: "The first proposal updated judgment.",
+        boundaryChange: "",
+        nextLikelyMove: "",
+        openQuestionsChange: "",
+        requiresConfirmation: true,
+      },
+    });
+    const secondProposalResult = await operations.proposeWorkingThreadUpdate({
+      thread,
+      draft: {
+        summary: "",
+        judgmentChange: "",
+        boundaryChange: "",
+        nextLikelyMove: "The second proposal should be regenerated.",
+        openQuestionsChange: "",
+        requiresConfirmation: true,
+      },
+    });
+    const firstProposal = firstProposalResult.data!;
+    const secondProposal = secondProposalResult.data!;
+
+    const firstApply = await operations.applyConfirmedWorkingThreadUpdate({
+      proposal: firstProposal,
+      confirmation: validConfirmation(firstProposal),
+    });
+    const secondApply = await operations.applyConfirmedWorkingThreadUpdate({
+      proposal: secondProposal,
+      confirmation: validConfirmation(secondProposal),
+    });
+    const persisted = await store.readThread(threadId);
+
+    expect(firstApply.status).toBe("ok");
+    expect(secondApply).toMatchObject({
+      status: "conflict",
+      operation: "applyConfirmedWorkingThreadUpdate",
+      threadId,
+      recommendedAction: "regenerateProposal",
+    });
+    expect(persisted.thread?.currentJudgment).toBe("The first proposal updated judgment.");
+    expect(persisted.thread?.nextLikelyMove).toBe("Write action-only operation handlers.");
   });
 
   it("applies confirmed section patches and returns the updated thread", async () => {
@@ -390,5 +458,6 @@ function validConfirmation(
     sourceTurnId: "turn-1",
     approvedIntent: "Apply the deterministic Working Thread update.",
     baseLastUpdated: proposal.baseLastUpdated,
+    baseVersion: proposal.baseVersion,
   };
 }
