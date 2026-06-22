@@ -22,9 +22,9 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 ## Boundary
 
 - Do not build a new standalone Along agent in V1.
-- Do not implement Core/MCP runtime, server, storage, watcher, adapter, delegation, or write delegation behavior beyond the approved type-only minimal contract.
-- Do not implement a real Core/MCP server in the minimal contract design pass.
-- Do not implement a real Core/MCP server until the dedicated Minimal Server implementation plan is reviewed and approved.
+- Do not expand the completed Minimal Server V1 into a broader Core/MCP runtime, watcher, adapter, delegation, or write delegation layer without a separate approved pass.
+- Do not treat fresh-session MCP client validation as approval for new server capabilities beyond the implemented docs-backed stdio Minimal Server V1.
+- Do not implement another Core/MCP server or transport shape until a dedicated follow-up spec is reviewed and approved.
 - The Minimal Server direction must stay docs-backed and non-autonomous unless the user explicitly approves a later storage/runtime change.
 - Do not introduce `.along/` local store for the Minimal Server V1 data source.
 - Do not expose MCP prompts in Minimal Server V1; keep prompts deferred until the skill/plugin boundary is clearer.
@@ -53,7 +53,7 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 
 ## Drift Triggers
 
-- The work shifts into real Core/MCP runtime, server, storage, adapter, or local-layer implementation beyond the approved type-only contract.
+- The work shifts from fresh-session MCP client validation into new Core/MCP runtime, transport, storage, adapter, or local-layer implementation beyond the completed Minimal Server V1.
 - The work shifts toward plugin packaging before behavior is validated.
 - The agent starts planning a drifted direction before asking the user to confirm the direction switch.
 - The work revives Hermes adapter, delegation, or local/desktop presence as V1 scope.
