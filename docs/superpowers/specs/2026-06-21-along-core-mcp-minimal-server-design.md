@@ -1,7 +1,7 @@
 # Along Core/MCP Minimal Server Design
 
 Date: 2026-06-21
-Status: Approved
+Status: Approved and implemented
 
 ## Summary
 
