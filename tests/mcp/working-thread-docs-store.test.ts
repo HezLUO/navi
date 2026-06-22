@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { link, mkdtemp, mkdir, readFile, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { link, lstat, mkdtemp, mkdir, readFile, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createWorkingThreadDocsStore } from "../../src/mcp/working-thread-docs-store";
@@ -309,26 +309,51 @@ This duplicate heading makes the patched record malformed.`,
     await expect(readFile(recordPath, "utf8")).resolves.toBe(validRecord);
   });
 
-  it("rejects writes when a record lock already exists", async () => {
+  it("serializes concurrent writes and rejects the stale proposal", async () => {
     const { recordsDir, store } = await createTempStore();
     const recordPath = path.join(recordsDir, "store-test-thread.md");
-    await writeFile(path.join(recordsDir, "store-test-thread.lock"), "locked");
+    const lockPath = path.join(recordsDir, "store-test-thread.lock");
 
-    await expect(store.applySectionPatchProposal({
-      proposalId: "proposal-locked",
+    const firstWrite = store.applySectionPatchProposal({
+      proposalId: "proposal-concurrent-first",
       threadId: "store-test-thread",
       baseLastUpdated: "2026-06-22",
       baseVersion: storeTestBaseVersion,
       changes: [{
         section: "currentJudgment",
         currentValue: "The store test is running.",
-        proposedValue: "This locked patch should not apply.",
-        rationale: "Another writer holds the record lock.",
+        proposedValue: "The first concurrent patch was applied.",
+        rationale: "The first queued writer should win.",
       }],
       confirmationPrompt: "Apply this Working Thread update?",
       riskLevel: "medium",
-    })).rejects.toThrow(/lock|concurrent/i);
-    await expect(readFile(recordPath, "utf8")).resolves.toBe(validRecord);
+    });
+    const staleWrite = store.applySectionPatchProposal({
+      proposalId: "proposal-concurrent-stale",
+      threadId: "store-test-thread",
+      baseLastUpdated: "2026-06-22",
+      baseVersion: storeTestBaseVersion,
+      changes: [{
+        section: "nextLikelyMove",
+        currentValue: "Apply the docs-backed store patch.",
+        proposedValue: "This stale queued patch should not apply.",
+        rationale: "The second queued writer uses the same base content.",
+      }],
+      confirmationPrompt: "Apply this Working Thread update?",
+      riskLevel: "medium",
+    });
+
+    await expect(firstWrite).resolves.toMatchObject({
+      thread: {
+        currentJudgment: "The first concurrent patch was applied.",
+      },
+    });
+    await expect(staleWrite).rejects.toThrow(/stale/i);
+
+    const persisted = await readFile(recordPath, "utf8");
+    expect(persisted).toContain("The first concurrent patch was applied.");
+    expect(persisted).toContain("Apply the docs-backed store patch.");
+    await expect(lstat(lockPath)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("rejects malformed record writes", async () => {

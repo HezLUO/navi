@@ -1,5 +1,5 @@
 import { constants, lstatSync, realpathSync } from "node:fs";
-import { lstat, open, readdir, unlink, type FileHandle } from "node:fs/promises";
+import { lstat, open, readdir, type FileHandle } from "node:fs/promises";
 import path from "node:path";
 import type {
   WorkingThreadSummary,
@@ -30,6 +30,7 @@ export interface WorkingThreadDocsStore {
 
 const recordsDirSegments = ["docs", "along", "working-threads"];
 const safeThreadIdPattern = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const recordWriteQueues = new Map<string, Promise<unknown>>();
 
 export function createWorkingThreadDocsStore(
   options: WorkingThreadDocsStoreOptions,
@@ -148,9 +149,7 @@ async function applyPatchProposalToRecordFile(
   recordsDir: string,
   proposal: WorkingThreadUpdateProposal,
 ): Promise<ParsedWorkingThreadDocument> {
-  const releaseLock = await acquireRecordLock(recordsDir, proposal.threadId);
-
-  try {
+  return runWithRecordWriteQueue(recordsDir, proposal.threadId, async () => {
     const recordPath = await ensureRecordFileSafe(recordsDir, proposal.threadId);
     const file = await open(recordPath, getNoFollowReadWriteFlags());
 
@@ -193,9 +192,7 @@ async function applyPatchProposalToRecordFile(
     } finally {
       await file.close();
     }
-  } finally {
-    await releaseLock();
-  }
+  });
 }
 
 async function ensureRecordFileSafe(
@@ -253,53 +250,6 @@ async function ensureRecordsDirSafe(
   }
 
   return true;
-}
-
-async function acquireRecordLock(
-  recordsDir: string,
-  threadId: string,
-): Promise<() => Promise<void>> {
-  await ensureRecordsDirSafe(recordsDir, { allowMissing: false });
-  const lockPath = resolveLockPath(recordsDir, threadId);
-  let lockFile: FileHandle;
-
-  try {
-    lockFile = await open(lockPath, getNoFollowExclusiveCreateFlags());
-  } catch (error) {
-    if (isNodeError(error) && error.code === "EEXIST") {
-      throw new Error(`Working Thread record is locked by another concurrent write: ${threadId}.`);
-    }
-
-    throw error;
-  }
-
-  await lockFile.close();
-
-  return async () => {
-    await unlink(lockPath).catch((error: unknown) => {
-      if (isNodeError(error) && error.code === "ENOENT") {
-        return;
-      }
-
-      throw error;
-    });
-  };
-}
-
-function resolveLockPath(recordsDir: string, threadId: string): string {
-  if (!safeThreadIdPattern.test(threadId) || path.isAbsolute(threadId)) {
-    throw new Error(`Invalid thread id: ${threadId}.`);
-  }
-
-  const resolvedRecordsDir = path.resolve(recordsDir);
-  const lockPath = path.resolve(resolvedRecordsDir, `${threadId}.lock`);
-  const relativePath = path.relative(resolvedRecordsDir, lockPath);
-
-  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-    throw new Error(`Invalid thread id: ${threadId}.`);
-  }
-
-  return lockPath;
 }
 
 function validateProposalBase(
@@ -430,10 +380,27 @@ function getNoFollowReadWriteFlags(): number {
   return constants.O_RDWR | constants.O_NOFOLLOW;
 }
 
-function getNoFollowExclusiveCreateFlags(): number {
-  if (typeof constants.O_NOFOLLOW !== "number") {
-    throw new Error("Cannot safely lock Working Thread record: O_NOFOLLOW is unavailable.");
-  }
+async function runWithRecordWriteQueue<T>(
+  recordsDir: string,
+  threadId: string,
+  operation: () => Promise<T>,
+): Promise<T> {
+  const queueKey = `${path.resolve(recordsDir)}:${threadId}`;
+  const previous = recordWriteQueues.get(queueKey) ?? Promise.resolve();
+  let releaseCurrent!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const queued = previous.then(() => current, () => current);
+  recordWriteQueues.set(queueKey, queued);
 
-  return constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW;
+  try {
+    await previous.catch(() => undefined);
+    return await operation();
+  } finally {
+    releaseCurrent();
+    if (recordWriteQueues.get(queueKey) === queued) {
+      recordWriteQueues.delete(queueKey);
+    }
+  }
 }
