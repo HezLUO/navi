@@ -14,7 +14,9 @@ import {
   type WorkingThreadDocsStore,
 } from "./working-thread-docs-store";
 import { summarizeWorkingThread } from "./working-thread-markdown";
-import { createWorkingThreadOperations } from "./working-thread-operations";
+import {
+  createWorkingThreadOperations,
+} from "./working-thread-operations";
 
 export const WORKING_THREAD_RESOURCE_URIS = [
   "working-thread://summaries",
@@ -55,6 +57,29 @@ const applyConfirmedWorkingThreadUpdateInputSchema = {
   confirmation: unknownRecord,
 };
 
+export interface WorkingThreadMcpRegistrar {
+  registerResource(
+    name: string,
+    uriOrTemplate: string | ResourceTemplate,
+    config: Record<string, unknown>,
+    handler: (uri: URL, variables: Record<string, string | string[]>) => Promise<ReadResourceResult>,
+  ): unknown;
+  registerTool(
+    name: string,
+    config: Record<string, unknown>,
+    handler: (input: unknown) => Promise<CallToolResult>,
+  ): unknown;
+}
+
+export interface WorkingThreadMcpSurfaceOperations {
+  classifyDrift(input: ClassifyDriftInput): Promise<unknown>;
+  draftWrapUp(input: DraftWrapUpInput): Promise<unknown>;
+  proposeWorkingThreadUpdate(input: ProposeWorkingThreadUpdateInput): Promise<unknown>;
+  applyConfirmedWorkingThreadUpdate(
+    input: ApplyConfirmedWorkingThreadUpdateInput,
+  ): Promise<unknown>;
+}
+
 export function parseWorkspaceArg(argv: string[]): string {
   const workspaceFlagIndex = argv.indexOf("--workspace");
   if (workspaceFlagIndex === -1) {
@@ -74,9 +99,18 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     name: "along-working-thread",
     version: "0.1.0",
   });
-  const operations = createWorkingThreadOperations(store);
 
-  server.registerResource(
+  registerWorkingThreadMcpSurface(server, store);
+
+  return server;
+}
+
+export function registerWorkingThreadMcpSurface(
+  registrar: WorkingThreadMcpRegistrar,
+  store: WorkingThreadDocsStore,
+  operations: WorkingThreadMcpSurfaceOperations = createWorkingThreadOperations(store),
+): void {
+  registrar.registerResource(
     "working-thread-summaries",
     WORKING_THREAD_RESOURCE_URIS[0],
     {
@@ -87,7 +121,7 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     async (uri) => jsonResource(uri.toString(), await store.listSummaries()),
   );
 
-  server.registerResource(
+  registrar.registerResource(
     "working-thread-summary",
     new ResourceTemplate(WORKING_THREAD_RESOURCE_URIS[1], {
       list: async () => ({
@@ -115,7 +149,7 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     },
   );
 
-  server.registerResource(
+  registrar.registerResource(
     "working-thread-record",
     new ResourceTemplate(WORKING_THREAD_RESOURCE_URIS[2], {
       list: async () => ({
@@ -140,7 +174,7 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     ),
   );
 
-  server.registerTool(
+  registrar.registerTool(
     "classifyDrift",
     {
       title: "Classify drift",
@@ -152,7 +186,7 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     ),
   );
 
-  server.registerTool(
+  registrar.registerTool(
     "draftWrapUp",
     {
       title: "Draft wrap-up",
@@ -164,7 +198,7 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     ),
   );
 
-  server.registerTool(
+  registrar.registerTool(
     "proposeWorkingThreadUpdate",
     {
       title: "Propose Working Thread update",
@@ -176,7 +210,7 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
     ),
   );
 
-  server.registerTool(
+  registrar.registerTool(
     "applyConfirmedWorkingThreadUpdate",
     {
       title: "Apply confirmed Working Thread update",
@@ -189,8 +223,6 @@ export function createWorkingThreadMcpServer(store: WorkingThreadDocsStore): Mcp
       ),
     ),
   );
-
-  return server;
 }
 
 export async function main(argv = process.argv): Promise<void> {
