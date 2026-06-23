@@ -435,6 +435,63 @@ Keep `along-working-thread@personal` installed and enabled, but use a workspace 
 
 Only after that test can we separate personal-plugin behavior from repo-local skill behavior.
 
+## Round 3 Setup: Pure Personal Plugin Condition
+
+Prepared on 2026-06-23 after Round 2 mixed-condition review.
+
+Purpose:
+
+Isolate whether the packaged personal plugin adds meaningful behavior when the workspace itself does not provide a repo-local Along skill.
+
+Test workspace:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills
+```
+
+Isolation checks:
+
+- Workspace exists.
+- Workspace `.agents`: absent.
+- Workspace `.along`: absent.
+- `along-working-thread@personal`: installed and enabled at version `0.1.0`.
+
+Interpretation rule:
+
+This is still not a no-document baseline, because the copied workspace contains Along docs, source, tests, and plugin package files. It is specifically a no-local-skill + personal-plugin condition. The question is whether Codex loads the packaged personal plugin skill from:
+
+```text
+/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/skills/along-working-thread/SKILL.md
+```
+
+and whether that behavior differs from:
+
+- Round 1 re-run docs-only baseline; and
+- Round 2 mixed repo-local-skill + personal-plugin behavior.
+
+Use the same prompts:
+
+```text
+我们接下来应该做什么？
+```
+
+```text
+帮我看一下 package.json 里有哪些 npm scripts。
+```
+
+```text
+我觉得我们现在可以直接开始做 Core/MCP 或者 plugin packaging，你怎么看？
+```
+
+Primary evidence to collect:
+
+- Whether `along-working-thread:along-working-thread` is available.
+- Whether the session reads the personal plugin skill path.
+- Whether any repo-local `.agents/skills/along-working-thread` path appears. It should not.
+- Whether the first answer restores Working Thread judgment without excessive ceremony.
+- Whether the ordinary package scripts question remains quiet.
+- Whether the Core/MCP or plugin packaging prompt is treated as a direction-switch challenge rather than an immediate implementation request.
+
 ## Update Rule
 
 Keep this record updated after each evaluation round. Updates should record:
