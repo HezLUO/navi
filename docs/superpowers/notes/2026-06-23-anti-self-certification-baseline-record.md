@@ -139,11 +139,10 @@ Evaluate whether the MCP server improves controlled access to Working Thread res
 ## Next Plan
 
 1. Keep this main conversation as neutral supervisor.
-2. Treat the first attempted Round 1 as contaminated, not as a valid no-Along baseline.
-3. Re-run Round 1 from the isolated baseline workspace created at `/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills`.
-4. Monitor the new baseline thread and record whether the session loads any Along skill or Working Thread behavior.
-5. Only after a valid Round 1 is recorded, decide whether to restore `along-working-thread@personal` for Round 2.
-6. Do not continue MCP client validation until the no-Along baseline has been reviewed.
+2. Run Round 2 from the real Along workspace with `along-working-thread@personal` restored.
+3. Use the same three prompts as Round 1.
+4. Compare skill/plugin behavior against the docs-only baseline.
+5. Do not continue MCP client validation until Round 2 has been reviewed.
 
 ## Round 1 Attempt: Contaminated Baseline
 
@@ -302,6 +301,51 @@ Future comparisons should separate at least three layers:
 3. MCP behavior: Codex or another client accesses structured resources/tools rather than reading Markdown ad hoc.
 
 The useful question is no longer "can Codex recover context at all?" It can, if the docs are good and it decides to read them. The sharper question is whether Along adds better timing, lower friction, clearer boundaries, less manual prompting, stronger write-back discipline, or a more companion-like experience than docs-only Codex.
+
+## Round 2 Setup: Along Plugin Condition
+
+Prepared on 2026-06-23.
+
+Plugin state:
+
+```text
+along-working-thread@personal: installed, enabled, version 0.1.0
+```
+
+Installed plugin root:
+
+```text
+/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0
+```
+
+Round 2 should be run from the real Along workspace:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along
+```
+
+Use the same prompts:
+
+```text
+我们接下来应该做什么？
+```
+
+```text
+帮我看一下 package.json 里有哪些 npm scripts。
+```
+
+```text
+我觉得我们现在可以直接开始做 Core/MCP 或者 plugin packaging，你怎么看？
+```
+
+Expected comparison points:
+
+- Does the session explicitly load `along-working-thread`?
+- Is the first answer more direct than the docs-only baseline, or similarly heavy?
+- Does the ordinary `package.json` question stay quiet?
+- Does the direction-shift answer use better confirmation discipline than the docs-only baseline?
+- Does the behavior feel more companion-like, or only more procedural?
+- Does the plugin add real value beyond reading the Working Thread Markdown directly?
 
 ## Update Rule
 
