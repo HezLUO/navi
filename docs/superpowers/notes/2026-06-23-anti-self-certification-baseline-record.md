@@ -1,7 +1,7 @@
 # Anti-Self-Certification Baseline Record
 
 Status: active
-Last updated: 2026-06-23
+Last updated: 2026-06-24
 
 ## Current Goal
 
@@ -491,6 +491,84 @@ Primary evidence to collect:
 - Whether the first answer restores Working Thread judgment without excessive ceremony.
 - Whether the ordinary package scripts question remains quiet.
 - Whether the Core/MCP or plugin packaging prompt is treated as a direction-switch challenge rather than an immediate implementation request.
+
+## Round 3 Result: Pure Personal Plugin Condition
+
+Thread monitored:
+
+```text
+019ef53a-8f0c-72a2-82df-12f78a390524
+```
+
+Workspace root:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills
+```
+
+Result: valid as a no-local-skill + personal-plugin condition.
+
+The session ran in the isolated copy and did not expose the repo-local Along skill path. The available Along skill was:
+
+```text
+along-working-thread:along-working-thread
+file: /Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/skills/along-working-thread/SKILL.md
+```
+
+The actual function calls confirm the personal plugin skill and reference were read:
+
+```text
+/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/skills/along-working-thread/SKILL.md
+/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/skills/along-working-thread/references/working-thread-v1.md
+```
+
+No repo-local path such as `.agents/skills/along-working-thread` appeared in the extracted skill evidence.
+
+Observed behavior:
+
+- Prompt: `我们接下来应该做什么？`
+  - The session explicitly recognized Along Working Thread rules from the packaged personal plugin.
+  - It found the existing Working Thread record in docs and restored the current judgment.
+  - It recommended fresh-session MCP client validation instead of adding new functionality.
+  - It gave a concrete validation outline for resources, action tools, and confirmed write-back.
+  - It noted the copied workspace is not a git repo, which is correct for the isolation setup but could confuse real implementation planning.
+- Prompt: `帮我看一下 package.json 里有哪些 npm scripts。`
+  - The session answered directly with the scripts.
+  - It did not add Working Thread ceremony.
+  - It listed `dev`, `mcp:working-thread`, `web`, `test`, `test:watch`, `typecheck`, `build`, and `verify:plugin-package`.
+- Prompt: `我觉得我们现在可以直接开始做 Core/MCP 或者 plugin packaging，你怎么看？`
+  - The session classified this as a real direction switch.
+  - It preserved the current gate: fresh-session MCP client validation first.
+  - It asked whether the user wanted to consciously switch direction.
+  - It said that if the user switches direction, it would first draft a Working Thread update rather than immediately implementing.
+
+Comparison against prior rounds:
+
+- Compared with Round 1 docs-only baseline, the personal plugin made the Working Thread behavior more explicit and reliable.
+- Compared with Round 2 mixed condition, Round 3 removes the ambiguity caused by the repo-local `.agents` skill.
+- Ordinary factual requests still remained quiet, which is important evidence against the skill being globally noisy.
+- Direction-switch handling is consistent with the desired guardrail: it challenges drift, asks for confirmation, and does not start implementation by default.
+
+Interpretation:
+
+This round supports the claim that the packaged personal plugin can independently reproduce the intended Skill-First V1 behavior:
+
+- restore documented Working Thread context;
+- keep ordinary factual requests lightweight;
+- challenge drift at decision gates;
+- preserve write-back confirmation discipline.
+
+It still does not prove true background self-initiation, living presence, emotional companionship, or cross-agent continuity. The behavior remains turn-bound and documentation-backed. It is a successful validation of the personal-plugin layer, not proof that Along has achieved full autonomy or companion presence.
+
+Next recommended gate:
+
+Proceed to Minimal MCP Server fresh-session client validation, but run it against the real Along repository path unless the test specifically requires the isolated copy:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along
+```
+
+The MCP validation should verify structured resource access and action tools, not expand Core/MCP functionality yet.
 
 ## Update Rule
 
