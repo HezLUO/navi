@@ -134,15 +134,76 @@ Evaluate whether the MCP server improves controlled access to Working Thread res
 - How much of Along's perceived value comes from real product behavior versus careful prompting and record-keeping?
 - What failures would convince us that the current direction is too procedural and not companion-like enough?
 - Should future validation include an explicit adversarial reviewer session before any new implementation pass?
+- How should a true no-Along baseline be isolated when the Along repo itself contains `.agents/skills/along-working-thread`?
 
 ## Next Plan
 
 1. Keep this main conversation as neutral supervisor.
-2. Run Round 1 no-Along baseline in a fresh Along project conversation.
-3. Capture the fresh session output as screenshots or text.
-4. Compare behavior against the questions in the baseline protocol.
-5. Only after Round 1 is recorded, decide whether to restore `along-working-thread@personal` for Round 2.
+2. Treat the first attempted Round 1 as contaminated, not as a valid no-Along baseline.
+3. Decide how to isolate a true no-Along baseline despite the repo-local `.agents/skills/along-working-thread` source.
+4. Re-run Round 1 only after the local skill loading path is controlled.
+5. Only after a valid Round 1 is recorded, decide whether to restore `along-working-thread@personal` for Round 2.
 6. Do not continue MCP client validation until the no-Along baseline has been reviewed.
+
+## Round 1 Attempt: Contaminated Baseline
+
+Thread monitored:
+
+```text
+019ef4ac-39d3-7172-b34f-2e0d46d1c248
+```
+
+Workspace root:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along
+```
+
+Plugin state:
+
+```text
+along-working-thread@personal: not installed
+```
+
+Result: invalid as a no-Along baseline.
+
+The fresh session still loaded `along-working-thread` from the repo-local skill path:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along/.agents/skills/along-working-thread/SKILL.md
+```
+
+This means removing `along-working-thread@personal` is not enough to remove Along influence when the test session is opened inside the Along repository. The repo itself provides a local skill, so the baseline was contaminated even though the personal plugin was removed.
+
+Observed behavior:
+
+- Prompt: `我们接下来应该做什么？`
+  - The session explicitly read the Working Thread rules and record.
+  - It answered by restoring the Along Working Thread and recommending fresh-session MCP client validation.
+  - This is Along-like continuity, not baseline Codex behavior.
+- Prompt: `帮我看一下 package.json 里有哪些 npm scripts。`
+  - The session answered directly with the npm scripts.
+  - This validates ordinary-request quietness, but it is not sufficient to prove a no-Along baseline.
+- Prompt: `我觉得我们现在可以直接开始做 Core/MCP 或者 plugin packaging，你怎么看？`
+  - The session explicitly said it was using Along Working Thread boundaries.
+  - It classified the request as a real direction switch and asked whether to switch direction or complete fresh-session MCP client validation.
+  - This is exactly the Along behavior under test, so it cannot count as baseline evidence.
+
+Implication:
+
+The test design needs a stronger isolation mechanism. Future no-Along baseline tests must control both:
+
+- user-level plugin state; and
+- repo-local skill availability under `.agents/skills`.
+
+Possible next isolation options:
+
+- Temporarily move or rename `.agents/skills/along-working-thread` for the baseline test, then restore it after the test.
+- Run the baseline in a clean copy of the Along repo with no `.agents/skills/along-working-thread`.
+- Add a deliberate no-skill test workspace that points to the same source tree but does not expose repo-local skills.
+- Use another project folder as the Codex workspace and ask it to inspect the Along repo path explicitly, if Codex local skill loading is workspace-scoped.
+
+Do not treat the monitored session as evidence that ordinary Codex has Along-like continuity. It only proves that repo-local skills still influence fresh sessions even after the personal plugin is removed.
 
 ## Update Rule
 
