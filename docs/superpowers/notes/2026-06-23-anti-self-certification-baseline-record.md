@@ -347,6 +347,94 @@ Expected comparison points:
 - Does the behavior feel more companion-like, or only more procedural?
 - Does the plugin add real value beyond reading the Working Thread Markdown directly?
 
+## Round 2 Result: Mixed Local Skill + Personal Plugin Condition
+
+Thread monitored:
+
+```text
+019ef4c4-bd4d-7132-a825-bb458ef675da
+```
+
+Workspace root:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along
+```
+
+Plugin state:
+
+```text
+along-working-thread@personal: installed, enabled, version 0.1.0
+```
+
+Result: useful as an Along-enabled behavior sample, but not valid as a pure personal-plugin isolation test.
+
+The session had both Along skill sources available:
+
+```text
+r15 = /Users/james/Codex Project/General Codex Project/Along/.agents/skills
+r14 = /Users/james/.codex/plugins/cache/personal
+```
+
+Available Along skills included:
+
+```text
+along-working-thread: file r15/along-working-thread/SKILL.md
+along-working-thread:along-working-thread: file r14/along-working-thread/0.1.0/skills/along-working-thread/SKILL.md
+```
+
+The actual function calls show the session read the repo-local skill, not the packaged personal-plugin skill:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along/.agents/skills/along-working-thread/SKILL.md
+/Users/james/Codex Project/General Codex Project/Along/.agents/skills/along-working-thread/references/working-thread-v1.md
+```
+
+Observed behavior:
+
+- Prompt: `我们接下来应该做什么？`
+  - The session read Along Working Thread rules and project records.
+  - It also read the anti-self-certification baseline record.
+  - It recommended Round 2 plugin-condition validation instead of more Core/MCP feature expansion.
+  - This answer was well aligned with the neutral audit plan, but because it used the repo-local skill, it cannot prove the personal plugin added the behavior.
+- Prompt: `帮我看一下 package.json 里有哪些 npm scripts。`
+  - The session explicitly said it would read `package.json` directly and avoid Working Thread discussion.
+  - It listed the scripts correctly:
+    `dev`, `mcp:working-thread`, `web`, `test`, `test:watch`, `typecheck`, `build`, and `verify:plugin-package`.
+  - This is a positive quietness signal: ordinary factual requests did not become Working Thread ceremony.
+- Prompt: `我觉得我们现在可以直接开始做 Core/MCP 或者 plugin packaging，你怎么看？`
+  - The session advised against directly starting new Core/MCP or plugin packaging work.
+  - It distinguished validating the existing Minimal MCP Server from expanding runtime, transport, storage, adapters, presence, public packaging, or other new functionality.
+  - It asked whether the user intended a deliberate direction switch or wanted to complete the current validation gate.
+  - This is a positive drift-challenge signal, but it remains ambiguous whether it came from repo-local skill behavior, the personal plugin, or the documentation itself.
+
+Comparison against Round 1 re-run:
+
+- Both Round 1 docs-only and Round 2 mixed condition recovered the current project direction from repository records.
+- Round 2 had more explicit Working Thread framing and stronger "do not contaminate evaluation" discipline.
+- Round 2 handled the ordinary `package.json` request cleanly, which reduces the concern that Along always over-proceduralizes every turn.
+- The incremental value of the personal plugin is still unproven because the real Along workspace also exposes the repo-local `.agents/skills/along-working-thread` skill.
+
+Interpretation:
+
+Round 2 shows that an Along-enabled session can behave usefully: it preserves continuity, avoids unnecessary ceremony for ordinary factual requests, and challenges product-direction drift. However, it does not isolate the installed plugin as the cause. The current evidence supports "Along skill behavior is useful under mixed local/plugin conditions," not "the packaged personal plugin independently works."
+
+Next recommended isolation:
+
+Run a pure personal-plugin condition from the no-local-skill workspace:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills
+```
+
+Keep `along-working-thread@personal` installed and enabled, but use a workspace without `.agents/skills/along-working-thread`. Then repeat the same three prompts and check whether the available skills include only the personal plugin source:
+
+```text
+/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/skills/along-working-thread/SKILL.md
+```
+
+Only after that test can we separate personal-plugin behavior from repo-local skill behavior.
+
 ## Update Rule
 
 Keep this record updated after each evaluation round. Updates should record:
