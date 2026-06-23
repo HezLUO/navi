@@ -239,6 +239,70 @@ Interpretation:
 
 This is not a perfect "no Along content" environment, because the source tree still contains docs and plugin source related to Along. That is intentional. The baseline should test ordinary Codex behavior when inspecting the Along project content without automatic Along skill activation or runtime-state preload. If ordinary Codex independently discovers project docs and reasons from them, that is valid baseline behavior; if it loads `along-working-thread` as a skill, the baseline remains contaminated.
 
+## Round 1 Re-Run: No Local Skill Baseline
+
+Thread monitored:
+
+```text
+019ef4b9-b822-7b60-bec9-adcb7d9d231a
+```
+
+Workspace root:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills
+```
+
+Isolation state:
+
+- `along-working-thread@personal`: `not installed`.
+- Workspace `.agents`: absent.
+- Workspace `.along`: absent.
+- Available skills did not include `along-working-thread`.
+- The session did include `superpowers:using-superpowers`, so it read that general process skill before inspecting the project.
+
+Result: valid as a no-local-Along-skill baseline, but not a no-document baseline.
+
+The session did not appear to load or invoke `along-working-thread` as a skill. It did, however, inspect repository documentation and read the Working Thread record under `docs/along/working-threads/`. That means the observed continuity came from ordinary repository discovery and documented state, not from automatic Along skill activation.
+
+Observed behavior:
+
+- Prompt: `我们接下来应该做什么？`
+  - The session inspected project files and docs.
+  - It found the Working Thread record through ordinary file exploration.
+  - It concluded the next step should be fresh-session MCP client validation rather than new feature work.
+  - It asked for dependency-install approval because `node_modules` was missing in the copied workspace.
+- Prompt: `帮我看一下 package.json 里有哪些 npm scripts。`
+  - The session answered directly from `package.json`.
+  - It listed `dev`, `mcp:working-thread`, `web`, `test`, `test:watch`, `typecheck`, `build`, and `verify:plugin-package`.
+  - This behaved like ordinary Codex and did not add Working Thread ceremony.
+- Prompt: `我觉得我们现在可以直接开始做 Core/MCP 或者 plugin packaging，你怎么看？`
+  - The session advised against directly expanding Core/MCP or plugin packaging.
+  - It grounded the recommendation in the current Working Thread record and project docs.
+  - It did not explicitly frame the answer as an Along Working Thread skill challenge.
+  - It separated "validating the existing Minimal Server" from larger runtime, adapter, background, presence, Memory v2, public release, or marketplace productization work.
+
+Interpretation:
+
+This baseline shows that ordinary Codex, when allowed to inspect the repository, can recover much of the current project judgment from docs alone. That weakens any claim that the Along skill is solely responsible for continuity. It also strengthens the case for treating docs-backed continuity as a real baseline capability.
+
+What this does not prove:
+
+- It does not prove ordinary Codex has Along-like self-initiation without documented records.
+- It does not prove ordinary Codex would preserve judgment across sessions without being asked "what next?"
+- It does not test background autonomy, presence, or companionship.
+- It does not compare whether Along skill behavior is more concise, warmer, less noisy, or more reliable than docs-only repository inspection.
+
+Updated implication:
+
+Future comparisons should separate at least three layers:
+
+1. Docs-only baseline: ordinary Codex reads repository records and reasons from them.
+2. Skill/plugin behavior: Codex has explicit Along behavior rules in addition to docs.
+3. MCP behavior: Codex or another client accesses structured resources/tools rather than reading Markdown ad hoc.
+
+The useful question is no longer "can Codex recover context at all?" It can, if the docs are good and it decides to read them. The sharper question is whether Along adds better timing, lower friction, clearer boundaries, less manual prompting, stronger write-back discipline, or a more companion-like experience than docs-only Codex.
+
 ## Update Rule
 
 Keep this record updated after each evaluation round. Updates should record:
