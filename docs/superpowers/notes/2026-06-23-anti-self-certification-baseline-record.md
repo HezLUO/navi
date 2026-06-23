@@ -140,8 +140,8 @@ Evaluate whether the MCP server improves controlled access to Working Thread res
 
 1. Keep this main conversation as neutral supervisor.
 2. Treat the first attempted Round 1 as contaminated, not as a valid no-Along baseline.
-3. Decide how to isolate a true no-Along baseline despite the repo-local `.agents/skills/along-working-thread` source.
-4. Re-run Round 1 only after the local skill loading path is controlled.
+3. Re-run Round 1 from the isolated baseline workspace created at `/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills`.
+4. Monitor the new baseline thread and record whether the session loads any Along skill or Working Thread behavior.
 5. Only after a valid Round 1 is recorded, decide whether to restore `along-working-thread@personal` for Round 2.
 6. Do not continue MCP client validation until the no-Along baseline has been reviewed.
 
@@ -204,6 +204,40 @@ Possible next isolation options:
 - Use another project folder as the Codex workspace and ask it to inspect the Along repo path explicitly, if Codex local skill loading is workspace-scoped.
 
 Do not treat the monitored session as evidence that ordinary Codex has Along-like continuity. It only proves that repo-local skills still influence fresh sessions even after the personal plugin is removed.
+
+## Baseline Isolation Workspace
+
+Created on 2026-06-23:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along-baseline-no-skills
+```
+
+Purpose:
+
+Run a cleaner no-Along baseline in a workspace that preserves the Along source/docs shape but removes automatic local Along skill loading and runtime state.
+
+Creation method:
+
+- copied the Along project into a sibling directory;
+- excluded `.git`;
+- excluded `node_modules`;
+- excluded `.agents`;
+- excluded `.superpowers`;
+- excluded `dist`;
+- removed copied `.along` runtime data after noticing it was present.
+
+Current isolation checks:
+
+- `.agents`: absent.
+- `.along`: absent.
+- `package.json`: present.
+- `docs/`, `src/`, `tests/`, `plugins/`, and `scripts/`: present.
+- `along-working-thread@personal`: still `not installed`.
+
+Interpretation:
+
+This is not a perfect "no Along content" environment, because the source tree still contains docs and plugin source related to Along. That is intentional. The baseline should test ordinary Codex behavior when inspecting the Along project content without automatic Along skill activation or runtime-state preload. If ordinary Codex independently discovers project docs and reasons from them, that is valid baseline behavior; if it loads `along-working-thread` as a skill, the baseline remains contaminated.
 
 ## Update Rule
 
