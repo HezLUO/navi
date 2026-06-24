@@ -35,7 +35,7 @@ A temporary MCP client script was created outside the repository:
 /private/tmp/along-mcp-client-validation.mjs
 ```
 
-The script used the official MCP TypeScript SDK client and `StdioClientTransport` to spawn the Along server from the real repository:
+The initial validation script used the official MCP TypeScript SDK client and `StdioClientTransport` to spawn the Along server from the real repository:
 
 ```text
 npm run mcp:working-thread -- --workspace "/Users/james/Codex Project/General Codex Project/Along"
@@ -49,7 +49,9 @@ listen EPERM
 
 The validation was rerun with escalated permissions. This matches prior sandbox behavior seen in full test runs and does not indicate an MCP server failure.
 
-## Real Repository Result
+The schema-alignment follow-up revalidation below used the isolated implementation worktree before merge.
+
+## Initial Real Repository Result
 
 Workspace:
 
@@ -92,7 +94,7 @@ applyConfirmedWorkingThreadUpdate
 
 No MCP prompts were involved in this validation.
 
-## Important Finding
+## Initial Important Finding
 
 The real Working Thread record was exposed as a partial/malformed record.
 
@@ -203,6 +205,20 @@ Date: 2026-06-24
 
 The Working Thread schema alignment pass resolved the real-record malformed blocker.
 
+Follow-up workspace:
+
+```text
+/Users/james/Codex Project/General Codex Project/Along-worktrees/working-thread-schema-alignment
+```
+
+The first follow-up run in the Codex sandbox failed with the known `tsx` IPC limitation:
+
+```text
+listen EPERM
+```
+
+The same MCP SDK client validation was rerun with escalated permissions because `tsx` needs to create a local IPC pipe under `/var/folders/.../tsx-501/*.pipe`.
+
 Result:
 
 - The active Working Thread record now keeps the canonical core before appendix sections.
@@ -211,5 +227,19 @@ Result:
 - MCP resources can expose both the structured core and appendix-preserved full record context.
 - Confirmed write-back remains limited to canonical sections.
 - No new MCP tools, prompts, transports, runtime behavior, adapters, presence, or `.along/` state were added.
+
+Revalidation evidence:
+
+- Server identity remained `along-working-thread` version `0.1.0`.
+- Resources remained `working-thread://summaries`, `working-thread://threads/2026-06-18-existing-agent-self-initiation-layer/summary`, and `working-thread://threads/2026-06-18-existing-agent-self-initiation-layer/record`.
+- Resource templates remained `working-thread://threads/{threadId}/summary` and `working-thread://threads/{threadId}/record`.
+- Tool names remained `classifyDrift`, `draftWrapUp`, `proposeWorkingThreadUpdate`, and `applyConfirmedWorkingThreadUpdate`.
+- The active record reported `targetRecordMalformed: false`.
+- Detected appendix headings were `Validation Notes`, `Plan Audit`, `Deferred Capability Map`, `Packaging Positioning`, `Packaging Success Criteria`, `Packaging Metadata`, and `Packaging Source Strategy`.
+- `classifyDrift`, `draftWrapUp`, and `proposeWorkingThreadUpdate` operated against the aligned real record without applying any real repository write-back.
+- Disposable workspace write-back returned `status: ok` for `applyConfirmedWorkingThreadUpdate`.
+- Re-applying the same disposable proposal returned `status: conflict`.
+- The disposable patched record contained the validation text and preserved `## Validation Notes`.
+- No real repository write-back was applied by the follow-up validation script.
 
 This resolves the schema/content alignment blocker found during the first MCP client validation. It does not change the broader product conclusion: Along still has turn-bound, docs-backed continuity, not background autonomy or living presence.
