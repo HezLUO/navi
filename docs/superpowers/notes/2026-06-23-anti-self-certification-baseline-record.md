@@ -570,6 +570,33 @@ Proceed to Minimal MCP Server fresh-session client validation, but run it agains
 
 The MCP validation should verify structured resource access and action tools, not expand Core/MCP functionality yet.
 
+## Round 4 Result: Minimal MCP Client Validation
+
+Completed on 2026-06-24.
+
+Detailed report:
+
+```text
+docs/superpowers/notes/2026-06-24-minimal-mcp-client-validation.md
+```
+
+Result:
+
+- A real MCP SDK client successfully connected to the stdio Minimal MCP Server after sandbox escalation for `tsx` IPC permissions.
+- The server exposed the expected resources, resource templates, and action-only tools.
+- The real Along repository Working Thread record was readable, but malformed under the V1 parser because it contains extra headings such as `Validation Notes`, `Plan Audit`, and packaging-related sections.
+- The server correctly exposed partial context with warnings and did not allow real-record write-back while the record is malformed.
+- Confirmed write-back and stale proposal conflict behavior passed in a disposable workspace with a clean synthetic Working Thread record.
+- No files in the real repository were modified by the MCP write-back validation.
+
+Interpretation:
+
+The Minimal MCP Server passed the fresh-client server/client validation layer, but the active Working Thread content now exceeds the strict V1 schema. This is a product/schema alignment issue, not a reason to expand Core/MCP.
+
+Next recommended gate:
+
+Run a small Working Thread schema alignment decision before any further MCP expansion. Decide whether V1 should keep records strict and move extra material to separate notes, or allow selected appendices without making the record malformed.
+
 ## Update Rule
 
 Keep this record updated after each evaluation round. Updates should record:
