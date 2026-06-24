@@ -43,6 +43,22 @@ The user approved the Minimal MCP Server spec.
 - Which agent client should validate the server first?
 `;
 
+const recordWithAppendices = `${validRecord}
+
+## Validation Notes
+
+2026-06-24 validation showed the MCP client can read the record.
+
+### Nested Evidence
+
+Appendix evidence may contain lower-level headings because it is read-only.
+
+## Packaging Metadata
+
+- Package version remains 0.1.0.
+- This appendix is not part of the WorkingThread contract.
+`;
+
 const sourcePath = "docs/along/working-threads/existing-agent-self-initiation-layer.md";
 
 describe("Working Thread Markdown", () => {
@@ -75,6 +91,67 @@ describe("Working Thread Markdown", () => {
     expect(parsed.thread?.openQuestions).toEqual([
       "Which agent client should validate the server first?",
     ]);
+  });
+
+  it("parses appendices after the canonical core as read-only context", () => {
+    const parsed = parseWorkingThreadMarkdown({
+      id: "appendix-thread",
+      sourcePath: "docs/along/working-threads/appendix-thread.md",
+      markdown: recordWithAppendices,
+    });
+
+    expect(parsed.malformed).toBe(false);
+    expect(parsed.thread).toMatchObject({
+      id: "appendix-thread",
+      currentJudgment: "The Minimal MCP Server spec is approved and awaiting implementation.",
+      nextLikelyMove: "Implement the docs-backed stdio MCP server.",
+    });
+    expect(parsed.thread?.openQuestions).toEqual([
+      "Which agent client should validate the server first?",
+    ]);
+    expect(parsed.warnings).toEqual([]);
+    expect(parsed.appendices).toHaveLength(2);
+    expect(parsed.appendices?.[0]).toMatchObject({
+      heading: "Validation Notes",
+      markdown: expect.stringContaining("2026-06-24 validation showed"),
+      startOffset: expect.any(Number),
+      endOffset: expect.any(Number),
+    });
+    expect(parsed.appendices?.[0]?.markdown).toContain("### Nested Evidence");
+    expect(parsed.appendices?.[1]).toMatchObject({
+      heading: "Packaging Metadata",
+      markdown: expect.stringContaining("Package version remains 0.1.0."),
+      startOffset: expect.any(Number),
+      endOffset: expect.any(Number),
+    });
+  });
+
+  it("keeps unknown headings before canonical core completion malformed", () => {
+    const appendixBeforeOpenQuestions = validRecord.replace(
+      "## Open Questions",
+      `## Validation Notes
+
+This appears before Open Questions, so the canonical core is incomplete.
+
+## Open Questions`,
+    );
+
+    const parsed = parseWorkingThreadMarkdown({
+      id: "misordered-appendix-thread",
+      sourcePath: "docs/along/working-threads/misordered-appendix-thread.md",
+      markdown: appendixBeforeOpenQuestions,
+    });
+
+    expect(parsed.malformed).toBe(true);
+    expect(parsed.thread).toBeUndefined();
+    expect(parsed.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "unknown-section",
+          message: expect.stringContaining("Validation Notes"),
+        }),
+      ]),
+    );
   });
 
   it("builds an actionable summary for a valid record", () => {
@@ -319,6 +396,23 @@ Only one section exists.
     expect(patched).toContain(`## Last Wrap-Up
 
 The user approved the Minimal MCP Server spec.`);
+  });
+
+  it("preserves read-only appendices when patching canonical sections", () => {
+    const patched = createWorkingThreadSectionPatch(recordWithAppendices, [
+      {
+        section: "lastWrapUp",
+        currentValue: "The user approved the Minimal MCP Server spec.",
+        proposedValue: "The schema alignment pass preserved appendix content.",
+        rationale: "Appendices must remain read-only and preserved.",
+      },
+    ]).markdown;
+
+    expect(patched).toContain("The schema alignment pass preserved appendix content.");
+    expect(patched).toContain("## Validation Notes");
+    expect(patched).toContain("### Nested Evidence");
+    expect(patched).toContain("## Packaging Metadata");
+    expect(patched).toContain("- Package version remains 0.1.0.");
   });
 
   it("reports the first changed offset so stores can avoid truncate-to-zero rewrites", () => {
