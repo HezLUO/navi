@@ -1,6 +1,6 @@
 # Minimal MCP Client Validation Report
 
-Status: completed with one important product/schema finding
+Status: completed; initial schema finding resolved by follow-up
 Date: 2026-06-24
 
 ## Goal
@@ -241,5 +241,11 @@ Revalidation evidence:
 - Re-applying the same disposable proposal returned `status: conflict`.
 - The disposable patched record contained the validation text and preserved `## Validation Notes`.
 - No real repository write-back was applied by the follow-up validation script.
+
+Verification rerun:
+
+- `npm test -- tests/mcp/working-thread-markdown.test.ts tests/mcp/working-thread-docs-store.test.ts tests/mcp/working-thread-operations.test.ts tests/mcp/working-thread-server.test.ts` passed: 4 files, 71 tests.
+- `npm run typecheck` passed.
+- `npm run build` passed.
 
 This resolves the schema/content alignment blocker found during the first MCP client validation. It does not change the broader product conclusion: Along still has turn-bound, docs-backed continuity, not background autonomy or living presence.

@@ -611,7 +611,7 @@ Result:
 
 Interpretation:
 
-This improves MCP usability against real project records without changing the evidence hierarchy. It proves the docs-backed MCP layer can handle long-running Working Thread records more realistically, but it still does not prove true self-initiation or companion presence.
+This improves MCP usability against real project records without changing the evidence hierarchy. It demonstrates in this validation that the docs-backed MCP layer can handle long-running Working Thread records more realistically, but it still does not prove true self-initiation or companion presence.
 
 ## Update Rule
 
