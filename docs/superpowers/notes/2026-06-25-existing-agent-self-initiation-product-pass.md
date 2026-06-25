@@ -101,6 +101,7 @@ Record decisions here as the pass progresses.
 - Product-layer concept: use **Challenge Moment** as the short-term product concept. A Challenge Moment is the point where Along notices the user or agent may be drifting away from stated goals, acting on weak assumptions, skipping validation, over-expanding scope, or treating implementation success as product proof.
 - Short-term product framing: Along can first become a Challenge Layer for existing agents before it becomes a fuller living companion.
 - Challenge Moment priority: make **anti-self-certification** the core. Direction drift is the most frequent visible form. Premature execution and weak assumptions are supporting triggers that explain why a challenge is warranted.
+- Challenge Moment presentation: default to a short **Challenge Brief** instead of directly injecting a full conversation turn. Use an execution gate only for high-risk moments. Use wrap-up challenges as a later-stage supplement, not the primary self-initiation surface. Do not make direct in-chat challenge insertion the V1 default because it risks polluting the working context.
 
 ## Next Design Question
 
