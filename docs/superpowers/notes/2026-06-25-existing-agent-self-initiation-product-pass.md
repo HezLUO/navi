@@ -98,6 +98,8 @@ Record decisions here as the pass progresses.
 - Short-term emphasis: the short-term product should emphasize Along's **challenging** quality.
 - Interpretation: Along should not merely remember or summarize. It should be willing to interrupt the user's momentum when it detects drift, weak assumptions, premature implementation, or self-certifying conclusions.
 - Boundary: this does not mean aggressive interruption, always-on critique, or generic debate. The challenge should be tied to the user's own stated goals, Working Thread boundaries, and recent decisions.
+- Product-layer concept: use **Challenge Moment** as the short-term product concept. A Challenge Moment is the point where Along notices the user or agent may be drifting away from stated goals, acting on weak assumptions, skipping validation, over-expanding scope, or treating implementation success as product proof.
+- Short-term product framing: Along can first become a Challenge Layer for existing agents before it becomes a fuller living companion.
 
 ## Next Design Question
 
