@@ -107,6 +107,7 @@ Record decisions here as the pass progresses.
 - Challenge Brief outcomes: support accepting the challenge, refining the challenge, dismissing it for now, and turning it into validation. Make **turn into validation** the default recommended outcome because it best expresses anti-self-certification: Along should help convert questionable judgment into lightweight evidence instead of merely trying to persuade the user.
 - Lightweight validation actions: use fresh-session checks and read-only reviews as the primary validation actions. Use user calibration for product-experience judgments such as whether a moment felt self-initiating, companion-like, annoying, or useful. Do not make implementation or write delegation part of the default validation action.
 - Minimum demo loop: support challenge before implementation, challenge on direction switch, and challenge after completion. Make **challenge after completion** the primary demo path because it targets the strongest anti-self-certification moment: implementation passed, but product validity may still be unproven.
+- Formal spec: wrote `docs/superpowers/specs/2026-06-25-along-challenge-layer-design.md` for user review. The spec keeps V1 scoped to a turn-bound Challenge Layer for existing agents, not a standalone agent, background runtime, emotional companion, or automatic executor.
 
 ## Next Design Question
 
