@@ -89,3 +89,16 @@ Ask the user to choose the first product frame for Along inside existing agents:
 - or a hybrid.
 
 Record decisions here as the pass progresses.
+
+## Decisions During Product Pass
+
+2026-06-25:
+
+- Product frame: use a **Hybrid** frame.
+- Short-term emphasis: the short-term product should emphasize Along's **challenging** quality.
+- Interpretation: Along should not merely remember or summarize. It should be willing to interrupt the user's momentum when it detects drift, weak assumptions, premature implementation, or self-certifying conclusions.
+- Boundary: this does not mean aggressive interruption, always-on critique, or generic debate. The challenge should be tied to the user's own stated goals, Working Thread boundaries, and recent decisions.
+
+## Next Design Question
+
+Clarify what kind of challenge makes Along feel valuable rather than annoying.
