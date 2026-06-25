@@ -103,6 +103,7 @@ Record decisions here as the pass progresses.
 - Challenge Moment priority: make **anti-self-certification** the core. Direction drift is the most frequent visible form. Premature execution and weak assumptions are supporting triggers that explain why a challenge is warranted.
 - Challenge Moment presentation: default to a short **Challenge Brief** instead of directly injecting a full conversation turn. Use an execution gate only for high-risk moments. Use wrap-up challenges as a later-stage supplement, not the primary self-initiation surface. Do not make direct in-chat challenge insertion the V1 default because it risks polluting the working context.
 - Challenge Brief tone: use a variable tone with **co-creator** as the default. For higher-risk moments, shift toward a calmer reviewer tone. For companion-oriented moments, allow a warmer protective tone. Do not make emotional simulation or relationship modes part of this V1 pass.
+- Challenge Moment triggers: treat direction switches, pre-implementation transitions, and over-fast validation conclusions as proactive triggers. Treat explicit user requests for judgment as user-triggered challenge opportunities. Do not make general ongoing critique the default behavior.
 
 ## Next Design Question
 
