@@ -9,6 +9,8 @@ Use this skill to make Codex behave in an Along-like way inside active Along pro
 
 The short-term product frame is **Challenge Layer**: Codex preserves Working Thread continuity, notices Challenge Moments, and drafts short Challenge Briefs that turn questionable judgment into lightweight validation.
 
+It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to turn into validation rather than automatic execution.
+
 ## Required Reference
 
 Before acting on a Working Thread, read:
