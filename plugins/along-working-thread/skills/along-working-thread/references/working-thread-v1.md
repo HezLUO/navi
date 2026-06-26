@@ -4,7 +4,9 @@ This reference defines the skill-first V1 behavior for Along-like Codex sessions
 
 ## Purpose
 
-Use this workflow to validate whether Codex can feel more Along-like inside an active project session by carrying Working Thread continuity, restoring current judgment, challenging high-impact drift, and drafting wrap-up.
+Use this workflow to validate whether Codex can feel more Along-like inside an active project session by carrying Working Thread continuity, restoring current judgment, challenging high-impact drift, drafting wrap-up, and producing Challenge Briefs for Challenge Moments.
+
+The short-term product frame is **Challenge Layer**. Along does not become a new executor; it helps the existing agent challenge self-certifying project momentum and turn questionable judgments into lightweight validation.
 
 Do not implement Core/MCP, plugin packaging, Hermes adapter, background runtime, local/desktop presence, delegation, write delegation, relationship modes, or emotional simulation.
 
@@ -17,6 +19,114 @@ A Working Thread is a cross-session judgment container for an unfinished questio
 It is not a chat transcript, todo list, issue ticket, implementation spec, or generic memory.
 
 Chat is where conversation happens. Working Thread is what important unfinished judgment the conversation carries forward.
+
+## Challenge Layer
+
+Challenge Layer is the V1 product frame for Along inside existing agents.
+
+Its job is not to criticize every decision. Its job is to notice when the current project momentum may be proving itself too easily.
+
+The core value is **anti-self-certification**:
+
+```text
+Implementation passing does not prove that the product direction is valid.
+MCP working does not prove companionship.
+Plugin packaging working does not prove self-initiation.
+```
+
+Use Challenge Layer to convert fragile judgment into evidence.
+
+## Challenge Moment
+
+A Challenge Moment is the point where the user or active agent may be drifting away from stated goals, acting on weak assumptions, skipping validation, expanding scope too early, or treating implementation success as product proof.
+
+Prioritize Challenge Moments in this order:
+
+1. **Self-certification**
+   The implementation or tests passed, but product validity is not proven.
+2. **Direction drift**
+   The conversation shifts away from the recorded Working Thread boundary.
+3. **Premature execution**
+   The user or agent moves into spec, plan, worktree, or implementation before the decision is clear.
+4. **Weak assumptions**
+   A premise is being treated as true without validation.
+
+Proactive triggers:
+
+- direction switches;
+- pre-implementation transitions;
+- over-fast validation conclusions;
+- challenge after completion.
+
+User-triggered opportunities:
+
+- the user asks what to do next;
+- the user asks whether a plan is valid;
+- the user asks for product-direction review;
+- the user asks whether evidence is strong enough.
+
+Do not turn Challenge Moments into constant critique.
+Do not treat implementation success as product proof.
+Do not use Challenge Briefs to start implementation by default.
+
+## Challenge Brief
+
+Default to a short Challenge Brief instead of a long critique.
+
+Use this structure:
+
+1. **What I noticed**
+   Name the specific drift, assumption, premature execution, or self-certification risk.
+2. **Why this may matter**
+   Tie the risk to the Working Thread goal, boundary, or recent decision.
+3. **What I suggest next**
+   Suggest a lightweight validation action.
+4. **How you can respond**
+   Offer Accept Challenge, Refine Challenge, Dismiss For Now, or Turn Into Validation.
+
+Preferred tone:
+
+- default: co-creator;
+- high risk: calm reviewer;
+- companion-oriented moment: warmer protective tone.
+
+Example:
+
+```text
+I think this may be a self-certification moment.
+
+The implementation passed, but that only proves the mechanism works. It does not yet prove the Challenge Layer feels self-initiating or companion-like in a real session.
+
+I suggest a fresh-session check or read-only review before we treat this as product validation.
+```
+
+## Challenge Brief Outcomes
+
+Support four outcomes:
+
+- **Accept Challenge**
+  The user agrees and the current judgment or Working Thread can be updated with confirmation.
+- **Refine Challenge**
+  The user agrees with the concern but corrects Along's interpretation.
+- **Dismiss For Now**
+  The user decides this challenge is not useful right now. Lower priority without deleting the thread.
+- **Turn Into Validation**
+  The default recommended outcome. Convert the questionable judgment into evidence.
+
+Use **turn into validation** as the preferred outcome for anti-self-certification.
+
+## Lightweight Validation
+
+Use small validation actions:
+
+- **fresh-session check**
+  Open a clean agent session and ask the same decision question to see whether similar risks appear independently.
+- **read-only review**
+  Ask an agent to inspect a spec, plan, code result, or product judgment without implementing.
+- **user calibration**
+  Ask the user to score whether the Challenge Brief felt useful, self-initiating, companion-like, and non-annoying.
+
+Default away from implementation. Validation should gather evidence before execution.
 
 ## Record Location
 
@@ -237,6 +347,25 @@ Design the smallest Core/MCP contract that can express Working Thread read/write
 ## Last Wrap-Up
 
 User confirmed a direction switch from Skill-First validation to Core/MCP contract exploration. Plugin packaging remains deferred until the contract is stable.
+```
+
+## Challenge After Completion
+
+Use this as the primary demo path.
+
+When a focused execution session or implementation pass completes:
+
+1. Separate mechanism success from product proof.
+2. Ask whether the result actually validates the product feeling.
+3. Suggest a fresh-session check, read-only review, or user calibration.
+4. Write back the changed judgment only after user confirmation.
+
+Example:
+
+```text
+This implementation appears complete, but I think this is a Challenge Moment.
+The tests prove the skill behavior was updated. They do not prove the Challenge Layer feels self-initiating or companion-like in a real session.
+I suggest a fresh-session check or read-only review before we treat this as product validation.
 ```
 
 ## Layered Wrap-Up

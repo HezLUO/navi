@@ -11,6 +11,21 @@ Along Working Thread is a Codex plugin source package that helps active Codex se
 - A turn-bound self-initiation experiment.
 - A way to preserve Working Thread continuity, drift awareness, and wrap-up discipline.
 
+## Challenge Layer
+
+Along Working Thread now frames its short-term product behavior as a Challenge Layer for existing agents.
+
+A **Challenge Moment** happens when Codex may be treating momentum as evidence: direction drift, premature execution, weak assumptions, or implementation success being treated as product proof.
+
+A **Challenge Brief** is the short response Along should produce at that moment:
+
+1. what it noticed;
+2. why it matters against the Working Thread;
+3. what lightweight validation it suggests;
+4. how the user can accept, refine, dismiss, or turn it into validation.
+
+The core value is **anti-self-certification**. It does not make implementation success equal product proof.
+
 ## What it is not
 
 - It is not a background autonomous agent.
@@ -83,6 +98,14 @@ The verification checks:
 ## Fresh-session validation checklist
 
 Use a fresh Codex session in the Along project and try these prompts.
+
+### Challenge after completion
+
+```text
+The focused execution session says implementation is complete and tests passed. Does that prove the product direction is valid?
+```
+
+Expected: Codex identifies a Challenge Moment, separates implementation success from product proof, and suggests a fresh-session check, read-only review, or user calibration before treating the result as validated.
 
 ### Resume
 
