@@ -156,6 +156,42 @@ describe("Along Working Thread Codex skill", () => {
     expect(reference).toContain("Do not add real model invocation tests");
   });
 
+  it("documents Challenge Layer behavior and lightweight validation", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "Challenge Layer",
+      "Challenge Moment",
+      "Challenge Brief",
+      "anti-self-certification",
+      "turn into validation",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "challenge after completion",
+      "direction switches",
+      "pre-implementation transitions",
+      "over-fast validation conclusions",
+      "fresh-session check",
+      "read-only review",
+      "user calibration",
+      "Accept Challenge",
+      "Refine Challenge",
+      "Dismiss For Now",
+      "Turn Into Validation",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    expect(reference).toContain("Do not turn Challenge Moments into constant critique.");
+    expect(reference).toContain("Do not treat implementation success as product proof.");
+    expect(reference).toContain("Do not use Challenge Briefs to start implementation by default.");
+  });
+
   it("ships a product-owned Working Thread directory with the required record template", async () => {
     const readme = await readRepoText("docs/along/working-threads/README.md");
 
@@ -266,6 +302,51 @@ describe("Along Working Thread repo-contained plugin package", () => {
     ]) {
       expect(await repoPathExists(forbiddenPath), forbiddenPath).toBe(false);
     }
+  });
+
+  it("positions the package as a Challenge Layer without expanding runtime scope", async () => {
+    const manifest = JSON.parse(
+      await readRepoText("plugins/along-working-thread/.codex-plugin/plugin.json"),
+    ) as {
+      version: string;
+      description: string;
+      keywords: string[];
+      interface: {
+        shortDescription: string;
+        longDescription: string;
+        defaultPrompt: string[];
+      };
+    };
+    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+
+    expect(manifest.version).toBe("0.1.0");
+    expect(manifest.description).toContain("Challenge Layer");
+    expect(manifest.keywords).toEqual(expect.arrayContaining(["challenge-layer", "validation"]));
+    expect(manifest.interface.shortDescription).toContain("Challenge Layer");
+    expect(manifest.interface.longDescription).toContain("Challenge Moment");
+    expect(manifest.interface.longDescription).toContain("not background autonomy");
+    expect(manifest.interface.defaultPrompt).toEqual(
+      expect.arrayContaining([
+        "Check whether this is a self-certification moment.",
+        "Turn this challenge into a lightweight validation.",
+      ]),
+    );
+
+    expect(readme).toContain("## Challenge Layer");
+    expect(readme).toContain("Challenge Moment");
+    expect(readme).toContain("Challenge Brief");
+    expect(readme).toContain("anti-self-certification");
+    expect(readme).toContain("Challenge after completion");
+    expect(readme).toContain("fresh-session check");
+    expect(readme).toContain("read-only review");
+    expect(readme).toContain("user calibration");
+    expect(readme).toContain("It does not make implementation success equal product proof.");
+
+    expect(version).toContain("Challenge Layer");
+    expect(version).toContain("0.1.0");
+    expect(version).toContain("not a runtime capability upgrade");
+    expect(version).toContain("Do not bump to 0.2.0");
   });
 
   it("keeps the packaged skill copy in exact sync with the repo skill source", async () => {
