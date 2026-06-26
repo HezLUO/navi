@@ -108,6 +108,7 @@ Record decisions here as the pass progresses.
 - Lightweight validation actions: use fresh-session checks and read-only reviews as the primary validation actions. Use user calibration for product-experience judgments such as whether a moment felt self-initiating, companion-like, annoying, or useful. Do not make implementation or write delegation part of the default validation action.
 - Minimum demo loop: support challenge before implementation, challenge on direction switch, and challenge after completion. Make **challenge after completion** the primary demo path because it targets the strongest anti-self-certification moment: implementation passed, but product validity may still be unproven.
 - Formal spec: wrote `docs/superpowers/specs/2026-06-25-along-challenge-layer-design.md` for user review. The spec keeps V1 scoped to a turn-bound Challenge Layer for existing agents, not a standalone agent, background runtime, emotional companion, or automatic executor.
+- Implementation status: Challenge Layer behavior was implemented as skill/plugin documentation and validation tests. The implementation remains turn-bound and docs-backed; it does not add runtime, UI, adapters, write delegation, or automatic execution.
 - Implementation plan: wrote `docs/superpowers/plans/2026-06-25-along-challenge-layer.md`. The plan keeps implementation scoped to skill/reference/package documentation, validation tests, package metadata, and continuity records.
 
 ## Next Design Question
