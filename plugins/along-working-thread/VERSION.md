@@ -1,12 +1,13 @@
 # Along Working Thread 0.1.0
 
-`0.1.0` is the current turn-bound self-initiation and Challenge Layer package version.
+`0.1.0` is the current turn-bound self-initiation, Navi Progress Map, and Challenge Layer package version.
 
-This pass tightens the repo-contained source package behavior by documenting Challenge Moment, Challenge Brief, and lightweight validation rules. It is not a runtime capability upgrade.
+This pass documents Navi as the customer-facing Progress Map behavior for non-expert progress and next-step questions. It is not a runtime capability upgrade.
 
 The package continues to provide:
 
 - Working Thread resume inside active Codex sessions;
+- Navi Progress Maps for progress, next-step, continue, and confusion questions from non-expert users;
 - ordinary request quietness;
 - medium-drift boundary notes;
 - high-impact drift confirmation;
@@ -22,6 +23,7 @@ It does not add:
 - cross-agent memory;
 - relationship modes;
 - delegation;
+- automatic final decision-making across every professional domain;
 - automatic implementation after a challenge;
 - proof that product feeling is valid without user or fresh-session validation;
 - public marketplace release.

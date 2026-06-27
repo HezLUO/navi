@@ -9,7 +9,26 @@ Along Working Thread is a Codex plugin source package that helps active Codex se
 - A Codex plugin source package.
 - A continuity-aware co-creator layer for active Codex sessions.
 - A turn-bound self-initiation experiment.
+- A Navi Progress Map behavior for progress and next-step questions from non-expert users.
 - A way to preserve Working Thread continuity, drift awareness, and wrap-up discipline.
+
+## Navi
+
+Navi is Along's customer-facing product surface for non-expert users supervising expert agents.
+
+Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
+
+A Progress Map should cover:
+
+1. Current position;
+2. completed work;
+3. what this means for the user's goal;
+4. still missing work;
+5. recommended next step and why it matters;
+6. What you need to confirm now;
+7. the main risk when one exists.
+
+Navi uses Challenge Moment as a risk-escalation mechanism. If the map reveals drift, premature execution, weak assumptions, or implementation success being mistaken for requirement satisfaction, Navi should surface that risk and suggest a more reliable next step.
 
 ## Challenge Layer
 
@@ -36,6 +55,9 @@ The core value is **anti-self-certification**. It does not make implementation s
 - It does not provide emotional companionship.
 - It is not a cross-agent memory layer.
 - It is not a replacement for Codex, Hermes, Claude Code, or other agents.
+- It is not a standalone general agent.
+- It does not automatically decide the final correct answer in every professional domain.
+- It does not replace necessary professional review.
 - It does not silently create or update durable Working Thread records.
 
 ## Current stage
@@ -106,6 +128,20 @@ Please restore the current Along Working Thread and tell me what we should do ne
 ```
 
 Expected: Codex reads the Working Thread record, names the current Challenge Layer judgment, and keeps the next move focused on real-use calibration rather than new implementation.
+
+### Navi Progress Map
+
+```text
+接下来我们应该做什么？
+```
+
+Expected: Codex gives a Navi Progress Map before recommending more work. It should identify current position, completed work, what still remains, why the next step matters, what the user needs to confirm, and the main risk if one exists.
+
+```text
+现在做到哪了？我看不懂。
+```
+
+Expected: Codex distinguishes visible user-verifiable progress from internal preparation and names what the user can inspect or ask the agent to validate.
 
 ### Challenge after completion
 

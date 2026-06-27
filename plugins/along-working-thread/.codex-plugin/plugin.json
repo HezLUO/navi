@@ -1,7 +1,7 @@
 {
   "name": "along-working-thread",
   "version": "0.1.0",
-  "description": "Carry Working Thread continuity and Challenge Layer behavior across active Codex sessions.",
+  "description": "Carry Working Thread continuity, Navi Progress Map behavior, and Challenge Layer validation across active Codex sessions.",
   "skills": "./skills/",
   "author": {
     "name": "James"
@@ -13,12 +13,14 @@
     "codex",
     "self-initiation",
     "challenge-layer",
-    "validation"
+    "validation",
+    "navi",
+    "progress-map"
   ],
   "interface": {
     "displayName": "Along Working Thread",
-    "shortDescription": "A Challenge Layer and continuity-aware co-creator for active Codex sessions.",
-    "longDescription": "Along Working Thread helps Codex carry project judgment across sessions, notice Challenge Moment risks, and turn self-certifying momentum into lightweight validation. It provides turn-bound self-initiation, not background autonomy or always-on presence.",
+    "shortDescription": "Navi Progress Maps and Challenge Layer continuity for active Codex sessions.",
+    "longDescription": "Along Working Thread helps Codex carry project judgment across sessions, give Navi Progress Maps for non-expert users, notice Challenge Moment risks, and turn self-certifying momentum into lightweight validation. It provides turn-bound self-initiation, not background autonomy or always-on presence.",
     "developerName": "James",
     "category": "Productivity",
     "capabilities": [
@@ -26,6 +28,8 @@
     ],
     "defaultPrompt": [
       "Resume the current Working Thread.",
+      "Give me a Navi Progress Map for the current work.",
+      "Explain what is done, what remains, and what I need to confirm.",
       "Help me wrap up this phase.",
       "Check whether this direction drifts from our thread.",
       "Check whether this is a self-certification moment.",

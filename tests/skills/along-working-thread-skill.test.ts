@@ -325,7 +325,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     );
     expect(manifest.interface.displayName).toBe("Along Working Thread");
     expect(manifest.interface.shortDescription).toBe(
-      "A Challenge Layer and continuity-aware co-creator for active Codex sessions.",
+      "Navi Progress Maps and Challenge Layer continuity for active Codex sessions.",
     );
     expect(manifest.interface.longDescription).toContain("turn-bound self-initiation");
     expect(manifest.interface.longDescription).toContain("not background autonomy");
@@ -333,6 +333,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.interface.capabilities).toContain("Interactive");
     expect(manifest.interface.defaultPrompt).toEqual([
       "Resume the current Working Thread.",
+      "Give me a Navi Progress Map for the current work.",
+      "Explain what is done, what remains, and what I need to confirm.",
       "Help me wrap up this phase.",
       "Check whether this direction drifts from our thread.",
       "Check whether this is a self-certification moment.",
@@ -395,6 +397,53 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(version).toContain("Do not bump to 0.2.0");
   });
 
+  it("positions the package around Navi Progress Map without expanding runtime scope", async () => {
+    const manifest = JSON.parse(
+      await readRepoText("plugins/along-working-thread/.codex-plugin/plugin.json"),
+    ) as {
+      version: string;
+      description: string;
+      keywords: string[];
+      interface: {
+        shortDescription: string;
+        longDescription: string;
+        defaultPrompt: string[];
+      };
+    };
+    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+
+    expect(manifest.version).toBe("0.1.0");
+    expect(manifest.description).toContain("Navi");
+    expect(manifest.description).toContain("Progress Map");
+    expect(manifest.keywords).toEqual(expect.arrayContaining(["navi", "progress-map"]));
+    expect(manifest.interface.shortDescription).toContain("Navi");
+    expect(manifest.interface.longDescription).toContain("non-expert users");
+    expect(manifest.interface.longDescription).toContain("Progress Map");
+    expect(manifest.interface.longDescription).toContain("not background autonomy");
+    expect(manifest.interface.defaultPrompt).toEqual(
+      expect.arrayContaining([
+        "Give me a Navi Progress Map for the current work.",
+        "Explain what is done, what remains, and what I need to confirm.",
+      ]),
+    );
+
+    expect(readme).toContain("## Navi");
+    expect(readme).toContain("Progress Map");
+    expect(readme).toContain("understand, supervise, and steer expert agents");
+    expect(readme).toContain("Current position");
+    expect(readme).toContain("What you need to confirm now");
+    expect(readme).toContain("not a standalone general agent");
+    expect(readme).toContain("does not replace necessary professional review");
+    expect(readme).toContain("接下来我们应该做什么？");
+    expect(readme).toContain("现在做到哪了？我看不懂。");
+
+    expect(version).toContain("Navi");
+    expect(version).toContain("Progress Map");
+    expect(version).toContain("not a runtime capability upgrade");
+    expect(version).toContain("Do not bump to 0.2.0");
+  });
+
   it("keeps the packaged skill copy in exact sync with the repo skill source", async () => {
     const sourceDir = ".agents/skills/along-working-thread";
     const packagedDir = "plugins/along-working-thread/skills/along-working-thread";
@@ -430,7 +479,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(readme).toContain("rate usefulness, self-initiation, co-creator feel, and annoyance");
 
     expect(version).toContain("# Along Working Thread 0.1.0");
-    expect(version).toContain("repo-contained source package");
+    expect(version).toContain("customer-facing Progress Map behavior");
     expect(version).toContain("not a runtime capability upgrade");
     expect(version).toContain("Do not bump to 0.2.0");
   });
