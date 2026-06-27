@@ -192,6 +192,50 @@ describe("Along Working Thread Codex skill", () => {
     expect(reference).toContain("Do not use Challenge Briefs to start implementation by default.");
   });
 
+  it("documents Navi Progress Map behavior for non-expert users", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "Navi",
+      "Progress Map",
+      "non-expert users",
+      "understand, supervise, and steer expert agents",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Current position",
+      "Completed",
+      "What this means for your goal",
+      "Still missing",
+      "Recommended next step",
+      "What you need to confirm now",
+      "Main risk",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "what should we do next",
+      "what is the current progress",
+      "should we continue",
+      "are we done",
+      "I do not understand the current progress",
+      "do not jump straight to another task recommendation",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    expect(reference).toContain("visible product progress or internal preparation");
+    expect(reference).toContain("Challenge Moment becomes the escalation behavior when the map reveals risk");
+    expect(reference).toContain("Navi helps the user supervise whether the agent's professional judgment is reliable enough to continue.");
+    expect(reference).toContain("claim it can automatically decide the final correct answer in every domain");
+    expect(reference).toContain("replace legal, medical, financial, engineering, or other high-risk professional responsibility");
+  });
+
   it("ships a product-owned Working Thread directory with the required record template", async () => {
     const readme = await readRepoText("docs/along/working-threads/README.md");
 
