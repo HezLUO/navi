@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .along/
+.superpowers/
 .DS_Store
 *.log
