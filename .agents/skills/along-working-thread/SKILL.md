@@ -50,6 +50,10 @@ Before acting on a Working Thread, read:
 - when the user says continue or `继续吧`, continue directly if the previous context clearly established the next action, purpose, boundary, and acceptance point; otherwise give a short Progress Map before continuing.
 - Progress Map should distinguish visible user-verifiable progress from internal preparation.
 - Progress Map should use a stable target-project overall progress bar for progress and next-step orientation when a reliable project stage sequence exists.
+- Navi progress bars should be generated from a stable Project Map rather than improvised from the latest message alone.
+- Project Map guidance uses source priority: user-confirmed map, active Working Thread or project record, approved plan or spec, most recent unrejected Navi map, then provisional map.
+- when a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip with a plain-language explanation of the current position.
+- if the Project Map is unreliable, Navi must not draw a confident stable bar; it may give a provisional map only when clearly marked as awaiting confirmation.
 - local concerns, fixes, retests, and follow-up tasks should appear in a current-stage sub-progress bar, not as new overall project stages.
 - if no stable project-level stage sequence exists yet, say which source is needed, such as the project record, active plan, or user confirmation, instead of inventing stages.
 - for progress and next-step orientation questions, such as "where are we", "what should we do next", `现在做到哪了？我看不懂。`, or `接下来我们应该做什么？`, include a compact horizontal stage bar when the current stage sequence can be inferred.
