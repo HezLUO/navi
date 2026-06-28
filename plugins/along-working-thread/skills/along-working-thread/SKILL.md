@@ -1,11 +1,11 @@
 ---
 name: along-working-thread
-description: 'Use in the Along project when Codex should preserve judgment-oriented Working Thread continuity across active sessions, provide Navi Progress Maps for non-expert progress or next-step questions, challenge high-impact drift, produce Challenge Briefs for Challenge Moments, or draft wrap-up with user confirmation. Do not use for one-off coding tasks, background automation, or implementation work that does not involve Working Thread continuity.'
+description: 'Use when any active Codex project needs Working Thread continuity or Navi Progress Maps for non-expert progress/next-step confusion, including 现在做到哪了, 我看不懂, 接下来, 继续吧, or 这个方案可以吗; also use for high-impact drift challenges, Challenge Briefs, or wrap-up with user confirmation. Do not use for one-off coding tasks, background automation, or implementation without project supervision.'
 ---
 
 # Along Working Thread
 
-Use this skill to make Codex behave in an Along-like way inside active Along project sessions.
+Use this skill to make Codex behave in an Along-like way inside an installed, active Codex project.
 
 The customer-facing product surface is **Navi**: a non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents.
 
@@ -23,7 +23,7 @@ Before acting on a Working Thread, read:
 
 ## Hard Boundaries
 
-- This skill may be considered by default in the Along project when the user request matches Working Thread behavior.
+- This skill may be considered by default in any installed, active Codex project when the user request matches Navi Progress Map, Challenge Layer, or Working Thread behavior.
 - Codex must not silently create durable Working Thread docs.
 - Codex must not silently write persistent continuity records.
 - Codex must not treat a high-impact drift challenge as a hard block.
@@ -43,6 +43,8 @@ Before acting on a Working Thread, read:
 
 - ordinary requests stay quiet: answer directly without mentioning Working Thread, Along, drift, or wrap-up.
 - Navi Progress Map triggers when the user asks what should happen next, what the current progress is, whether to continue, whether the work is done, what remains, or says they do not understand the current progress.
+- Do not limit Navi Progress Map triggers to the Along repository; when this package is installed, progress and next-step confusion in any target project should naturally trigger Navi.
+- Do not require the user to name Navi or say "Progress Map" before giving a map for clear progress, next-step, continue, done, or confusion questions.
 - for Progress Map requests, orient before recommending: current position, completed work, what it means for the user's goal, still missing work, recommended next step, what the user needs to confirm now, and one main risk when relevant.
 - do not output a Progress Map for every response. Use it when the user needs supervisory orientation, not for ordinary clear tasks, local factual questions, or already-confirmed execution.
 - when the user says continue or `继续吧`, continue directly if the previous context clearly established the next action, purpose, boundary, and acceptance point; otherwise give a short Progress Map before continuing.

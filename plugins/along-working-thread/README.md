@@ -18,6 +18,8 @@ Navi is Along's customer-facing product surface for non-expert users supervising
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
 
+When this package is installed, Navi Progress Map triggers apply in any active Codex project, not only the Along repository. Do not require the user to name Navi; ordinary progress, next-step, continue, done, plan-reliability, and confusion questions should naturally trigger a map when project state can be inferred.
+
 A Progress Map should cover:
 
 1. Current position;
@@ -119,7 +121,7 @@ The verification checks:
 
 ## Fresh-session validation checklist
 
-Use a fresh Codex session in the Along project. These checks validate the current Challenge Layer stage; they do not prove background autonomy, runtime behavior, or long-term product feeling.
+Use fresh Codex sessions in both the Along project and at least one non-Along target project. These checks validate the current Challenge Layer stage; they do not prove background autonomy, runtime behavior, or long-term product feeling.
 
 ### Recovery
 
@@ -130,6 +132,14 @@ Please restore the current Along Working Thread and tell me what we should do ne
 Expected: Codex reads the Working Thread record, names the current Challenge Layer judgment, and keeps the next move focused on real-use calibration rather than new implementation.
 
 ### Navi Progress Map
+
+In a non-Along target project where the package is installed:
+
+```text
+现在做到哪了？我看不懂。
+```
+
+Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. The map should describe the target project's own stable stage sequence when one can be inferred, not Along's or Navi's implementation stages.
 
 ```text
 接下来我们应该做什么？

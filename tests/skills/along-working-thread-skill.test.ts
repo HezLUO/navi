@@ -99,6 +99,12 @@ describe("Along Working Thread Codex skill", () => {
 
     expect(parsed.name).toBe("along-working-thread");
     expect(parsed.description).toEqual(expect.stringContaining("Working Thread continuity"));
+    expect(parsed.description).toEqual(expect.stringContaining("any active Codex project"));
+    expect(parsed.description).toEqual(expect.stringContaining("non-expert progress"));
+    expect(parsed.description).toEqual(expect.stringContaining("现在做到哪了"));
+    expect(parsed.description).toEqual(expect.stringContaining("我看不懂"));
+    expect(parsed.description).toEqual(expect.stringContaining("接下来"));
+    expect(parsed.description).not.toEqual(expect.stringContaining("Use in the Along project"));
   });
 
   it("defines a repo-scoped skill with explicit V1 boundaries", async () => {
@@ -242,6 +248,8 @@ describe("Along Working Thread Codex skill", () => {
 
     expect(skill).toContain("stable target-project overall progress bar");
     expect(skill).toContain("current-stage sub-progress bar");
+    expect(skill).toContain("installed, active Codex project");
+    expect(skill).toContain("Do not limit Navi Progress Map triggers to the Along repository");
     expect(reference).toContain("Challenge Moment becomes the escalation behavior when the map reveals risk");
     expect(reference).toContain("Navi helps the user supervise whether the agent's professional judgment is reliable enough to continue.");
     expect(reference).toContain("claim it can automatically decide the final correct answer in every domain");
@@ -446,6 +454,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(readme).toContain("Current position");
     expect(readme).toContain("What you need to confirm now");
     expect(readme).toContain("not a standalone general agent");
+    expect(readme).toContain("When this package is installed, Navi Progress Map triggers apply in any active Codex project");
+    expect(readme).toContain("Do not require the user to name Navi");
     expect(readme).toContain("does not replace necessary professional review");
     expect(readme).toContain("接下来我们应该做什么？");
     expect(readme).toContain("现在做到哪了？我看不懂。");

@@ -34,6 +34,8 @@ Navi exists because the user may be responsible for the outcome while lacking en
 
 Navi's default behavior is a **Progress Map**. It appears when the user asks what should happen next, what the current progress is, whether to continue, whether the work is done, what remains, whether a plan is reliable, or says they do not understand the current progress.
 
+When this package is installed, Navi Progress Map triggers apply in any active Codex project, not only the Along repository. Do not require the user to name Navi or explicitly ask for a "Progress Map" before giving one for clear progress, next-step, continue, done, plan-reliability, or confusion questions. The map should describe the user's current target project, not Along or Navi, unless Along or Navi is actually the target project.
+
 Common user phrasings include "what should we do next", "what is the current progress", "should we continue", "continue", "are we done", "is this plan okay", "I do not understand the current progress", `继续吧`, and `这个方案可以吗？我不懂技术。`.
 
 Navi should not jump straight to another task recommendation when the user is asking for orientation; do not jump straight to another task recommendation. It should first help the user understand where the work stands and what they need to confirm.
