@@ -294,6 +294,36 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("source priority");
     expect(reference).toContain("If sources conflict");
     expect(reference).toContain("confirmed user-facing project map wins");
+    expect(reference).toContain("docs/along/project-maps/");
+    expect(reference).toContain("read the matching confirmed Project Map record");
+  });
+
+  it("ships a confirmed Project Map record for the current Navi test project", async () => {
+    expect(await repoPathExists("docs/along/project-maps/README.md")).toBe(true);
+    expect(await repoPathExists("docs/along/project-maps/navi-current-test-project.md")).toBe(true);
+
+    const readme = await readRepoText("docs/along/project-maps/README.md");
+    const naviMap = await readRepoText("docs/along/project-maps/navi-current-test-project.md");
+
+    for (const expected of [
+      "confirmed Project Map",
+      "Do not rewrite `overall_stages` without user confirmation.",
+      "current-stage sub-progress",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+
+    for (const expected of [
+      "# Navi Current Test Project Map",
+      "map_status: confirmed",
+      "source: user-confirmed current Navi test project map",
+      "[问题定义] -> [行为设计] -> [文档写入] -> [新会话验证] -> [真实使用校准] -> [稳定产品行为]",
+      "current_overall_stage: 真实使用校准",
+      "Do not rename, remove, merge, split, or reorder `overall_stages` without explicit user confirmation.",
+      "local concerns, fixes, retests, pushes, and fresh-session checks must stay in `sub_progress`",
+    ]) {
+      expect(naviMap).toContain(expected);
+    }
   });
 
   it("documents compact horizontal rendering and mandatory current-position explanation", async () => {

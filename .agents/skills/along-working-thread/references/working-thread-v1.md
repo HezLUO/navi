@@ -110,6 +110,8 @@ Use this source priority when building the `Project Map`:
 4. the most recent Navi map that the user did not reject;
 5. a provisional inferred map, clearly marked as awaiting confirmation.
 
+When the target repo contains `docs/along/project-maps/`, treat those files as project records for Navi. Before drawing a Progress Map from memory, recent conversation, or improvised labels, read the matching confirmed Project Map record. If a confirmed record exists for the target project, reuse its `overall_stages` exactly unless the user explicitly confirms a map change.
+
 If sources conflict, the more recently confirmed user-facing project map wins over older inferred state.
 
 The overall progress bar describes the target project, not Navi's own internal answering process. Local concerns, document fixes, retests, validation loops, or calibration tasks belong in `sub_progress`. They must not rewrite `overall_stages`.
