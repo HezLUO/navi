@@ -259,6 +259,94 @@ describe("Along Working Thread Codex skill", () => {
     expect(reference).toContain("replace legal, medical, financial, engineering, or other high-risk professional responsibility");
   });
 
+  it("documents the Navi Project Map model and source priority", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "Project Map",
+      "map_status",
+      "overall_stages",
+      "current_overall_stage",
+      "current_stage_explanation",
+      "sub_progress",
+      "visible_evidence",
+      "missing_or_risk",
+      "next_gate",
+      "user_confirmation_needed",
+      "source",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "user just confirmed",
+      "active Working Thread or project record",
+      "approved plan or spec",
+      "most recent Navi map that the user did not reject",
+      "provisional inferred map",
+      "clearly marked as awaiting confirmation",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    expect(skill).toContain("stable Project Map");
+    expect(skill).toContain("source priority");
+    expect(reference).toContain("If sources conflict");
+    expect(reference).toContain("confirmed user-facing project map wins");
+  });
+
+  it("documents compact horizontal rendering and mandatory current-position explanation", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "compact horizontal progress strip",
+      "[需求澄清] -> [方案比较] -> [原型设计]",
+      "▲",
+      "The strip answers \"where am I\"",
+      "the explanation answers \"what does this position mean\"",
+      "Every current position must be followed by a plain-language explanation",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    expect(skill).toContain("compact horizontal progress strip");
+    expect(skill).toContain("plain-language explanation");
+  });
+
+  it("documents degraded state rules for unreliable project maps", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "should not draw a confident stable bar",
+      "我现在还没有可靠的项目地图",
+      "临时判断，待你确认后才会作为稳定项目地图",
+      "Accuracy is more important than immediate visual confidence",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    expect(skill).toContain("must not draw a confident stable bar");
+    expect(skill).toContain("provisional map");
+  });
+
+  it("documents graphical progress bar validation in the package README", async () => {
+    const readme = await readRepoText("plugins/along-working-thread/README.md");
+
+    for (const expected of [
+      "Project Map",
+      "stable target-project stage sequence",
+      "compact horizontal progress strip",
+      "source priority",
+      "provisional map",
+      "must not draw a confident stable bar",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+  });
+
   it("ships a product-owned Working Thread directory with the required record template", async () => {
     const readme = await readRepoText("docs/along/working-threads/README.md");
 
