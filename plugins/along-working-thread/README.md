@@ -22,6 +22,12 @@ When this package is installed, Navi Progress Map triggers apply in any active C
 
 Navi is accuracy-first in fresh sessions. It may inspect the target project's source-of-truth before outputting the Progress Map; it should not guess a temporary stage bar just to answer faster.
 
+Navi progress bars should come from a stable **Project Map** rather than a one-off guess. The Project Map records the user's target project, stable target-project stage sequence, current stage, current-stage explanation, optional sub-progress, visible evidence, missing risk, next gate, user confirmation needed, and source.
+
+Project Map source priority is: the map the user just confirmed, the active Working Thread or project record, an approved plan or spec, the most recent unrejected Navi map, then a clearly marked provisional map.
+
+When a reliable Project Map exists, Navi should render a compact horizontal progress strip and explain the current position in plain language. If the map is unreliable, Navi must not draw a confident stable bar; it should inspect the source of truth or mark any provisional map as awaiting confirmation.
+
 A Progress Map should cover:
 
 1. Current position;
@@ -168,6 +174,8 @@ Expected: If the next action, purpose, boundary, and acceptance point are alread
 Expected: Codex treats this as a pre-approval check rather than giving a simple yes/no. It should explain missing evidence, tradeoffs, risks, acceptance criteria, or the need for read-only review before the user approves implementation.
 
 Stable bar note: The overall progress bar should describe the user's target project, not Navi's own implementation stages. Local concerns or fixes should appear in a current-stage sub-progress bar when useful.
+
+Graphical progress note: The map should use the stable Project Map source priority and render a compact horizontal progress strip when a reliable target-project stage sequence exists. The current-position marker must be followed by a plain-language explanation of what that stage is doing. If the source is unreliable, Codex should say it needs the project record, active plan, or user confirmation and must not draw a confident stable bar. A provisional map is acceptable only when clearly labeled as awaiting confirmation.
 
 ### Challenge after completion
 
