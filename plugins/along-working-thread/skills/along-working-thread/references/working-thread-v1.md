@@ -148,7 +148,9 @@ For progress and next-step orientation questions, include a compact horizontal s
 
 ### Compact Horizontal Rendering
 
-When a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip:
+When a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip. In the current chat-only version, "graphical" means a text-rendered progress graphic, not a bitmap image or UI widget. Future UI can render the same Project Map as a richer component.
+
+The overall stages should be a single-line stage strip whenever the chat surface can fit it. Do not split the overall stage sequence across multiple lines just because it is long; prefer shorter stage labels or fewer stable overall stages. The current-position marker may appear on the next line.
 
 ```text
 项目总体进度
@@ -174,7 +176,7 @@ If no reliable Project Map exists, Navi should not draw a confident stable bar. 
 我现在还没有可靠的项目地图。为了避免误导，我需要先看项目记录、当前计划或最近确认的目标，然后再画进度条。
 ```
 
-It may provide a provisional map only if clearly labeled:
+It may provide a provisional map only if clearly labeled. When the agent has inferred a stage sequence from source files or recent logs instead of a confirmed map, this label is required:
 
 ```text
 临时判断，待你确认后才会作为稳定项目地图。

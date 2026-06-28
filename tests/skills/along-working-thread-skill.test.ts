@@ -302,6 +302,8 @@ describe("Along Working Thread Codex skill", () => {
 
     for (const expected of [
       "compact horizontal progress strip",
+      "single-line stage strip",
+      "Do not split the overall stage sequence across multiple lines",
       "[需求澄清] -> [方案比较] -> [原型设计]",
       "▲",
       "The strip answers \"where am I\"",
@@ -312,6 +314,7 @@ describe("Along Working Thread Codex skill", () => {
     }
 
     expect(skill).toContain("compact horizontal progress strip");
+    expect(skill).toContain("single-line stage strip");
     expect(skill).toContain("plain-language explanation");
   });
 
@@ -339,6 +342,7 @@ describe("Along Working Thread Codex skill", () => {
       "Project Map",
       "stable target-project stage sequence",
       "compact horizontal progress strip",
+      "single-line stage strip",
       "source priority",
       "provisional map",
       "must not draw a confident stable bar",
