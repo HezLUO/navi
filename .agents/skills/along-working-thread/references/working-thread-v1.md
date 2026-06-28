@@ -77,6 +77,8 @@ Progress Map should distinguish visible product progress or internal preparation
 
 If context is insufficient, do not invent project state. Say what can be inferred and inspect or ask for the relevant project record, recent changes, or active plan.
 
+Fresh sessions should prioritize accuracy over immediate orientation. When the agent has not yet inspected the target project, it may inspect the source-of-truth before outputting the Progress Map. Do not guess a temporary stage bar just to answer faster.
+
 Do not output a Progress Map for every response. Output one when the user needs supervisory orientation: current progress, next step, whether to continue, whether the work is done, whether a plan is reliable, what they need to confirm, or when they say they do not understand. Do not output a Progress Map for ordinary clear tasks, local factual questions, already-confirmed execution, or repeated map requests when the stage has not changed.
 
 If the user says "continue" or `继续吧`, inspect the previous context. Continue directly when the next action, purpose, boundary, and acceptance point are already clear. If any of those are unclear, give a short Progress Map before continuing so the user understands where the work stands, what continuing will enter, and what they need to confirm.

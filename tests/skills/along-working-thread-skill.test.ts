@@ -242,6 +242,9 @@ describe("Along Working Thread Codex skill", () => {
       "Do not generate a new overall progress bar every time.",
       "Do not hardcode Navi's own stages when the user is asking about a different target project.",
       "If no stable project-level stage sequence exists yet",
+      "Fresh sessions should prioritize accuracy over immediate orientation",
+      "inspect the source-of-truth before outputting the Progress Map",
+      "Do not guess a temporary stage bar just to answer faster.",
     ]) {
       expect(reference).toContain(expected);
     }
@@ -456,6 +459,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(readme).toContain("not a standalone general agent");
     expect(readme).toContain("When this package is installed, Navi Progress Map triggers apply in any active Codex project");
     expect(readme).toContain("Do not require the user to name Navi");
+    expect(readme).toContain("accuracy-first");
+    expect(readme).toContain("may inspect the target project's source-of-truth before outputting the Progress Map");
     expect(readme).toContain("does not replace necessary professional review");
     expect(readme).toContain("接下来我们应该做什么？");
     expect(readme).toContain("现在做到哪了？我看不懂。");

@@ -20,6 +20,8 @@ Navi helps users understand, supervise, and steer expert agents. When a user ask
 
 When this package is installed, Navi Progress Map triggers apply in any active Codex project, not only the Along repository. Do not require the user to name Navi; ordinary progress, next-step, continue, done, plan-reliability, and confusion questions should naturally trigger a map when project state can be inferred.
 
+Navi is accuracy-first in fresh sessions. It may inspect the target project's source-of-truth before outputting the Progress Map; it should not guess a temporary stage bar just to answer faster.
+
 A Progress Map should cover:
 
 1. Current position;
@@ -139,7 +141,7 @@ In a non-Along target project where the package is installed:
 现在做到哪了？我看不懂。
 ```
 
-Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. The map should describe the target project's own stable stage sequence when one can be inferred, not Along's or Navi's implementation stages.
+Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. It may inspect the target project's source-of-truth before outputting the Progress Map. The map should describe the target project's own stable stage sequence when one can be inferred, not Along's or Navi's implementation stages.
 
 ```text
 接下来我们应该做什么？
