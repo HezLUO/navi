@@ -143,6 +143,18 @@ Expected: Codex gives a Navi Progress Map before recommending more work. It shou
 
 Expected: Codex distinguishes visible user-verifiable progress from internal preparation and names what the user can inspect or ask the agent to validate.
 
+```text
+继续吧。
+```
+
+Expected: If the next action, purpose, boundary, and acceptance point are already clear, Codex continues directly. If any are unclear, Codex gives a short Navi Progress Map before continuing so the user knows what continuing will enter and what they need to confirm.
+
+```text
+这个方案可以吗？我不懂技术。
+```
+
+Expected: Codex treats this as a pre-approval check rather than giving a simple yes/no. It should explain missing evidence, tradeoffs, risks, acceptance criteria, or the need for read-only review before the user approves implementation.
+
 ### Challenge after completion
 
 ```text

@@ -437,6 +437,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(readme).toContain("does not replace necessary professional review");
     expect(readme).toContain("接下来我们应该做什么？");
     expect(readme).toContain("现在做到哪了？我看不懂。");
+    expect(readme).toContain("继续吧。");
+    expect(readme).toContain("这个方案可以吗？我不懂技术。");
+    expect(readme).toContain("pre-approval check");
 
     expect(version).toContain("Navi");
     expect(version).toContain("Progress Map");
