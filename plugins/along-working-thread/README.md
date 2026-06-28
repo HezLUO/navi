@@ -135,13 +135,13 @@ Expected: Codex reads the Working Thread record, names the current Challenge Lay
 接下来我们应该做什么？
 ```
 
-Expected: Codex gives a Navi Progress Map before recommending more work. It should identify current position, completed work, what still remains, why the next step matters, what the user needs to confirm, and the main risk if one exists.
+Expected: Codex gives a Navi Progress Map before recommending more work. When a reliable target-project stage sequence exists, it should include a stable target-project overall progress bar, identify current position, explain what the current stage is doing, name completed work, what still remains, why the next step matters, what the user needs to confirm, and the main risk if one exists.
 
 ```text
 现在做到哪了？我看不懂。
 ```
 
-Expected: Codex distinguishes visible user-verifiable progress from internal preparation and names what the user can inspect or ask the agent to validate.
+Expected: Codex includes a stable target-project overall progress bar when a reliable stage sequence exists, distinguishes visible user-verifiable progress from internal preparation, explains what the current stage is doing, and names what the user can inspect or ask the agent to validate.
 
 ```text
 继续吧。
@@ -154,6 +154,8 @@ Expected: If the next action, purpose, boundary, and acceptance point are alread
 ```
 
 Expected: Codex treats this as a pre-approval check rather than giving a simple yes/no. It should explain missing evidence, tradeoffs, risks, acceptance criteria, or the need for read-only review before the user approves implementation.
+
+Stable bar note: The overall progress bar should describe the user's target project, not Navi's own implementation stages. Local concerns or fixes should appear in a current-stage sub-progress bar when useful.
 
 ### Challenge after completion
 

@@ -47,7 +47,9 @@ Before acting on a Working Thread, read:
 - do not output a Progress Map for every response. Use it when the user needs supervisory orientation, not for ordinary clear tasks, local factual questions, or already-confirmed execution.
 - when the user says continue or `继续吧`, continue directly if the previous context clearly established the next action, purpose, boundary, and acceptance point; otherwise give a short Progress Map before continuing.
 - Progress Map should distinguish visible user-verifiable progress from internal preparation.
-- Progress Map may include a horizontal stage bar when it helps a non-expert user understand project position, but the stage bar must use user-facing stage names and explain what the marked current stage is doing.
+- Progress Map should use a stable target-project overall progress bar for progress and next-step orientation when a reliable project stage sequence exists.
+- local concerns, fixes, retests, and follow-up tasks should appear in a current-stage sub-progress bar, not as new overall project stages.
+- if no stable project-level stage sequence exists yet, say which source is needed, such as the project record, active plan, or user confirmation, instead of inventing stages.
 - for progress and next-step orientation questions, such as "where are we", "what should we do next", `现在做到哪了？我看不懂。`, or `接下来我们应该做什么？`, include a compact horizontal stage bar when the current stage sequence can be inferred.
 - Challenge Moment becomes the escalation behavior when the map reveals risk; it should appear inside the map rather than as a separate lecture.
 - professional judgment support should identify unclear requirements, unsupported recommendations, premature next steps, missing validation, and when expert review is needed.
@@ -89,6 +91,7 @@ Before acting on a Working Thread, read:
 - For Navi Progress Maps, default to a project navigator structure with a warm supervisor tone.
 - Do not turn every Progress Map into a long project report; include the smallest map that helps the user regain supervisory control.
 - Do not use internal labels alone, such as "write skill/reference" or "implementation pass", without translating what that stage means for the user's goal.
+- Do not hardcode Navi's own stages when the user is asking about a different target project.
 - If a progress or next-step question lacks enough context for a reliable stage bar, say what source is needed instead of inventing stages.
 - Add agent-use coaching only when the user is visibly confused or asks how to use the agent better.
 - For Challenge Briefs, lead with the specific risk and keep the default recommendation focused on validation, not execution.
