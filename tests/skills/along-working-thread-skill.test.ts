@@ -678,6 +678,24 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(version).toContain("Do not bump to 0.2.0");
   });
 
+  it("documents Navi entry routing in agent metadata without forcing ordinary requests", async () => {
+    const agentMetadata = await readRepoText(
+      "plugins/along-working-thread/skills/along-working-thread/agents/openai.yaml",
+    );
+
+    expect(agentMetadata).toContain("Navi Progress Maps");
+    expect(agentMetadata).toContain("Rhythm Maps");
+    expect(agentMetadata).toContain("progress, next-step, confusion, continue, or plan-reliability");
+    expect(agentMetadata).toContain("接下来");
+    expect(agentMetadata).toContain("现在做到哪");
+    expect(agentMetadata).toContain("我看不懂");
+    expect(agentMetadata).toContain("继续吧");
+    expect(agentMetadata).toContain("这个方案可以吗");
+    expect(agentMetadata).toContain("ordinary clear execution requests");
+    expect(agentMetadata).toContain("stay quiet");
+    expect(agentMetadata).toContain("allow_implicit_invocation: true");
+  });
+
   it("positions the package around Navi Progress Map without expanding runtime scope", async () => {
     const manifest = JSON.parse(
       await readRepoText("plugins/along-working-thread/.codex-plugin/plugin.json"),
