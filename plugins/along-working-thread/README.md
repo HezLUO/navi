@@ -28,6 +28,12 @@ Project Map source priority is: the map the user just confirmed, the active Work
 
 Project-local handoff files, session logs, project state files, TODO files, trackers, and workflow records are valid project records when they live inside the target project directory. They should not be treated as forbidden source-thread history merely because they summarize prior work.
 
+### Project-local Navi trigger source
+
+Do not rely only on global skill auto-routing for real use. A target project can add a short project-local Navi trigger source, usually in `AGENTS.md`, so fresh sessions discover that progress, next-step, continue, confusion, and plan-reliability questions should first receive a compact Navi map. This is a reliability layer because global skill auto-routing can be inconsistent.
+
+Use `docs/along/project-maps/navi-project-trigger-template.md` as the reusable starting point. Keep project-specific rhythm labels in the target project, and keep ordinary clear execution requests quiet when the next action, boundary, and acceptance point are already established.
+
 When a reliable Project Map exists, Navi should render a compact horizontal progress strip and explain the current position in plain language. In the current chat-only version, "graphical" means a text-rendered single-line stage strip with a current-position marker, not a bitmap image or UI widget. If the map is unreliable, Navi must not draw a confident stable bar; it should inspect the source of truth or mark any provisional map as awaiting confirmation.
 
 For flowing long-running projects, Navi should use a **Rhythm Map** instead of forcing a one-way overall progress bar. Flowing projects include internship-style project work, Hong Kong application-style project work, weekly refresh cycles, daily preparation loops, waiting for external feedback, parallel opportunities, and decision gates.

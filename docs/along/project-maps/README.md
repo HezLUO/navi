@@ -6,6 +6,8 @@ A confirmed Project Map is the source of truth for stable overall progress bars.
 
 Use current-stage sub-progress for local concerns, fixes, retests, pushes, fresh-session checks, or other temporary work inside the current overall stage.
 
+Use `navi-project-trigger-template.md` when a target project needs a lightweight project-local Navi trigger source. This is useful because global skill auto-routing can be inconsistent in fresh sessions; a short rule in the target project's `AGENTS.md` makes Progress Map and Rhythm Map behavior discoverable from the project itself.
+
 ## Record Shape
 
 ```text

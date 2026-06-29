@@ -449,6 +449,43 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("Do not downgrade non-code long-running workspaces to ordinary advice");
   });
 
+  it("documents project-local Navi trigger sources and reusable template", async () => {
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Project-Local Navi Trigger Source",
+      "Do not rely only on global skill auto-routing",
+      "project-local trigger source",
+      "AGENTS.md",
+      "project-local trigger source is a reliability layer",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Project-local Navi trigger source",
+      "docs/along/project-maps/navi-project-trigger-template.md",
+      "global skill auto-routing can be inconsistent",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+
+    for (const expected of [
+      "# Navi Project Trigger Template",
+      "Paste this into the target project's `AGENTS.md`",
+      "When the user asks about project progress, next steps, whether to continue, or says they do not understand the current state",
+      "first give a compact Navi map before ordinary task advice",
+      "项目节奏",
+      "当前主线",
+      "If the user gives a clear execution command with the next action, boundary, and acceptance point already established",
+      "keep Navi quiet",
+    ]) {
+      expect(template).toContain(expected);
+    }
+  });
+
   it("documents degraded state rules for unreliable project maps", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");

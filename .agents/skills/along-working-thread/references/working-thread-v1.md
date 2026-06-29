@@ -131,6 +131,16 @@ Project-local handoff files, session logs, PROJECT_STATE, TODO files, trackers, 
 
 For fresh sessions, these project-local records are often the correct source for recovering a user's current goal, active route, waiting state, and decision gate. Use them when they are relevant, and still avoid external conversation history.
 
+### Project-Local Navi Trigger Source
+
+Do not rely only on global skill auto-routing for Navi. In fresh sessions, the Along Working Thread skill may be installed and readable but not implicitly selected for an ordinary next-step prompt. A project-local trigger source is a reliability layer that makes Navi discoverable from the target project itself.
+
+When a supervised project needs reliable Navi behavior, add a short project-local trigger source to the target project's `AGENTS.md` or equivalent agent instruction file. The trigger source should say that progress, next-step, continue, confusion, and plan-reliability questions should first receive a compact Navi map before ordinary task advice.
+
+Use the template at `docs/along/project-maps/navi-project-trigger-template.md` as the generic starting point. Keep project-specific rhythm labels in the target project, not in the global Navi skill. The global skill defines the behavior; the project-local trigger source tells fresh agents when to apply it for that project.
+
+The project-local trigger source is a reliability layer, not a replacement for the skill. It should stay short, point to project-local records such as `PROJECT_STATE.md`, TODO files, trackers, workflow records, and handoffs, and preserve ordinary-request quietness when the user gives a clear execution command with the next action, boundary, and acceptance point already established.
+
 ### Project Shape Selection
 
 Navi should not assume that every supervised project has one stable one-way completion path. Before choosing a visual map, identify the layer the user is asking about:
