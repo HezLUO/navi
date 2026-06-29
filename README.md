@@ -1,19 +1,24 @@
 # Along
 
-Along is a lo-fi coding companion that learns along with you.
+Along is the parent project for Navi.
 
-It is not built for broad code execution. You work on your project; Along quietly works on understanding it, keeps its own journal, and carries a small curiosity into the next session.
+Navi is the current V1 product surface: it helps non-expert users understand, supervise, and steer expert agents. Its current behavior is **Progress Map + Challenge Layer**. Progress Maps answer where the user's target project stands, what is missing, what comes next, and what the user needs to confirm. Challenge Layer behavior appears when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum.
 
-## MVP Shape
+## Current V1 shape
 
-- Local web UI launched by `along start`
-- Project memory in `.along/`
-- Global companion memory in `~/.along/`
-- Inspectable graph memory
-- Session-bounded autonomy
-- Reciprocal interaction
-- Optional lo-fi soundscape
-- No project code edits in the MVP
+- Codex skill/plugin behavior with project-local docs.
+- Navi Progress Maps for progress, next-step, continue, confusion, and plan-reliability questions.
+- Rhythm Maps for flowing long-running projects with recurring cycles, waiting states, and decision gates.
+- Challenge Layer behavior for anti-self-certification moments.
+- Working Thread continuity for project judgment that needs durable carry-forward.
+- Project-local Navi initialization through `AGENTS.md` and `docs/along/project-maps/`.
+- No background autonomy, notifications, or always-on presence in V1.
+
+## Architecture boundary
+
+Current V1 uses skill/plugin behavior with project-local docs. MCP, runtime, local app, background presence, companion memory, and adapter surfaces are experimental or later layers unless explicitly called out for a focused validation pass.
+
+The repository still contains older Along companion ideas, including local memory, Shared Desk, soundscape, and `.along/` runtime concepts. Treat those as historical or future-facing context, not the current recommended Navi installation path.
 
 ## Development
 

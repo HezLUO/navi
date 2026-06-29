@@ -1,7 +1,7 @@
 interface:
-  display_name: Along Working Thread
+  display_name: Navi
   short_description: Use for Navi Progress Maps, Rhythm Maps, or Challenge Briefs when users ask progress, next-step, confusion, continue, or plan-reliability questions.
-  default_prompt: Use Along Working Thread for Navi Progress Maps and Rhythm Maps on 接下来, 现在做到哪, 我看不懂, 继续吧, or 这个方案可以吗; ordinary clear execution requests stay quiet.
+  default_prompt: Use Navi for Progress Maps and Rhythm Maps on 接下来, 现在做到哪, 我看不懂, 继续吧, or 这个方案可以吗; ordinary clear execution requests stay quiet.
 
 policy:
   allow_implicit_invocation: true

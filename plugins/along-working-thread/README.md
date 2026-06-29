@@ -1,8 +1,10 @@
-# Along Working Thread
+# Navi
 
-Bring self-initiation and continuity to the agents you already use.
+Navi helps non-expert users understand, supervise, and steer expert agents.
 
-Along Working Thread is a Codex plugin source package that helps active Codex sessions carry project judgment, notice drift, and draft wrap-ups with your confirmation.
+Navi is a Codex plugin source package that gives Progress Maps, identifies Challenge Moment risks, and helps active Codex sessions carry project judgment with user confirmation.
+
+The internal legacy package id remains `along-working-thread`. That id is kept for compatibility with the existing skill path, package layout, local installs, and tests.
 
 ## What it is
 
@@ -68,7 +70,7 @@ Navi uses Challenge Moment as a risk-escalation mechanism. If the map reveals dr
 
 ## Challenge Layer
 
-Along Working Thread now frames its short-term product behavior as a Challenge Layer for existing agents.
+Navi uses Challenge Layer behavior when a project map reveals risk.
 
 A **Challenge Moment** happens when Codex may be treating momentum as evidence: direction drift, premature execution, weak assumptions, or implementation success being treated as product proof.
 
@@ -98,7 +100,7 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 ## Current stage
 
-This repo-contained package is the source-package form of Along Working Thread `0.1.0`.
+This repo-contained package is the source-package form of Navi `0.1.0`.
 
 It packages the current validated skill-first behavior. It does not add new runtime, memory, presence, adapter, or delegation capabilities.
 
@@ -149,7 +151,7 @@ npm run verify:plugin-package
 
 The verification checks:
 
-- existing Along Working Thread skill tests;
+- existing Navi / Along Working Thread skill tests;
 - plugin manifest validity;
 - exact drift between `.agents/skills/along-working-thread` and `plugins/along-working-thread/skills/along-working-thread`.
 

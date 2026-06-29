@@ -118,7 +118,8 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("must not silently write");
     expect(skill).toContain("background runtime");
     expect(skill).toContain("references/working-thread-v1.md");
-    expect(metadata).toContain("display_name: Along Working Thread");
+    expect(metadata).toContain("display_name: Navi");
+    expect(metadata).toContain("Use Navi for Progress Maps");
     expect(metadata).toContain("allow_implicit_invocation: true");
   });
 
@@ -634,6 +635,21 @@ describe("Along Working Thread Codex skill", () => {
 });
 
 describe("Along Working Thread repo-contained plugin package", () => {
+  it("documents the current Navi-first product narrative in the root README", async () => {
+    const readme = await readRepoText("README.md");
+
+    for (const expected of [
+      "Navi is the current V1 product surface",
+      "Progress Map + Challenge Layer",
+      "Current V1 shape",
+      "skill/plugin behavior with project-local docs",
+      "MCP, runtime, local app, background presence",
+      "older Along companion ideas",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+  });
+
   it("ships the minimal repo-contained plugin package layout and manifest", async () => {
     for (const requiredPath of [
       "plugins/along-working-thread/.codex-plugin/plugin.json",
@@ -669,13 +685,13 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.name).toBe("along-working-thread");
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.skills).toBe("./skills/");
-    expect(manifest.author.name).toBe("Along Working Thread Contributors");
+    expect(manifest.author.name).toBe("Navi Contributors");
     expect(manifest.description).toContain("Working Thread continuity");
     expect(manifest.keywords).toEqual(
       expect.arrayContaining(["along", "working-thread", "continuity", "codex", "self-initiation"]),
     );
-    expect(manifest.interface.displayName).toBe("Along Working Thread");
-    expect(manifest.interface.developerName).toBe("Along Working Thread Contributors");
+    expect(manifest.interface.displayName).toBe("Navi");
+    expect(manifest.interface.developerName).toBe("Navi Contributors");
     expect(manifest.interface.shortDescription).toBe(
       "Navi Progress Maps and Challenge Layer continuity for active Codex sessions.",
     );
@@ -692,6 +708,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "Check whether this is a self-certification moment.",
       "Turn this challenge into a lightweight validation.",
     ]);
+    expect(manifest.name).toBe("along-working-thread");
+    expect(manifest.interface.longDescription).toContain("legacy skill id remains along-working-thread");
     const formerDeveloperName = ["Ja", "mes"].join("");
     expect(JSON.stringify(manifest)).not.toContain(formerDeveloperName);
 
@@ -846,7 +864,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
     const readme = await readRepoText("plugins/along-working-thread/README.md");
     const version = await readRepoText("plugins/along-working-thread/VERSION.md");
 
-    expect(readme).toContain("Bring self-initiation and continuity to the agents you already use.");
+    expect(readme).toContain("# Navi");
+    expect(readme).toContain("Navi helps non-expert users understand, supervise, and steer expert agents.");
+    expect(readme).toContain("The internal legacy package id remains `along-working-thread`.");
     expect(readme).toContain("## What it is");
     expect(readme).toContain("## What it is not");
     expect(readme).toContain("Codex plugin source package");
