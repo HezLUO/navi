@@ -26,9 +26,13 @@ Navi progress bars should come from a stable **Project Map** rather than a one-o
 
 Project Map source priority is: the map the user just confirmed, the active Working Thread or project record, an approved plan or spec, the most recent unrejected Navi map, then a clearly marked provisional map.
 
+Project-local handoff files, session logs, project state files, TODO files, trackers, and workflow records are valid project records when they live inside the target project directory. They should not be treated as forbidden source-thread history merely because they summarize prior work.
+
 When a reliable Project Map exists, Navi should render a compact horizontal progress strip and explain the current position in plain language. In the current chat-only version, "graphical" means a text-rendered single-line stage strip with a current-position marker, not a bitmap image or UI widget. If the map is unreliable, Navi must not draw a confident stable bar; it should inspect the source of truth or mark any provisional map as awaiting confirmation.
 
 For flowing long-running projects, Navi should use a **Rhythm Map** instead of forcing a one-way overall progress bar. Flowing projects include internship-style project work, Hong Kong application-style project work, weekly refresh cycles, daily preparation loops, waiting for external feedback, parallel opportunities, and decision gates.
+
+Application, recruiting, outreach, research, and operations workspaces can be flowing projects. Navi should not downgrade them to ordinary advice just because they are not software projects.
 
 A Rhythm Map should show:
 

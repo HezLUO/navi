@@ -26,7 +26,7 @@
   - Add package-facing explanation and fresh-session validation checks for flowing projects.
 - Modify: `plugins/along-working-thread/VERSION.md`
   - Note that `0.1.0` now includes documented Rhythm Map behavior but remains a documentation-only behavior update.
-- Optional external sync after verification: `/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/`
+- Optional external sync after verification: `$CODEX_HOME/plugins/cache/personal/along-working-thread/0.1.0/`
   - Sync the installed personal plugin cache from `plugins/along-working-thread/` only after repo verification passes.
 
 ## Constraints
@@ -119,7 +119,7 @@ In the same file, add this test immediately after the test from Step 1:
     for (const expected of [
       "Example: Hong Kong Application Project",
       "[方向校准] + [导师/项目筛选] + [材料/表单准备] + [提交/外联跟进]",
-      "[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]",
+      "[申请表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]",
       "[预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]",
     ]) {
       expect(reference).toContain(expected);
@@ -314,12 +314,12 @@ For a Hong Kong application-style project, the whole project is flowing because 
                              当前焦点
 
 当前主线
-[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
+[申请表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
                        ▲
                     当前动作
 ```
 
-The overall project uses a Rhythm Map, but a bounded subtask such as `HKUST CSE Early 表单填报` can still use a linear subtask strip:
+The overall project uses a Rhythm Map, but a bounded subtask such as an application form-filling sequence can still use a linear subtask strip:
 
 ```text
 [预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]
@@ -465,7 +465,7 @@ git commit -m "docs: package navi rhythm maps"
 - Review: `scripts/verify-plugin-package.mjs`
 - Review: `.agents/skills/along-working-thread/`
 - Review: `plugins/along-working-thread/`
-- Optional external sync target: `/Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/`
+- Optional external sync target: `$CODEX_HOME/plugins/cache/personal/along-working-thread/0.1.0/`
 
 - [ ] **Step 1: Run plugin package verification**
 
@@ -502,7 +502,7 @@ Expected: clean working tree on the implementation branch or `main`, with the ne
 If implementing from the main local repo and the installed cache exists, sync the verified package to the installed personal plugin cache:
 
 ```bash
-rsync -a --delete plugins/along-working-thread/ /Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0/
+rsync -a --delete plugins/along-working-thread/ $CODEX_HOME/plugins/cache/personal/along-working-thread/0.1.0/
 ```
 
 Expected: command succeeds. If Codex sandbox blocks writes outside the workspace, request escalation with the reason: syncing the verified local plugin package into the installed personal plugin cache.
@@ -512,7 +512,7 @@ Expected: command succeeds. If Codex sandbox blocks writes outside the workspace
 Run:
 
 ```bash
-diff -qr plugins/along-working-thread /Users/james/.codex/plugins/cache/personal/along-working-thread/0.1.0
+diff -qr plugins/along-working-thread $CODEX_HOME/plugins/cache/personal/along-working-thread/0.1.0
 ```
 
 Expected: no output.
@@ -579,7 +579,7 @@ Expected answer shape:
                              当前焦点
 
 当前主线
-[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
+[申请表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
                        ▲
                     当前动作
 ```

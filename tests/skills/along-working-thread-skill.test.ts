@@ -412,11 +412,41 @@ describe("Along Working Thread Codex skill", () => {
     for (const expected of [
       "Example: Hong Kong Application Project",
       "[方向校准] + [导师/项目筛选] + [材料/表单准备] + [提交/外联跟进]",
-      "[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]",
+      "[申请表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]",
       "[预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]",
     ]) {
       expect(reference).toContain(expected);
     }
+  });
+
+  it("documents source classification for non-code flowing workspaces", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "project-local handoff files",
+      "session logs",
+      "PROJECT_STATE",
+      "TODO",
+      "trackers",
+      "workflow records",
+      "valid project records",
+      "Do not treat project-local handoff files as forbidden source-thread history",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Application, recruiting, outreach, research, and operations workspaces can be flowing projects",
+      "Do not downgrade them to ordinary advice just because they are not software projects.",
+      "When a user asks `接下来我们应该做什么？` in a Hong Kong application-style project",
+      "should produce a Rhythm Map",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    expect(skill).toContain("project-local handoff files");
+    expect(skill).toContain("Do not downgrade non-code long-running workspaces to ordinary advice");
   });
 
   it("documents degraded state rules for unreliable project maps", async () => {

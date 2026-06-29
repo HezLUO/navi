@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Navi currently handles stable, one-way project progress with a compact horizontal progress strip. Real calibration with `intern` and `mp_ph_aplication` showed a different project shape: some supervised projects do not have one overall completion path. They move through recurring cycles, parallel opportunities, waiting states, and user decision gates.
+Navi currently handles stable, one-way project progress with a compact horizontal progress strip. Real calibration with recruiting and application workspaces showed a different project shape: some supervised projects do not have one overall completion path. They move through recurring cycles, parallel opportunities, waiting states, and user decision gates.
 
 This design adds a **Rhythm Map** behavior for flowing projects. It preserves Navi's promise to help non-expert users understand, supervise, and steer expert agents without forcing misleading one-way progress bars.
 
@@ -77,7 +77,7 @@ This map does not express completion percentage. It expresses:
 
 ## Example: Internship Project
 
-For `intern`, the project is flowing because it combines weekly job-pool refresh, daily interview preparation, active application waiting, and evidence-driven status updates.
+For an internship-style workspace, the project is flowing because it combines weekly job-pool refresh, daily interview preparation, active application waiting, and evidence-driven status updates.
 
 ```text
 项目节奏
@@ -100,7 +100,7 @@ Navi should then explain in plain language:
 
 ## Example: Hong Kong Application Project
 
-For `mp_ph_aplication`, the overall project is flowing because supervisor screening, direction planning, materials, forms, and follow-ups continue in parallel.
+For a Hong Kong application-style workspace, the overall project is flowing because supervisor screening, direction planning, materials, forms, and follow-ups continue in parallel.
 
 ```text
 项目节奏
@@ -109,12 +109,12 @@ For `mp_ph_aplication`, the overall project is flowing because supervisor screen
                              当前焦点
 
 当前主线
-[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
+[申请表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
                        ▲
                     当前动作
 ```
 
-The overall project uses a Rhythm Map, but a bounded subtask such as `HKUST CSE Early 表单填报` can still use a linear subtask strip:
+The overall project uses a Rhythm Map, but a bounded subtask such as an application form-filling sequence can still use a linear subtask strip:
 
 ```text
 [预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]
@@ -168,8 +168,8 @@ If the user has already confirmed the next action and the purpose, boundary, and
 Fixture-style documentation tests should cover:
 
 - flowing projects do not force a one-way overall progress strip;
-- `intern`-style prompts produce a Rhythm Map with weekly, daily, waiting, and decision loops;
-- `mp_ph_aplication`-style prompts produce a Rhythm Map for the whole project but a linear strip for bounded form-filling subtasks;
+- internship-style prompts produce a Rhythm Map with weekly, daily, waiting, and decision loops;
+- Hong Kong application-style prompts produce a Rhythm Map for the whole project but a linear strip for bounded form-filling subtasks;
 - `接下来我们应该做什么？` triggers supervisory orientation when the project is long-running and ambiguous;
 - clear small execution requests do not trigger a map;
 - provisional language appears when the stage sequence or rhythm is inferred rather than confirmed.

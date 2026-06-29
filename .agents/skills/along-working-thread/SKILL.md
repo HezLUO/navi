@@ -62,7 +62,9 @@ Before acting on a Working Thread, read:
 - if the project shape is unclear, mark the map as provisional rather than presenting a confident stable map.
 - Navi progress bars should be generated from a stable Project Map rather than improvised from the latest message alone.
 - Project Map guidance uses source priority: user-confirmed map, active Working Thread or project record, approved plan or spec, most recent unrejected Navi map, then provisional map.
+- project-local handoff files, session logs, PROJECT_STATE, TODO files, trackers, and workflow records are valid project records when they are inside the target project directory; do not treat them as forbidden source-thread history.
 - if the target repo has `docs/along/project-maps/`, read the matching confirmed Project Map record before drawing a Progress Map from memory or recent conversation.
+- Do not downgrade non-code long-running workspaces to ordinary advice. Application, recruiting, outreach, research, and operations workspaces can be flowing projects when they have recurring cycles, parallel routes, external feedback, or user decision gates.
 - when a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip: a single-line stage strip plus a current-position marker and a plain-language explanation.
 - if the Project Map is unreliable, Navi must not draw a confident stable bar; it may give a provisional map only when clearly marked as awaiting confirmation.
 - local concerns, fixes, retests, and follow-up tasks should appear in a current-stage sub-progress bar, not as new overall project stages.

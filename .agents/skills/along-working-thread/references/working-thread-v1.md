@@ -123,6 +123,14 @@ When the target repo contains `docs/along/project-maps/`, treat those files as p
 
 If sources conflict, the more recently confirmed user-facing project map wins over older inferred state.
 
+### Source Classification
+
+Do not read other Codex threads, source-thread history, or delegation source conversations when the user has forbidden that context.
+
+Project-local handoff files, session logs, PROJECT_STATE, TODO files, trackers, and workflow records are valid project records when they are inside the target project directory. Do not treat project-local handoff files as forbidden source-thread history just because they summarize prior work.
+
+For fresh sessions, these project-local records are often the correct source for recovering a user's current goal, active route, waiting state, and decision gate. Use them when they are relevant, and still avoid external conversation history.
+
 ### Project Shape Selection
 
 Navi should not assume that every supervised project has one stable one-way completion path. Before choosing a visual map, identify the layer the user is asking about:
@@ -145,6 +153,8 @@ Use a Rhythm Map when the work is a flowing long-running project with signals su
 - external feedback that controls the next step;
 - repeated loops of refresh, screen, prepare, wait, follow up, and decide;
 - ongoing stewardship rather than one fixed deliverable.
+
+Application, recruiting, outreach, research, and operations workspaces can be flowing projects. Do not downgrade them to ordinary advice just because they are not software projects.
 
 If the project shape is mixed, Navi should pick the narrowest useful map:
 
@@ -215,12 +225,14 @@ For a Hong Kong application-style project, the whole project is flowing because 
                              当前焦点
 
 当前主线
-[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
+[申请表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
                        ▲
                     当前动作
 ```
 
-The overall project uses a Rhythm Map, but a bounded subtask such as `HKUST CSE Early 表单填报` can still use a linear subtask strip:
+When a user asks `接下来我们应该做什么？` in a Hong Kong application-style project, Navi should produce a Rhythm Map for the whole flowing project before giving ordinary next-step advice. The answer should use project-local records such as project state files, application TODO files, focused-session registries, handoff files, trackers, and workflow records when they are inside the target project directory.
+
+The overall project uses a Rhythm Map, but a bounded subtask such as an application form-filling sequence can still use a linear subtask strip:
 
 ```text
 [预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]
