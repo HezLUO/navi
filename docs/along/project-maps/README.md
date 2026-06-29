@@ -8,6 +8,8 @@ Use current-stage sub-progress for local concerns, fixes, retests, pushes, fresh
 
 Use `navi-project-trigger-template.md` when a target project needs a lightweight project-local Navi trigger source. This is useful because global skill auto-routing can be inconsistent in fresh sessions; a short rule in the target project's `AGENTS.md` makes Progress Map and Rhythm Map behavior discoverable from the project itself.
 
+Use `navi-project-init.md` to install Navi into a target project through the minimum reliable path: global skill + project-local trigger source + project-local Project Map or Rhythm Map.
+
 ## Record Shape
 
 ```text

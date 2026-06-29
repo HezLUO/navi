@@ -141,6 +141,21 @@ Use the template at `docs/along/project-maps/navi-project-trigger-template.md` a
 
 The project-local trigger source is a reliability layer, not a replacement for the skill. It should stay short, point to project-local records such as `PROJECT_STATE.md`, TODO files, trackers, workflow records, and handoffs, and preserve ordinary-request quietness when the user gives a clear execution command with the next action, boundary, and acceptance point already established.
 
+### Navi Project Initialization
+
+Navi Project Initialization is the minimum reliable path to install Navi into a target project. It uses the global skill plus project-local trigger source plus project-local Project Map or Rhythm Map.
+
+Use initialization when a user wants reliable Navi behavior in an existing project, especially after fresh-session validation shows that ordinary next-step prompts do not implicitly select the global skill. The setup should inspect the target project, classify the project shape, draft the trigger source, draft the map, and ask for user confirmation before writing durable project files.
+
+Minimum install output:
+
+- a short Navi trigger source in `AGENTS.md` or the target project's equivalent instruction file;
+- a target-project map under `docs/along/project-maps/` when the project has a stable enough shape;
+- the project-local source records Navi should read first;
+- a fresh-session validation prompt.
+
+Do not implement Core/MCP, background runtime, or a CLI as part of this minimum pass. Future product surface can be `navi init` or an app workflow, but the V1 behavior is still documentation-based setup with user-confirmed durable writes.
+
 ### Project Shape Selection
 
 Navi should not assume that every supervised project has one stable one-way completion path. Before choosing a visual map, identify the layer the user is asking about:

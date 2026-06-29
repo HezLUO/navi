@@ -34,6 +34,10 @@ Do not rely only on global skill auto-routing for real use. A target project can
 
 Use `docs/along/project-maps/navi-project-trigger-template.md` as the reusable starting point. Keep project-specific rhythm labels in the target project, and keep ordinary clear execution requests quiet when the next action, boundary, and acceptance point are already established.
 
+### Navi project initialization
+
+Use `docs/along/project-maps/navi-project-init.md` when installing Navi into a target project. The minimum reliable path is global skill + project-local trigger source + project-local Project Map or Rhythm Map. Initialization should inspect the target project, draft the trigger source and map, ask for confirmation before durable writes, then run fresh-session validation with an ordinary next-step prompt.
+
 When a reliable Project Map exists, Navi should render a compact horizontal progress strip and explain the current position in plain language. In the current chat-only version, "graphical" means a text-rendered single-line stage strip with a current-position marker, not a bitmap image or UI widget. If the map is unreliable, Navi must not draw a confident stable bar; it should inspect the source of truth or mark any provisional map as awaiting confirmation.
 
 For flowing long-running projects, Navi should use a **Rhythm Map** instead of forcing a one-way overall progress bar. Flowing projects include internship-style project work, Hong Kong application-style project work, weekly refresh cycles, daily preparation loops, waiting for external feedback, parallel opportunities, and decision gates.
