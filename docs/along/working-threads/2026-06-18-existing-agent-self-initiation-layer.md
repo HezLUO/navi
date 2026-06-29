@@ -27,6 +27,8 @@ Navi Progress Map real-use calibration has a positive two-layer map signal as of
 
 Cross-project Navi calibration now has an early positive signal as of 2026-06-29. A fresh read-only session in `mp_ph_aplication` used a Rhythm Map for a flowing Hong Kong application project, identified parallel HKUST, CUHK, and Track B loops, and avoided treating prepared materials as submitted work. A separate fresh read-only session in `sub_ag_ski` reused that project's confirmed map and identified open-source release preparation as the current stage. Because the validation prompts included explicit read-only and orientation framing to avoid source-thread contamination, the next gate is a stricter natural-prompt pass rather than declaring stable product behavior.
 
+The stricter natural-prompt pass also produced a positive signal on 2026-06-29. Fresh sessions in `mp_ph_aplication`, `sub_ag_ski`, and `intern` were given only read-only/source-thread boundaries plus the ordinary question `接下来要做什么？`; the prompts did not mention Navi, Progress Map, orientation behavior, or expected map output. All three sessions still treated the request as project-orientation work: `mp_ph_aplication` used a Rhythm Map for application loops, `sub_ag_ski` reused its target-project map, and `intern` used a long-running rhythm map for recruiting/interview preparation. This is stronger evidence than the lightly framed validation pass, but it remains a limited sample rather than automatic proof of stable product behavior.
+
 Long-term positioning is now approved: Along should become a local-first, open-source, existing-agent companion layer. It should help the agents users already rely on gain continuity, turn-bound self-initiation, drift awareness, wrap-up discipline, and eventually deeper companionship. It should not present itself as another general coding agent.
 
 ## Boundary
@@ -74,7 +76,7 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 
 ## Next Likely Move
 
-Use the merged Challenge Layer in real sessions and collect calibration on whether Challenge Briefs feel useful, self-initiating, companion-like, and non-annoying. For Navi Progress Map, the next gate is stricter cross-project fresh-session calibration with less validation framing and more natural ordinary prompts in non-Navi workspaces, especially projects with flowing rhythms such as applications, recruiting, research, or operations. If the work returns to the MCP thread, the next gate remains fresh-session MCP client validation against the stdio server, especially resource reads, action-tool behavior, and confirmed section-patch write-back from a real client session.
+Use the merged Challenge Layer in real sessions and collect calibration on whether Challenge Briefs feel useful, self-initiating, companion-like, and non-annoying. For Navi Progress Map, decide whether the current self-test, cross-project, and natural-prompt evidence is enough to move toward stable product behavior, or whether one broader sample pass is needed first. If the work returns to the MCP thread, the next gate remains fresh-session MCP client validation against the stdio server, especially resource reads, action-tool behavior, and confirmed section-patch write-back from a real client session.
 
 ## Last Wrap-Up
 
@@ -455,3 +457,13 @@ V1 packaging should be a distribution copy, not a source-of-truth migration:
 - `sub_ag_ski` fresh-session thread `019f1368-b221-77c1-8f23-d4fa3ef07818` answered `接下来要做什么？` using that target project's confirmed map instead of Navi's own implementation stages.
 - The `sub_ag_ski` answer placed the project at `开源发布准备` and recommended release-readiness verification before more feature expansion.
 - This is a useful cross-project signal, but it is still not final product proof because the validation prompts included explicit read-only boundaries and a light instruction that orientation prompts should orient first. The next calibration should use more natural prompts while still preventing source-thread history contamination.
+
+2026-06-29 Navi natural-prompt cross-project calibration:
+
+- `mp_ph_aplication` fresh-session thread `019f1371-0762-7712-b55c-6a877f362f4d` was prompted only with read-only/source-thread boundaries and `接下来要做什么？`.
+- The `mp_ph_aplication` answer still produced a Rhythm Map, identified the active focus as CUHK interview practice inside a flowing application workspace, and preserved separate gates for HKUST form submission and Track B package-building.
+- `sub_ag_ski` fresh-session thread `019f1371-08c1-7033-9913-4ba2d10454f7` used the project's confirmed map and located the work at `开源发布准备`.
+- The `sub_ag_ski` answer recommended release-readiness review and warned against treating one MCP dogfood pass as complete product proof.
+- `intern` fresh-session thread `019f1371-0aa3-7260-aa3f-9986ba3ac33d` identified the project as a long-running recruiting rhythm rather than a one-time completion project.
+- The `intern` answer recommended the next small loop: check active application feedback first, then run low-barrier training instead of expanding applications or rewriting materials.
+- This is the strongest Navi Progress Map calibration signal so far because the prompts did not name Navi, Progress Map, or expected orientation behavior. It still remains a limited three-project sample and should be treated as evidence for a stability decision, not an automatic stability claim.

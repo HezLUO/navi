@@ -28,9 +28,9 @@ local concerns, fixes, retests, pushes, and fresh-session checks must stay in `s
 Recent local sub-progress:
 
 ```text
-[两层地图修复] -> [安装态同步] -> [self-test 复测] -> [跨项目复测] -> [记录结果] -> [自然 prompt 校准]
-                                                                                         ^
-                                                                                      当前小步
+[记录旧校准结果] -> [提交记录] -> [自然 prompt 校准] -> [记录自然校准] -> [push] -> [稳定性判断]
+                                                                                                  ^
+                                                                                               当前小步
 ```
 
 This sub-progress is a calibration/debugging record for Navi's own test project. It is not a user-facing product roadmap; future user projects should define their own target-project stages and use this record only as an example of stable-map behavior.
@@ -43,14 +43,16 @@ This sub-progress is a calibration/debugging record for Navi's own test project.
 - 2026-06-29 fresh-session calibration verified the two-layer map rule in the Navi current test project: orientation prompts produced the stable overall map before current-stage internal progress, while an explicitly local task question used local-only progress.
 - The two-layer map rule was synced to the personal plugin source and Codex plugin cache, then pushed to `origin/main` at `7beb487`.
 - 2026-06-29 cross-project calibration produced positive signals in `mp_ph_aplication` and `sub_ag_ski`: `mp_ph_aplication` used a Rhythm Map for a flowing application project and did not mark unsubmitted applications as done; `sub_ag_ski` reused its target-project map and identified open-source release preparation as the current stage.
+- 2026-06-29 stricter natural-prompt calibration produced stronger positive signals in `mp_ph_aplication`, `sub_ag_ski`, and `intern`. The prompts did not mention Navi, Progress Map, orientation behavior, or expected maps; they only kept the sessions read-only and prevented source-thread contamination.
+- In the natural-prompt pass, `mp_ph_aplication` again used a Rhythm Map for a flowing application project, `sub_ag_ski` reused its target-project map, and `intern` used a long-running rhythm map for recruiting/interview preparation.
 
 ## missing_or_risk
 
-The main risk is treating documentation, fixture tests, Navi's self-test project, or lightly guided validation prompts as product proof. Real-use calibration must continue with more natural ordinary prompts in non-Navi target projects, especially for repeated progress questions where the target-project map should remain stable and for flowing projects where a Rhythm Map is more appropriate than a one-way completion bar.
+The main risk is treating documentation, fixture tests, Navi's self-test project, or a small number of positive fresh-session samples as product proof. Real-use calibration has stronger evidence now, but the sample is still narrow and should not automatically become a stable-product claim without user confirmation.
 
 ## next_gate
 
-Run a stricter cross-project fresh-session calibration pass with less validation framing and more natural ordinary prompts, while still preventing source-thread contamination. Verify whether `mp_ph_aplication`, `sub_ag_ski`, and another non-Navi project trigger the right target-project map without relying on Navi-specific context.
+Decide whether the current positive calibration is enough to move the Navi current test project toward `稳定产品行为`, or whether one broader sample pass is needed first. Any move out of `真实使用校准` requires explicit user confirmation.
 
 ## user_confirmation_needed
 
