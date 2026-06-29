@@ -348,6 +348,77 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("plain-language explanation");
   });
 
+  it("documents Navi Rhythm Map behavior for flowing projects", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "Rhythm Map",
+      "flowing long-running project",
+      "recurring daily, weekly, or periodic actions",
+      "multiple parallel opportunities, routes, targets, or stakeholders",
+      "external feedback that controls the next step",
+      "repeated loops of refresh, screen, prepare, wait, follow up, and decide",
+      "ongoing stewardship rather than one fixed deliverable",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "project shape",
+      "whole long-running project",
+      "bounded subtask",
+      "linear subtask strip",
+      "pick the narrowest useful map",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Navi should choose a Rhythm Map instead of forcing a one-way overall progress bar",
+      "Rhythm Map",
+      "flowing projects",
+      "specific bounded subtask",
+    ]) {
+      expect(skill).toContain(expected);
+    }
+  });
+
+  it("documents Rhythm Map rendering, examples, and downgrade behavior", async () => {
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+
+    for (const expected of [
+      "项目节奏",
+      "[周期刷新] + [日常准备] + [机会/对象等待] + [决策确认]",
+      "当前主线",
+      "[读取状态] -> [判断优先级] -> [执行最小闭环] -> [记录/等待反馈]",
+      "This map does not express completion percentage.",
+      "what the user must confirm",
+      "where continuing will lead",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Example: Internship Project",
+      "[每周岗位刷新] + [每日笔试/面试准备] + [投递等待] + [岗位决策]",
+      "[检查反馈] -> [完成今日练习] -> [刷新岗位池] -> [决定是否定制材料]",
+      "status changes require evidence such as email, portal state, or screenshots",
+      "material customization should wait until a specific target job is selected",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Example: Hong Kong Application Project",
+      "[方向校准] + [导师/项目筛选] + [材料/表单准备] + [提交/外联跟进]",
+      "[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]",
+      "[预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents degraded state rules for unreliable project maps", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
@@ -379,6 +450,35 @@ describe("Along Working Thread Codex skill", () => {
     ]) {
       expect(readme).toContain(expected);
     }
+  });
+
+  it("documents Rhythm Map validation in the package README and version boundary", async () => {
+    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+
+    for (const expected of [
+      "Rhythm Map",
+      "flowing long-running projects",
+      "weekly refresh",
+      "daily preparation",
+      "waiting for external feedback",
+      "decision gate",
+      "should not force a one-way overall progress bar",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+
+    for (const expected of [
+      "internship-style project",
+      "Hong Kong application-style project",
+      "whole long-running project",
+      "bounded subtask",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+
+    expect(version).toContain("Rhythm Map behavior for flowing long-running projects");
+    expect(version).toContain("documentation-only behavior update");
   });
 
   it("ships a product-owned Working Thread directory with the required record template", async () => {
