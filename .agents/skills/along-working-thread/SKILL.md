@@ -50,6 +50,16 @@ Before acting on a Working Thread, read:
 - when the user says continue or `继续吧`, continue directly if the previous context clearly established the next action, purpose, boundary, and acceptance point; otherwise give a short Progress Map before continuing.
 - Progress Map should distinguish visible user-verifiable progress from internal preparation.
 - Progress Map should use a stable target-project overall progress bar for progress and next-step orientation when a reliable project stage sequence exists.
+- Navi should choose a Rhythm Map instead of forcing a one-way overall progress bar when the target work is a flowing long-running project.
+- flowing projects include any of these signals:
+  - recurring daily, weekly, or periodic actions;
+  - multiple parallel opportunities, routes, targets, or stakeholders;
+  - external feedback that controls the next step;
+  - repeated loops of refresh, screen, prepare, wait, follow up, and decide;
+  - ongoing stewardship rather than one fixed deliverable.
+- when the user asks about a whole long-running flowing project, use a Rhythm Map that shows project rhythm, current focus, waiting states, and user decision gate.
+- when the user asks about a specific bounded subtask inside a flowing project, use the narrowest useful map, such as a linear subtask strip.
+- if the project shape is unclear, mark the map as provisional rather than presenting a confident stable map.
 - Navi progress bars should be generated from a stable Project Map rather than improvised from the latest message alone.
 - Project Map guidance uses source priority: user-confirmed map, active Working Thread or project record, approved plan or spec, most recent unrejected Navi map, then provisional map.
 - if the target repo has `docs/along/project-maps/`, read the matching confirmed Project Map record before drawing a Progress Map from memory or recent conversation.

@@ -91,16 +91,25 @@ Navi's progress bar should be generated from a stable `Project Map`, not improvi
 Project Map
 - project_name: the user's current supervised project
 - map_status: confirmed | provisional
+- project_shape: optional linear | flowing | mixed | unclear
 - overall_stages: stable target-project stages
 - current_overall_stage: the active overall stage
 - current_stage_explanation: what the current stage means in plain language
 - sub_progress: optional local steps inside the current stage
+- rhythm_strip: optional stable rhythm labels for flowing projects
+- current_rhythm_focus: optional current position in the rhythm strip
+- active_track: optional active route, target, stakeholder, or workstream
+- current_active_step: optional current step inside the active track
+- waiting_states: optional external waits or feedback gates
+- decision_gate: optional user decision needed before the next loop
 - visible_evidence: completed work the user can verify
 - missing_or_risk: current gap, uncertainty, or main risk
 - next_gate: acceptance point before moving to the next stage
 - user_confirmation_needed: what the user needs to confirm now
 - source: where this map came from
 ```
+
+For flowing projects, the Rhythm Map fields are the stable source for project shape, rhythm labels, active-track labels, current position, waiting states, and decision gates. If those fields are absent or unreliable, mark the Rhythm Map provisional and ask for the project record, active plan, or user confirmation instead of inventing stable labels.
 
 Use this source priority when building the `Project Map`:
 
@@ -114,9 +123,112 @@ When the target repo contains `docs/along/project-maps/`, treat those files as p
 
 If sources conflict, the more recently confirmed user-facing project map wins over older inferred state.
 
-The overall progress bar describes the target project, not Navi's own internal answering process. Local concerns, document fixes, retests, validation loops, or calibration tasks belong in `sub_progress`. They must not rewrite `overall_stages`.
+### Project Shape Selection
 
-Progress Map should include a stable target-project overall progress bar for progress and next-step orientation questions when a reliable project stage sequence exists.
+Navi should not assume that every supervised project has one stable one-way completion path. Before choosing a visual map, identify the layer the user is asking about:
+
+```text
+Whole long-running project? -> classify project shape
+Specific subtask?           -> classify subtask shape
+```
+
+Use a linear progress strip when the work is a one-time delivery or a bounded subtask:
+
+```text
+[需求] -> [设计] -> [执行] -> [验证] -> [交付]
+```
+
+Use a Rhythm Map when the work is a flowing long-running project with signals such as:
+
+- recurring daily, weekly, or periodic actions;
+- multiple parallel opportunities, routes, targets, or stakeholders;
+- external feedback that controls the next step;
+- repeated loops of refresh, screen, prepare, wait, follow up, and decide;
+- ongoing stewardship rather than one fixed deliverable.
+
+If the project shape is mixed, Navi should pick the narrowest useful map:
+
+- whole long-running project: Rhythm Map;
+- specific bounded subtask: linear subtask strip;
+- unclear scope: provisional map plus a confirmation question.
+
+### Rhythm Map
+
+A Rhythm Map is the Navi map form for flowing long-running projects. This map does not express completion percentage. It should show the current cycle, active focus, waiting states, user decision gate, and where continuing will lead.
+
+Use this structure:
+
+```text
+项目节奏
+[周期刷新] + [日常准备] + [机会/对象等待] + [决策确认]
+                                      ▲
+                                   当前焦点
+
+当前主线
+[读取状态] -> [判断优先级] -> [执行最小闭环] -> [记录/等待反馈]
+                         ▲
+                      当前动作
+```
+
+The upper layer answers: what repeating rhythm is this long-running project currently in?
+
+The lower layer answers: what specific track or action is active in this conversation?
+
+A valid Rhythm Map response must include:
+
+- a compact rhythm strip;
+- a compact active-track or current-action strip when useful;
+- a plain-language explanation of the current focus;
+- what has changed or stayed stable;
+- the recommended next small loop;
+- what the user must confirm;
+- any main risk, especially if the agent may otherwise over-execute or update status without evidence.
+
+Do not use internal labels alone. If the rhythm says `日常准备`, explain what that means for the user's actual goal.
+
+#### Example: Internship Project
+
+For an internship-style project, the whole project is flowing because it combines weekly job-pool refresh, daily interview preparation, active application waiting, and evidence-driven status updates.
+
+```text
+项目节奏
+[每周岗位刷新] + [每日笔试/面试准备] + [投递等待] + [岗位决策]
+                                      ▲
+                                   当前焦点
+
+当前主线
+[检查反馈] -> [完成今日练习] -> [刷新岗位池] -> [决定是否定制材料]
+                     ▲
+                  当前动作
+```
+
+The explanation should make clear that today is not about "finishing the project"; the next useful move is a small daily loop; status changes require evidence such as email, portal state, or screenshots; and material customization should wait until a specific target job is selected.
+
+#### Example: Hong Kong Application Project
+
+For a Hong Kong application-style project, the whole project is flowing because supervisor screening, direction planning, materials, forms, and follow-ups continue in parallel.
+
+```text
+项目节奏
+[方向校准] + [导师/项目筛选] + [材料/表单准备] + [提交/外联跟进]
+                                ▲
+                             当前焦点
+
+当前主线
+[HKUST 表单预检] -> [人工填报] -> [最终提交确认] -> [记录结果]
+                       ▲
+                    当前动作
+```
+
+The overall project uses a Rhythm Map, but a bounded subtask such as `HKUST CSE Early 表单填报` can still use a linear subtask strip:
+
+```text
+[预检] -> [填表] -> [附件核对] -> [最终确认] -> [提交后记录]
+```
+
+For linear maps and bounded subtasks, the overall progress bar describes the target project, not Navi's own internal answering process. Rhythm Maps use compact rhythm strips instead of one-way completion bars. Local concerns, document fixes, retests, validation loops, or calibration tasks belong in `sub_progress`. They must not rewrite `overall_stages`.
+
+Progress Map should include a stable target-project overall progress bar for progress and next-step orientation questions when a reliable linear project stage sequence exists.
 
 The overall progress bar answers: where is the user's target project?
 
@@ -151,6 +263,8 @@ For progress and next-step orientation questions, include a compact horizontal s
 ### Compact Horizontal Rendering
 
 When a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip. In the current chat-only version, "graphical" means a text-rendered progress graphic, not a bitmap image or UI widget. Future UI can render the same Project Map as a richer component.
+
+When the project is flowing rather than linear, render the Rhythm Map as compact horizontal strips instead of a one-way overall progress strip. The same rule applies: the strip answers "where am I", and the explanation answers "what does this position mean".
 
 The overall stages should be a single-line stage strip whenever the chat surface can fit it. Do not split the overall stage sequence across multiple lines just because it is long; prefer shorter stage labels or fewer stable overall stages. The current-position marker may appear on the next line.
 
