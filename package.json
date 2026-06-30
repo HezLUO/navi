@@ -1,8 +1,18 @@
 {
   "name": "along",
   "version": "0.1.0",
+  "description": "Navi helps non-expert users understand, supervise, and steer expert agents with Progress Maps and Challenge Layer behavior.",
   "private": true,
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HezLUO/along.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HezLUO/along/issues"
+  },
+  "homepage": "https://github.com/HezLUO/along#readme",
   "bin": {
     "along": "src/cli/index.ts"
   },

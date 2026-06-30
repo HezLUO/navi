@@ -100,9 +100,9 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 ## Current stage
 
-This repo-contained package is the source-package form of Navi `0.1.0`.
+This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha`.
 
-It packages the current validated skill-first behavior. It does not add new runtime, memory, presence, adapter, or delegation capabilities.
+It packages the current validated skill-first behavior. It does not add new runtime, memory, presence, adapter, or delegation capabilities. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 
 ## Package layout
 
@@ -140,6 +140,8 @@ plugins/along-working-thread
 ```
 
 This package does not include an automatic install script. Installation should remain an explicit user action.
+
+This package is ready for GitHub source alpha testing. Public Codex marketplace release remains deferred.
 
 ## Verify package
 

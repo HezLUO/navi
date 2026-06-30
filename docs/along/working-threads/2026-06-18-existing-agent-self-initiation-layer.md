@@ -33,6 +33,8 @@ The quietness boundary follow-up on 2026-06-30 closed an important negative samp
 
 On 2026-06-30, the user confirmed the Navi stability decision. Navi Progress Map V1 should now be treated as `稳定产品行为` for the docs-backed skill behavior: ordinary orientation prompts should produce target-project maps, flowing projects should use Rhythm Maps, specific local tasks should stay scoped, and narrow factual checks should stay quiet. This is a stable V1 baseline, not proof that long-term product feeling, every target domain, or future runtime/UI surfaces are fully validated.
 
+The current release move is GitHub open-source alpha preparation for Navi `0.1.0-alpha`. This is a source-release readiness pass: public README, license, changelog, package metadata, and plugin alpha notes. It does not approve npm publication, public Codex marketplace publication, automatic installers, runtime/UI work, adapters, background behavior, or broader product launch claims.
+
 Long-term positioning is now approved: Along should become a local-first, open-source, existing-agent companion layer. It should help the agents users already rely on gain continuity, turn-bound self-initiation, drift awareness, wrap-up discipline, and eventually deeper companionship. It should not present itself as another general coding agent.
 
 ## Boundary
@@ -81,6 +83,8 @@ Long-term positioning is now approved: Along should become a local-first, open-s
 ## Next Likely Move
 
 Use Navi Progress Map V1 as the stable docs-backed behavior baseline in real sessions, while continuing to collect long-term product-feeling evidence: whether maps and Challenge Moments stay useful, self-initiating, companion-like, and non-annoying across repeated use. If the work returns to the MCP thread, the next gate remains fresh-session MCP client validation against the stdio server, especially resource reads, action-tool behavior, and confirmed section-patch write-back from a real client session.
+
+For release work, finish the GitHub alpha source-release surface first: MIT license, Navi-first root README, alpha changelog, package metadata, plugin alpha notes, and verification. Keep npm, marketplace, runtime/UI, adapters, and background behavior as separate future scopes.
 
 ## Last Wrap-Up
 
@@ -487,3 +491,9 @@ V1 packaging should be a distribution copy, not a source-of-truth migration:
 - After the natural-prompt positive samples, quietness negative-sample correction, verification, and pushed records, the user explicitly confirmed moving Navi from `真实使用校准` to `稳定产品行为`.
 - The stability claim is scoped to V1 docs-backed skill behavior: Progress Map, Rhythm Map, two-layer orientation, local-only task handling, and ordinary factual-check quietness.
 - The stability claim does not cover a future UI/runtime surface, every professional domain, or long-term emotional/product feeling. Those remain future real-use calibration areas.
+
+2026-06-30 Navi open-source alpha release preparation:
+
+- The user approved preparing a GitHub open-source alpha release.
+- The release scope is `0.1.0-alpha` source readiness: README, license, changelog, metadata, plugin alpha notes, and verification.
+- The release scope does not include npm publication, public Codex marketplace publication, automatic install scripts, runtime/UI expansion, adapters, background autonomy, or a claim that long-term product feeling is fully proven.

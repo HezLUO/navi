@@ -1,55 +1,128 @@
-# Along
+# Navi
 
-Along is the parent project for Navi.
+Navi helps non-expert users understand, supervise, and steer expert agents.
 
-Navi is the current V1 product surface: it helps non-expert users understand, supervise, and steer expert agents. Its current behavior is **Progress Map + Challenge Layer**. Progress Maps answer where the user's target project stands, what is missing, what comes next, and what the user needs to confirm. Challenge Layer behavior appears when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum.
+This repository is the open-source alpha home for Navi. Navi is the current V1 product surface of Along. Navi gives **Progress Map + Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge.
 
-## Current V1 shape
+## Alpha Status
 
-- Codex skill/plugin behavior with project-local docs.
-- Navi Progress Maps for progress, next-step, continue, confusion, and plan-reliability questions.
-- Rhythm Maps for flowing long-running projects with recurring cycles, waiting states, and decision gates.
+`0.1.0-alpha` is ready as a GitHub source release for developers and early testers.
+
+What is stable in this alpha:
+
+- Navi Progress Maps for progress, next-step, continue, done, confusion, and plan-reliability questions.
+- Rhythm Maps for flowing long-running projects with recurring cycles, waiting states, parallel opportunities, and decision gates.
 - Challenge Layer behavior for anti-self-certification moments.
 - Working Thread continuity for project judgment that needs durable carry-forward.
 - Project-local Navi initialization through `AGENTS.md` and `docs/along/project-maps/`.
-- No background autonomy, notifications, or always-on presence in V1.
+- Codex skill/plugin behavior with project-local docs.
 
-## Architecture boundary
+What is not included:
 
-Current V1 uses skill/plugin behavior with project-local docs. MCP, runtime, local app, background presence, companion memory, and adapter surfaces are experimental or later layers unless explicitly called out for a focused validation pass.
+- npm package publication.
+- Public Codex marketplace release.
+- Automatic install or sync script.
+- Background autonomy, notifications, or always-on presence.
+- A future UI/runtime surface.
+- Hermes, Claude Code, or other agent adapters.
+- Memory v2, relationship modes, delegation, or write delegation.
 
-The repository still contains older Along companion ideas, including local memory, Shared Desk, soundscape, and `.along/` runtime concepts. Treat those as historical or future-facing context, not the current recommended Navi installation path.
+The root `package.json` intentionally remains `"private": true` to prevent accidental npm publication. The source is available under the MIT license for GitHub alpha use.
 
-## Development
+## Current V1 shape
+
+Current V1 uses skill/plugin behavior with project-local docs. The repo-contained Codex plugin source package lives at:
+
+```text
+plugins/along-working-thread
+```
+
+The internal package id remains `along-working-thread` for compatibility with existing skill paths, local installs, and tests. The customer-facing product name is Navi.
+
+Navi V1 is docs-backed and turn-bound. It works while an active agent session is running; it does not watch files, send notifications, or act when Codex is closed.
+
+## What Navi Does
+
+Navi Progress Maps are for questions like:
+
+```text
+接下来我们应该做什么？
+现在做到哪了？我看不懂。
+继续吧。
+这个方案可以吗？我不懂技术。
+```
+
+For a bounded project, Navi should use a compact project map:
+
+```text
+[需求] -> [设计] -> [执行] -> [验证] -> [交付]
+                         ^
+                      当前位置
+```
+
+For a flowing long-running project, Navi should use a Rhythm Map instead of forcing a completion bar:
+
+```text
+[周期刷新] + [日常准备] + [机会/对象等待] + [决策确认]
+                                      ^
+                                   当前焦点
+```
+
+Challenge Layer behavior appears when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum. Its job is to turn questionable momentum into lightweight validation, not to criticize every decision.
+
+## Quick Start
+
+Install dependencies:
 
 ```bash
 npm install
-npm test
-npm run typecheck
-npm run web
 ```
 
-In another terminal:
+Verify the repo-contained Navi plugin source package:
 
 ```bash
-npm run dev
+npm run verify:plugin-package
 ```
 
-Then open:
+Run the full local checks:
+
+```bash
+npm test
+npm run typecheck
+```
+
+For local Codex plugin experimentation, use this package source directory:
 
 ```text
-http://127.0.0.1:5173
+plugins/along-working-thread
 ```
 
-## Demo Flow
+This alpha does not include an automatic installer. Installation should remain an explicit user action in the local Codex/plugin environment.
 
-1. Start the local server.
-2. Open the Shared Desk.
-3. Along chooses one small curiosity.
-4. Along shows what it is reading.
-5. Ask Along one question or correct one assumption.
-6. Wrap up and inspect `.along/journal/` and `.along/graph/`.
+## Project-Local Setup
 
-## Safety Boundary
+For reliable Navi behavior in a target project, use:
 
-Along may read bounded project context, remember, and suggest. It does not modify project code, create branches, make commits, or run broad shell commands in the MVP.
+- a project-local trigger source in `AGENTS.md`;
+- a confirmed Project Map or Rhythm Map under `docs/along/project-maps/`;
+- the target project's source records, such as state files, TODO files, trackers, workflow records, and handoffs.
+
+Reusable setup docs:
+
+- `docs/along/project-maps/navi-project-init.md`
+- `docs/along/project-maps/navi-project-trigger-template.md`
+- `docs/along/project-maps/README.md`
+
+## Architecture Boundary
+
+MCP, runtime, local app, background presence, companion memory, and adapter surfaces are experimental or later layers unless explicitly called out for a focused validation pass.
+
+The repository still contains older Along companion ideas, including local memory, Shared Desk, soundscape, and `.along/` runtime concepts. Treat those as historical or future-facing context, not the current recommended Navi installation path.
+
+## Release Notes
+
+See `CHANGELOG.md` for the `0.1.0-alpha` release notes.
+
+## License
+
+MIT. See `LICENSE`.

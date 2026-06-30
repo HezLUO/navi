@@ -2,7 +2,11 @@
 
 `0.1.0` is the current turn-bound self-initiation, Navi Progress Map, and Challenge Layer package version.
 
+`0.1.0-alpha` is the GitHub source-release label for this repo-contained package. The plugin manifest remains at `0.1.0` for compatibility with the existing package id, local installs, and tests.
+
 This pass documents Navi as the customer-facing Progress Map behavior for non-expert progress and next-step questions, including Rhythm Map behavior for flowing long-running projects. It is a documentation-only behavior update, not a runtime capability upgrade.
+
+The alpha release is suitable for developers who want to inspect, fork, or install the Codex plugin source package manually. It is not an npm release, not a public Codex marketplace release, and not a broader product launch.
 
 The package continues to provide:
 
