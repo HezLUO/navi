@@ -671,10 +671,12 @@ describe("Along Working Thread repo-contained plugin package", () => {
     const readme = await readRepoText("README.md");
 
     for (const expected of [
-      "Navi is the current V1 product surface",
-      "V1 alpha behavior centers on",
+      "Navi is an independent open-source product and the first V1 product surface from the broader Along vision",
+      "Navi is the current alpha product you can inspect, install, and test today",
+      "This repository is the canonical open-source alpha home for Navi",
+      "Navi's V1 alpha behavior centers on",
       "Progress/Rhythm Maps",
-      "Along remains the broader long-term product vision",
+      "Along is the broader long-term product vision",
       "Current V1 shape",
       "skill/plugin behavior with project-local docs",
       "MCP, runtime, local app, background presence",
