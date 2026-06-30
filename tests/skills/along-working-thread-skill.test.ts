@@ -319,9 +319,10 @@ describe("Along Working Thread Codex skill", () => {
       "map_status: confirmed",
       "source: user-confirmed current Navi test project map",
       "[问题定义] -> [行为设计] -> [文档写入] -> [新会话验证] -> [真实使用校准] -> [稳定产品行为]",
-      "current_overall_stage: 真实使用校准",
+      "current_overall_stage: 稳定产品行为",
       "Do not rename, remove, merge, split, or reorder `overall_stages` without explicit user confirmation.",
       "local concerns, fixes, retests, pushes, and fresh-session checks must stay in `sub_progress`",
+      "V1 docs-backed skill behavior is stable enough to use as the baseline",
     ]) {
       expect(naviMap).toContain(expected);
     }
