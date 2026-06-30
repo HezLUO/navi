@@ -43,10 +43,6 @@ The internal package id remains `along-working-thread` for alpha compatibility. 
 
 Current V1 uses skill/plugin behavior with project-local docs. The repo-contained Codex plugin source package lives at:
 
-Navi is the current V1 product surface from the Along vision.
-
-Along remains the broader long-term product vision.
-
 ```text
 plugins/along-working-thread
 ```
