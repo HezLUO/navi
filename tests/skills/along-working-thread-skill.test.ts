@@ -613,7 +613,7 @@ describe("Along Working Thread Codex skill", () => {
       expect(readme).toContain(expected);
     }
 
-    expect(version).toContain("Rhythm Map behavior for flowing long-running projects");
+    expect(version).toContain("Progress/Rhythm Maps and Challenge Layer are the current V1 alpha mechanisms");
     expect(version).toContain("documentation-only behavior update");
   });
 
@@ -672,7 +672,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
     for (const expected of [
       "Navi is the current V1 product surface",
-      "Progress Map + Challenge Layer",
+      "V1 alpha behavior centers on",
+      "Progress/Rhythm Maps",
+      "Along remains the broader long-term product vision",
       "Current V1 shape",
       "skill/plugin behavior with project-local docs",
       "MCP, runtime, local app, background presence",
@@ -912,7 +914,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(readme).toContain("rate usefulness, self-initiation, co-creator feel, and annoyance");
 
     expect(version).toContain("# Along Working Thread 0.1.0");
-    expect(version).toContain("customer-facing Progress Map behavior");
+    expect(version).toContain("Along's current V1 product surface");
+    expect(version).toContain("not the whole long-term Along product");
     expect(version).toContain("not a runtime capability upgrade");
     expect(version).toContain("Do not bump to 0.2.0");
   });

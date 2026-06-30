@@ -59,7 +59,7 @@ Priority: high before public release
 
 Problem:
 
-The root README still describes Along mainly as a lo-fi coding companion with local memory, graph memory, soundscape, and shared desk behavior. The current validated product surface is Navi: Progress Map + Challenge Layer for non-expert supervision.
+Some docs have compressed Navi into Progress Map plus Challenge Layer. The intended hierarchy is broader: Navi is Along's current V1 product surface for non-expert supervision, Progress/Rhythm Maps and Challenge Layer are the current V1 alpha mechanisms, Working Thread is the internal continuity substrate, and Along remains the broader long-term product vision.
 
 Why it matters:
 
@@ -67,8 +67,8 @@ The repository currently tells two different stories. A new reader may not know 
 
 Recommended fix:
 
-- Update the root README to explain the current product hierarchy.
-- Make Navi the current V1 surface.
+- Keep the root README and package docs aligned on the current product hierarchy.
+- Make Navi the current V1 surface without reducing Navi to Progress/Rhythm Maps and Challenge Layer.
 - Move older companion/runtime ideas into roadmap or historical context.
 
 ### 3. Installation And Initialization Debt

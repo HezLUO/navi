@@ -7,11 +7,11 @@ description: 'Use when any active Codex project needs Working Thread continuity 
 
 Use this skill to make Codex behave in an Along-like way inside an installed, active Codex project.
 
-The customer-facing product surface is **Navi**: a non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents.
+The current V1 product surface of Along is **Navi**: a non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents.
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-The short-term product behavior is **Progress Map + Challenge Layer**. Navi gives a Progress Map when the user asks about progress, next steps, whether to continue, or says they do not understand the current state. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, or says they do not understand the current state. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum. Along remains the broader long-term product vision.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 

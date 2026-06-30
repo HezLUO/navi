@@ -2,7 +2,7 @@
 
 Navi helps non-expert users understand, supervise, and steer expert agents.
 
-This repository is the open-source alpha home for Navi. Navi is the current V1 product surface of Along. Navi gives **Progress Map + Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge.
+This repository is the open-source alpha home for Navi. Navi is the current V1 product surface of Along: a non-expert supervision layer for active expert-agent work. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge. Along remains the broader long-term product vision.
 
 ## Alpha Status
 

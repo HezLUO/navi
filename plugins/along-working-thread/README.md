@@ -2,7 +2,7 @@
 
 Navi helps non-expert users understand, supervise, and steer expert agents.
 
-Navi is a Codex plugin source package that gives Progress Maps, identifies Challenge Moment risks, and helps active Codex sessions carry project judgment with user confirmation.
+Navi is the current V1 product surface of Along. This Codex plugin source package centers Navi's V1 alpha behavior on Progress/Rhythm Maps and Challenge Layer behavior while helping active Codex sessions carry project judgment with user confirmation. Along remains the broader long-term product vision.
 
 The internal legacy package id remains `along-working-thread`. That id is kept for compatibility with the existing skill path, package layout, local installs, and tests.
 
@@ -16,7 +16,7 @@ The internal legacy package id remains `along-working-thread`. That id is kept f
 
 ## Navi
 
-Navi is Along's customer-facing product surface for non-expert users supervising expert agents.
+Navi is Along's current V1 product surface for non-expert users supervising expert agents.
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
 

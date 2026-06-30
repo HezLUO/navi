@@ -6,7 +6,7 @@ This reference defines the skill-first V1 behavior for Along-like Codex sessions
 
 Use this workflow to validate whether Codex can feel more Along-like inside an active project session by carrying Working Thread continuity, restoring current judgment, giving Navi Progress Maps for non-expert progress questions, challenging high-impact drift, drafting wrap-up, and producing Challenge Briefs for Challenge Moments.
 
-The customer-facing surface is **Navi**. Navi helps non-expert users understand, supervise, and steer expert agents. The short-term product behavior is **Progress Map + Challenge Layer**: Navi orients the user on current progress first, then uses Challenge Moment as the risk-escalation mechanism when the current path may be misleading.
+The current V1 product surface of Along is **Navi**. Navi helps non-expert users understand, supervise, and steer expert agents. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer**: Navi orients the user on current progress first, then uses Challenge Moment as the risk-escalation mechanism when the current path may be misleading. Along remains the broader long-term product vision.
 
 Do not implement Core/MCP, plugin packaging, Hermes adapter, background runtime, local/desktop presence, delegation, write delegation, relationship modes, or emotional simulation.
 
@@ -22,7 +22,7 @@ Chat is where conversation happens. Working Thread is what important unfinished 
 
 ## Navi
 
-Navi is Along's customer-facing product surface for non-expert users supervising expert agents.
+Navi is Along's current V1 product surface for non-expert users supervising expert agents.
 
 Its V1 promise is:
 
