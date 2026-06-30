@@ -2,7 +2,9 @@
 
 Navi helps non-expert users understand, supervise, and steer expert agents.
 
-This repository is the open-source alpha home for Navi. Navi is the current V1 product surface of Along: a non-expert supervision layer for active expert-agent work. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge. Along remains the broader long-term product vision.
+Navi is an independent open-source product and the first V1 product surface from the broader Along vision. Along is the long-term companion-layer vision; Navi is the current alpha product you can inspect, install, and test today.
+
+This repository is the canonical open-source alpha home for Navi. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge.
 
 ## Alpha Status
 
@@ -29,9 +31,21 @@ What is not included:
 
 The root `package.json` intentionally remains `"private": true` to prevent accidental npm publication. The source is available under the MIT license for GitHub alpha use.
 
+## Relationship To Along
+
+Along is the broader long-term product vision: a local-first, open-source companion layer for existing agents.
+
+Navi is the first independent V1 product surface from that vision. It is not the whole Along roadmap. The current Navi alpha focuses on non-expert supervision through Progress/Rhythm Maps, Challenge Layer behavior, and Working Thread continuity.
+
+The internal package id remains `along-working-thread` for alpha compatibility. Treat that as an implementation and migration name, not the customer-facing product name.
+
 ## Current V1 shape
 
 Current V1 uses skill/plugin behavior with project-local docs. The repo-contained Codex plugin source package lives at:
+
+Navi is the current V1 product surface from the Along vision.
+
+Along remains the broader long-term product vision.
 
 ```text
 plugins/along-working-thread

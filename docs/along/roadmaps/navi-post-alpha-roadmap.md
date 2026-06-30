@@ -33,6 +33,7 @@ Goal: make the current source alpha easier to inspect, install, and verify witho
 
 - P0: Clarify the manual Codex plugin install path for users who already understand local Codex plugin or skill workflows.
 - P0: Add a short "verify this checkout" path that starts from a fresh clone and ends with `npm run verify:plugin-package`.
+- Repository split follow-through: `HezLUO/navi` is the canonical Navi alpha product repository; `HezLUO/along` remains the lightweight umbrella and long-term product vision repository.
 - P1: Add contributor basics: `CONTRIBUTING.md`, issue templates, PR template, and a short maintainer release checklist.
 - P1: Decide whether the repo should expose a public roadmap file from the root README.
 - P1: Design, but do not yet implement, an automatic install or sync script. The design should explain source of truth, overwrite behavior, user confirmation, and rollback.

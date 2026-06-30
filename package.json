@@ -1,5 +1,5 @@
 {
-  "name": "along",
+  "name": "navi",
   "version": "0.1.0",
   "description": "Navi helps non-expert users understand, supervise, and steer expert agents with Progress Maps and Challenge Layer behavior.",
   "private": true,
@@ -7,12 +7,12 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/HezLUO/along.git"
+    "url": "https://github.com/HezLUO/navi.git"
   },
   "bugs": {
-    "url": "https://github.com/HezLUO/along/issues"
+    "url": "https://github.com/HezLUO/navi/issues"
   },
-  "homepage": "https://github.com/HezLUO/along#readme",
+  "homepage": "https://github.com/HezLUO/navi#readme",
   "bin": {
     "along": "src/cli/index.ts"
   },
