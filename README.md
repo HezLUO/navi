@@ -6,6 +6,30 @@ Navi is an independent open-source product and the first V1 product surface from
 
 This repository is the canonical open-source alpha home for Navi. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge.
 
+## Try Navi Alpha In 5 Minutes
+
+This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. It is not yet an npm package, public marketplace listing, or one-click installer.
+
+```bash
+git clone https://github.com/HezLUO/navi.git
+cd navi
+npm install
+npm run verify:plugin-package
+```
+
+That verifies the repo-contained Navi plugin source package. To try Navi in a real target project, follow:
+
+- `docs/along/project-maps/navi-project-init.md`
+- `docs/along/project-maps/navi-project-trigger-template.md`
+
+The minimum reliable setup is: global skill/plugin availability, a short project-local trigger source in `AGENTS.md`, and a confirmed Project Map or Rhythm Map for that target project. After that setup, ordinary questions like `接下来我们应该做什么？`, `现在做到哪了？我看不懂。`, or unclear `继续吧。` should produce a Navi map before ordinary task advice.
+
+## Who This Alpha Is For
+
+Use this alpha if you want to test Navi's current supervision behavior in active Codex sessions, review the plugin source package, or give feedback on whether Progress/Rhythm Maps and Challenge Layer behavior help non-expert users steer expert-agent work.
+
+Wait for a later release if you need automatic installation, npm distribution, public marketplace installation, runtime UI, background watching, notifications, or adapters for agents outside Codex.
+
 ## Alpha Status
 
 `0.1.0-alpha.1` is ready as the latest GitHub source release for developers and early testers.
@@ -80,7 +104,7 @@ For a flowing long-running project, Navi should use a Rhythm Map instead of forc
 
 Challenge Layer behavior appears when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum. Its job is to turn questionable momentum into lightweight validation, not to criticize every decision.
 
-## Quick Start
+## Verify The Source Package
 
 Install dependencies:
 
@@ -108,6 +132,16 @@ plugins/along-working-thread
 ```
 
 This alpha does not include an automatic installer. Installation should remain an explicit user action in the local Codex/plugin environment.
+
+## Alpha Feedback We Want
+
+The most useful alpha feedback is evidence from real or realistic target projects:
+
+- Did ordinary progress, next-step, confusion, continue, and plan-reliability questions trigger a useful Navi map?
+- Did flowing projects use Rhythm Maps instead of misleading completion bars?
+- Did Challenge Layer behavior catch weak assumptions or self-certifying momentum without becoming constant critique?
+- Did narrow factual checks and clear execution requests stay quiet?
+- Did the `along-working-thread` compatibility name confuse installation or review?
 
 ## Project-Local Setup
 
