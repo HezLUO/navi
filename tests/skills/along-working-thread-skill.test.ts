@@ -260,6 +260,96 @@ describe("Along Working Thread Codex skill", () => {
     expect(reference).toContain("replace legal, medical, financial, engineering, or other high-risk professional responsibility");
   });
 
+  it("documents alpha 4 phase, validation, and parallel-work supervision", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const readme = await readRepoText("plugins/along-working-thread/README.md");
+
+    for (const expected of [
+      "phase supervision",
+      "verification budget",
+      "stop criteria",
+      "proactive decision signal",
+      "parallel work supervision",
+      "vision-distance",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Design: decide what to do, why, and what not to do",
+      "Calibration: observe real or semi-real behavior without proving the whole system",
+      "Implementation: make a bounded change for a confirmed problem",
+      "Release: prepare an external version that users may rely on",
+      "Closeout: record outcome, risks, and next steps without adding new validation loops",
+      "Exploration: investigate future directions without committing to implementation",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Design mode does not need tests",
+      "Implementation mode uses targeted tests around changed behavior",
+      "Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks",
+      "Closeout mode records the result and should not start a new validation loop",
+      "continued validation will not change the current decision",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "task goal",
+      "allowed edit scope",
+      "allowed validation level",
+      "forbidden escalations",
+      "stop criteria",
+      "expected return format",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "The main session should not default to waiting for every worktree",
+      "wait only when the worktree result is blocking",
+      "The result will change the current design direction",
+      "The result is required before a merge, release, or irreversible decision",
+      "The worktree discovered a blocking fact that invalidates the current assumption",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Navi should proactively surface signals when silence would cause loss of control",
+      "The current stage has met its stop criteria",
+      "Codex is exceeding the verification budget",
+      "Work is drifting from design into implementation, or from implementation into release",
+      "A write, commit, push, release, external-project edit, or destructive action needs approval",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "phase supervision",
+      "verification budget",
+      "proactive decision signals",
+      "parallel work supervision",
+      "vision-distance",
+      "stop, wait, approve, continue, or ask how far the current work is from the original goal",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "Alpha.4 supervision extends this from passive progress mapping to decision support",
+      "whether to continue, stop, wait, approve, or move to the next phase",
+      "without adding UI, runtime, memory, or automatic worktree orchestration",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");

@@ -20,6 +20,8 @@ Navi is Along's current V1 product surface for non-expert users supervising expe
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
 
+Alpha.4 supervision extends this from passive progress mapping to decision support for whether to continue, stop, wait, approve, or move to the next phase. It covers phase supervision, verification budgets, proactive decision signals, parallel work supervision, and lightweight vision-distance judgment without adding UI, runtime, memory, or automatic worktree orchestration.
+
 When this package is installed, Navi Progress Map triggers apply in any active Codex project, not only the Along repository. Do not require the user to name Navi; ordinary progress, next-step, continue, done, plan-reliability, and confusion questions should naturally trigger a map when project state can be inferred.
 
 Navi is accuracy-first in fresh sessions. It may inspect the target project's source-of-truth before outputting the Progress Map; it should not guess a temporary stage bar just to answer faster.

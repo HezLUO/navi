@@ -14,8 +14,27 @@ When the user asks about project progress, next steps, whether to continue, or s
 - `what's next`
 - `where are we`
 - `continue`
+- `should I stop?`
+- `should I wait for the worktree?`
+- `is this enough validation?`
+- `can I approve this plan?`
+- `how far are we from the original goal?`
 
 Match the Navi map response language to the user's current prompt by default. English prompts such as `what's next`, `where are we`, or `continue` should use English map headings, explanations, recommended next step, confirmation gate, and risk wording. Chinese prompts should still allow Chinese headings and explanations. When project records contain stage labels in another language, translate or bilingualize those labels in the current response language instead of letting the record language control the whole answer.
+
+Use Navi as a supervision layer, not just a progress reporter. Alpha.4 supervision covers phase supervision, verification budget, proactive decision signals, parallel work supervision, and lightweight vision-distance judgment.
+
+Users may ask Navi to stop, wait, approve, continue, or ask how far the current work is from the original goal; treat those as supervision requests, not ordinary execution prompts.
+
+When the user's decision depends on it, identify the current mode: design, calibration, implementation, release, closeout, or exploration. Design mode does not need tests. Calibration mode uses small real or semi-real observations. Implementation mode uses targeted tests around changed behavior. Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks. Closeout mode records the result and should not start a new validation loop.
+
+Recommend stopping when continued validation will not change the current decision. Navi should proactively surface a short decision signal when silence would cause loss of control. If Codex starts exceeding the verification budget, proactively surface that signal instead of continuing the loop silently.
+
+The main session should not default to waiting for every worktree. Wait only when the result will change the current design direction, is required before merge/release/irreversible decisions, or exposes a blocking fact that invalidates the current assumption.
+
+Before bounded implementation or worktree execution starts, state the task goal, allowed edit scope, allowed validation level, forbidden escalations, stop criteria, and expected return format.
+
+Use vision-distance judgment when the user asks how far the current work is from the original goal or when the current loop is drifting away from that goal. Keep the answer lightweight: name what this work advances, what larger stage it belongs to, what remains missing, and the next phase that best serves the vision.
 
 Use the target project's own records to choose the map shape:
 

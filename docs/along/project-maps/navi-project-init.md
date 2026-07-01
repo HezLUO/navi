@@ -8,6 +8,8 @@ The product lesson from fresh-session calibration is that a global skill can be 
 global skill + project-local trigger source + project-local Project Map
 ```
 
+For alpha.4, the project-local trigger source also carries Navi supervision rules: phase supervision, verification budget, stop criteria, proactive decision signals, parallel work supervision, and lightweight vision-distance judgment. This lets fresh sessions help the user decide whether to continue, stop, wait, approve, or move to the next phase without depending only on global skill auto-routing.
+
 `navi init` is the narrow project-local setup surface for this pattern. It automates the preview and optional write of target-project files; it does not install the global Codex plugin or skill.
 
 This is not a new runtime. It is a project setup pattern that makes Navi discoverable from the target project itself.
@@ -44,7 +46,7 @@ When applied with `--write`, the minimum project-local setup creates or updates:
 
 1. Inspect the target project records before inventing a map.
 2. Classify the project shape: linear, flowing, mixed, or unclear.
-3. Draft the project-local trigger source.
+3. Draft the project-local trigger source, including the alpha.4 supervision rules for phase, validation budget, stop/wait/approval gates, worktree waiting, and vision-distance judgment.
 4. Draft the Project Map or Rhythm Map.
 5. Show the preview and have the user choose whether to apply it with `--write`.
 6. Write only the smallest project-local files needed for reliable Navi behavior.

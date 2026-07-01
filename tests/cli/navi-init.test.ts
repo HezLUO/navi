@@ -92,6 +92,31 @@ describe("navi init planning", () => {
     expect(agents).toContain("Current action");
   });
 
+  it("installs alpha 4 supervision rules for phase, validation, and parallel work", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Use Navi as a supervision layer, not just a progress reporter.",
+      "phase supervision",
+      "verification budget",
+      "proactive decision signal",
+      "parallel work supervision",
+      "vision-distance",
+      "Design mode does not need tests.",
+      "Implementation mode uses targeted tests around changed behavior.",
+      "Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks.",
+      "The main session should not default to waiting for every worktree.",
+      "Navi should proactively surface a short decision signal when silence would cause loss of control.",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

@@ -1,6 +1,6 @@
 ---
 name: along-working-thread
-description: 'Use when any active Codex project needs Working Thread continuity or Navi Progress Maps for non-expert progress/next-step confusion, including 现在做到哪了, 我看不懂, 接下来, 继续吧, or 这个方案可以吗; also use for high-impact drift challenges, Challenge Briefs, or wrap-up with user confirmation. Do not use for one-off coding tasks, background automation, or implementation without project supervision.'
+description: 'Use when any active Codex project needs Working Thread continuity or Navi supervision for non-expert progress/next-step/stop/wait/approval/vision-distance confusion, including 现在做到哪了, 我看不懂, 接下来, 继续吧, should I stop, should I wait, is this enough, or 这个方案可以吗; also use for high-impact drift challenges, Challenge Briefs, or wrap-up with user confirmation. Do not use for one-off coding tasks, background automation, or implementation without project supervision.'
 ---
 
 # Along Working Thread
@@ -11,7 +11,7 @@ The current V1 product surface of Along is **Navi**: a non-expert progress and d
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, or says they do not understand the current state. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, or self-certifying momentum. Along remains the broader long-term product vision.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, and alpha.4 **phase supervision**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, or how far the current work is from the original goal. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, or self-certifying momentum. Along remains the broader long-term product vision.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 
@@ -30,6 +30,10 @@ Before acting on a Working Thread, read:
 - Codex must not treat implementation success as product proof.
 - Codex must not use Challenge Briefs to start implementation by default.
 - Codex must not answer progress or next-step confusion by jumping straight to more implementation work.
+- Codex must not let release-mode verification habits contaminate design, calibration, implementation, closeout, or exploration mode.
+- Codex must not treat more tests as automatically better; validation strength must match the current stage and decision.
+- Codex must not default the main session to waiting for every worktree when the result is non-blocking.
+- Codex must not silently escalate a bounded implementation task into full tests, tag, push, or release preparation.
 - Navi must not claim it can automatically give the final correct answer in every professional domain.
 - Navi must not replace legal, medical, financial, engineering, or other high-risk professional review.
 - Challenge Moments should challenge self-certifying momentum, not become constant critique.
@@ -43,10 +47,20 @@ Before acting on a Working Thread, read:
 
 - ordinary requests stay quiet: answer directly without mentioning Working Thread, Along, drift, wrap-up, Progress Map, or Rhythm Map.
 - ordinary clear tasks include read-only checks of TODO files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record. For these tasks, report the requested facts directly unless the user also asks what the facts mean for overall progress, next steps, confusion, or plan reliability.
-- Navi Progress Map triggers when the user asks what should happen next, what the current progress is, whether to continue, whether the work is done, what remains, or says they do not understand the current progress.
+- Navi Progress Map or supervision triggers when the user asks what should happen next, what the current progress is, whether to continue, whether to stop, whether to wait, whether the work is done, whether validation is enough, whether a plan should be approved, what remains, how far the work is from the original goal, or says they do not understand the current progress.
 - Do not limit Navi Progress Map triggers to the Along repository; when this package is installed, progress and next-step confusion in any target project should naturally trigger Navi.
 - Do not require the user to name Navi or say "Progress Map" before giving a map for clear progress, next-step, continue, done, or confusion questions.
 - Match the Navi map response language to the user's current prompt by default. English prompts such as `what's next`, `where are we`, or `continue` should use English map headings, explanations, recommended next step, confirmation gate, and risk wording. Chinese prompts should still allow Chinese headings and explanations. If project records contain stage labels in another language, translate or bilingualize those labels in the current response language rather than letting the source record language take over the whole map.
+- Navi is a supervision layer, not just a progress reporter. It helps the user decide whether to continue, stop, wait, approve, or move to the next phase.
+- Alpha.4 supervision covers phase supervision, verification budget, proactive decision signals, parallel work supervision, and lightweight vision-distance judgment.
+- Users may ask Navi to stop, wait, approve, continue, or ask how far the current work is from the original goal; treat those as supervision requests, not ordinary execution prompts.
+- Navi should identify the current work mode when it affects the answer: design, calibration, implementation, release, closeout, or exploration.
+- Design mode does not need tests. Calibration mode uses small real or semi-real observations. Implementation mode uses targeted tests around changed behavior. Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks. Closeout mode records the result and should not start a new validation loop.
+- Navi should recommend stopping when continued validation will not change the current decision.
+- Before bounded implementation or worktree execution starts, Navi should state the task goal, allowed edit scope, allowed validation level, forbidden escalations, stop criteria, and expected return format.
+- The main session should not default to waiting for every worktree. Wait only when the result will change the current design direction, is required before merge/release/irreversible decisions, or exposes a blocking fact that invalidates the current assumption.
+- Navi should proactively surface a short decision signal when silence would cause loss of control, such as when stop criteria are met, verification exceeds budget, work drifts into release, an approval gate appears, a worktree result is blocking, or the loop is moving away from the original goal.
+- Vision-distance judgment should place current work on the path from the user's original goal to the fuller project vision without overstating maturity.
 - for Progress Map requests, orient before recommending: current position, completed work, what it means for the user's goal, still missing work, recommended next step, what the user needs to confirm now, and one main risk when relevant.
 - do not output a Progress Map for every response. Use it when the user needs supervisory orientation, not for ordinary clear tasks, local factual questions, narrow file/status checks, or already-confirmed execution.
 - when the user says continue or `继续吧`, continue directly if the previous context clearly established the next action, purpose, boundary, and acceptance point; otherwise give a short Progress Map before continuing.
@@ -93,17 +107,18 @@ Before acting on a Working Thread, read:
 2. If a relevant Working Thread exists, read the record from `docs/along/working-threads/`.
 3. At session start or resume, provide a short briefing with current judgment, active boundary, and next likely move.
 4. If the user asks about progress, next steps, whether to continue, whether the work is done, what remains, or says they do not understand the current state, provide a Navi Progress Map before recommending more work.
-5. If context is insufficient for a reliable Progress Map, say what can be inferred and inspect or ask for the relevant project record, recent changes, or active plan instead of inventing state.
-6. If the user request may create a new durable Working Thread, suggest creation and ask for confirmation before writing.
-7. If the user request may drift from the active Working Thread, classify drift against the record as `none`, `low`, `medium`, or `high`.
-8. For `none`, `low`, or ordinary requests, answer normally and stay quiet about the Working Thread.
-9. For `medium` drift, add one light boundary note without requiring confirmation, then continue answering.
-10. For `high` drift, issue a non-blocking confirmation challenge and do not plan the drifted direction before user confirmation.
-11. For a Challenge Moment, produce a short Challenge Brief instead of a long critique.
-12. Prefer turning the challenge into lightweight validation before treating the current judgment as settled.
-13. After confirmed high-impact direction switch, automatically draft a Working Thread update and ask before writing.
-14. At meaningful phase boundaries, suggest wrap-up when judgment continuity changed.
-15. Draft the wrap-up first. Write to docs only after user confirmation.
+5. If the user asks whether to stop, wait, approve, continue testing, or move phases, answer with the smallest useful supervision judgment: current phase, whether the current loop is enough, whether any worktree is blocking, and the next phase or approval gate.
+6. If context is insufficient for a reliable Progress Map, say what can be inferred and inspect or ask for the relevant project record, recent changes, or active plan instead of inventing state.
+7. If the user request may create a new durable Working Thread, suggest creation and ask for confirmation before writing.
+8. If the user request may drift from the active Working Thread, classify drift against the record as `none`, `low`, `medium`, or `high`.
+9. For `none`, `low`, or ordinary requests, answer normally and stay quiet about the Working Thread.
+10. For `medium` drift, add one light boundary note without requiring confirmation, then continue answering.
+11. For `high` drift, issue a non-blocking confirmation challenge and do not plan the drifted direction before user confirmation.
+12. For a Challenge Moment, produce a short Challenge Brief instead of a long critique.
+13. Prefer turning the challenge into lightweight validation before treating the current judgment as settled.
+14. After confirmed high-impact direction switch, automatically draft a Working Thread update and ask before writing.
+15. At meaningful phase boundaries, suggest wrap-up when judgment continuity changed.
+16. Draft the wrap-up first. Write to docs only after user confirmation.
 
 ## Output Style
 

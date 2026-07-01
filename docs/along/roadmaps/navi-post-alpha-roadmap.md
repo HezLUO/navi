@@ -13,6 +13,18 @@ Navi is Along's current V1 product surface, not the whole long-term Along produc
 
 The alpha claim is limited: the docs-backed skill behavior is stable enough to use as the V1 baseline. This does not prove long-term product feeling, every professional domain, or future runtime/UI surfaces.
 
+## Alpha 4 Supervision Focus
+
+Goal: strengthen Navi as a supervision layer before expanding into a full project navigation console.
+
+- P0: Add phase supervision so Navi can explain whether the current work is design, calibration, implementation, release, closeout, or exploration.
+- P0: Add verification budget guidance so Navi can tell the user when targeted validation is enough and when continued checks have become release-level work.
+- P0: Add proactive decision signals for stop, wait, approval, phase-change, and over-validation moments.
+- P0: Add parallel work supervision so the main session does not default to waiting for every bounded worktree.
+- P1: Add lightweight vision-distance judgment so Navi can place current work on the path from the user's original goal to the fuller Navi vision.
+
+This is not approval to implement runtime UI, background watchers, Memory v2, agent adapters, delegation, marketplace distribution, or release automation.
+
 ## Alpha Feedback
 
 Goal: learn whether Navi stays useful, self-initiating, companion-like, and non-annoying in real repeated use.
