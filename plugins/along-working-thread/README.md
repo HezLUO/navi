@@ -139,7 +139,13 @@ For local experimentation, use the package directory as the plugin source:
 plugins/along-working-thread
 ```
 
-This package does not include an automatic install script. Installation should remain an explicit user action.
+This plugin source package still requires explicit local Codex plugin or skill setup. The repository also includes a narrow target-project initializer:
+
+```bash
+npm run navi -- init --target /path/to/target-project
+```
+
+`navi init` prepares project-local Navi files in the target project. It does not install or sync the global Codex plugin or skill.
 
 This package is ready for GitHub source alpha testing. Public Codex marketplace release remains deferred.
 

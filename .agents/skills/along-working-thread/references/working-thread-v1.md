@@ -158,7 +158,9 @@ Minimum install output:
 - the project-local source records Navi should read first;
 - a fresh-session validation prompt.
 
-Do not implement Core/MCP, background runtime, or a CLI as part of this minimum pass. Future product surface can be `navi init` or an app workflow, but the V1 behavior is still documentation-based setup with user-confirmed durable writes.
+`navi init` is the narrow project-local setup surface for this pattern. It previews the `AGENTS.md` trigger source and provisional Project/Rhythm Map starter, then writes only when the user passes `--write`.
+
+Do not use `navi init` as a global Codex plugin or skill installer. Do not add Core/MCP, background runtime, npm publication, marketplace publication, one-click sync, or automatic final project-state inference to this setup surface.
 
 ### Project Shape Selection
 
