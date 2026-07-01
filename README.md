@@ -1,6 +1,14 @@
 # Navi
 
+English | [简体中文](./README.zh-CN.md)
+
 Navi helps non-expert users understand, supervise, and steer expert agents.
+
+GitHub source alpha | Codex project setup | MIT
+
+Agent work is hard to supervise. Navi turns project progress, next steps, and risky momentum into readable maps for active Codex sessions.
+
+![Navi Progress Map preview](docs/assets/navi-progress-map-preview.svg)
 
 Navi is an independent open-source product and the first V1 product surface from the broader Along vision. Along is the long-term companion-layer vision; Navi is the current alpha product you can inspect, install, and test today.
 

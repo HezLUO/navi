@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="460" viewBox="0 0 1120 460" role="img" aria-labelledby="title desc">
+  <title id="title">Navi Progress Map preview</title>
+  <desc id="desc">A sample Navi map showing project stages, current position, missing work, next gate, and challenge note.</desc>
+  <rect width="1120" height="460" rx="18" fill="#f8fafc"/>
+  <rect x="24" y="24" width="1072" height="412" rx="14" fill="#ffffff" stroke="#d7dde5"/>
+
+  <text x="56" y="72" fill="#0f172a" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="28" font-weight="700">Navi Progress Map</text>
+  <text x="56" y="104" fill="#526173" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="16">Answers progress questions before ordinary task advice.</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" font-weight="600">
+    <rect x="56" y="146" width="154" height="52" rx="8" fill="#e9eef5" stroke="#cbd5e1"/>
+    <text x="86" y="178" fill="#334155">Requirements</text>
+
+    <path d="M220 172H270" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M263 165L270 172L263 179" fill="none" stroke="#94a3b8" stroke-width="2"/>
+
+    <rect x="280" y="146" width="124" height="52" rx="8" fill="#e9eef5" stroke="#cbd5e1"/>
+    <text x="318" y="178" fill="#334155">Design</text>
+
+    <path d="M414 172H464" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M457 165L464 172L457 179" fill="none" stroke="#94a3b8" stroke-width="2"/>
+
+    <rect x="474" y="146" width="146" height="52" rx="8" fill="#075985" stroke="#075985"/>
+    <text x="506" y="178" fill="#ffffff">Execution</text>
+
+    <path d="M630 172H680" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M673 165L680 172L673 179" fill="none" stroke="#94a3b8" stroke-width="2"/>
+
+    <rect x="690" y="146" width="152" height="52" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="720" y="178" fill="#475569">Verification</text>
+
+    <path d="M852 172H902" stroke="#94a3b8" stroke-width="2"/>
+    <path d="M895 165L902 172L895 179" fill="none" stroke="#94a3b8" stroke-width="2"/>
+
+    <rect x="912" y="146" width="132" height="52" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="946" y="178" fill="#475569">Delivery</text>
+  </g>
+
+  <path d="M547 210V240" stroke="#075985" stroke-width="2"/>
+  <path d="M538 231L547 240L556 231" fill="none" stroke="#075985" stroke-width="2"/>
+  <text x="470" y="268" fill="#075985" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="700">Current position</text>
+
+  <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <rect x="56" y="304" width="316" height="92" rx="10" fill="#f1f5f9" stroke="#d7dde5"/>
+    <text x="78" y="334" fill="#0f172a" font-size="17" font-weight="700">What is done</text>
+    <text x="78" y="362" fill="#526173" font-size="15">The target project has a usable map</text>
+    <text x="78" y="384" fill="#526173" font-size="15">and a local trigger source.</text>
+
+    <rect x="402" y="304" width="316" height="92" rx="10" fill="#f8fafc" stroke="#d7dde5"/>
+    <text x="424" y="334" fill="#0f172a" font-size="17" font-weight="700">What is missing</text>
+    <text x="424" y="362" fill="#526173" font-size="15">Fresh-session validation in the</text>
+    <text x="424" y="384" fill="#526173" font-size="15">real target project.</text>
+
+    <rect x="748" y="304" width="296" height="92" rx="10" fill="#ecfeff" stroke="#a5f3fc"/>
+    <text x="770" y="334" fill="#164e63" font-size="17" font-weight="700">Next gate</text>
+    <text x="770" y="362" fill="#155e75" font-size="15">Run read-only validation before</text>
+    <text x="770" y="384" fill="#155e75" font-size="15">treating setup as proven.</text>
+  </g>
+</svg>
