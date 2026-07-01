@@ -8,7 +8,7 @@ This repository is the canonical open-source alpha home for Navi. Navi's V1 alph
 
 ## Try Navi Alpha In 5 Minutes
 
-This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. It is not yet an npm package, public marketplace listing, or one-click installer.
+This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. It is not yet an npm package, public marketplace listing, or one-click global installer.
 
 ```bash
 git clone https://github.com/HezLUO/navi.git
@@ -16,6 +16,20 @@ cd navi
 npm install
 npm run verify:plugin-package
 ```
+
+Preview project-local setup for a target project:
+
+```bash
+npm run navi -- init --target /path/to/target-project
+```
+
+Apply the setup only after reviewing the preview:
+
+```bash
+npm run navi -- init --target /path/to/target-project --write
+```
+
+Project-local setup is explicit and dry-run by default. `navi init` prepares `AGENTS.md`, `docs/along/project-maps/`, and a fresh-session validation prompt inside the target project. It does not install the global Codex plugin or skill.
 
 That verifies the repo-contained Navi plugin source package. To try Navi in a real target project, follow:
 
@@ -28,7 +42,7 @@ The minimum reliable setup is: global skill/plugin availability, a short project
 
 Use this alpha if you want to test Navi's current supervision behavior in active Codex sessions, review the plugin source package, or give feedback on whether Progress/Rhythm Maps and Challenge Layer behavior help non-expert users steer expert-agent work.
 
-Wait for a later release if you need automatic installation, npm distribution, public marketplace installation, runtime UI, background watching, notifications, or adapters for agents outside Codex.
+Wait for a later release if you need npm distribution, public marketplace installation, global Codex plugin installation, one-click sync, runtime UI, background watching, notifications, or adapters for agents outside Codex.
 
 ## Alpha Status
 
@@ -40,14 +54,14 @@ What is stable in this alpha:
 - Rhythm Maps for flowing long-running projects with recurring cycles, waiting states, parallel opportunities, and decision gates.
 - Challenge Layer behavior for anti-self-certification moments.
 - Working Thread continuity for project judgment that needs durable carry-forward.
-- Project-local Navi initialization through `AGENTS.md` and `docs/along/project-maps/`.
+- Project-local Navi initialization through `navi init`, `AGENTS.md`, and `docs/along/project-maps/`.
 - Codex skill/plugin behavior with project-local docs.
 
 What is not included:
 
 - npm package publication.
 - Public Codex marketplace release.
-- Automatic install or sync script.
+- Global Codex plugin installation or one-click sync.
 - Background autonomy, notifications, or always-on presence.
 - A future UI/runtime surface.
 - Hermes, Claude Code, or other agent adapters.
@@ -131,7 +145,13 @@ For local Codex plugin experimentation, use this package source directory:
 plugins/along-working-thread
 ```
 
-This alpha does not include an automatic installer. Installation should remain an explicit user action in the local Codex/plugin environment.
+This alpha includes a narrow project-local initializer:
+
+```bash
+npm run navi -- init --target /path/to/target-project
+```
+
+The initializer is dry-run by default and only writes with `--write`. It prepares the target project for Navi behavior; it does not install or sync the global Codex plugin or skill.
 
 ## Alpha Feedback We Want
 

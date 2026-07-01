@@ -73,7 +73,7 @@ Recommended fix:
 
 ### 3. Installation And Initialization Debt
 
-Status: open
+Status: partly addressed
 Priority: high before broader real-use validation
 
 Problem:
@@ -92,9 +92,9 @@ If a user installs the plugin and expects ordinary questions like `接下来我�
 
 Recommended fix:
 
-- Keep the current docs-backed initialization path.
-- Add a clearer "Install Navi into this project" guide.
-- Later consider a `navi init` or app workflow that drafts `AGENTS.md` and a Project Map after user confirmation.
+- Keep `navi init` narrow: project-local preview by default, `--write` for durable changes, no global plugin install.
+- Add clearer "Install Navi into this project" docs around the command.
+- Treat global plugin installation, one-click sync, npm release, and marketplace release as separate distribution projects.
 
 ### 4. Architecture Boundary Debt
 

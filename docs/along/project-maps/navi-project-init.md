@@ -1,12 +1,14 @@
 # Navi Project Initialization
 
-Navi Project Initialization is the minimum reliable way to install Navi into a target project.
+Navi Project Initialization is the minimum reliable way to connect Navi to a target project.
 
 The product lesson from fresh-session calibration is that a global skill can be installed and readable without being implicitly selected for ordinary next-step questions. The reliable V1 path is therefore:
 
 ```text
 global skill + project-local trigger source + project-local Project Map
 ```
+
+`navi init` is the narrow project-local setup surface for this pattern. It automates the preview and optional write of target-project files; it does not install the global Codex plugin or skill.
 
 This is not a new runtime. It is a project setup pattern that makes Navi discoverable from the target project itself.
 
@@ -52,7 +54,7 @@ If the project shape is unclear, write only a provisional trigger source and ask
 
 ## Boundaries
 
-Do not implement Core/MCP, background runtime, or a CLI as part of this minimum pass.
+Do not use `navi init` as a global Codex plugin or skill installer. Do not implement Core/MCP, background runtime, npm publication, marketplace publication, or one-click sync as part of this project-local setup surface.
 
 Do not silently edit a target project's `AGENTS.md` or project-map records. User confirmation is required before durable writes.
 
@@ -62,15 +64,15 @@ Do not force Navi into ordinary clear execution requests. If the user gives a cl
 
 Read-only checks of TODO files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks. They should answer directly and should not produce a Progress Map or Rhythm Map unless the user also asks what those facts mean for overall progress, next steps, confusion, or plan reliability.
 
-## Future Product Surface
+## Product Surface
 
-Future product surface can be `navi init`, `Install Navi into this project`, or an app workflow that performs the same setup:
+`navi init` performs this setup flow:
 
 ```text
-read target project -> draft trigger source -> draft Project Map -> user confirms -> write files -> fresh-session validation
+read target project -> draft trigger source -> draft provisional Project Map -> preview -> user applies with --write -> fresh-session validation
 ```
 
-That future surface should automate the setup, not change the core product rule: reliable Navi behavior comes from combining the global skill with a project-local trigger source and project-local map.
+The command should automate the setup, not change the core product rule: reliable Navi behavior comes from combining the global skill with a project-local trigger source and project-local map.
 
 ## Fresh-session validation
 
