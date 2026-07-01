@@ -24,10 +24,23 @@ export interface InitAction {
   previousContent?: string;
 }
 
-type WritableInitAction = InitAction & {
-  kind: "create" | "modify";
+type CreateInitAction = InitAction & {
+  kind: "create";
   content: string;
 };
+
+type ModifyInitAction = InitAction & {
+  kind: "modify";
+  content: string;
+  previousContent: string;
+};
+
+type WritableInitAction = CreateInitAction | ModifyInitAction;
+
+interface PreflightedWrite {
+  action: WritableInitAction;
+  writePath: string;
+}
 
 export interface InitPlan {
   mode: "dry-run" | "write";
@@ -131,23 +144,17 @@ export async function applyInitPlan(plan: InitPlan): Promise<void> {
   }
 
   const targetDir = path.resolve(plan.targetDir);
+  const writes = await preflightInitPlan(plan);
 
-  for (const action of plan.actions) {
-    if (isWritableAction(action)) {
-      const writePath = resolveActionWritePath(targetDir, action);
+  for (const { action, writePath } of writes) {
+    await assertPhysicalWritePath(targetDir, writePath);
+
+    if (action.kind === "create") {
+      await fs.mkdir(path.dirname(writePath), { recursive: true });
       await assertPhysicalWritePath(targetDir, writePath);
-
-      if (action.kind === "create") {
-        if (action.relativePath === PROJECT_MAP_RELATIVE_PATH) {
-          await assertNoProjectMapsAppeared(targetDir);
-        }
-
-        await fs.mkdir(path.dirname(writePath), { recursive: true });
-        await assertPhysicalWritePath(targetDir, writePath);
-        await writeNewFile(writePath, action);
-      } else {
-        await writeModifiedFile(writePath, action);
-      }
+      await writeNewFile(writePath, action);
+    } else {
+      await writeModifiedFile(writePath, action);
     }
   }
 }
@@ -292,6 +299,51 @@ function resolveActionWritePath(targetDir: string, action: InitAction): string {
   return writePath;
 }
 
+async function preflightInitPlan(plan: InitPlan): Promise<PreflightedWrite[]> {
+  const targetDir = path.resolve(plan.targetDir);
+  const writes: PreflightedWrite[] = [];
+
+  for (const action of plan.actions) {
+    const writableAction = validateWritableActionShape(action);
+    if (writableAction === undefined) {
+      continue;
+    }
+
+    const writePath = resolveActionWritePath(targetDir, writableAction);
+    await assertPhysicalWritePath(targetDir, writePath);
+
+    if (writableAction.kind === "create") {
+      await assertCreateTargetIsFresh(writePath, writableAction);
+
+      if (writableAction.relativePath === PROJECT_MAP_RELATIVE_PATH) {
+        await assertNoProjectMapsAppeared(targetDir);
+      }
+    } else {
+      await assertModifyTargetIsFresh(writePath, writableAction);
+    }
+
+    writes.push({ action: writableAction, writePath });
+  }
+
+  return writes;
+}
+
+function validateWritableActionShape(action: InitAction): WritableInitAction | undefined {
+  if (action.kind === "skip") {
+    return undefined;
+  }
+
+  if (action.content === undefined) {
+    throw new Error(`Refusing to ${action.kind} ${action.relativePath}: missing content`);
+  }
+
+  if (action.kind === "modify" && action.previousContent === undefined) {
+    throw new Error(`Refusing to modify ${action.relativePath}: missing previous content guard`);
+  }
+
+  return action as WritableInitAction;
+}
+
 async function assertPhysicalWritePath(targetDir: string, writePath: string): Promise<void> {
   const resolvedTarget = path.resolve(targetDir);
   const realTarget = await fs.realpath(resolvedTarget);
@@ -318,6 +370,12 @@ async function assertPhysicalWritePath(targetDir: string, writePath: string): Pr
   }
 }
 
+async function assertCreateTargetIsFresh(writePath: string, action: CreateInitAction): Promise<void> {
+  if ((await lstatIfExists(writePath)) !== undefined) {
+    throw new Error(`Refusing to create ${action.relativePath}: file already exists since planning`);
+  }
+}
+
 async function assertNoProjectMapsAppeared(targetDir: string): Promise<void> {
   const existingMaps = await listExistingProjectMaps(targetDir);
   if (existingMaps.length > 0) {
@@ -325,11 +383,18 @@ async function assertNoProjectMapsAppeared(targetDir: string): Promise<void> {
   }
 }
 
-function isWritableAction(action: InitAction): action is WritableInitAction {
-  return (action.kind === "create" || action.kind === "modify") && action.content !== undefined;
+async function assertModifyTargetIsFresh(writePath: string, action: ModifyInitAction): Promise<void> {
+  const current = await readTextIfExists(writePath);
+  if (current === undefined) {
+    throw new Error(`Refusing to modify ${action.relativePath}: file is missing since planning`);
+  }
+
+  if (current !== action.previousContent) {
+    throw new Error(`Refusing to modify ${action.relativePath}: file changed since planning`);
+  }
 }
 
-async function writeNewFile(writePath: string, action: WritableInitAction): Promise<void> {
+async function writeNewFile(writePath: string, action: CreateInitAction): Promise<void> {
   try {
     await fs.writeFile(writePath, action.content, { flag: "wx" });
   } catch (error) {
@@ -342,20 +407,8 @@ async function writeNewFile(writePath: string, action: WritableInitAction): Prom
   }
 }
 
-async function writeModifiedFile(writePath: string, action: WritableInitAction): Promise<void> {
-  if (action.previousContent === undefined) {
-    throw new Error(`Refusing to modify ${action.relativePath}: missing previous content guard`);
-  }
-
-  const current = await readTextIfExists(writePath);
-  if (current === undefined) {
-    throw new Error(`Refusing to modify ${action.relativePath}: file is missing since planning`);
-  }
-
-  if (current !== action.previousContent) {
-    throw new Error(`Refusing to modify ${action.relativePath}: file changed since planning`);
-  }
-
+async function writeModifiedFile(writePath: string, action: ModifyInitAction): Promise<void> {
+  await assertModifyTargetIsFresh(writePath, action);
   await fs.writeFile(writePath, action.content);
 }
 

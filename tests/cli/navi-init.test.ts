@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   NAVI_AGENTS_BLOCK_START,
   applyInitPlan,
@@ -12,8 +12,11 @@ import {
   runNaviInitCli,
 } from "../../src/cli/navi-init";
 
+const tempRoots = new Set<string>();
+
 async function makeProject(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-init-"));
+  tempRoots.add(root);
   const project = path.join(root, "target-project");
   await fs.mkdir(project);
   return project;
@@ -27,6 +30,11 @@ async function exists(filePath: string): Promise<boolean> {
     return false;
   }
 }
+
+afterEach(async () => {
+  await Promise.all([...tempRoots].map((root) => fs.rm(root, { recursive: true, force: true })));
+  tempRoots.clear();
+});
 
 describe("navi init planning", () => {
   it("defaults to dry-run and does not write target files", async () => {
@@ -263,6 +271,112 @@ describe("navi init planning", () => {
     expect(await exists(plannedMapPath)).toBe(false);
   });
 
+  it("does not create AGENTS.md when a later project map create fails preflight", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+    const agentsPath = path.join(project, "AGENTS.md");
+    const mapDir = path.join(project, "docs/along/project-maps");
+    const alternateMapPath = path.join(mapDir, "another-map.md");
+    const plannedMapPath = path.join(mapDir, "navi-project-map.md");
+
+    await fs.mkdir(mapDir, { recursive: true });
+    await fs.writeFile(alternateMapPath, "# Another Map\n");
+
+    await expect(applyInitPlan(plan)).rejects.toThrow(/project map/i);
+    expect(await exists(agentsPath)).toBe(false);
+    expect(await exists(plannedMapPath)).toBe(false);
+    await expect(fs.readFile(alternateMapPath, "utf8")).resolves.toBe("# Another Map\n");
+  });
+
+  it("does not modify AGENTS.md when a later project map create fails preflight", async () => {
+    const project = await makeProject();
+    const agentsPath = path.join(project, "AGENTS.md");
+    const originalAgents = "# Project Instructions\n\nKeep this existing rule.\n";
+    await fs.writeFile(agentsPath, originalAgents);
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+    const mapDir = path.join(project, "docs/along/project-maps");
+    const alternateMapPath = path.join(mapDir, "another-map.md");
+    const plannedMapPath = path.join(mapDir, "navi-project-map.md");
+
+    await fs.mkdir(mapDir, { recursive: true });
+    await fs.writeFile(alternateMapPath, "# Another Map\n");
+
+    await expect(applyInitPlan(plan)).rejects.toThrow(/project map/i);
+    await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe(originalAgents);
+    expect(await exists(plannedMapPath)).toBe(false);
+  });
+
+  it("rejects create or modify actions that are missing content", async () => {
+    const project = await makeProject();
+    const agentsPath = path.join(project, "AGENTS.md");
+
+    await expect(
+      applyInitPlan({
+        mode: "write",
+        targetDir: project,
+        validationPrompt: "",
+        actions: [
+          {
+            kind: "create",
+            relativePath: "AGENTS.md",
+            absolutePath: agentsPath,
+            summary: "Malformed create.",
+          },
+        ],
+      }),
+    ).rejects.toThrow(/content/i);
+
+    await expect(
+      applyInitPlan({
+        mode: "write",
+        targetDir: project,
+        validationPrompt: "",
+        actions: [
+          {
+            kind: "modify",
+            relativePath: "AGENTS.md",
+            absolutePath: agentsPath,
+            summary: "Malformed modify.",
+          },
+        ],
+      }),
+    ).rejects.toThrow(/content/i);
+  });
+
+  it("preflights missing modify guards before writing earlier actions", async () => {
+    const project = await makeProject();
+    const existingPath = path.join(project, "existing.md");
+    const agentsPath = path.join(project, "AGENTS.md");
+    await fs.writeFile(existingPath, "# Existing\n");
+
+    await expect(
+      applyInitPlan({
+        mode: "write",
+        targetDir: project,
+        validationPrompt: "",
+        actions: [
+          {
+            kind: "create",
+            relativePath: "AGENTS.md",
+            absolutePath: agentsPath,
+            summary: "Create AGENTS first.",
+            content: "# New Agents\n",
+          },
+          {
+            kind: "modify",
+            relativePath: "existing.md",
+            absolutePath: existingPath,
+            summary: "Malformed modify.",
+            content: "# Changed\n",
+          },
+        ],
+      }),
+    ).rejects.toThrow(/previous content/i);
+
+    expect(await exists(agentsPath)).toBe(false);
+    await expect(fs.readFile(existingPath, "utf8")).resolves.toBe("# Existing\n");
+  });
+
   it("renders write mode as no-op when every action is skipped", async () => {
     const project = await makeProject();
     await fs.writeFile(
@@ -290,6 +404,7 @@ describe("navi init CLI helpers", () => {
 
   it("resolves relative target paths against the injected CLI cwd", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-init-cwd-"));
+    tempRoots.add(root);
     const project = path.join(root, "target-project");
     await fs.mkdir(project);
     const stdout: string[] = [];
