@@ -145,7 +145,7 @@ This plugin source package still requires explicit local Codex plugin or skill s
 npm run navi -- init --target /path/to/target-project
 ```
 
-`navi init` prepares project-local Navi files in the target project. It does not install or sync the global Codex plugin or skill.
+`navi init` previews project-local Navi files for the target project; add `--write` to apply the preview. It does not install or sync the global Codex plugin or skill.
 
 This package is ready for GitHub source alpha testing. Public Codex marketplace release remains deferred.
 
