@@ -26,7 +26,7 @@ It is most useful for non-expert supervision, long-running work, flowing project
 
 ## Minimum install output
 
-After user confirmation, the minimum install should create or update:
+When applied with `--write`, the minimum project-local setup creates or updates:
 
 1. `AGENTS.md`
    Add a short project-local Navi trigger source. Start from `docs/along/project-maps/navi-project-trigger-template.md`.
@@ -46,7 +46,7 @@ After user confirmation, the minimum install should create or update:
 2. Classify the project shape: linear, flowing, mixed, or unclear.
 3. Draft the project-local trigger source.
 4. Draft the Project Map or Rhythm Map.
-5. Ask for user confirmation before writing durable project files.
+5. Show the preview and have the user choose whether to apply it with `--write`.
 6. Write only the smallest project-local files needed for reliable Navi behavior.
 7. Run a fresh-session validation with an ordinary prompt, such as `接下来我们应该做什么？`.
 
@@ -56,13 +56,13 @@ If the project shape is unclear, write only a provisional trigger source and ask
 
 Do not use `navi init` as a global Codex plugin or skill installer. Do not implement Core/MCP, background runtime, npm publication, marketplace publication, or one-click sync as part of this project-local setup surface.
 
-Do not silently edit a target project's `AGENTS.md` or project-map records. User confirmation is required before durable writes.
+Do not silently edit a target project's `AGENTS.md` or project-map records. `navi init` previews by default; durable writes require the explicit `--write` flag.
 
 Do not hardcode Navi's own project stages into the target project. The installed map must describe the user's target project.
 
 Do not force Navi into ordinary clear execution requests. If the user gives a clear command with the next action, boundary, and acceptance point already established, keep Navi quiet.
 
-Read-only checks of TODO files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks. They should answer directly and should not produce a Progress Map or Rhythm Map unless the user also asks what those facts mean for overall progress, next steps, confusion, or plan reliability.
+Read-only checks of task files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks. They should answer directly and should not produce a Progress Map or Rhythm Map unless the user also asks what those facts mean for overall progress, next steps, confusion, or plan reliability.
 
 ## Product Surface
 

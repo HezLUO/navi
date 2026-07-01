@@ -126,7 +126,10 @@ describe("navi init planning", () => {
     const plan = await buildInitPlan({ targetDir: project, write: true });
     await applyInitPlan(plan);
 
-    expect(plan.actions.find((action) => action.relativePath === "docs/along/project-maps/navi-project-map.md")?.kind).toBe("skip");
+    const mapAction = plan.actions.find((action) => action.relativePath === "docs/along/project-maps/navi-project-map.md");
+    expect(mapAction?.kind).toBe("skip");
+    expect(mapAction?.summary).toContain("Existing Markdown records found under docs/along/project-maps");
+    expect(mapAction?.summary).toContain("will not create another starter map automatically");
     await expect(fs.readFile(mapPath, "utf8")).resolves.toBe("# Existing Map\n\nKeep this confirmed map.\n");
   });
 

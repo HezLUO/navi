@@ -31,14 +31,14 @@ Apply the setup only after reviewing the preview:
 npm run navi -- init --target /path/to/target-project --write
 ```
 
-Project-local setup is explicit and dry-run by default. `navi init` prepares `AGENTS.md`, `docs/along/project-maps/`, and a fresh-session validation prompt inside the target project. It does not install the global Codex plugin or skill.
+Project-local setup is explicit and dry-run by default. `navi init` prepares `AGENTS.md`, `docs/along/project-maps/navi-project-map.md`, and a fresh-session validation prompt inside the target project. It does not install the global Codex plugin or skill.
 
 For more setup detail, follow:
 
 - `docs/along/project-maps/navi-project-init.md`
 - `docs/along/project-maps/navi-project-trigger-template.md`
 
-The minimum reliable setup is: global skill/plugin availability, a short project-local trigger source in `AGENTS.md`, and a confirmed Project Map or Rhythm Map for that target project. After that setup, ordinary questions like `接下来我们应该做什么？`, `现在做到哪了？我看不懂。`, or unclear `继续吧。` should produce a Navi map before ordinary task advice.
+The minimum reliable setup is: global skill/plugin availability, a short project-local trigger source in `AGENTS.md`, and a confirmed Project Map or Rhythm Map for that target project. After that setup, ordinary questions like `What should we do next?`, `Where are we now? I do not understand.`, or an unclear `Continue.` should produce a Navi map before ordinary task advice. Chinese prompts such as `接下来我们应该做什么？` are supported too.
 
 ## Who This Alpha Is For
 
@@ -65,7 +65,7 @@ What is not included:
 - Public Codex marketplace release.
 - Global Codex plugin installation or one-click sync.
 - Background autonomy, notifications, or always-on presence.
-- A future UI/runtime surface.
+- Runtime UI or future local app surface.
 - Hermes, Claude Code, or other agent adapters.
 - Memory v2, relationship modes, delegation, or write delegation.
 
@@ -96,10 +96,10 @@ Navi V1 is docs-backed and turn-bound. It works while an active agent session is
 Navi Progress Maps are for questions like:
 
 ```text
-接下来我们应该做什么？
-现在做到哪了？我看不懂。
-继续吧。
-这个方案可以吗？我不懂技术。
+What should we do next?
+Where are we now? I do not understand.
+Continue.
+Is this plan okay? I am not technical.
 ```
 
 For a bounded project, Navi should use a compact project map:

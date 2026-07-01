@@ -276,7 +276,7 @@ async function planProjectMapAction(targetDir: string, mapPath: string): Promise
       kind: "skip",
       relativePath: PROJECT_MAP_RELATIVE_PATH,
       absolutePath: mapPath,
-      summary: `Existing project map record found: ${existingMaps.join(", ")}. Navi will not overwrite it.`,
+      summary: `Existing Markdown records found under docs/along/project-maps: ${existingMaps.join(", ")}. Navi will not create another starter map automatically.`,
     };
   }
 
