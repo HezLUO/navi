@@ -1,6 +1,6 @@
 # Navi Product Debt Register
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
@@ -179,6 +179,52 @@ Recommended fix:
 - Commit only when the project owner wants Navi behavior in that project.
 - Do not treat validation leftovers as part of Along itself.
 
+### 8. Continuation Friction And Pause Reason Debt
+
+Status: open
+Priority: medium-high for supervision calibration
+
+Problem:
+
+Users may need to repeatedly type `continue` or `继续` to make Codex keep executing. From the user's perspective, it is often unclear why Codex stopped, whether the stop was necessary, and whether continuing is safe or just restarting another validation loop.
+
+Observed scenario:
+
+The user may reasonably feel that many pauses do not need approval. If the only useful response is `continue`, the pause is probably not serving the user. The right stop point should be a real decision point: permission to write, commit, push, release, change phase, spend meaningful verification budget, touch another project, or choose between materially different directions.
+
+Calibration seed:
+
+After the continuation-friction issue was already written into the docs and a lightweight `git diff --check` had passed, the user still had to type `continue` to make the session keep moving. This is an example of avoidable pause friction: no new user judgment was needed to continue the same design-recording task, and the next useful action was simply to record the example as calibration evidence.
+
+The same friction immediately repeated: after the first calibration seed was recorded and checked, the user again had to type `continue` and explicitly pointed out that the session should keep moving until the next real decision point. This strengthens the product signal: Navi should not stop merely because a local recording/checking step completed; it should stop when the user must decide whether to commit, push, change scope, spend more budget, or cross a mode boundary.
+
+Why it matters:
+
+Repeated manual continuation creates friction and shifts supervisory burden back onto the user. A non-expert user may not know whether Codex paused because it needs approval, reached a safe stop point, hit a tool/runtime boundary, exceeded the current verification budget, or simply lost execution momentum.
+
+Product judgment:
+
+This is not primarily a user behavior problem. Repeated `continue` is a user adaptation to opaque stopping behavior. Navi should not teach users to micromanage every step; it should help Codex continue inside an already-approved boundary and stop only when there is a reason the user can actually judge.
+
+This should be a Navi supervision capability, but not as "never stop" automation. Navi should help the user understand and control pauses:
+
+- explain why Codex is stopping now;
+- classify whether the pause is necessary, optional, or avoidable;
+- state what would happen if the user says `continue`;
+- identify whether continuing would cross a mode boundary such as design to implementation, implementation to release, or read-only to write;
+- offer a bounded continuation contract when safe, such as "continue through these three steps, then stop at this acceptance point";
+- recommend stopping when another `continue` would only restart low-value validation or execution loops.
+
+Recommended fix:
+
+- Add "pause reason visibility" to future Navi supervision calibration.
+- Collect real examples where the user had to repeatedly type `continue`.
+- For each example, record whether there was a real decision, permission, risk, mode boundary, or verification-budget boundary.
+- Treat "the user can only reply continue" as evidence of avoidable pause friction unless a platform, permission, or safety boundary explains the stop.
+- Distinguish necessary pauses from avoidable friction.
+- Consider adding a concise pause explanation to Navi output when Codex stops at a decision gate.
+- Consider adding bounded continuation contracts to `navi init` guidance only after calibration shows the wording reduces friction without weakening user control.
+
 ## Suggested Order
 
 1. Make public naming Navi-first while preserving legacy ids.
@@ -188,3 +234,4 @@ Recommended fix:
 5. Keep Web UI future-surface work out of alpha release prep unless explicitly approved.
 6. Add a fresh-session validation log.
 7. Clean up or commit target-project Navi initialization files case by case.
+8. Calibrate continuation friction and pause reason visibility before adding stronger continuous-execution behavior.

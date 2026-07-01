@@ -1,7 +1,7 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: draft backlog after the `0.1.0-alpha` GitHub source release
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
@@ -33,11 +33,14 @@ Goal: learn whether Navi stays useful, self-initiating, companion-like, and non-
 - P0: Record when Progress Maps help the user regain control and when they feel too heavy, too frequent, or unnecessary.
 - P0: Record when Challenge Moments correctly prevent self-certification, drift, or premature execution.
 - P0: Record false positives: moments where Navi challenged too much, interrupted clear execution, or overread a low-risk situation.
+- P0: Record continuation friction: moments where the user repeatedly has to type `continue` or `继续`, why Codex stopped, whether the pause was necessary, whether there was a real decision point, and whether Navi should explain or reduce that pause.
 - P0: Validate the alpha clone/install/verify path from a clean local checkout.
 - P0: Keep the external-reader GitHub homepage and Release-page check postponed but not deleted.
 - P1: Expand calibration beyond the current limited cross-project sample into more target-project shapes, including coding, applications, research, operations, and document-heavy work.
 - P1: Add a small evidence log for real-use calibration: prompt, project shape, expected behavior, actual behavior, and user judgment.
 - P1: Keep quietness regression samples active, especially TODO/status/tracker/today's-items checks that should remain ordinary factual requests.
+- P1: Explore bounded continuation contracts: when safe, Navi may tell the user what will happen if they continue through several steps and where Codex should stop again.
+- P1: Explore decision-point stopping guidance: Codex should keep moving inside an approved boundary and pause when user judgment is actually needed.
 
 ## Distribution Improvements
 
@@ -63,6 +66,8 @@ Goal: keep larger product layers visible without letting them slip into the alph
 - Web UI / local app surface: treat the existing Shared Desk web code as historical Along product-expression work and a possible future Navi capability layer, not as part of the current alpha. A future branch should first define whether the interface is a Navi map review surface, an Along companion surface, or a separate local app.
 - Local companion runtime: evaluate whether Navi should ever gain watcher, scheduler, notification, or always-on presence behavior.
 - Agent adapters: investigate whether Hermes, Claude Code, or other agents can call the same Working Thread and Navi coordination behavior.
+- Pause reason visibility: evaluate whether Navi should explain why Codex stopped, whether the stop was necessary, and whether the next `continue` would cross a supervision boundary.
+- Decision-point stopping: evaluate whether Navi can reduce meaningless `continue` prompts by distinguishing permission/risk/phase boundaries from ordinary execution momentum.
 - Memory v2 and relationship modes: explore long-term personalization only after the V1 process boundary remains reliable.
 - Delegation and write delegation: investigate agent-to-agent coordination only after confirmed write-back and user supervision rules are stronger.
 - Marketplace or npm packaging: treat these as separate distribution projects, not as automatic follow-ups to the alpha release.
