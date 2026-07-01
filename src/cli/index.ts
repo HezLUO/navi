@@ -2,11 +2,13 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import open from "open";
-import { runNaviInitCli } from "./navi-init";
 
 const command = process.argv[2] ?? "start";
 
 if (command === "init") {
+  const { runNaviInitCli } = await import(
+    new URL("./navi-init.ts", import.meta.url).href
+  ) as typeof import("./navi-init");
   const exitCode = await runNaviInitCli(process.argv.slice(3));
   process.exit(exitCode);
 }
