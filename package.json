@@ -14,11 +14,13 @@
   },
   "homepage": "https://github.com/HezLUO/navi#readme",
   "bin": {
+    "navi": "src/cli/index.ts",
     "along": "src/cli/index.ts"
   },
   "scripts": {
     "dev": "tsx src/server/index.ts",
     "mcp:working-thread": "tsx src/mcp/working-thread-server.ts",
+    "navi": "tsx src/cli/index.ts",
     "web": "vite --host 127.0.0.1",
     "test": "vitest run",
     "test:watch": "vitest",

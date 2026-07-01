@@ -1,12 +1,14 @@
 import packageJson from "../../package.json";
 
 describe("Working Thread MCP package wiring", () => {
-  it("exposes a repo-level stdio launch script without adding a new package bin", () => {
+  it("exposes the Navi project installer bin while preserving Along compatibility", () => {
     expect(packageJson.scripts["mcp:working-thread"]).toBe(
       "tsx src/mcp/working-thread-server.ts",
     );
+    expect(packageJson.scripts.navi).toBe("tsx src/cli/index.ts");
 
     expect(packageJson.bin).toEqual({
+      navi: "src/cli/index.ts",
       along: "src/cli/index.ts",
     });
   });

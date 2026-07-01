@@ -2,11 +2,17 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import open from "open";
+import { runNaviInitCli } from "./navi-init";
 
 const command = process.argv[2] ?? "start";
 
+if (command === "init") {
+  const exitCode = await runNaviInitCli(process.argv.slice(3));
+  process.exit(exitCode);
+}
+
 if (command !== "start") {
-  console.error(`Unknown command "${command}". Use: along start`);
+  console.error(`Unknown command "${command}". Use: navi init [--target <path>] [--write] or along start`);
   process.exit(1);
 }
 
