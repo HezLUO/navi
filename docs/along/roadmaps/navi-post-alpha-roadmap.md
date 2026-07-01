@@ -1,7 +1,7 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: draft backlog after the `0.1.0-alpha` GitHub source release
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
@@ -48,12 +48,30 @@ Goal: keep larger product layers visible without letting them slip into the alph
 
 - MCP client validation: test the existing docs-backed stdio Minimal Server V1 from a real MCP client session, especially resource reads, action tools, and confirmed section-patch write-back.
 - Navi project initialization workflow: extend the shipped narrow `navi init` surface only after real-use feedback confirms the dry-run and write model.
-- UI/runtime surface: explore how Project Maps, Rhythm Maps, and Challenge Moments could render as a richer interface rather than chat-only text.
+- Web UI / local app surface: treat the existing Shared Desk web code as historical Along product-expression work and a possible future Navi capability layer, not as part of the current alpha. A future branch should first define whether the interface is a Navi map review surface, an Along companion surface, or a separate local app.
 - Local companion runtime: evaluate whether Navi should ever gain watcher, scheduler, notification, or always-on presence behavior.
 - Agent adapters: investigate whether Hermes, Claude Code, or other agents can call the same Working Thread and Navi coordination behavior.
 - Memory v2 and relationship modes: explore long-term personalization only after the V1 process boundary remains reliable.
 - Delegation and write delegation: investigate agent-to-agent coordination only after confirmed write-back and user supervision rules are stronger.
 - Marketplace or npm packaging: treat these as separate distribution projects, not as automatic follow-ups to the alpha release.
+
+### Web UI Exploration Gate
+
+Do not rebrand or ship the existing `src/web` surface as Navi until a focused exploration answers:
+
+- What user problem the UI solves better than chat-only Navi maps.
+- Whether the first screen should show a map review surface, a project supervision console, or an Along-style companion desk.
+- What current alpha boundary must remain visible: no background watcher, no always-on presence, no implicit write authority, and no claim that runtime UI is included in `0.1.0-alpha`.
+- Whether the implementation belongs in this Navi repo, the broader Along repo, or a separate prototype branch.
+- What validation evidence is required before the UI appears in the README, release notes, or marketplace/narrative copy.
+
+Recommended branch shape when approved:
+
+```text
+explore/navi-web-ui-surface
+```
+
+That branch should start as a design/prototype branch, not a release-prep branch.
 
 ## Explicitly Out Of Current Scope
 
@@ -63,7 +81,7 @@ The current alpha does not include and should not imply:
 - Public Codex marketplace publication.
 - Global plugin installation, one-click sync, npm distribution, or marketplace installation.
 - Background runtime, watcher, scheduler, notifications, or always-on presence.
-- Future UI/runtime surface.
+- Runtime UI, local app surface, or Web UI rebrand.
 - Hermes, Claude Code, or other agent adapters.
 - Memory v2, relationship modes, delegation, or write delegation.
 - Automatic final decision-making across every professional domain.

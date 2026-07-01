@@ -1,6 +1,6 @@
 # Navi Product Debt Register
 
-Last updated: 2026-06-29
+Last updated: 2026-07-01
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
@@ -120,7 +120,28 @@ Recommended fix:
 - Label MCP/runtime surfaces as experimental, historical, or future-facing if they are not the current recommended path.
 - Avoid implying background autonomy or always-on supervision.
 
-### 5. Validation Debt
+### 5. Web UI Future-Surface Debt
+
+Status: open
+Priority: medium, separate from alpha release prep
+
+Problem:
+
+The repository contains `src/web` Shared Desk code from earlier Along product-expression work. It may be useful evidence for a future Navi or Along local interface, but it is not the current Navi alpha surface.
+
+Why it matters:
+
+If the web UI is casually rebranded as Navi, external readers may think `0.1.0-alpha` includes a runtime UI or local app. That would conflict with the current alpha boundary and weaken the install story, which is currently skill/plugin behavior plus project-local docs.
+
+Recommended fix:
+
+- Keep the root README clear that runtime UI and local app surfaces are later layers.
+- Do not include Web UI screenshots, launch instructions, or rebrand language in alpha release notes unless a focused UI exploration is approved.
+- If the UI direction is reopened, start a dedicated design/prototype branch such as `explore/navi-web-ui-surface`.
+- Define the product question first: Navi map review surface, project supervision console, Along companion desk, or separate local app.
+- Require visual and behavioral validation before treating the UI as a shipped Navi capability.
+
+### 6. Validation Debt
 
 Status: open
 Priority: medium
@@ -139,7 +160,7 @@ Recommended fix:
 - Add a durable validation log for fresh-session calibration results.
 - Track target project, prompt, expected behavior, result, failure reason, and fix decision.
 
-### 6. Target Project Cleanup Debt
+### 7. Target Project Cleanup Debt
 
 Status: open
 Priority: low-medium
@@ -164,5 +185,6 @@ Recommended fix:
 2. Update the root README product narrative.
 3. Clarify the current architecture boundary.
 4. Improve the project initialization guide.
-5. Add a fresh-session validation log.
-6. Clean up or commit target-project Navi initialization files case by case.
+5. Keep Web UI future-surface work out of alpha release prep unless explicitly approved.
+6. Add a fresh-session validation log.
+7. Clean up or commit target-project Navi initialization files case by case.
