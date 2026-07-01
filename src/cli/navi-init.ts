@@ -21,7 +21,13 @@ export interface InitAction {
   absolutePath: string;
   summary: string;
   content?: string;
+  previousContent?: string;
 }
+
+type WritableInitAction = InitAction & {
+  kind: "create" | "modify";
+  content: string;
+};
 
 export interface InitPlan {
   mode: "dry-run" | "write";
@@ -39,6 +45,13 @@ export interface NaviInitIo {
   cwd: string;
   stdout: (text: string) => void;
   stderr: (text: string) => void;
+}
+
+class InitArgsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InitArgsError";
+  }
 }
 
 export function resolveTargetPath(targetDir: string, relativePath: string): string {
@@ -59,7 +72,7 @@ export function resolveTargetPath(targetDir: string, relativePath: string): stri
 
 export function parseInitArgs(args: string[], cwd = process.cwd()): Required<InitOptions> {
   const parsed: Required<InitOptions> = {
-    targetDir: cwd,
+    targetDir: path.resolve(cwd),
     write: false,
   };
 
@@ -69,9 +82,9 @@ export function parseInitArgs(args: string[], cwd = process.cwd()): Required<Ini
     if (arg === "--target") {
       const target = args[index + 1];
       if (!target || target.startsWith("--")) {
-        throw new Error("Missing value for --target");
+        throw new InitArgsError("Missing value for --target");
       }
-      parsed.targetDir = target;
+      parsed.targetDir = path.resolve(cwd, target);
       index += 1;
       continue;
     }
@@ -81,7 +94,7 @@ export function parseInitArgs(args: string[], cwd = process.cwd()): Required<Ini
       continue;
     }
 
-    throw new Error(`Unknown option: ${arg}`);
+    throw new InitArgsError(`Unknown option: ${arg}`);
   }
 
   return parsed;
@@ -113,9 +126,15 @@ export async function applyInitPlan(plan: InitPlan): Promise<void> {
   }
 
   for (const action of plan.actions) {
-    if ((action.kind === "create" || action.kind === "modify") && action.content !== undefined) {
-      await fs.mkdir(path.dirname(action.absolutePath), { recursive: true });
-      await fs.writeFile(action.absolutePath, action.content);
+    if (isWritableAction(action)) {
+      const writePath = resolveActionWritePath(plan.targetDir, action);
+
+      if (action.kind === "create") {
+        await fs.mkdir(path.dirname(writePath), { recursive: true });
+        await writeNewFile(writePath, action);
+      } else {
+        await writeModifiedFile(writePath, action);
+      }
     }
   }
 }
@@ -134,9 +153,12 @@ export function renderInitPlan(plan: InitPlan): string {
   }
 
   lines.push("");
+  const writableActions = plan.actions.filter((action) => action.kind === "create" || action.kind === "modify");
   if (isDryRun) {
     lines.push("No files were changed.");
     lines.push(`Apply with: navi init --target ${JSON.stringify(plan.targetDir)} --write`);
+  } else if (writableActions.length === 0) {
+    lines.push("No files needed changes.");
   } else {
     lines.push("Files were changed according to the plan above.");
   }
@@ -159,15 +181,22 @@ export async function runNaviInitCli(
     stderr: (text) => process.stderr.write(text),
   },
 ): Promise<number> {
+  let options: Required<InitOptions>;
   try {
-    const options = parseInitArgs(args, io.cwd);
+    options = parseInitArgs(args, io.cwd);
+  } catch (error) {
+    io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
+    io.stderr("Usage: navi init [--target <path>] [--write]\n");
+    return 1;
+  }
+
+  try {
     const plan = await buildInitPlan(options);
     await applyInitPlan(plan);
     io.stdout(renderInitPlan(plan));
     return 0;
   } catch (error) {
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
-    io.stderr("Usage: navi init [--target <path>] [--write]\n");
     return 1;
   }
 }
@@ -215,6 +244,7 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
     absolutePath: agentsPath,
     summary: "Append the project-local Navi trigger source while preserving existing instructions.",
     content: `${existing}${separator}${block}\n`,
+    previousContent: existing,
   };
 }
 
@@ -237,6 +267,50 @@ async function planProjectMapAction(targetDir: string, mapPath: string): Promise
     summary: "Create a provisional Navi Project Map starter record.",
     content: renderProjectMap(targetDir),
   };
+}
+
+function resolveActionWritePath(targetDir: string, action: InitAction): string {
+  const writePath = resolveTargetPath(targetDir, action.relativePath);
+
+  if (path.resolve(action.absolutePath) !== writePath) {
+    throw new Error(`Planned absolute path does not match target-relative path: ${action.relativePath}`);
+  }
+
+  return writePath;
+}
+
+function isWritableAction(action: InitAction): action is WritableInitAction {
+  return (action.kind === "create" || action.kind === "modify") && action.content !== undefined;
+}
+
+async function writeNewFile(writePath: string, action: WritableInitAction): Promise<void> {
+  try {
+    await fs.writeFile(writePath, action.content, { flag: "wx" });
+  } catch (error) {
+    if (isNodeError(error) && error.code === "EEXIST") {
+      throw new Error(`Refusing to create ${action.relativePath}: file already exists since planning`, {
+        cause: error,
+      });
+    }
+    throw error;
+  }
+}
+
+async function writeModifiedFile(writePath: string, action: WritableInitAction): Promise<void> {
+  if (action.previousContent === undefined) {
+    throw new Error(`Refusing to modify ${action.relativePath}: missing previous content guard`);
+  }
+
+  const current = await readTextIfExists(writePath);
+  if (current === undefined) {
+    throw new Error(`Refusing to modify ${action.relativePath}: file is missing since planning`);
+  }
+
+  if (current !== action.previousContent) {
+    throw new Error(`Refusing to modify ${action.relativePath}: file changed since planning`);
+  }
+
+  await fs.writeFile(writePath, action.content);
 }
 
 function renderAgentsBlock(): string {
