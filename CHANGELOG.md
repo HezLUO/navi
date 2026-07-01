@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.1.0-alpha.2 - 2026-07-01
+
+Navi `0.1.0-alpha.2` is a GitHub source-alpha checkpoint after the standalone Navi repository split and project-local initializer validation.
+
+### Added
+
+- Added the narrow `navi init` project-local initializer with dry-run preview by default and explicit `--write` application.
+- Added target-project setup docs for `AGENTS.md`, `docs/along/project-maps/navi-project-map.md`, and fresh-session validation.
+- Added homepage polish with English/Chinese README entry points and a Progress Map preview asset.
+- Added Web UI future-surface guidance that keeps existing `src/web` Shared Desk code out of the current alpha surface.
+
+### Changed
+
+- Clarified that `navi init` does not install the global Codex plugin or skill.
+- Clarified existing project-map-directory preview wording so Navi does not imply every Markdown record is a confirmed project map.
+- Tightened release, README, roadmap, and product-debt language around alpha boundaries, source verification, and the Navi/Along relationship.
+- Synced package metadata so the lockfile includes the shipped `navi` bin entry.
+
+### Validated
+
+- `npm run verify:plugin-package` passed.
+- `npm test -- tests/cli/navi-init.test.ts` passed.
+- `npm run typecheck` passed.
+- Full `npm test` passed outside the sandbox after sandbox-local TCP listener restrictions blocked server tests.
+- Clean target dry-run/write validation confirmed `navi init` previews without writing, then writes only `AGENTS.md` and `docs/along/project-maps/navi-project-map.md` with `--write`.
+
+### Not Included
+
+- No npm package publication.
+- No public Codex marketplace publication.
+- No global plugin installation, one-click sync, or npm distribution.
+- No runtime UI, local app surface, Web UI rebrand, background watcher, notifications, or always-on presence.
+- No Hermes, Claude Code, or other agent adapters.
+- No Memory v2, relationship modes, delegation, or write delegation.
+
 ## 0.1.0-alpha.1 - 2026-06-30
 
 Navi `0.1.0-alpha.1` clarifies the product hierarchy after the first alpha release.

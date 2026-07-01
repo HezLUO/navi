@@ -56,7 +56,7 @@ Wait for a later release if you need npm distribution, public marketplace instal
 
 ## Alpha Status
 
-`0.1.0-alpha.1` is ready as the latest GitHub source release for developers and early testers.
+`0.1.0-alpha.2` is ready as the latest GitHub source release for developers and early testers.
 
 What is stable in this alpha:
 
@@ -195,7 +195,7 @@ The repository still contains older Along companion ideas, including local memor
 
 ## Release Notes
 
-See `CHANGELOG.md` for the latest alpha release notes.
+See `CHANGELOG.md` and `docs/releases/v0.1.0-alpha.2.md` for the latest alpha release notes.
 
 ## License
 
