@@ -58,13 +58,14 @@ Wait for a later release if you need npm distribution, public marketplace instal
 
 ## Alpha Status
 
-`0.1.0-alpha.2` is ready as the latest GitHub source release for developers and early testers.
+`0.1.0-alpha.3` is ready as the latest GitHub source release for developers and early testers.
 
 What is stable in this alpha:
 
 - Navi Progress Maps for progress, next-step, continue, done, confusion, and plan-reliability questions.
 - Rhythm Maps for flowing long-running projects with recurring cycles, waiting states, parallel opportunities, and decision gates.
 - Challenge Layer behavior for anti-self-certification moments.
+- Prompt-language following for Navi maps in multilingual target projects.
 - Working Thread continuity for project judgment that needs durable carry-forward.
 - Project-local Navi initialization through `navi init`, `AGENTS.md`, and `docs/along/project-maps/`.
 - Codex skill/plugin behavior with project-local docs.
@@ -205,7 +206,7 @@ The repository still contains older Along companion ideas, including local memor
 
 ## Release Notes
 
-See `CHANGELOG.md` and `docs/releases/v0.1.0-alpha.2.md` for the latest alpha release notes.
+See `CHANGELOG.md` and `docs/releases/v0.1.0-alpha.3.md` for the latest alpha release notes.
 
 ## License
 

@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.1.0-alpha.3 - 2026-07-01
+
+Navi `0.1.0-alpha.3` is a GitHub source-alpha maintenance checkpoint for prompt-language following in Navi maps.
+
+### Changed
+
+- Clarified that Navi map responses should follow the user's current prompt language by default.
+- Clarified that saved Project Map or Rhythm Map records are source evidence, not the answer-language selector.
+- Updated the repo skill, packaged plugin skill, project-map docs, and `navi init` generated trigger block with the language-following rule.
+- Updated README guidance so multilingual target projects do not imply that saved Chinese records require English prompts to receive Chinese maps.
+
+### Validated
+
+- `npm run verify:plugin-package` passed.
+- `npm test -- tests/cli/navi-init.test.ts tests/skills/along-working-thread-skill.test.ts` passed.
+- `npm run typecheck` passed.
+- Fresh-session validation against a real target-project copy confirmed that English `what's next` receives an English map and Chinese prompts keep a Chinese map.
+
+### Not Included
+
+- No npm package publication.
+- No public Codex marketplace publication.
+- No global plugin installation, one-click sync, or npm distribution.
+- No runtime UI, local app surface, Web UI rebrand, background watcher, notifications, or always-on presence.
+- No Hermes, Claude Code, or other agent adapters.
+- No Memory v2, relationship modes, delegation, or write delegation.
+
 ## 0.1.0-alpha.2 - 2026-07-01
 
 Navi `0.1.0-alpha.2` is a GitHub source-alpha checkpoint after the standalone Navi repository split and project-local initializer validation.
