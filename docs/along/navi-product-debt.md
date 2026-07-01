@@ -84,7 +84,7 @@ Fresh-session calibration showed that global skill auto-routing can be inconsist
 global skill + project-local trigger source + project-local Project Map
 ```
 
-That path is documented, but not yet productized as a simple user flow.
+That path is now partly productized through the narrow project-local `navi init` initializer, but global plugin installation, one-click sync, npm release, marketplace release, and clearer user docs remain open distribution work.
 
 Why it matters:
 

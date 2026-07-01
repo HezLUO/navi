@@ -695,6 +695,32 @@ describe("Along Working Thread repo-contained plugin package", () => {
     ]) {
       expect(readme).toContain(expected);
     }
+
+    const verifyCommandIndex = readme.indexOf("npm run verify:plugin-package");
+    const verifySentenceIndex = readme.indexOf("That verifies the repo-contained Navi plugin source package.");
+    const initCommandIndex = readme.indexOf("npm run navi -- init --target /path/to/target-project");
+
+    expect(verifyCommandIndex).toBeLessThan(verifySentenceIndex);
+    expect(verifySentenceIndex).toBeLessThan(initCommandIndex);
+  });
+
+  it("documents shipped navi init scope in debt and roadmap docs", async () => {
+    const debt = await readRepoText("docs/along/navi-product-debt.md");
+    const roadmap = await readRepoText("docs/along/roadmaps/navi-post-alpha-roadmap.md");
+
+    for (const expected of [
+      "Status: partly addressed",
+      "partly productized through the narrow project-local `navi init` initializer",
+    ]) {
+      expect(debt).toContain(expected);
+    }
+
+    for (const expected of [
+      "Validate the narrow `navi init` project-local initializer",
+      "Global plugin installation, one-click sync, npm distribution, or marketplace installation",
+    ]) {
+      expect(roadmap).toContain(expected);
+    }
   });
 
   it("ships the minimal repo-contained plugin package layout and manifest", async () => {

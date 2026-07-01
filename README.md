@@ -17,7 +17,9 @@ npm install
 npm run verify:plugin-package
 ```
 
-Preview project-local setup for a target project:
+That verifies the repo-contained Navi plugin source package.
+
+To try Navi in a real target project, preview the project-local setup:
 
 ```bash
 npm run navi -- init --target /path/to/target-project
@@ -31,7 +33,7 @@ npm run navi -- init --target /path/to/target-project --write
 
 Project-local setup is explicit and dry-run by default. `navi init` prepares `AGENTS.md`, `docs/along/project-maps/`, and a fresh-session validation prompt inside the target project. It does not install the global Codex plugin or skill.
 
-That verifies the repo-contained Navi plugin source package. To try Navi in a real target project, follow:
+For more setup detail, follow:
 
 - `docs/along/project-maps/navi-project-init.md`
 - `docs/along/project-maps/navi-project-trigger-template.md`
