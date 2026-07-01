@@ -450,6 +450,31 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents prompt-language following for Progress and Rhythm Maps", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "default response language should follow the user's current prompt",
+      "Project records written in another language do not by themselves decide the response language",
+      "English orientation prompts such as `what's next`, `where are we`, or `continue` should produce English map headings",
+      "translate or bilingualize source stage labels",
+      "Chinese orientation prompts should still allow Chinese headings",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+
+    for (const expected of [
+      "Match the Navi map response language to the user's current prompt by default.",
+      "English prompts such as `what's next`, `where are we`, or `continue` should use English map headings",
+      "Chinese prompts should still allow Chinese headings and explanations.",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+  });
+
   it("documents source classification for non-code flowing workspaces", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");

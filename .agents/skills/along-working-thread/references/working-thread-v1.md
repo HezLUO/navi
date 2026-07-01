@@ -40,6 +40,16 @@ Common user phrasings include "what should we do next", "what is the current pro
 
 Navi should not jump straight to another task recommendation when the user is asking for orientation; do not jump straight to another task recommendation. It should first help the user understand where the work stands and what they need to confirm.
 
+### Response Language Selection
+
+For Navi Progress Maps and Rhythm Maps, the default response language should follow the user's current prompt.
+
+Project records written in another language do not by themselves decide the response language. They are source evidence, not the answer-language selector.
+
+English orientation prompts such as `what's next`, `where are we`, or `continue` should produce English map headings, plain-language explanations, recommended next step, confirmation gate, and risk wording. If a source Project Map or Rhythm Map uses Chinese stage labels such as `[方向校准]` or `当前焦点`, translate or bilingualize source stage labels so the English answer remains readable, for example `[Direction alignment / 方向校准]`.
+
+Chinese orientation prompts should still allow Chinese headings and explanations. When the user's prompt language is mixed or unclear, prefer the language that best matches the current user-facing request, not the language of older project records.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.
@@ -197,7 +207,21 @@ If the project shape is mixed, Navi should pick the narrowest useful map:
 
 A Rhythm Map is the Navi map form for flowing long-running projects. This map does not express completion percentage. It should show the current cycle, active focus, waiting states, user decision gate, and where continuing will lead.
 
-Use this structure:
+For an English prompt, prefer this structure:
+
+```text
+Project rhythm
+[Cycle refresh] + [Daily preparation] + [Opportunity/object waiting] + [Decision confirmation]
+                                      ▲
+                                  Current focus
+
+Current track
+[Read status] -> [Judge priority] -> [Execute smallest loop] -> [Record/wait for feedback]
+                         ▲
+                    Current action
+```
+
+For a Chinese prompt, this Chinese structure is also valid:
 
 ```text
 项目节奏

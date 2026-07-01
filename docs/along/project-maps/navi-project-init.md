@@ -48,7 +48,7 @@ When applied with `--write`, the minimum project-local setup creates or updates:
 4. Draft the Project Map or Rhythm Map.
 5. Show the preview and have the user choose whether to apply it with `--write`.
 6. Write only the smallest project-local files needed for reliable Navi behavior.
-7. Run a fresh-session validation with an ordinary prompt, such as `接下来我们应该做什么？`.
+7. Run a fresh-session validation with an ordinary prompt, such as `what's next`, `where are we`, `continue`, or `接下来我们应该做什么？`.
 
 If the project shape is unclear, write only a provisional trigger source and ask which project record should become the source of truth. Do not draw a confident stable map.
 
@@ -76,7 +76,19 @@ The command should automate the setup, not change the core product rule: reliabl
 
 ## Fresh-session validation
 
-After initialization, validate with a new project session that does not mention Navi or `along-working-thread`:
+After initialization, validate with a new project session that does not mention Navi or `along-working-thread`. Use both English and Chinese ordinary prompts when the target project has multilingual records, because Navi maps should follow the current prompt language rather than the saved record language.
+
+English example:
+
+```text
+Read only. Do not modify files, commit, or run implementation.
+
+Important boundary: do not read, quote, or rely on any source thread, delegation source thread, other Codex thread, or conversation history outside the current request. Judge only from files inside the current project directory.
+
+what's next
+```
+
+Chinese example:
 
 ```text
 请只读，不要修改文件、不要提交、不要运行实现。

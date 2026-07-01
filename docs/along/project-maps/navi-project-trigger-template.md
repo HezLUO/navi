@@ -11,13 +11,32 @@ When the user asks about project progress, next steps, whether to continue, or s
 - `现在做到哪了？我看不懂。`
 - `继续吧。`
 - `这个方案可以吗？我不懂技术。`
+- `what's next`
+- `where are we`
+- `continue`
+
+Match the Navi map response language to the user's current prompt by default. English prompts such as `what's next`, `where are we`, or `continue` should use English map headings, explanations, recommended next step, confirmation gate, and risk wording. Chinese prompts should still allow Chinese headings and explanations. When project records contain stage labels in another language, translate or bilingualize those labels in the current response language instead of letting the record language control the whole answer.
 
 Use the target project's own records to choose the map shape:
 
 - If the work has a stable one-way delivery path, use a compact horizontal progress strip.
 - If the work is a long-running flow with repeated cycles, parallel tracks, waiting states, or external feedback, use a Rhythm Map.
 
-For flowing projects, prefer this structure and replace the labels with project-specific terms:
+For flowing projects, prefer this English structure for English prompts and replace the labels with project-specific terms:
+
+```text
+Project rhythm
+[Cycle/direction] + [Object/opportunity screening] + [Material/execution prep] + [Submit/follow up/feedback]
+                              ▲
+                         Current focus
+
+Current track
+[Read status] -> [Judge priority] -> [Execute smallest loop] -> [Record/wait for feedback]
+                         ▲
+                    Current action
+```
+
+For Chinese prompts, this Chinese structure is also valid:
 
 ```text
 项目节奏

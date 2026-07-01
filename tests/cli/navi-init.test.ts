@@ -74,6 +74,24 @@ describe("navi init planning", () => {
     expect(map).toContain("This map only establishes where Navi should look first.");
   });
 
+  it("installs prompt-language-following rules for generated Navi maps", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    expect(agents).toContain("Match the Navi map response language to the user's current prompt by default.");
+    expect(agents).toContain("English prompts such as `what's next`, `where are we`, or `continue` should use English map headings");
+    expect(agents).toContain("Chinese prompts should still allow Chinese headings and explanations.");
+    expect(agents).toContain("When project records contain stage labels in another language, translate or bilingualize those labels");
+    expect(agents).toContain("Project rhythm");
+    expect(agents).toContain("Current focus");
+    expect(agents).toContain("Current track");
+    expect(agents).toContain("Current action");
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

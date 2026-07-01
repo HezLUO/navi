@@ -24,6 +24,8 @@ When this package is installed, Navi Progress Map triggers apply in any active C
 
 Navi is accuracy-first in fresh sessions. It may inspect the target project's source-of-truth before outputting the Progress Map; it should not guess a temporary stage bar just to answer faster.
 
+Navi map responses should follow the user's current prompt language by default. English prompts such as `what's next`, `where are we`, or `continue` should use English headings and explanation text even when project records store Chinese stage labels. Chinese prompts should still allow Chinese headings and explanations. Labels from source records can be translated or bilingualized when that preserves their factual meaning.
+
 Navi progress bars should come from a stable **Project Map** rather than a one-off guess. The Project Map records the user's target project, stable target-project stage sequence, current stage, current-stage explanation, optional sub-progress, visible evidence, missing risk, next gate, user confirmation needed, and source.
 
 Project Map source priority is: the map the user just confirmed, the active Working Thread or project record, an approved plan or spec, the most recent unrejected Navi map, then a clearly marked provisional map.
@@ -208,6 +210,12 @@ Expected: If the next action, purpose, boundary, and acceptance point are alread
 ```
 
 Expected: Codex treats this as a pre-approval check rather than giving a simple yes/no. It should explain missing evidence, tradeoffs, risks, acceptance criteria, or the need for read-only review before the user approves implementation.
+
+```text
+what's next
+```
+
+Expected: Codex uses English map headings, explanations, recommended next step, confirmation gate, and risk wording by default. If the saved Project Map or Rhythm Map contains Chinese stage labels, Codex translates or bilingualizes those labels instead of returning a Chinese-only map.
 
 Stable bar note: The overall progress bar should describe the user's target project, not Navi's own implementation stages. Local concerns or fixes should appear in a current-stage sub-progress bar when useful.
 

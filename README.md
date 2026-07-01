@@ -48,6 +48,8 @@ For more setup detail, follow:
 
 The minimum reliable setup is: global skill/plugin availability, a short project-local trigger source in `AGENTS.md`, and a confirmed Project Map or Rhythm Map for that target project. After that setup, ordinary questions like `What should we do next?`, `Where are we now? I do not understand.`, or an unclear `Continue.` should produce a Navi map before ordinary task advice. Chinese prompts such as `接下来我们应该做什么？` are supported too.
 
+Navi maps should follow the user's current prompt language by default. If a target project's saved Project Map or Rhythm Map uses labels in another language, Navi should translate or bilingualize those labels in the current answer rather than returning a full map in the saved record's language.
+
 ## Who This Alpha Is For
 
 Use this alpha if you want to test Navi's current supervision behavior in active Codex sessions, review the plugin source package, or give feedback on whether Progress/Rhythm Maps and Challenge Layer behavior help non-expert users steer expert-agent work.
@@ -119,6 +121,14 @@ For a bounded project, Navi should use a compact project map:
 ```
 
 For a flowing long-running project, Navi should use a Rhythm Map instead of forcing a completion bar:
+
+```text
+[Cycle refresh] + [Daily preparation] + [Opportunity/object waiting] + [Decision confirmation]
+                                      ^
+                                  Current focus
+```
+
+Chinese prompts can use Chinese map labels:
 
 ```text
 [周期刷新] + [日常准备] + [机会/对象等待] + [决策确认]
