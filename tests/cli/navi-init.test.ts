@@ -134,6 +134,24 @@ describe("navi init planning", () => {
     await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe("# Project Instructions\n\nChanged elsewhere.\n");
   });
 
+  it("rejects final-path symlinks before modifying AGENTS.md", async () => {
+    const project = await makeProject();
+    const agentsPath = path.join(project, "AGENTS.md");
+    const originalAgents = "# Project Instructions\n\nOriginal rule.\n";
+    await fs.writeFile(agentsPath, originalAgents);
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+    const outsideAgentsPath = path.join(path.dirname(project), "outside-agents.md");
+    const mapPath = path.join(project, "docs/along/project-maps/navi-project-map.md");
+
+    await fs.writeFile(outsideAgentsPath, originalAgents);
+    await fs.unlink(agentsPath);
+    await fs.symlink(outsideAgentsPath, agentsPath);
+
+    await expect(applyInitPlan(plan)).rejects.toThrow(/symlink/i);
+    await expect(fs.readFile(outsideAgentsPath, "utf8")).resolves.toBe(originalAgents);
+    expect(await exists(mapPath)).toBe(false);
+  });
+
   it("rejects unsafe target-relative writes", () => {
     expect(() => resolveTargetPath("/tmp/example-project", "../outside.md")).toThrow(/outside target/i);
   });
@@ -141,6 +159,7 @@ describe("navi init planning", () => {
   it("rejects externally supplied plans whose paths escape or mismatch the target", async () => {
     const project = await makeProject();
     const outsidePath = path.join(path.dirname(project), "outside.md");
+    const absoluteInsidePath = path.join(project, "absolute.md");
 
     await expect(
       applyInitPlan({
@@ -177,6 +196,44 @@ describe("navi init planning", () => {
     ).rejects.toThrow(/outside target/i);
 
     expect(await exists(outsidePath)).toBe(false);
+
+    await expect(
+      applyInitPlan({
+        mode: "write",
+        targetDir: project,
+        validationPrompt: "",
+        actions: [
+          {
+            kind: "create",
+            relativePath: absoluteInsidePath,
+            absolutePath: absoluteInsidePath,
+            summary: "Unsafe absolute relative path.",
+            content: "# Unsafe\n",
+          },
+        ],
+      }),
+    ).rejects.toThrow(/absolute/i);
+
+    expect(await exists(absoluteInsidePath)).toBe(false);
+  });
+
+  it("rejects symlinked parent directories before creating a project map", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "AGENTS.md"),
+      `${NAVI_AGENTS_BLOCK_START}\n## Navi Progress Map Rules\nExisting block.\n<!-- NAVI:END -->\n`,
+    );
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+    const outsideMapDir = path.join(path.dirname(project), "outside-maps");
+    const mapParent = path.join(project, "docs/along/project-maps");
+    const outsideMapPath = path.join(outsideMapDir, "navi-project-map.md");
+
+    await fs.mkdir(path.dirname(mapParent), { recursive: true });
+    await fs.mkdir(outsideMapDir);
+    await fs.symlink(outsideMapDir, mapParent);
+
+    await expect(applyInitPlan(plan)).rejects.toThrow(/symlink/i);
+    expect(await exists(outsideMapPath)).toBe(false);
   });
 
   it("rejects target paths that are not directories", async () => {
@@ -185,6 +242,25 @@ describe("navi init planning", () => {
     await fs.writeFile(fileTarget, "not a directory");
 
     await expect(buildInitPlan({ targetDir: fileTarget, write: false })).rejects.toThrow(/directory/i);
+  });
+
+  it("rejects a project map create when another map appears after planning", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "AGENTS.md"),
+      `${NAVI_AGENTS_BLOCK_START}\n## Navi Progress Map Rules\nExisting block.\n<!-- NAVI:END -->\n`,
+    );
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+    const mapDir = path.join(project, "docs/along/project-maps");
+    const alternateMapPath = path.join(mapDir, "another-map.md");
+    const plannedMapPath = path.join(mapDir, "navi-project-map.md");
+
+    await fs.mkdir(mapDir, { recursive: true });
+    await fs.writeFile(alternateMapPath, "# Another Map\n");
+
+    await expect(applyInitPlan(plan)).rejects.toThrow(/project map/i);
+    await expect(fs.readFile(alternateMapPath, "utf8")).resolves.toBe("# Another Map\n");
+    expect(await exists(plannedMapPath)).toBe(false);
   });
 
   it("renders write mode as no-op when every action is skipped", async () => {

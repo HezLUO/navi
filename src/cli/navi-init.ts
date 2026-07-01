@@ -56,6 +56,11 @@ class InitArgsError extends Error {
 
 export function resolveTargetPath(targetDir: string, relativePath: string): string {
   const resolvedTarget = path.resolve(targetDir);
+
+  if (path.isAbsolute(relativePath)) {
+    throw new Error(`Refusing to use absolute target-relative path: ${relativePath}`);
+  }
+
   const resolvedPath = path.resolve(resolvedTarget, relativePath);
   const relativeFromTarget = path.relative(resolvedTarget, resolvedPath);
 
@@ -125,12 +130,20 @@ export async function applyInitPlan(plan: InitPlan): Promise<void> {
     return;
   }
 
+  const targetDir = path.resolve(plan.targetDir);
+
   for (const action of plan.actions) {
     if (isWritableAction(action)) {
-      const writePath = resolveActionWritePath(plan.targetDir, action);
+      const writePath = resolveActionWritePath(targetDir, action);
+      await assertPhysicalWritePath(targetDir, writePath);
 
       if (action.kind === "create") {
+        if (action.relativePath === PROJECT_MAP_RELATIVE_PATH) {
+          await assertNoProjectMapsAppeared(targetDir);
+        }
+
         await fs.mkdir(path.dirname(writePath), { recursive: true });
+        await assertPhysicalWritePath(targetDir, writePath);
         await writeNewFile(writePath, action);
       } else {
         await writeModifiedFile(writePath, action);
@@ -279,6 +292,39 @@ function resolveActionWritePath(targetDir: string, action: InitAction): string {
   return writePath;
 }
 
+async function assertPhysicalWritePath(targetDir: string, writePath: string): Promise<void> {
+  const resolvedTarget = path.resolve(targetDir);
+  const realTarget = await fs.realpath(resolvedTarget);
+  const relativeWritePath = path.relative(resolvedTarget, writePath);
+  const parts = relativeWritePath.split(path.sep).filter(Boolean);
+  let currentPath = resolvedTarget;
+
+  for (const part of parts) {
+    currentPath = path.join(currentPath, part);
+    const stat = await lstatIfExists(currentPath);
+    if (stat === undefined) {
+      return;
+    }
+
+    const relativeComponent = path.relative(resolvedTarget, currentPath) || ".";
+    if (stat.isSymbolicLink()) {
+      throw new Error(`Refusing to write through symlink inside target: ${relativeComponent}`);
+    }
+
+    const realComponent = await fs.realpath(currentPath);
+    if (!isPathInside(realTarget, realComponent)) {
+      throw new Error(`Refusing to write outside target directory through physical path: ${relativeComponent}`);
+    }
+  }
+}
+
+async function assertNoProjectMapsAppeared(targetDir: string): Promise<void> {
+  const existingMaps = await listExistingProjectMaps(targetDir);
+  if (existingMaps.length > 0) {
+    throw new Error(`Refusing to create project map because a project map record now exists: ${existingMaps.join(", ")}`);
+  }
+}
+
 function isWritableAction(action: InitAction): action is WritableInitAction {
   return (action.kind === "create" || action.kind === "modify") && action.content !== undefined;
 }
@@ -410,6 +456,22 @@ async function readTextIfExists(filePath: string): Promise<string | undefined> {
     }
     throw error;
   }
+}
+
+async function lstatIfExists(filePath: string) {
+  try {
+    return await fs.lstat(filePath);
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function isPathInside(parentPath: string, childPath: string): boolean {
+  const relative = path.relative(parentPath, childPath);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
