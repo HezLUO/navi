@@ -367,6 +367,10 @@ describe("Along Working Thread Codex skill", () => {
       "continue to the already-defined acceptance point",
       "Do not stop just because a local sub-step finished",
       "explain the pause reason",
+      "Next Decision Visibility",
+      "smallest useful next-decision hint",
+      "no visible next decision except `continue`",
+      "valid stop can still create continuation friction",
     ]) {
       expect(skill).toContain(expected);
       expect(template).toContain(expected);
@@ -391,6 +395,14 @@ describe("Along Working Thread Codex skill", () => {
       "continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision",
       "Use the smallest useful intervention",
       "No map when the user says `continue` and the continuation boundary is already clear",
+      "Next Decision Visibility Rule",
+      "When Navi or Codex proactively stops",
+      "No Hint",
+      "One Default Recommendation",
+      "Short Option Set",
+      "the stop is already a clear approval gate",
+      "after commit, push, merge, validation, or worktree handoff",
+      "does not force a Progress Map",
     ]) {
       expect(reference).toContain(expected);
     }

@@ -241,6 +241,50 @@ Only stop the whole main session when every useful next step depends on the wait
 
 Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session unless one of those whole-session stop conditions is present.
 
+### Next Decision Visibility Rule
+
+A valid stop can still create continuation friction if it hides the next decision.
+
+When Navi or Codex proactively stops, and the user would otherwise have no visible next decision except `continue` or `继续`, provide the smallest useful next-decision hint.
+
+Use this rule after commit, push, merge, validation, or worktree handoff completes and the session remains active; when the pause reason itself does not reveal what the user can choose next; when multiple reasonable tracks exist such as closeout, calibration, design, implementation planning, or release preparation; or when recent interaction shows the user repeatedly has to ask `continue` to get direction.
+
+Do not add the hint when the user already gave the next instruction, the stop is already a clear approval gate, the session naturally ends, the current loop should continue to an already-defined acceptance point, or the hint would become fixed boilerplate.
+
+#### No Hint
+
+If the next decision is already visible, do not add extra structure.
+
+Example:
+
+```text
+I am stopping because the next action is `git push origin main`.
+```
+
+#### One Default Recommendation
+
+Use this when there is one clear next direction.
+
+Example:
+
+```text
+Next decision: close this alpha.5 follow-up here, or approve a small implementation plan to add this rule.
+```
+
+#### Short Option Set
+
+Use this when there are real branches.
+
+Example:
+
+```text
+Next decision: commit this note, keep collecting examples, or switch back to product design.
+```
+
+The option set should usually be 2-4 short choices.
+
+Next Decision Visibility does not force a Progress Map. Use a Progress Map or Rhythm Map only when the user asks where the project is, asks what comes next, or says they do not understand the broader project state.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.

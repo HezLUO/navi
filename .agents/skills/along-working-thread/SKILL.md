@@ -37,6 +37,7 @@ Before acting on a Working Thread, read:
 - Codex must not require user continuation for local sub-step completion when the next action, boundary, and acceptance point are already clear.
 - Codex must not treat lane-level waiting as whole-session waiting when non-conflicting main-session work can continue.
 - Codex must not use pause semantics to bypass user approval, tool approval, write gates, commit/push/tag/release gates, mode changes, scope expansion, validation-budget escalation, or cross-project modification.
+- Codex must not stop after a valid completed action and leave the user with no visible next decision except `continue` when the session is still active.
 - Navi must not claim it can automatically give the final correct answer in every professional domain.
 - Navi must not replace legal, medical, financial, engineering, or other high-risk professional review.
 - Challenge Moments should challenge self-certifying momentum, not become constant critique.
@@ -62,6 +63,8 @@ Before acting on a Working Thread, read:
 - Do not stop just because a local sub-step finished, such as a doc write, read-only status check, or `git diff --check` passing.
 - Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases, cross-project edits, mode changes, scope expansion, validation-budget escalation, or known-risk acceptance.
 - When stopping, explain the pause reason in one sentence when possible and say what continuing would do.
+- Next Decision Visibility covers valid stops that still create continuation friction. A valid stop can still create continuation friction if it hides the next decision. When Navi or Codex proactively stops and the user would otherwise have no visible next decision except `continue` or `继续`, provide the smallest useful next-decision hint.
+- Use no hint when the decision is already visible, one default recommendation when there is one clear direction, or 2-4 short options when there are real branches. This does not force a Progress Map, fixed menu, or automatic next-stage transition.
 - Use a light continuation contract when a multi-step loop is clear: continue to the next stated acceptance point, stop before the next approval gate, and do not expand scope. Do not turn this into a fixed block for every answer.
 - Distinguish lane-level waiting from whole-session waiting. Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session; continue non-conflicting design, supervision, acceptance-criteria, roadmap, or risk work.
 - Only make the whole session wait when all useful next steps depend on the result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.

@@ -136,6 +136,11 @@ describe("navi init planning", () => {
       "Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases",
       "When stopping, explain the pause reason in one sentence",
       "Use a light continuation contract when a multi-step loop is clear",
+      "Next Decision Visibility",
+      "smallest useful next-decision hint",
+      "no visible next decision except `continue`",
+      "after commit, push, merge, validation, or worktree handoff",
+      "does not force a Progress Map",
     ]) {
       expect(agents).toContain(expected);
     }
