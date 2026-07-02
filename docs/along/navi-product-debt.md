@@ -200,6 +200,8 @@ The same friction immediately repeated: after the first calibration seed was rec
 
 Another sharper variant appeared during alpha.5 worktree supervision. After a true worktree session had been created for implementation, the main session described itself as stopped at a real waiting point because review/merge depended on the worktree result. The user challenged this: review/merge was waiting, but the main session did not need to wait for unrelated design or supervision work. The correct distinction is lane-level waiting versus session-level waiting. Navi should not collapse "one workstream is blocked until a worktree returns" into "the whole user conversation should stop."
 
+The friction repeated again after the main session committed the waiting-scope documentation change and notified the alpha.5 worktree. The user had to type `continue` only to point out that this stop was also meaningless. The useful next action was still inside the already-approved supervision loop: record the new example, or continue checking whether the worktree follow-up had completed. No new approval was needed merely because the previous response had reported a completed commit and notification.
+
 Why it matters:
 
 Repeated manual continuation creates friction and shifts supervisory burden back onto the user. A non-expert user may not know whether Codex paused because it needs approval, reached a safe stop point, hit a tool/runtime boundary, exceeded the current verification budget, or simply lost execution momentum.
@@ -226,6 +228,7 @@ Recommended fix:
 - Treat "the user can only reply continue" as evidence of avoidable pause friction unless a platform, permission, or safety boundary explains the stop.
 - Distinguish necessary pauses from avoidable friction.
 - Distinguish lane-level blocked states from whole-session blocked states, especially when implementation runs in a worktree while the main session can continue design or supervision.
+- Do not treat a completion report as a mandatory stop when the next useful action remains inside the same approved supervision loop and does not require commit, push, mode change, scope change, or risk acceptance.
 - Consider adding a concise pause explanation to Navi output when Codex stops at a decision gate.
 - Consider adding bounded continuation contracts to `navi init` guidance only after calibration shows the wording reduces friction without weakening user control.
 

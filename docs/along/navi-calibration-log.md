@@ -90,3 +90,26 @@ Product follow-up:
 - Add lane-level versus session-level waiting to alpha.5 pause semantics.
 - Avoid phrases that imply the whole session must wait when only review/merge is blocked.
 - If a worktree result might change the current design direction, say so explicitly; otherwise continue non-conflicting design/supervision work.
+
+## 2026-07-02 - Completion Report Pause Friction
+
+Target project: Navi
+Mode: implementation / supervision
+
+Prompt shape:
+
+After the main session committed the waiting-scope documentation change and notified the alpha.5 implementation worktree, it reported completion and stopped. The user then typed `continue` and explicitly said this was another meaningless continuation prompt.
+
+Observed behavior:
+
+The previous response correctly reported that the documentation commit and worktree notification had succeeded. However, reporting a completed subtask was treated like the end of the active supervision loop. The next useful actions were still bounded and non-conflicting: record this new pause-friction example, or continue observing whether the worktree follow-up returned. The user was not being asked to approve a commit, push, tag, release, mode change, or risk acceptance.
+
+Calibration judgment:
+
+This is an avoidable pause. A completion report should not automatically stop the main session when the broader user-approved loop is still active and the next step does not need user judgment. The agent should continue to the next real decision point, or state that the only remaining blocked lane is waiting on external/worktree output while the rest of the main session can keep doing non-conflicting work.
+
+Product follow-up:
+
+- Add completion-report pause friction to alpha.5 calibration evidence.
+- Treat "I finished the local subtask" as progress, not a stop reason, unless the next action crosses a real approval boundary.
+- When the next action is only monitoring or recording within an approved loop, continue without requiring the user to type `continue`.
