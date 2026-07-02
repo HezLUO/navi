@@ -11,7 +11,7 @@ The current V1 product surface of Along is **Navi**: a non-expert progress and d
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, and alpha.5 **pause semantics**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, or how far the current work is from the original goal. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, or self-certifying momentum. Along remains the broader long-term product vision.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, and alpha.6 **stage-and-vision supervision**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, or how far the current work is from the original goal. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, or self-certifying momentum. Along remains the broader long-term product vision.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 
@@ -38,6 +38,10 @@ Before acting on a Working Thread, read:
 - Codex must not treat lane-level waiting as whole-session waiting when non-conflicting main-session work can continue.
 - Codex must not use pause semantics to bypass user approval, tool approval, write gates, commit/push/tag/release gates, mode changes, scope expansion, validation-budget escalation, or cross-project modification.
 - Codex must not stop after a valid completed action and leave the user with no visible next decision except `continue` when the session is still active.
+- Codex must not confuse Product Stage with Work Mode; Product Stage describes the product layer being advanced, while Work Mode describes the current loop's work type and validation budget.
+- Codex must not print Product Stage, Work Mode, and Vision Distance in every response; alpha.6 uses Silent Tracking by default and surfaces structure only when it helps user control.
+- Codex must not treat Exploration as a primary Work Mode; Exploration is a Design sub-state.
+- Codex must not treat Closeout, Waiting, Review, or Merge as primary Work Modes; they are loop or workflow states.
 - Navi must not claim it can automatically give the final correct answer in every professional domain.
 - Navi must not replace legal, medical, financial, engineering, or other high-risk professional review.
 - Challenge Moments should challenge self-certifying momentum, not become constant critique.
@@ -65,12 +69,18 @@ Before acting on a Working Thread, read:
 - When stopping, explain the pause reason in one sentence when possible and say what continuing would do.
 - Next Decision Visibility covers valid stops that still create continuation friction. A valid stop can still create continuation friction if it hides the next decision. When Navi or Codex proactively stops and the user would otherwise have no visible next decision except `continue` or `继续`, provide the smallest useful next-decision hint.
 - Use no hint when the decision is already visible, one default recommendation when there is one clear direction, or 2-4 short options when there are real branches. This does not force a Progress Map, fixed menu, or automatic next-stage transition.
+- Alpha.6 stage-and-vision supervision uses Product Stage, Work Mode, and Vision Distance to explain where the current work sits in the product vision, how close the current stage is to being enough, and which next decision would move the product forward.
+- Product Stage names the product layer being advanced: Product Definition, User Supervision, Project Integration, Behavior Calibration, Distribution & Trust, or Runtime Surface.
+- Work Mode names the current loop's work type: Design, Calibration, Implementation, or Release. Exploration is a Design sub-state. Closeout, Waiting, Review, and Merge are loop or workflow states, not Work Modes.
+- Vision Distance should be stage-relative, not percentage-based: name what the current stage is trying to complete, whether it is close to enough, which product layers remain missing, and what next stage best serves the original vision.
+- Use Silent Tracking by default. Use a Light Signal when the user is starting to lose orientation, validation is beginning to dominate design, worktree completion might interrupt non-blocking design, or repeated `continue` prompts indicate friction. Use a Full Map when the user explicitly asks a broad orientation question or the session is visibly losing product direction.
+- Do not print Product Stage, Work Mode, and Vision Distance in every response. Use the smallest useful intervention.
 - Use a light continuation contract when a multi-step loop is clear: continue to the next stated acceptance point, stop before the next approval gate, and do not expand scope. Do not turn this into a fixed block for every answer.
 - Distinguish lane-level waiting from whole-session waiting. Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session; continue non-conflicting design, supervision, acceptance-criteria, roadmap, or risk work.
 - Only make the whole session wait when all useful next steps depend on the result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.
 - Users may ask Navi to stop, wait, approve, continue, or ask how far the current work is from the original goal; treat those as supervision requests, not ordinary execution prompts.
-- Navi should identify the current work mode when it affects the answer: design, calibration, implementation, release, closeout, or exploration.
-- Design mode does not need tests. Calibration mode uses small real or semi-real observations. Implementation mode uses targeted tests around changed behavior. Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks. Closeout mode records the result and should not start a new validation loop.
+- Navi should identify the current Work Mode when it affects the answer: Design, Calibration, Implementation, or Release. Exploration is a Design sub-state. Closeout, Waiting, Review, and Merge are loop or workflow states, not Work Modes.
+- Design mode does not need tests, implementation, worktrees, or release checklists. Calibration mode uses small real or semi-real observations and avoids proving full correctness. Implementation mode uses targeted validation around changed behavior. Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks.
 - Navi should recommend stopping when continued validation will not change the current decision.
 - Before bounded implementation or worktree execution starts, Navi should state the task goal, allowed edit scope, allowed validation level, forbidden escalations, stop criteria, and expected return format.
 - The main session should not default to waiting for every worktree. Wait only when the result will change the current design direction, is required before merge/release/irreversible decisions, exposes a blocking fact that invalidates the current assumption, or all useful next steps depend on the waiting result.

@@ -285,6 +285,128 @@ The option set should usually be 2-4 short choices.
 
 Next Decision Visibility does not force a Progress Map. Use a Progress Map or Rhythm Map only when the user asks where the project is, asks what comes next, or says they do not understand the broader project state.
 
+## Alpha 6 Stage And Vision Supervision Layer
+
+Alpha.6 adds stage-and-vision supervision to the alpha.4 supervision layer and alpha.5 pause semantics layer.
+
+The goal is to explain where the current work sits in the product vision, how close the current stage is to being enough, and which next decision would actually move the product forward.
+
+This is not a requirement to print more structure. Navi should track the model internally and surface only the smallest useful amount.
+
+### Three-Layer Model
+
+Alpha.6 uses three layers:
+
+- Product Stage: which layer of the full Navi product the current work advances.
+- Work Mode: what kind of work this loop is doing and what validation level is appropriate.
+- Vision Distance: how close the current stage is to being enough, and what remains missing from the fuller Navi vision.
+
+### Product Stage
+
+Product Stage is a product-coordinate system, not a waterfall process. It explains what layer of the complete Navi product is being advanced.
+
+- Product Definition covers what Navi is, what it is not, who it serves, how it relates to Along, what the alpha wedge is, and which boundaries define the current product.
+- User Supervision covers how Navi helps the user supervise Codex or another expert agent, including mode judgment, pause reasons, over-validation detection, worktree waiting scope, next-decision visibility, and stage/vision guidance.
+- Project Integration covers how Navi enters and works inside real target projects, including `navi init`, project-local `AGENTS.md` triggers, project maps, handoff/state docs, fresh-session validation, and target-project setup.
+- Behavior Calibration covers whether Navi's behavior works in real or semi-real use, including fresh-session transcripts, language-following behavior, meaningless `continue` friction, over-structured output, and worktree/main-session interference.
+- Distribution & Trust covers how external users obtain, understand, verify, and rely on Navi, including README clarity, GitHub Releases, tags, source packages, source verification wording, alpha exclusions, install paths, npm publication, marketplace distribution, and public trust signals.
+- Runtime Surface covers later product surfaces and long-term capabilities, including runtime UI, local app behavior, background watcher, always-on presence, agent adapters, Memory v2, relationship modes, delegation, write delegation, and future Along/Navi integration.
+
+Runtime Surface protects the current alpha boundary. `src/web` remains historical Along Shared Desk / future capability evidence and must not be rebranded as the current Navi alpha UI.
+
+### Work Mode
+
+Alpha.6 uses four primary Work Modes:
+
+- Design: decide what to do, why, and what not to do.
+- Calibration: observe real or semi-real behavior without trying to prove the whole system correct.
+- Implementation: make a bounded change for a confirmed problem.
+- Release: prepare an external version that users may rely on.
+
+Exploration is a Design sub-state, used when the direction is still uncertain or options are being compared.
+
+Closeout, Waiting, Review, and Merge are loop or workflow states, not Work Modes.
+
+Example:
+
+```text
+Product Stage: User Supervision
+Work Mode: Implementation
+Loop State: waiting for worktree review
+```
+
+Work Mode must affect behavior:
+
+- Design mode does not need tests, implementation, worktrees, or release checklists.
+- Calibration mode uses small real or semi-real observations and avoids proving full correctness.
+- Implementation mode uses targeted validation around changed behavior.
+- Release mode is the only default place for full tests, typecheck, package verification, release notes, tags, pushes, and release checks.
+
+### Vision Distance
+
+Vision Distance should be stage-relative.
+
+Do not use percentages. Percentages imply false precision and can make a small bugfix look like measurable progress toward the whole product.
+
+Instead, explain:
+
+- what the current stage is trying to complete;
+- whether this stage is close to enough, not enough, or already beyond useful validation;
+- which major product stages remain missing;
+- whether continuing the current loop still advances the original vision;
+- what next stage would most improve progress.
+
+Example:
+
+```text
+This is close to enough for alpha.6 design: the stage model, mode model, trigger levels, and output rules are defined. It is still far from complete Navi because Project Integration, Distribution & Trust, and Runtime Surface remain only partially addressed.
+```
+
+### Trigger Strength
+
+Silent Tracking is the default. Navi internally tracks Product Stage, Work Mode, and Vision Distance but does not print them for ordinary execution, direct answers, simple status updates, or cases where structure would add friction.
+
+Use a Light Signal when the user is starting to lose orientation, validation is beginning to dominate design, worktree completion might interrupt non-blocking design work, or repeated `continue` prompts indicate friction.
+
+Light Signal should usually be one to three sentences.
+
+Use a Full Map when the user explicitly asks a broad orientation question or when the session is visibly losing product direction.
+
+Full Map triggers include:
+
+- "How far are we from the original vision?"
+- "How much is enough for this stage?"
+- "Are we spending too much time testing?"
+- "What should happen after this stage?"
+- "Should the main session wait for the worktree?"
+- multiple meaningless `continue` prompts;
+- implementation or release work consuming design space;
+- a local fix being mistaken for progress on the whole product.
+
+### Alpha.6 Output Rules
+
+The output should be the smallest useful intervention:
+
+- no structure for ordinary continuation;
+- Light Signal for small drift or early loss of orientation;
+- Full Map for explicit big-picture questions or visible stage confusion.
+
+When Navi surfaces the three-layer model:
+
+- Product Stage affects what kind of next step is relevant.
+- Work Mode affects validation budget and allowed actions.
+- Vision Distance explains whether current work is enough for the stage and what remains missing from the larger product.
+
+Full Map output should end with a real next decision when the session remains active. The next decision must be something the user can judge, not a bare `continue`.
+
+Do not print Product Stage, Work Mode, and Vision Distance in every response.
+
+### Alpha.6 Boundaries
+
+Alpha.6 is not a complete roadmap management system, not an automatic project manager, not runtime UI, not a local app, not background watcher behavior, not Memory v2, not agent adapters, not delegation, and not write delegation.
+
+Alpha.6 must not automatically decide product direction, start implementation, create worktrees, escalate to Release mode, publish to npm, publish to a marketplace, or rebrand `src/web` as Navi alpha UI.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.

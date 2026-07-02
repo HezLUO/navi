@@ -146,6 +146,36 @@ describe("navi init planning", () => {
     }
   });
 
+  it("installs alpha 6 stage and vision supervision rules for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Alpha.6 stage-and-vision supervision",
+      "Product Stage",
+      "Work Mode",
+      "Vision Distance",
+      "Product Definition",
+      "User Supervision",
+      "Project Integration",
+      "Behavior Calibration",
+      "Distribution & Trust",
+      "Runtime Surface",
+      "Use Silent Tracking by default",
+      "Use a Light Signal",
+      "Use a Full Map",
+      "Exploration is a Design sub-state",
+      "Closeout, Waiting, Review, and Merge are loop or workflow states",
+      "Do not print Product Stage, Work Mode, and Vision Distance in every response",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

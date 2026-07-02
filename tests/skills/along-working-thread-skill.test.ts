@@ -408,6 +408,64 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 6 stage and vision supervision", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Alpha.6 stage-and-vision supervision",
+      "Product Stage",
+      "Work Mode",
+      "Vision Distance",
+      "Silent Tracking",
+      "Light Signal",
+      "Full Map",
+      "Product Definition",
+      "User Supervision",
+      "Project Integration",
+      "Behavior Calibration",
+      "Distribution & Trust",
+      "Runtime Surface",
+      "Exploration is a Design sub-state",
+      "Closeout, Waiting, Review, and Merge are loop or workflow states",
+      "Do not print Product Stage, Work Mode, and Vision Distance in every response",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "## Alpha 6 Stage And Vision Supervision Layer",
+      "Product Stage is a product-coordinate system",
+      "not a waterfall process",
+      "Product Definition covers what Navi is, what it is not",
+      "User Supervision covers how Navi helps the user supervise Codex",
+      "Project Integration covers how Navi enters and works inside real target projects",
+      "Behavior Calibration covers whether Navi's behavior works in real or semi-real use",
+      "Distribution & Trust covers how external users obtain, understand, verify, and rely on Navi",
+      "Runtime Surface covers later product surfaces and long-term capabilities",
+      "four primary Work Modes",
+      "Exploration is a Design sub-state",
+      "Closeout, Waiting, Review, and Merge are loop or workflow states",
+      "Vision Distance should be stage-relative",
+      "Do not use percentages",
+      "Silent Tracking is the default",
+      "Light Signal should usually be one to three sentences",
+      "Full Map when the user explicitly asks a broad orientation question",
+      "The output should be the smallest useful intervention",
+      "Product Stage affects what kind of next step is relevant",
+      "Work Mode affects validation budget and allowed actions",
+      "Vision Distance explains whether current work is enough for the stage",
+      "Do not print Product Stage, Work Mode, and Vision Distance in every response",
+      "not a complete roadmap management system",
+      "not an automatic project manager",
+      "not runtime UI",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
