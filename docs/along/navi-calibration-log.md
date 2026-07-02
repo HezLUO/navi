@@ -104,6 +104,10 @@ Observed behavior:
 
 The previous response correctly reported that the documentation commit and worktree notification had succeeded. However, reporting a completed subtask was treated like the end of the active supervision loop. The next useful actions were still bounded and non-conflicting: record this new pause-friction example, or continue observing whether the worktree follow-up returned. The user was not being asked to approve a commit, push, tag, release, mode change, or risk acceptance.
 
+The same pattern repeated immediately after the completion-pause example was committed. The response reported the commit hash and ahead-of-origin branch state, then stopped. The user again had to type `continue` only to label the pause as meaningless and request that it be recorded.
+
+It repeated again after that repeated sample was written but not committed. The response stopped at a possible commit decision. Commit remains a real git boundary in general, but the user judged this stop as meaningless because the active instruction was to keep recording pause-friction samples until the next meaningful decision point. This suggests Navi needs a batching concept for evidence collection: do not force a commit decision after every tiny calibration note when the user has asked to continue collecting.
+
 Calibration judgment:
 
 This is an avoidable pause. A completion report should not automatically stop the main session when the broader user-approved loop is still active and the next step does not need user judgment. The agent should continue to the next real decision point, or state that the only remaining blocked lane is waiting on external/worktree output while the rest of the main session can keep doing non-conflicting work.
@@ -113,3 +117,4 @@ Product follow-up:
 - Add completion-report pause friction to alpha.5 calibration evidence.
 - Treat "I finished the local subtask" as progress, not a stop reason, unless the next action crosses a real approval boundary.
 - When the next action is only monitoring or recording within an approved loop, continue without requiring the user to type `continue`.
+- When the user explicitly asks to keep collecting examples, batch the observations and defer commit prompts until there is a meaningful batch boundary.

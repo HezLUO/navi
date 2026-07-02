@@ -202,6 +202,10 @@ Another sharper variant appeared during alpha.5 worktree supervision. After a tr
 
 The friction repeated again after the main session committed the waiting-scope documentation change and notified the alpha.5 worktree. The user had to type `continue` only to point out that this stop was also meaningless. The useful next action was still inside the already-approved supervision loop: record the new example, or continue checking whether the worktree follow-up had completed. No new approval was needed merely because the previous response had reported a completed commit and notification.
 
+The same pattern repeated once more after the completion-pause example itself was committed. The response reported the commit hash and current branch state, then stopped, leaving the user to type `continue` only to say that this was another meaningless continuation. This shows that "I committed the record" is not automatically a real stop point when the broader active loop still has non-conflicting follow-up work.
+
+It repeated yet again after an additional completion-pause sample was written but not committed. The response treated "the docs now have modified files; should we commit?" as the next stop. Commit is normally a real boundary, but in this specific loop the user had already asked to keep recording meaningless `continue` samples until the next meaningful decision. Navi should be able to batch evidence collection instead of forcing a commit decision after every small observation.
+
 Why it matters:
 
 Repeated manual continuation creates friction and shifts supervisory burden back onto the user. A non-expert user may not know whether Codex paused because it needs approval, reached a safe stop point, hit a tool/runtime boundary, exceeded the current verification budget, or simply lost execution momentum.
@@ -229,6 +233,7 @@ Recommended fix:
 - Distinguish necessary pauses from avoidable friction.
 - Distinguish lane-level blocked states from whole-session blocked states, especially when implementation runs in a worktree while the main session can continue design or supervision.
 - Do not treat a completion report as a mandatory stop when the next useful action remains inside the same approved supervision loop and does not require commit, push, mode change, scope change, or risk acceptance.
+- When the user explicitly asks to keep collecting pause-friction evidence, batch small doc observations and stop for a commit decision only when the batch is ready, the user switches tasks, or continuing would create review risk.
 - Consider adding a concise pause explanation to Navi output when Codex stops at a decision gate.
 - Consider adding bounded continuation contracts to `navi init` guidance only after calibration shows the wording reduces friction without weakening user control.
 
