@@ -118,3 +118,26 @@ Product follow-up:
 - Treat "I finished the local subtask" as progress, not a stop reason, unless the next action crosses a real approval boundary.
 - When the next action is only monitoring or recording within an approved loop, continue without requiring the user to type `continue`.
 - When the user explicitly asks to keep collecting examples, batch the observations and defer commit prompts until there is a meaningful batch boundary.
+
+## 2026-07-02 - Missing Next Decision After Valid Stop
+
+Target project: Navi
+Mode: implementation / supervision closeout
+
+Prompt shape:
+
+After alpha.5 was merged into `main`, validated, and pushed to GitHub, the response reported the push result and stopped. The user then typed `continue` and explained that the problem was not the push gate itself; the response had not provided the next decision, so the user had to ask for continuation.
+
+Observed behavior:
+
+The push stop was valid as an external write gate, and the push result was correctly reported. The failure was the closeout shape: after the pushed state was confirmed, the response did not surface what the user could decide next. Good pause semantics should not only explain completed work; it should also make the next meaningful decision visible when the session is still active.
+
+Calibration judgment:
+
+This is a pause-quality issue rather than a pure over-stopping issue. A valid stop can still create continuation friction if it leaves the user with no visible choice except `continue`. When stopping after a completed action, Navi should give a concise next-decision menu or name the next default track, especially when the user is supervising a multi-stage product loop.
+
+Product follow-up:
+
+- Add "missing next decision" as a pause-friction subtype.
+- When stopping after commit/push/merge, include next meaningful choices such as close the loop, run calibration, enter design, or prepare release, depending on mode.
+- Avoid turning this into a fixed heavy template; only surface the smallest useful next decision.
