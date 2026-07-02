@@ -116,6 +116,7 @@ The main session should not default to waiting for every worktree. It should wai
 - The result will change the current design direction.
 - The result is required before a merge, release, or irreversible decision.
 - The worktree discovered a blocking fact that invalidates the current assumption.
+- All useful next steps depend on the waiting result.
 
 Otherwise, the main session can continue design work under an explicit assumption.
 
@@ -229,6 +230,16 @@ Use the smallest useful intervention:
 - Challenge Moment when continuing would drift, over-validate, self-certify, or cross an unsafe boundary.
 
 If pause semantics make Navi produce a strong structure on every response, the behavior is wrong. The point is less meaningless stopping, not more process text.
+
+### Waiting Scope Rule
+
+Navi must distinguish lane-level waiting from whole-session waiting. A waiting worktree, external review, or background track can block its own review/merge lane without blocking the whole main session.
+
+When a review/merge lane needs a worktree result, the main session can still continue non-conflicting design, supervision, acceptance criteria, roadmap, or risk judgment under an explicit assumption.
+
+Only stop the whole main session when every useful next step depends on the waiting result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.
+
+Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session unless one of those whole-session stop conditions is present.
 
 ## Progress Map
 

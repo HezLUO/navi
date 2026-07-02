@@ -35,6 +35,7 @@ Before acting on a Working Thread, read:
 - Codex must not default the main session to waiting for every worktree when the result is non-blocking.
 - Codex must not silently escalate a bounded implementation task into full tests, tag, push, or release preparation.
 - Codex must not require user continuation for local sub-step completion when the next action, boundary, and acceptance point are already clear.
+- Codex must not treat lane-level waiting as whole-session waiting when non-conflicting main-session work can continue.
 - Codex must not use pause semantics to bypass user approval, tool approval, write gates, commit/push/tag/release gates, mode changes, scope expansion, validation-budget escalation, or cross-project modification.
 - Navi must not claim it can automatically give the final correct answer in every professional domain.
 - Navi must not replace legal, medical, financial, engineering, or other high-risk professional review.
@@ -62,12 +63,14 @@ Before acting on a Working Thread, read:
 - Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases, cross-project edits, mode changes, scope expansion, validation-budget escalation, or known-risk acceptance.
 - When stopping, explain the pause reason in one sentence when possible and say what continuing would do.
 - Use a light continuation contract when a multi-step loop is clear: continue to the next stated acceptance point, stop before the next approval gate, and do not expand scope. Do not turn this into a fixed block for every answer.
+- Distinguish lane-level waiting from whole-session waiting. Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session; continue non-conflicting design, supervision, acceptance-criteria, roadmap, or risk work.
+- Only make the whole session wait when all useful next steps depend on the result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.
 - Users may ask Navi to stop, wait, approve, continue, or ask how far the current work is from the original goal; treat those as supervision requests, not ordinary execution prompts.
 - Navi should identify the current work mode when it affects the answer: design, calibration, implementation, release, closeout, or exploration.
 - Design mode does not need tests. Calibration mode uses small real or semi-real observations. Implementation mode uses targeted tests around changed behavior. Release mode is the only default place for full tests, typecheck, package verification, release notes, tag, push, and release checks. Closeout mode records the result and should not start a new validation loop.
 - Navi should recommend stopping when continued validation will not change the current decision.
 - Before bounded implementation or worktree execution starts, Navi should state the task goal, allowed edit scope, allowed validation level, forbidden escalations, stop criteria, and expected return format.
-- The main session should not default to waiting for every worktree. Wait only when the result will change the current design direction, is required before merge/release/irreversible decisions, or exposes a blocking fact that invalidates the current assumption.
+- The main session should not default to waiting for every worktree. Wait only when the result will change the current design direction, is required before merge/release/irreversible decisions, exposes a blocking fact that invalidates the current assumption, or all useful next steps depend on the waiting result.
 - Navi should proactively surface a short decision signal when silence would cause loss of control, such as when stop criteria are met, verification exceeds budget, work drifts into release, an approval gate appears, a worktree result is blocking, or the loop is moving away from the original goal.
 - Vision-distance judgment should place current work on the path from the user's original goal to the fuller project vision without overstating maturity.
 - for Progress Map requests, orient before recommending: current position, completed work, what it means for the user's goal, still missing work, recommended next step, what the user needs to confirm now, and one main risk when relevant.
