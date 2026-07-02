@@ -174,6 +174,8 @@ describe("navi init planning", () => {
     ]) {
       expect(agents).toContain(expected);
     }
+
+    expect(agents).not.toContain("design, calibration, implementation, release, closeout, or exploration");
   });
 
   it("rejects stale create actions when a target file appears after planning", async () => {

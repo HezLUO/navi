@@ -323,6 +323,8 @@ Alpha.6 uses four primary Work Modes:
 - Implementation: make a bounded change for a confirmed problem.
 - Release: prepare an external version that users may rely on.
 
+For current Work Mode classification, alpha.6 supersedes the earlier alpha.4 six-stage taxonomy.
+
 Exploration is a Design sub-state, used when the direction is still uncertain or options are being compared.
 
 Closeout, Waiting, Review, and Merge are loop or workflow states, not Work Modes.
