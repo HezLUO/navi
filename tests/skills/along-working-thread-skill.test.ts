@@ -350,6 +350,41 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 5 pause semantics and decision-point stopping", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Alpha.5 pause semantics",
+      "continue inside a bounded, already-approved loop",
+      "stop at decisions the user can actually judge",
+      "continue to the already-defined acceptance point",
+      "Do not stop just because a local sub-step finished",
+      "explain the pause reason",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "## Alpha 5 Pause Semantics Layer",
+      "Continue-Through Rule",
+      "Decision-Point Stop Rule",
+      "Pause Reason Rule",
+      "No Local Completion Stop Rule",
+      "When the next action, boundary, and acceptance point are already clear",
+      "Navi should not stop simply because a sub-step finished",
+      "successful file write or `git diff --check` pass",
+      "writing to files when the current mode was read-only",
+      "staging, committing, pushing, tagging, or releasing",
+      "Use the smallest useful intervention",
+      "No map when the user says `continue` and the continuation boundary is already clear",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");

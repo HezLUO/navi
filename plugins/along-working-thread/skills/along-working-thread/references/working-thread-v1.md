@@ -155,6 +155,81 @@ For alpha.4 this stays lightweight. Navi should be able to say:
 
 Navi should not pretend that a small bugfix or release check is equivalent to progress on the full vision.
 
+## Alpha 5 Pause Semantics Layer
+
+Alpha.5 adds pause semantics to the alpha.4 supervision layer. Alpha.4 decides the current mode and validation budget. Alpha.5 decides how to continue or stop inside that mode.
+
+The goal is:
+
+```text
+Continue inside a bounded, already-approved loop; stop at decisions the user can actually judge.
+```
+
+This is not a promise to never stop. Some stops are required for user control, tool approval, safety, and project ownership.
+
+### Continue-Through Rule
+
+When the next action, boundary, and acceptance point are already clear, Navi should help Codex continue to the already-defined acceptance point instead of stopping at every local completion.
+
+For example, if Codex has said it will write a calibration note, run a doc-only `git diff --check`, and then stop at the commit decision, then successful file write or `git diff --check` pass is not a user decision point. The user should not need to type `continue` merely to reach the commit decision.
+
+If the user says `continue` or `继续` and no permission, risk, mode, project, or release boundary is crossed, Navi should continue directly rather than re-rendering a full Progress Map.
+
+### Decision-Point Stop Rule
+
+Navi should stop when the next step asks the user to decide something meaningful, approve an action, accept risk, change mode, or change scope.
+
+Required stop points include:
+
+- writing to files when the current mode was read-only;
+- touching another project;
+- staging, committing, pushing, tagging, or releasing;
+- changing from design to implementation;
+- changing from implementation to release;
+- expanding scope beyond the approved task;
+- spending a higher validation budget than the current mode allows;
+- accepting a known risk;
+- choosing between materially different product directions;
+- resolving a failed check that requires code or behavior changes.
+
+### Pause Reason Rule
+
+When Navi stops proactively, it should explain the pause reason briefly and say what would happen if the user approves continuing.
+
+Default shape:
+
+```text
+I am stopping here because the next step is a git commit. If you approve, I will commit only the alpha.5 pause semantics implementation files and will not push, tag, or release.
+```
+
+Prefer one sentence when the context is simple. Do not print a full Progress Map when a pause reason is enough.
+
+### No Local Completion Stop Rule
+
+Navi should not stop simply because a sub-step finished. It should continue until the already-declared acceptance point unless a new fact creates a real decision.
+
+Avoidable stop points include:
+
+- "The doc was written."
+- "`git diff --check` passed."
+- "The readonly status check completed."
+- "The first file read finished."
+- "A non-blocking worktree produced another progress update."
+
+These can be reported as progress if useful, but they should not require a user `continue` when the larger boundary is already approved.
+
+### Pause Semantics Output Strategy
+
+Use the smallest useful intervention:
+
+- No map when the user says `continue` and the continuation boundary is already clear.
+- One-sentence pause reason when the only issue is why the agent stopped.
+- Light continuation contract when the task will take multiple steps but the boundary is clear.
+- Compact Progress Map when the user asks where the project is, what comes next, whether to continue, or says they do not understand.
+- Challenge Moment when continuing would drift, over-validate, self-certify, or cross an unsafe boundary.
+
+If pause semantics make Navi produce a strong structure on every response, the behavior is wrong. The point is less meaningless stopping, not more process text.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.

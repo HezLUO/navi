@@ -117,6 +117,26 @@ describe("navi init planning", () => {
     }
   });
 
+  it("installs alpha 5 pause semantics rules for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Alpha.5 pause semantics",
+      "continue to the already-defined acceptance point",
+      "Do not stop just because a local sub-step finished",
+      "Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases",
+      "When stopping, explain the pause reason in one sentence",
+      "Use a light continuation contract when a multi-step loop is clear",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });
