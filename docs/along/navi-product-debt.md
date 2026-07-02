@@ -198,6 +198,8 @@ After the continuation-friction issue was already written into the docs and a li
 
 The same friction immediately repeated: after the first calibration seed was recorded and checked, the user again had to type `continue` and explicitly pointed out that the session should keep moving until the next real decision point. This strengthens the product signal: Navi should not stop merely because a local recording/checking step completed; it should stop when the user must decide whether to commit, push, change scope, spend more budget, or cross a mode boundary.
 
+Another sharper variant appeared during alpha.5 worktree supervision. After a true worktree session had been created for implementation, the main session described itself as stopped at a real waiting point because review/merge depended on the worktree result. The user challenged this: review/merge was waiting, but the main session did not need to wait for unrelated design or supervision work. The correct distinction is lane-level waiting versus session-level waiting. Navi should not collapse "one workstream is blocked until a worktree returns" into "the whole user conversation should stop."
+
 Why it matters:
 
 Repeated manual continuation creates friction and shifts supervisory burden back onto the user. A non-expert user may not know whether Codex paused because it needs approval, reached a safe stop point, hit a tool/runtime boundary, exceeded the current verification budget, or simply lost execution momentum.
@@ -212,6 +214,7 @@ This should be a Navi supervision capability, but not as "never stop" automation
 - classify whether the pause is necessary, optional, or avoidable;
 - state what would happen if the user says `continue`;
 - identify whether continuing would cross a mode boundary such as design to implementation, implementation to release, or read-only to write;
+- identify the scope of the wait: a specific lane, a review/merge path, or the whole session;
 - offer a bounded continuation contract when safe, such as "continue through these three steps, then stop at this acceptance point";
 - recommend stopping when another `continue` would only restart low-value validation or execution loops.
 
@@ -222,6 +225,7 @@ Recommended fix:
 - For each example, record whether there was a real decision, permission, risk, mode boundary, or verification-budget boundary.
 - Treat "the user can only reply continue" as evidence of avoidable pause friction unless a platform, permission, or safety boundary explains the stop.
 - Distinguish necessary pauses from avoidable friction.
+- Distinguish lane-level blocked states from whole-session blocked states, especially when implementation runs in a worktree while the main session can continue design or supervision.
 - Consider adding a concise pause explanation to Navi output when Codex stops at a decision gate.
 - Consider adding bounded continuation contracts to `navi init` guidance only after calibration shows the wording reduces friction without weakening user control.
 

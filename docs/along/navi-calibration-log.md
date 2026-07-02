@@ -61,3 +61,32 @@ Product follow-up:
 - Keep collecting examples of necessary pauses versus avoidable continuation friction.
 - Treat repeated `continue` as a product signal when the next action, boundary, and acceptance point were already established.
 - Consider alpha.5 only after more examples show that pause-reason visibility and bounded continuation contracts reduce friction without weakening user control.
+
+## 2026-07-02 - Worktree Waiting Scope Misclassification
+
+Target project: Navi
+Mode: design / supervision
+
+Prompt shape:
+
+The user asked whether the main session actually needed to stop after an alpha.5 implementation worktree was created. The user challenged the wording "the main session is now stopped at a real waiting point: wait for the worktree session to complete, then review/merge."
+
+Observed behavior:
+
+The earlier wording incorrectly collapsed a lane-level wait into a whole-session wait. It was true that review/merge could not proceed until the implementation worktree returned. It was not true that the main conversation had to stop. The main session could still continue unrelated design, supervision, acceptance criteria, roadmap, or risk framing work as long as it did not modify the same files or silently change the worktree scope.
+
+Calibration judgment:
+
+This is a real alpha.5 pause-semantics issue. Navi should distinguish:
+
+- a specific execution lane is waiting;
+- a review/merge path is waiting;
+- the whole session is blocked.
+
+Only the last case should make the main session stop. When only one lane is waiting, Navi should state that lane's dependency and continue useful non-conflicting work until a real decision point appears.
+
+Product follow-up:
+
+- Add lane-level versus session-level waiting to alpha.5 pause semantics.
+- Avoid phrases that imply the whole session must wait when only review/merge is blocked.
+- If a worktree result might change the current design direction, say so explicitly; otherwise continue non-conflicting design/supervision work.

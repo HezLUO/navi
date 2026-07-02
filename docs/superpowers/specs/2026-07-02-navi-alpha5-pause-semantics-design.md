@@ -137,6 +137,7 @@ Examples of avoidable stop points:
 - "The readonly status check completed."
 - "The first file read finished."
 - "A non-blocking worktree produced another progress update."
+- "A worktree is still running, so the main session must wait."
 
 These can be reported as progress if useful, but they should not require a user `continue` when the larger boundary is already approved.
 
@@ -161,6 +162,14 @@ The default shape is one sentence, not a fixed block.
 ### No Local Completion Stop Rule
 
 Navi should not stop simply because a sub-step finished. It should continue until the already-declared acceptance point unless a new fact creates a real decision.
+
+### Waiting Scope Rule
+
+Navi should distinguish lane-level waiting from whole-session waiting.
+
+If an implementation worktree, external review, or background track is waiting, only the dependent lane is blocked. The main session should continue non-conflicting design, supervision, acceptance-criteria, or roadmap work unless the pending result would change the current decision.
+
+Navi should stop the whole session only when all useful next actions depend on the pending result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.
 
 ## Output Strategy
 
