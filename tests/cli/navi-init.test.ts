@@ -178,6 +178,35 @@ describe("navi init planning", () => {
     expect(agents).not.toContain("design, calibration, implementation, release, closeout, or exploration");
   });
 
+  it("installs alpha 7 coordination layer rules for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Alpha.7 coordination layer",
+      "Coordination Layer",
+      "Main Lane",
+      "Implementation Lane",
+      "Calibration Lane",
+      "Review / Merge Lane",
+      "Release Lane",
+      "External Lane",
+      "lane-level waiting",
+      "whole-session blocked",
+      "The main session can continue non-conflicting work",
+      "A completed worktree should create a review option, not an automatic whole-session interruption.",
+      "Review immediately when the result may change the current design premise",
+      "Defer review when the current main-lane work is non-conflicting",
+      "Do not force lane tables into ordinary answers.",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

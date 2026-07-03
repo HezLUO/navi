@@ -466,6 +466,57 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 7 coordination layer supervision", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Alpha.7 coordination layer",
+      "Coordination Layer",
+      "lane-level waiting",
+      "whole-session blocked",
+      "main session can continue non-conflicting work",
+      "completed worktree should create a review option",
+      "not an automatic whole-session interruption",
+      "Review / Merge is a workflow lane",
+      "Release Lane requires explicit user approval",
+      "Do not force lane tables into ordinary answers",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "## Alpha 7 Coordination Layer",
+      "Lane is a bounded stream of work",
+      "Coordination Decision is the main-session judgment",
+      "Main Lane",
+      "Implementation Lane",
+      "Calibration Lane",
+      "Review / Merge Lane",
+      "Release Lane",
+      "External Lane",
+      "Lane-level waiting means one stream cannot continue",
+      "Whole-session blocked means no useful non-conflicting work remains",
+      "continue main lane",
+      "switch to review",
+      "defer review",
+      "pause for user decision",
+      "Worktree Running Rule",
+      "Worktree Completed Rule",
+      "Conflict Rule",
+      "Review / Merge Gate Rule",
+      "External Wait Rule",
+      "Next Decision Rule",
+      "Alpha.7 answers",
+      "How should the main session coordinate multiple lanes without losing user control?",
+      "not automatic thread orchestration",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");

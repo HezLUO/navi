@@ -409,6 +409,141 @@ Alpha.6 is not a complete roadmap management system, not an automatic project ma
 
 Alpha.6 must not automatically decide product direction, start implementation, create worktrees, escalate to Release mode, publish to npm, publish to a marketplace, or rebrand `src/web` as Navi alpha UI.
 
+## Alpha 7 Coordination Layer
+
+Alpha.7 adds a Coordination Layer on top of alpha.5 pause semantics and alpha.6 stage-and-vision supervision.
+
+Alpha.5 answers:
+
+```text
+Should this lane continue or stop?
+```
+
+Alpha.6 answers:
+
+```text
+What product stage, work mode, and vision distance are we in?
+```
+
+Alpha.7 answers:
+
+```text
+How should the main session coordinate multiple lanes without losing user control?
+```
+
+The goal is:
+
+```text
+Keep the main session useful while bounded lanes run elsewhere; interrupt only when a lane result changes the current decision, creates risk, or reaches a real review/merge gate.
+```
+
+This is prompt/docs-backed supervision, not automatic thread orchestration.
+
+### Core Concepts
+
+Lane is a bounded stream of work with a purpose, scope, owner, and state.
+
+Coordination Decision is the main-session judgment about whether to continue, wait, switch attention, review, merge, or ask the user.
+
+These concepts are not a mandatory output template. Track them internally and surface only the smallest useful signal.
+
+### Lane Types
+
+- Main Lane: the main conversation lane for design, supervision, roadmap judgment, user decisions, acceptance criteria, review planning, and non-conflicting coordination.
+- Implementation Lane: a bounded implementation lane, usually a true Codex worktree session.
+- Calibration Lane: a lane for real or semi-real observations, such as fresh-session transcripts, natural prompt checks, target-project behavior samples, or continuation-friction examples.
+- Review / Merge Lane: a workflow lane that appears when a worktree or implementation result is ready to inspect, cherry-pick, merge, or reject.
+- Release Lane: a lane for external-version readiness. Release Lane requires explicit user approval to enter Release mode.
+- External Lane: a lane waiting on external state such as user feedback, GitHub, CI, another Codex thread, another repository, browser state, network access, or a tool result.
+
+Review / Merge is a workflow lane, not a Work Mode. The Work Mode may still be Implementation or Calibration depending on what is being integrated.
+
+### Lane State
+
+Useful lane states include active, waiting, completed, needs review, blocked, conflicting, and deferred.
+
+Lane-level waiting means one stream cannot continue.
+
+Whole-session blocked means no useful non-conflicting work remains without the pending result or user decision.
+
+Do not collapse lane-level waiting into whole-session blocked.
+
+### Coordination Decisions
+
+Use a Coordination Decision when multiple lanes interact:
+
+- continue main lane when the pending lane does not affect the current design or supervision judgment;
+- continue current execution lane when the task is inside an approved boundary and should proceed to the stated acceptance point;
+- switch to review when a completed lane may change the current premise, risk, or merge path;
+- defer review when the completed lane is relevant but does not need to interrupt the current design segment;
+- pause for user decision when the next action crosses a write, commit, push, release, mode, scope, risk, or project boundary;
+- stop as whole-session blocked when all meaningful next work depends on a pending lane or user decision;
+- open a new lane only with approval when a new worktree, fresh-session thread, or external project action is needed.
+
+### Worktree Running Rule
+
+A running worktree is not a whole-session blocker by default.
+
+The main session can continue non-conflicting design, supervision, acceptance-criteria, roadmap, or calibration-planning work when the pending implementation result does not affect the current judgment.
+
+### Worktree Completed Rule
+
+A completed worktree should create a review option, not an automatic whole-session interruption.
+
+Review immediately when the result may change the current design premise, risk assessment, file scope, merge path, release readiness, or user decision.
+
+Defer review when the current main-lane work is non-conflicting and the worktree result only matters after the current design segment closes.
+
+### Conflict Rule
+
+Stop or switch attention when continuing the main lane would edit the same files as another lane, expand or contradict that lane's scope, invalidate acceptance criteria, make a pending result obsolete, require a release decision, or create incompatible product judgments.
+
+### Review / Merge Gate Rule
+
+Review, cherry-pick, merge, or conflict resolution requires an explicit decision when it changes repository state or product direction.
+
+The main session may prepare review criteria without approval, but it should not merge or push without user approval.
+
+### External Wait Rule
+
+When a tool, thread, CI job, or external project is waiting, name what is waiting and whether other lanes can proceed.
+
+If useful non-conflicting work remains, continue it. If no useful work remains, say the whole session is blocked and name the missing condition.
+
+### Next Decision Rule
+
+When stopping after a completed action, name the next meaningful decision if the session remains active.
+
+Good:
+
+```text
+The push is complete. Next decision: close this calibration line, run one more natural prompt, or return to alpha.7 design.
+```
+
+Bad:
+
+```text
+Pushed.
+```
+
+### Alpha.7 Output Rules
+
+Use Silent Tracking by default.
+
+Use a Light Coordination Signal when the user needs a small orientation correction.
+
+Use a Coordination Map only when the user is visibly losing orientation, multiple lanes conflict, or the user explicitly asks whether to wait, review, merge, or continue.
+
+Do not force lane tables into ordinary answers.
+
+Use the smallest useful coordination signal.
+
+### Alpha.7 Boundaries
+
+Alpha.7 is not automatic creation of worktrees, automatic creation of Codex threads, automatic polling of all threads, automatic merge, automatic cherry-pick, automatic push, a long-term task database, a full project-management system, runtime UI, local app behavior, background watcher behavior, scheduler, notifications, Memory v2, agent adapters, delegation, write delegation, release automation, npm publication, marketplace distribution, or rebranding `src/web` as Navi alpha UI.
+
+Alpha.7 should improve coordination judgment in the current chat-based alpha surface. It should not become an orchestration engine.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.

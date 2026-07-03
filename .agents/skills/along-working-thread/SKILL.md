@@ -11,7 +11,7 @@ The current V1 product surface of Along is **Navi**: a non-expert progress and d
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, and alpha.6 **stage-and-vision supervision**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, or how far the current work is from the original goal. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, or self-certifying momentum. Along remains the broader long-term product vision.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, and alpha.7 **coordination layer**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum. Along remains the broader long-term product vision.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 
@@ -42,6 +42,11 @@ Before acting on a Working Thread, read:
 - Codex must not print Product Stage, Work Mode, and Vision Distance in every response; alpha.6 uses Silent Tracking by default and surfaces structure only when it helps user control.
 - Codex must not treat Exploration as a primary Work Mode; Exploration is a Design sub-state.
 - Codex must not treat Closeout, Waiting, Review, or Merge as primary Work Modes; they are loop or workflow states.
+- Codex must not collapse a lane-level wait, completed worktree, or external wait into whole-session blocking when useful non-conflicting main-session work can continue.
+- Codex must not let a completed worktree automatically interrupt the main session unless the result may change the current premise, risk, file scope, merge path, release readiness, or user decision.
+- Codex must not continue main-session work that would edit the same files, expand the worktree scope, invalidate acceptance criteria, make a pending result obsolete, or create incompatible product judgments.
+- Codex must not start a Release Lane, merge, cherry-pick, push, create a worktree, create a Codex thread, or poll external lanes without explicit user approval.
+- Codex must not force lane tables into ordinary answers; alpha.7 uses silent tracking by default and surfaces coordination only when it affects user control.
 - Navi must not claim it can automatically give the final correct answer in every professional domain.
 - Navi must not replace legal, medical, financial, engineering, or other high-risk professional review.
 - Challenge Moments should challenge self-certifying momentum, not become constant critique.
@@ -75,6 +80,16 @@ Before acting on a Working Thread, read:
 - Vision Distance should be stage-relative, not percentage-based: name what the current stage is trying to complete, whether it is close to enough, which product layers remain missing, and what next stage best serves the original vision.
 - Use Silent Tracking by default. Use a Light Signal when the user is starting to lose orientation, validation is beginning to dominate design, worktree completion might interrupt non-blocking design, or repeated `continue` prompts indicate friction. Use a Full Map when the user explicitly asks a broad orientation question or the session is visibly losing product direction.
 - Do not print Product Stage, Work Mode, and Vision Distance in every response. Use the smallest useful intervention.
+- Alpha.7 coordination layer helps the main session supervise multiple active lanes without becoming a runtime scheduler or project-management system. This Coordination Layer stays prompt/docs-backed.
+- Track lanes internally when useful: Main Lane, Implementation Lane, Calibration Lane, Review / Merge Lane, Release Lane, and External Lane.
+- A lane is a bounded stream of work with a purpose, scope, owner, and state. A Coordination Decision is the main-session judgment about whether to continue, wait, switch attention, review, merge, or ask the user.
+- Distinguish lane-level waiting from whole-session blocked. Lane-level waiting means one stream cannot continue. Whole-session blocked means no useful non-conflicting work remains without the pending result or user decision.
+- The main session can continue non-conflicting work while an implementation worktree, calibration thread, external review, or tool result is waiting, unless the pending result would change the current decision.
+- A completed worktree should create a review option, not an automatic whole-session interruption. Review immediately when the result may change the current design premise, risk assessment, file scope, merge path, release readiness, or user decision. Defer review when the current main-lane work is non-conflicting and the result only matters after the current design segment closes.
+- Stop or switch attention when continuing would edit the same files as another lane, expand or contradict that lane's scope, invalidate acceptance criteria, make a pending result obsolete, require a release decision, or create incompatible product judgments.
+- Review / Merge is a workflow lane, not a Work Mode. Release Lane requires explicit user approval to enter Release mode.
+- Use Silent Tracking by default. Use a Light Coordination Signal when a small orientation correction is enough. Use a Coordination Map only when the user is visibly losing orientation, multiple lanes conflict, or the user explicitly asks whether to wait, review, merge, or continue.
+- Do not force lane tables into ordinary answers. Use the smallest useful coordination signal.
 - Use a light continuation contract when a multi-step loop is clear: continue to the next stated acceptance point, stop before the next approval gate, and do not expand scope. Do not turn this into a fixed block for every answer.
 - Distinguish lane-level waiting from whole-session waiting. Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session; continue non-conflicting design, supervision, acceptance-criteria, roadmap, or risk work.
 - Only make the whole session wait when all useful next steps depend on the result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.
