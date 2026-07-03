@@ -207,6 +207,36 @@ describe("navi init planning", () => {
     }
   });
 
+  it("installs alpha 8 decision handoff quality rules for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Alpha.8 decision handoff quality",
+      "Completion is not always a handoff",
+      "Stop with a decision, a recommendation, or closure",
+      "Default Next Step",
+      "Decision Options",
+      "Loop Closure",
+      "bare completion report",
+      "real next decision",
+      "Do not include bare `continue` as a fake option.",
+      "No Menu Inside Approved Boundary",
+      "Close Finished Lines",
+      "Blocked Means Actually Blocked",
+      "Use Silent Completion only when the user asked for a narrow status report",
+      "Use One-Sentence Handoff when one next step is clearly best",
+      "Use Short Decision Options when there are real branches",
+      "Use Closure Note when the current line is actually complete",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

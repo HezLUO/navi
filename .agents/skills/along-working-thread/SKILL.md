@@ -11,7 +11,7 @@ The current V1 product surface of Along is **Navi**: a non-expert progress and d
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, and alpha.7 **coordination layer**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum. Along remains the broader long-term product vision.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, alpha.7 **coordination layer**, and alpha.8 **decision handoff quality**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Alpha.8 helps Codex stop with a decision, a recommendation, or closure instead of a bare completion report when the session remains active. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum. Along remains the broader long-term product vision.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 
@@ -47,6 +47,11 @@ Before acting on a Working Thread, read:
 - Codex must not continue main-session work that would edit the same files, expand the worktree scope, invalidate acceptance criteria, make a pending result obsolete, or create incompatible product judgments.
 - Codex must not start a Release Lane, merge, cherry-pick, push, create a worktree, create a Codex thread, or poll external lanes without explicit user approval.
 - Codex must not force lane tables into ordinary answers; alpha.7 uses silent tracking by default and surfaces coordination only when it affects user control.
+- Codex must not stop after a completed action with only a bare completion report when the session remains active and the next user decision is not visible.
+- Codex must not include bare `continue` or `继续` as a fake option; continuing must name the concrete next action, boundary, and stop point.
+- Codex must not print decision menus inside an already-approved bounded loop before the stated acceptance point.
+- Codex must not make a default recommendation sound like user approval for writes, commits, pushes, releases, mode changes, scope expansion, or risk acceptance.
+- Codex must not claim the whole session is blocked when only one lane is blocked and useful non-conflicting work remains.
 - Navi must not claim it can automatically give the final correct answer in every professional domain.
 - Navi must not replace legal, medical, financial, engineering, or other high-risk professional review.
 - Challenge Moments should challenge self-certifying momentum, not become constant critique.
@@ -90,6 +95,16 @@ Before acting on a Working Thread, read:
 - Review / Merge is a workflow lane, not a Work Mode. Release Lane requires explicit user approval to enter Release mode.
 - Use Silent Tracking by default. Use a Light Coordination Signal when a small orientation correction is enough. Use a Coordination Map only when the user is visibly losing orientation, multiple lanes conflict, or the user explicitly asks whether to wait, review, merge, or continue.
 - Do not force lane tables into ordinary answers. Use the smallest useful coordination signal.
+- Alpha.8 decision handoff quality covers what Codex says when it gives control back to the user. Completion is not always a handoff.
+- Stop with a decision, a recommendation, or closure; do not stop with a bare completion report when the session is still active.
+- Choose the smallest useful Handoff Outcome: Default Next Step when one direction is clearly best, Decision Options when real branches exist, Loop Closure when the current line is actually complete, or a blocked reason when no useful non-conflicting work remains.
+- A real next decision must be something the user can judge; do not include bare `continue` as a fake option. If continuing is an option, name the concrete next action, boundary, and stop point.
+- No Menu Inside Approved Boundary: if the user already approved a bounded loop with a clear acceptance point, continue to that point unless a new approval gate, risk, scope change, or blocker appears.
+- Close Finished Lines explicitly. Say the line is closed and name any remaining open lanes only when that helps the user choose what to do next.
+- Blocked Means Actually Blocked: do not say the whole session is waiting or blocked unless all useful non-conflicting work depends on the missing input, tool result, or external state.
+- Match handoff strength to Work Mode. Design handoffs recommend refine/write/commit/implementation planning. Calibration handoffs recommend record one sample, run one more sample, or close. Implementation handoffs recommend commit, review, merge, targeted follow-up, or stop at verification. Release handoffs recommend release gates only after explicit Release mode approval.
+- Use Silent Completion only for narrow status reports or genuinely finished work with no active follow-up. Use One-Sentence Handoff when one next step is clearly best. Use Short Decision Options when there are real branches. Use Closure Note when the current line is actually complete.
+- Alpha.8 is not a mandatory menu, fixed checklist, automatic mode switch, automatic implementation plan, automatic worktree creation, automatic commit/push/merge/tag/release, or project-management layer.
 - Use a light continuation contract when a multi-step loop is clear: continue to the next stated acceptance point, stop before the next approval gate, and do not expand scope. Do not turn this into a fixed block for every answer.
 - Distinguish lane-level waiting from whole-session waiting. Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session; continue non-conflicting design, supervision, acceptance-criteria, roadmap, or risk work.
 - Only make the whole session wait when all useful next steps depend on the result, or when continuing would change the worktree scope, touch the same files, cross a mode boundary, or require a user decision.

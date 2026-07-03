@@ -544,6 +544,161 @@ Alpha.7 is not automatic creation of worktrees, automatic creation of Codex thre
 
 Alpha.7 should improve coordination judgment in the current chat-based alpha surface. It should not become an orchestration engine.
 
+## Alpha 8 Decision Handoff Quality
+
+Alpha.8 adds Decision Handoff Quality on top of alpha.5 pause semantics, alpha.6 stage-and-vision supervision, and alpha.7 coordination.
+
+Alpha.5 answers:
+
+```text
+Should this lane continue or stop?
+```
+
+Alpha.6 answers:
+
+```text
+What product stage, work mode, and vision distance are we in?
+```
+
+Alpha.7 answers:
+
+```text
+How should the main session coordinate multiple lanes without losing user control?
+```
+
+Alpha.8 answers:
+
+```text
+When Codex gives control back, is the next decision visible and useful?
+```
+
+The goal is:
+
+```text
+Stop with a decision, a recommendation, or closure; do not stop with a bare completion report when the session is still active.
+```
+
+This is prompt/docs-backed supervision. It is not a runtime scheduler, task database, or project-management layer.
+
+### Core Principle
+
+Completion is not always a handoff.
+
+Reporting that an action completed is not enough when the session remains active and the user still needs to choose what happens next. A useful handoff should tell the user what control they now have.
+
+### Handoff Outcome
+
+Use the smallest useful Handoff Outcome:
+
+- Default Next Step: one direction is clearly best and does not cross an unapproved boundary.
+- Decision Options: two to four real branches exist and the user can judge among them.
+- Loop Closure: the current line is actually complete.
+- Blocked reason: no useful non-conflicting work remains without missing input, tool result, external state, or user approval.
+
+### Stop With Decision Rule
+
+If Codex proactively stops while the session remains active, the response should include one of:
+
+- a default recommended next step;
+- a small set of real decision options;
+- explicit loop closure;
+- a blocked reason and the condition needed to proceed.
+
+Avoid bare completion reports unless the user explicitly asked only for a status report.
+
+### One Clear Path Rule
+
+When one next step is clearly best, give a recommendation instead of a menu.
+
+Good:
+
+```text
+Recommended next step: push main. The work is already committed and verified; this does not start release mode.
+```
+
+Weak:
+
+```text
+What next?
+```
+
+### Real Branches Rule
+
+When multiple reasonable paths exist, show two to four real options. The branches must be concrete and materially different.
+
+Good:
+
+```text
+Next decision:
+1. Push the current docs commits.
+2. Create the implementation worktree.
+3. Pause with design and plan committed.
+```
+
+Bad:
+
+```text
+1. Continue.
+2. Do something else.
+```
+
+Do not include bare `continue` as a fake option. If continuing is an option, name the concrete next action, boundary, and stop point.
+
+### No Menu Inside Approved Boundary Rule
+
+If the user already approved a bounded loop with a clear acceptance point, do not stop with a menu at every intermediate completion.
+
+Example contract:
+
+```text
+I will write the plan, run diff check, then stop at the commit decision.
+```
+
+Successful file writes, read-only checks, and `git diff --check` passing inside that contract should not require user decisions. The handoff happens at the commit decision unless a new approval gate, risk, scope change, or blocker appears.
+
+### Close Finished Lines Rule
+
+When a line is complete, say so explicitly and name any remaining open lines if the session continues.
+
+Example:
+
+```text
+This calibration line is closed. No further validation is needed unless you want a natural-prompt sample later.
+```
+
+### Blocked Means Actually Blocked Rule
+
+Do not say the session is waiting or blocked unless all useful non-conflicting work depends on the missing input, tool result, external state, or user approval.
+
+If only one lane is blocked, name that lane and say what the main session can still do.
+
+### Mode-Sensitive Handoff Rule
+
+The handoff shape should match the current Work Mode:
+
+- Design: recommend refining, writing, committing, or moving to implementation planning.
+- Calibration: recommend recording evidence, running one more sample, or closing the calibration line.
+- Implementation: recommend commit, review, merge, targeted follow-up, or stopping at verification.
+- Release: recommend release-gate decisions such as tag, release notes, source package verification, or stop.
+
+Do not let implementation or release options appear in Design mode unless the user has approved that mode transition.
+
+### Output Strategy
+
+Silent Completion: use only when the user asked for a narrow status report or the task is genuinely done with no active follow-up.
+
+One-Sentence Handoff: use when a default next step is obvious.
+
+Short Decision Options: use when multiple real branches exist. Prefer two or three options. Four is the upper bound.
+
+Closure Note: use when the line is complete and the next best action is to switch tracks or stop.
+
+### Alpha.8 Boundaries
+
+Alpha.8 is not a mandatory menu in every response, not a fixed checklist after every action, not automatic mode switching, not automatic implementation planning, not automatic worktree creation, not automatic commit, push, merge, tag, or release, not a task database, not runtime UI, not local app behavior, not background watcher behavior, not Memory v2, not agent adapters, not delegation or write delegation, not release automation, not npm publication, and not marketplace distribution.
+
+Alpha.8 should improve the final step of supervision without creating more process text than the user needs.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.

@@ -517,6 +517,56 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 8 decision handoff quality", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Alpha.8 decision handoff quality",
+      "Completion is not always a handoff",
+      "Stop with a decision, a recommendation, or closure",
+      "Default Next Step",
+      "Decision Options",
+      "Loop Closure",
+      "bare completion report",
+      "real next decision",
+      "do not include bare `continue` as a fake option",
+      "No Menu Inside Approved Boundary",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "## Alpha 8 Decision Handoff Quality",
+      "Alpha.8 answers",
+      "When Codex gives control back, is the next decision visible and useful?",
+      "Completion is not always a handoff",
+      "Handoff Outcome",
+      "Default Next Step",
+      "Decision Options",
+      "Loop Closure",
+      "Stop With Decision Rule",
+      "One Clear Path Rule",
+      "Real Branches Rule",
+      "No Menu Inside Approved Boundary Rule",
+      "Close Finished Lines Rule",
+      "Blocked Means Actually Blocked Rule",
+      "Mode-Sensitive Handoff Rule",
+      "Silent Completion",
+      "One-Sentence Handoff",
+      "Short Decision Options",
+      "Closure Note",
+      "not a mandatory menu in every response",
+      "not automatic implementation planning",
+      "not automatic worktree creation",
+      "not automatic commit, push, merge, tag, or release",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
