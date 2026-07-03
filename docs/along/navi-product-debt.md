@@ -1,12 +1,14 @@
 # Navi Product Debt Register
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
 ## Current Naming Decision
 
 Use **Navi** as the public product and plugin display name.
+
+Use **Navi as an independent product surface**. Along is the parent project or lab context, not a prerequisite concept for understanding Navi. Navi may remain part of Along's broader product family, but external readers should be able to understand, install, and evaluate Navi without first learning Along.
 
 Use **Progress Map** as the name of Navi's current V1 output format, not as the whole product name. Progress Map is the clearest current wedge because users can immediately see it when they ask what is happening, what comes next, or whether a plan is trustworthy. It is not the entire long-term selling point.
 
@@ -18,7 +20,7 @@ Progress Map = core V1 map output
 Rhythm Map = Progress Map variant for flowing long-running projects
 Challenge Layer = risk-escalation behavior inside Navi
 Working Thread = internal continuity mechanism
-Along = parent project or lab context
+Along = parent project or lab context, not the user-facing prerequisite
 ```
 
 Recommended public plugin surface:
@@ -59,7 +61,7 @@ Priority: high before public release
 
 Problem:
 
-Some docs have compressed Navi into Progress Map plus Challenge Layer. The intended hierarchy is broader: Navi is Along's current V1 product surface for non-expert supervision, Progress/Rhythm Maps and Challenge Layer are the current V1 alpha mechanisms, Working Thread is the internal continuity substrate, and Along remains the broader long-term product vision.
+Some docs have compressed Navi into Progress Map plus Challenge Layer, while others still imply that the reader must understand Along first. The intended hierarchy is broader and Navi-first: Navi is an independent product surface for non-expert supervision of expert agents. Progress/Rhythm Maps and Challenge Layer are current V1 alpha mechanisms, Working Thread is the internal continuity substrate, and Along remains the parent/lab context or broader long-term product family.
 
 Why it matters:
 
@@ -68,8 +70,10 @@ The repository currently tells two different stories. A new reader may not know 
 Recommended fix:
 
 - Keep the root README and package docs aligned on the current product hierarchy.
-- Make Navi the current V1 surface without reducing Navi to Progress/Rhythm Maps and Challenge Layer.
+- Make Navi the public entrypoint without reducing Navi to Progress/Rhythm Maps and Challenge Layer.
+- Explain Along as origin, parent/lab context, or broader family, not as prerequisite user knowledge.
 - Move older companion/runtime ideas into roadmap or historical context.
+- Add a short compatibility note for `along-working-thread` as a legacy/internal id.
 
 ### 3. Installation And Initialization Debt
 

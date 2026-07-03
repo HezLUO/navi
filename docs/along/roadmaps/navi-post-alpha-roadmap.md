@@ -1,15 +1,29 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: draft backlog after the `0.1.0-alpha` GitHub source release
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
+
+## Product Positioning
+
+Navi should be treated as an independent product surface for non-expert users supervising expert agents.
+
+Along remains the parent project or lab context and may remain the broader product family, but external readers should not need to understand Along before they understand Navi. `along-working-thread` should be treated as a legacy/internal implementation id unless a future compatibility migration intentionally changes it.
+
+The public narrative should be Navi-first:
+
+```text
+Navi helps non-expert users understand, supervise, and steer expert agents.
+```
+
+This positioning keeps future Along integration possible without making Along the entrypoint for current users.
 
 ## Challenge Moment Integration
 
 Challenge Moment is already integrated into Navi through the Challenge Layer.
 
-Navi is Along's current V1 product surface, not the whole long-term Along product. Navi's V1 alpha behavior centers on Progress/Rhythm Maps and Challenge Layer. Challenge Moment is the escalation behavior inside a map when the current path shows drift, weak assumptions, premature execution, or self-certifying momentum. It should appear as a useful risk note and validation suggestion, not as a separate lecture or constant critique.
+Navi's V1 alpha behavior centers on Progress/Rhythm Maps, Challenge Layer, pause semantics, stage-and-vision supervision, and coordination guidance. Challenge Moment is the escalation behavior inside a map when the current path shows drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum. It should appear as a useful risk note and validation suggestion, not as a separate lecture or constant critique.
 
 The alpha claim is limited: the docs-backed skill behavior is stable enough to use as the V1 baseline. This does not prove long-term product feeling, every professional domain, or future runtime/UI surfaces.
 
