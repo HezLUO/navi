@@ -1,7 +1,7 @@
 {
   "name": "navi",
   "version": "0.1.0",
-  "description": "Navi helps non-expert users understand, supervise, and steer expert agents with Progress Maps and Challenge Layer behavior.",
+  "description": "Navi helps non-expert users understand, supervise, and steer expert agents with maps, challenge, pause, stage/vision, and coordination guidance.",
   "private": true,
   "license": "MIT",
   "type": "module",

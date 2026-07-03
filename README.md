@@ -10,9 +10,9 @@ Agent work is hard to supervise. Navi turns project progress, next steps, and ri
 
 ![Navi Progress Map preview](docs/assets/navi-progress-map-preview.svg)
 
-Navi is an independent open-source product and the first V1 product surface from the broader Along vision. Along is the long-term companion-layer vision; Navi is the current alpha product you can inspect, install, and test today.
+Navi is an independent open-source product for supervising expert agents. It is the current alpha product you can inspect, install, and test today.
 
-This repository is the canonical open-source alpha home for Navi. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer** behavior inside active Codex sessions: it explains where a target project stands, what is missing, what comes next, what the user needs to confirm, and when expert-agent momentum needs a lightweight challenge.
+This repository is the canonical open-source alpha home for Navi. Current main branch behavior includes Progress/Rhythm Maps, Challenge Layer, pause semantics, stage/vision supervision, and coordination guidance. Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.
 
 ## Try Navi Alpha In 5 Minutes
 
@@ -58,17 +58,23 @@ Wait for a later release if you need npm distribution, public marketplace instal
 
 ## Alpha Status
 
-`0.1.0-alpha.3` is ready as the latest GitHub source release for developers and early testers.
+Latest tagged GitHub source release: `0.1.0-alpha.3`.
+
+Current main branch: includes post-release docs-backed supervision updates through alpha.7 Coordination Layer guidance. These main-branch changes are not a new tagged release unless a later release is explicitly prepared.
 
 What is stable in this alpha:
 
 - Navi Progress Maps for progress, next-step, continue, done, confusion, and plan-reliability questions.
 - Rhythm Maps for flowing long-running projects with recurring cycles, waiting states, parallel opportunities, and decision gates.
 - Challenge Layer behavior for anti-self-certification moments.
+- Pause semantics for continue/stop boundaries and meaningful decision points.
+- Stage/vision supervision for product stage, work mode, and distance from the original goal.
+- Coordination guidance for worktrees, review/merge timing, external waits, and non-conflicting main-session work.
 - Prompt-language following for Navi maps in multilingual target projects.
 - Working Thread continuity for project judgment that needs durable carry-forward.
 - Project-local Navi initialization through `navi init`, `AGENTS.md`, and `docs/along/project-maps/`.
 - Codex skill/plugin behavior with project-local docs.
+- source package verification through `npm run verify:plugin-package`.
 
 What is not included:
 
@@ -84,11 +90,9 @@ The root `package.json` intentionally remains `"private": true` to prevent accid
 
 ## Relationship To Along
 
-Along is the broader long-term product vision: a local-first, open-source companion layer for existing agents.
+Along is the parent/lab context and broader long-term product family. Navi is an independent product surface from that work and should be understandable without knowing Along.
 
-Navi is the first independent V1 product surface from that vision. It is not the whole Along roadmap. The current Navi alpha focuses on non-expert supervision through Progress/Rhythm Maps, Challenge Layer behavior, and Working Thread continuity.
-
-The internal package id remains `along-working-thread` for alpha compatibility. Treat that as an implementation and migration name, not the customer-facing product name.
+Use Along to understand origin and future-family context. Use Navi to understand the current alpha product, setup path, and supervision behavior.
 
 ## Current V1 shape
 
@@ -98,7 +102,7 @@ Current V1 uses skill/plugin behavior with project-local docs. The repo-containe
 plugins/along-working-thread
 ```
 
-The internal package id remains `along-working-thread` for compatibility with existing skill paths, local installs, and tests. The customer-facing product name is Navi.
+Some internal ids, paths, and package directories still use `along-working-thread` for alpha compatibility. Treat that as legacy/internal naming, not the customer-facing product name.
 
 Navi V1 is docs-backed and turn-bound. It works while an active agent session is running; it does not watch files, send notifications, or act when Codex is closed.
 

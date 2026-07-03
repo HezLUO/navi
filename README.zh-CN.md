@@ -10,13 +10,13 @@ Agent 工作很难监督。Navi 会把项目进展、下一步和有风险的推
 
 ![Navi Progress Map preview](docs/assets/navi-progress-map-preview.svg)
 
-Navi 是一个独立的开源产品，也是更大的 Along 愿景中的第一个 V1 产品表面。Along 是长期的 companion-layer 愿景；Navi 是当前可以检查、安装和测试的 alpha 产品。
+Navi 是一个独立的开源产品，用于监督 expert agents。它是当前可以检查、安装和测试的 alpha 产品。
 
-这个仓库是 Navi canonical 的开源 alpha 主页。Navi 的 V1 alpha 行为集中在活跃 Codex 会话中的 **Progress/Rhythm Maps** 和 **Challenge Layer**：它会解释目标项目现在处于哪里、还缺什么、下一步是什么、用户需要确认什么，以及 expert-agent 的推进什么时候需要轻量挑战。
+这个仓库是 Navi canonical 的开源 alpha 主页。当前 main branch 行为包括 Progress/Rhythm Maps、Challenge Layer、pause semantics、stage/vision supervision 和 coordination guidance。Navi 会说明项目现在在哪里、还缺什么、是否应该继续、什么时候该停、验证做到什么程度够，以及并行工作应该等待还是继续。
 
 ## 5 分钟试用 Navi Alpha
 
-这个 alpha 是面向 Codex 用户和开发者的 GitHub source package，适合愿意从仓库测试的人。它还不是 npm package、公开 marketplace listing，或一键全局安装器。
+这个 alpha 是 GitHub source package，面向愿意从仓库测试的 Codex 用户和开发者。它还不是 npm package、公开 marketplace listing，或一键全局安装器。
 
 ```bash
 git clone https://github.com/HezLUO/navi.git
@@ -58,17 +58,23 @@ Navi map 默认应该跟随用户当前 prompt 的语言。如果目标项目保
 
 ## Alpha 状态
 
-`0.1.0-alpha.3` 是当前面向开发者和早期测试者的最新 GitHub source release。
+最新 tagged GitHub source release：`0.1.0-alpha.3`。
+
+当前 main branch：包含到 alpha.7 Coordination Layer guidance 为止的 post-release docs-backed supervision updates。除非后续明确准备新的 release，否则这些 main branch 变化还不是新的 tagged release。
 
 这个 alpha 中稳定的内容：
 
 - Navi Progress Maps：用于 progress、next-step、continue、done、confusion 和 plan-reliability 问题。
 - Rhythm Maps：用于有周期循环、等待状态、并行机会和决策门的长期流动项目。
 - Challenge Layer：用于 anti-self-certification moment。
+- Pause semantics：用于 continue/stop 边界和真正有意义的 decision point。
+- Stage/vision supervision：用于判断 product stage、work mode，以及距离原始目标还有多远。
+- Coordination guidance：用于 worktree、review/merge timing、external waits，以及 non-conflicting main-session work。
 - 多语言目标项目中的 Navi map prompt-language following。
 - Working Thread continuity：用于需要 durable carry-forward 的项目判断。
 - 通过 `navi init`、`AGENTS.md` 和 `docs/along/project-maps/` 做 project-local Navi 初始化。
 - 搭配 project-local docs 的 Codex skill/plugin 行为。
+- 通过 `npm run verify:plugin-package` 做 source package verification。
 
 当前不包含：
 
@@ -84,11 +90,9 @@ Navi map 默认应该跟随用户当前 prompt 的语言。如果目标项目保
 
 ## Navi 和 Along 的关系
 
-Along 是更大的长期产品愿景：一个 local-first、open-source 的 existing agents companion layer。
+Along 是 parent/lab context 和更长期的产品家族。Navi 是从这条线中独立出来的产品 surface，不应该要求读者先理解 Along 才能理解 Navi。
 
-Navi 是这个愿景中的第一个独立 V1 产品表面。它不是完整的 Along roadmap。当前 Navi alpha 关注通过 Progress/Rhythm Maps、Challenge Layer 行为和 Working Thread continuity 来帮助非专家监督 agent 工作。
-
-内部 package id 仍保留为 `along-working-thread`，用于 alpha compatibility。请把它视为 implementation 和 migration 名称，而不是面向用户的产品名。
+如果要理解来源和未来产品家族，可以看 Along。如果要理解当前 alpha 产品、setup path 和 supervision behavior，应先看 Navi。
 
 ## 当前 V1 形态
 
@@ -98,7 +102,7 @@ Navi 是这个愿景中的第一个独立 V1 产品表面。它不是完整的 A
 plugins/along-working-thread
 ```
 
-内部 package id 仍是 `along-working-thread`，以兼容现有 skill paths、local installs 和 tests。面向用户的产品名是 Navi。
+一些内部 id、路径和 package directory 仍会因为 alpha compatibility 使用 `along-working-thread`。请把它视为 legacy/internal naming，不是面向用户的产品名。
 
 Navi V1 是 docs-backed 且 turn-bound 的。它在活跃 agent session 中工作；它不会 watch files、发送 notifications，也不会在 Codex 关闭后继续行动。
 

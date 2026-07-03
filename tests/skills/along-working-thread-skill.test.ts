@@ -949,41 +949,84 @@ describe("Along Working Thread Codex skill", () => {
 });
 
 describe("Along Working Thread repo-contained plugin package", () => {
-  it("documents the current Navi-first product narrative in the root README", async () => {
+  it("documents the current Navi-first public narrative in the root README", async () => {
     const readme = await readRepoText("README.md");
 
     for (const expected of [
-      "Navi is an independent open-source product and the first V1 product surface from the broader Along vision",
-      "Navi is the current alpha product you can inspect, install, and test today",
-      "This repository is the canonical open-source alpha home for Navi",
-      "Navi's V1 alpha behavior centers on",
-      "Progress/Rhythm Maps",
-      "Try Navi Alpha In 5 Minutes",
+      "Navi helps non-expert users understand, supervise, and steer expert agents.",
+      "Navi is an independent open-source product for supervising expert agents.",
+      "Current main branch behavior includes Progress/Rhythm Maps, Challenge Layer, pause semantics, stage/vision supervision, and coordination guidance.",
+      "Latest tagged GitHub source release:",
+      "Current main branch:",
       "This alpha is a GitHub source package",
+      "Codex skill/plugin behavior",
+      "project-local docs",
+      "`navi init`",
+      "source package verification",
+      "npm run verify:plugin-package",
       "npm run navi -- init --target /path/to/target-project",
-      "Project-local setup is explicit and dry-run by default",
-      "git clone https://github.com/HezLUO/navi.git",
-      "Who This Alpha Is For",
-      "Wait for a later release if you need npm distribution",
-      "global Codex plugin installation",
-      "Along is the broader long-term product vision",
-      "Current V1 shape",
-      "skill/plugin behavior with project-local docs",
-      "Verify The Source Package",
-      "Alpha Feedback We Want",
-      "Did ordinary progress, next-step, confusion, continue, and plan-reliability questions trigger a useful Navi map?",
+      "Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.",
+      "Along is the parent/lab context and broader long-term product family.",
+      "should be understandable without knowing Along",
+      "Some internal ids, paths, and package directories still use `along-working-thread` for alpha compatibility.",
+      "legacy/internal naming",
+      "not the customer-facing product name",
       "MCP, runtime, local app, background presence",
       "older Along companion ideas",
     ]) {
       expect(readme).toContain(expected);
     }
 
-    const verifyCommandIndex = readme.indexOf("npm run verify:plugin-package");
-    const verifySentenceIndex = readme.indexOf("That verifies the repo-contained Navi plugin source package.");
-    const initCommandIndex = readme.indexOf("npm run navi -- init --target /path/to/target-project");
+    for (const forbidden of [
+      "Navi is Along's current V1 product surface",
+      "Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer** behavior",
+      "`0.1.0-alpha.3` is ready as the latest GitHub source release",
+    ]) {
+      expect(readme).not.toContain(forbidden);
+    }
 
-    expect(verifyCommandIndex).toBeLessThan(verifySentenceIndex);
-    expect(verifySentenceIndex).toBeLessThan(initCommandIndex);
+    const promiseIndex = readme.indexOf("Navi helps non-expert users understand, supervise, and steer expert agents.");
+    const alongIndex = readme.indexOf("Along is the parent/lab context");
+    const compatibilityIndex = readme.indexOf(
+      "Some internal ids, paths, and package directories still use `along-working-thread`",
+    );
+
+    expect(promiseIndex).toBeGreaterThanOrEqual(0);
+    expect(alongIndex).toBeGreaterThan(promiseIndex);
+    expect(compatibilityIndex).toBeGreaterThan(alongIndex);
+  });
+
+  it("keeps the Chinese README aligned with the public narrative system", async () => {
+    const readme = await readRepoText("README.zh-CN.md");
+
+    for (const expected of [
+      "Navi 帮助非专家用户理解、监督并引导 expert agents。",
+      "Navi 是一个独立的开源产品，用于监督 expert agents。",
+      "当前 main branch 行为包括 Progress/Rhythm Maps、Challenge Layer、pause semantics、stage/vision supervision 和 coordination guidance。",
+      "最新 tagged GitHub source release：",
+      "当前 main branch：",
+      "这个 alpha 是 GitHub source package",
+      "Codex skill/plugin 行为",
+      "project-local docs",
+      "`navi init`",
+      "source package verification",
+      "npm run verify:plugin-package",
+      "Navi 会说明项目现在在哪里、还缺什么、是否应该继续、什么时候该停、验证做到什么程度够，以及并行工作应该等待还是继续。",
+      "Along 是 parent/lab context 和更长期的产品家族。",
+      "不应该要求读者先理解 Along 才能理解 Navi",
+      "一些内部 id、路径和 package directory 仍会因为 alpha compatibility 使用 `along-working-thread`。",
+      "legacy/internal naming",
+      "不是面向用户的产品名",
+    ]) {
+      expect(readme).toContain(expected);
+    }
+
+    for (const forbidden of [
+      "Navi 是这个愿景中的第一个独立 V1 产品表面。",
+      "`0.1.0-alpha.3` 是当前面向开发者和早期测试者的最新 GitHub source release。",
+    ]) {
+      expect(readme).not.toContain(forbidden);
+    }
   });
 
   it("documents shipped navi init scope in debt and roadmap docs", async () => {
@@ -1130,6 +1173,10 @@ describe("Along Working Thread repo-contained plugin package", () => {
     );
 
     expect(agentMetadata).toContain("Navi Progress Maps");
+    expect(agentMetadata).toContain("supervision");
+    expect(agentMetadata).toContain("pause/continue");
+    expect(agentMetadata).toContain("stage/vision");
+    expect(agentMetadata).toContain("coordination");
     expect(agentMetadata).toContain("Rhythm Maps");
     expect(agentMetadata).toContain("progress, next-step, confusion, continue, or plan-reliability");
     expect(agentMetadata).toContain("接下来");
@@ -1140,6 +1187,33 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(agentMetadata).toContain("ordinary clear execution requests");
     expect(agentMetadata).toContain("stay quiet");
     expect(agentMetadata).toContain("allow_implicit_invocation: true");
+  });
+
+  it("keeps package metadata aligned with Navi public narrative", async () => {
+    const packageJson = JSON.parse(await readRepoText("package.json")) as {
+      description: string;
+      private: boolean;
+    };
+    const canonicalMetadata = await readRepoText(".agents/skills/along-working-thread/agents/openai.yaml");
+    const pluginMetadata = await readRepoText(
+      "plugins/along-working-thread/skills/along-working-thread/agents/openai.yaml",
+    );
+
+    expect(packageJson.private).toBe(true);
+    expect(packageJson.description).toContain(
+      "Navi helps non-expert users understand, supervise, and steer expert agents",
+    );
+    expect(packageJson.description).toContain("maps, challenge, pause, stage/vision, and coordination guidance");
+
+    for (const metadata of [canonicalMetadata, pluginMetadata]) {
+      expect(metadata).toContain("display_name: Navi");
+      expect(metadata).toContain("Navi supervision");
+      expect(metadata).toContain("Progress/Rhythm Maps");
+      expect(metadata).toContain("pause/continue");
+      expect(metadata).toContain("stage/vision");
+      expect(metadata).toContain("coordination");
+      expect(metadata).toContain("ordinary clear execution requests stay quiet");
+    }
   });
 
   it("positions the package around Navi Progress Map without expanding runtime scope", async () => {
