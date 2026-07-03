@@ -1,9 +1,59 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-03 - Alpha.6 Fresh-Session Stage / Vision Distance Check
+
+Target project: `/Users/james/Codex Project/General Codex Project/sub_ag_ski`
+Fresh thread: `019f25f9-e357-7582-b17c-e5493944862d`
+Mode: calibration, read-only
+
+Prompt shape:
+
+The fresh thread was created in the real target project and asked:
+
+> what's next? how far is this project from the original goal, and should I wait or continue?
+
+The prompt also instructed the thread not to modify files, run tests, or commit, and to answer from a 2-3 minute new-session perspective.
+
+Target-project context:
+
+- The target project is still `agent-delegate`, a real MCP-first delegation-advisor repository.
+- `navi init --write` had already appended the project-local Navi trigger to `AGENTS.md`.
+- The older custom Chinese Navi section in `AGENTS.md` had been removed before this calibration so the alpha.6 trigger would be the primary entry point.
+- The project map remained in Chinese, making this a useful mixed-language case: English orientation question plus Chinese project evidence.
+- The target project still had unrelated uncommitted work; the calibration was read-only and did not try to clean or stage it.
+
+Observed behavior:
+
+- The Codex thread handler was available again: `list_projects`, `list_threads`, `create_thread`, and `read_thread` all worked.
+- The fresh thread found the project-local Navi/working-thread rules and treated the task as read-only orientation.
+- It initially had to correct a skill-path assumption, then continued by using the actual available project records.
+- It found the confirmed project map and placed the target project at open-source release preparation.
+- It identified the product stage as Distribution & Trust and the work mode as Release.
+- It judged the project as close to the original goal, with the remaining gap being release-readiness judgment rather than core feature implementation.
+- It did not claim the target project was already complete; it noted the remaining decision between accepting one successful real MCP dogfood plus release checklist evidence or running one more realistic agent workflow dogfood.
+- It named the next real user decision: whether the current dogfood evidence is enough for an initial public release bar.
+
+Calibration judgment:
+
+Positive signal. Alpha.6's Product Stage / Work Mode / Vision Distance framing helped a new session answer the user's big-picture question instead of only reporting immediate next commands. The answer gave the user a useful stop/continue judgment and surfaced the real decision.
+
+Remaining risk:
+
+- The final answer was useful, but the thread spent about 67 seconds doing context gathering and emitted several progress updates. This is acceptable for a real fresh-session calibration, but it suggests Navi should continue watching for over-reading or over-narrating on lighter orientation prompts.
+- The prompt still included explicit read-only and 2-3 minute framing, so it is not a fully natural prompt sample.
+- This validates one real target project after `navi init` setup, not broad cross-domain stability.
+- The mixed-language setup behaved acceptably in this case, but language-following should continue to be watched in natural prompts.
+
+Product follow-up:
+
+- Treat this as evidence that alpha.6 should remain focused on supervision clarity, not as a reason to start release-mode validation.
+- Keep the next calibration lightweight: a more natural prompt can check whether Navi still gives the same stage/distance/decision clarity without being told it is a calibration.
+- Continue separating target-project release decisions from Navi release decisions.
 
 ## 2026-07-02 - Continuation Friction / Pause Boundary
 
