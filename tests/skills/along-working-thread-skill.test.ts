@@ -999,6 +999,66 @@ describe("Along Working Thread Codex skill", () => {
 });
 
 describe("Along Working Thread repo-contained plugin package", () => {
+  it("documents alpha 9 maintainer calibration evidence", async () => {
+    const rubric = await readRepoText("docs/along/calibration/decision-rubric.md");
+    const evidenceLog = await readRepoText("docs/along/calibration/evidence-log.md");
+
+    for (const expected of [
+      "# Navi Maintainer Calibration Decision Rubric",
+      "Maintainer-side only",
+      "This is not an end-user feature",
+      "What Counts As Evidence",
+      "What Does Not Count As Evidence",
+      "Success",
+      "Friction",
+      "Miss",
+      "Overreach",
+      "Boundary Confusion",
+      "Product Signal",
+      "Close",
+      "Watch",
+      "Roadmap",
+      "Design",
+      "Implement",
+      "Defer",
+      "Every evidence entry must end in a decision",
+      "Do not let a single non-urgent evidence item interrupt the current design loop",
+      "Evidence logging does not trigger full tests, typecheck, tag, release, npm publication, or marketplace work",
+      "Do not add this log to `navi init`",
+    ]) {
+      expect(rubric).toContain(expected);
+    }
+
+    for (const expected of [
+      "# Navi Maintainer Calibration Evidence Log",
+      "Status: maintainer-side calibration evidence",
+      "This log is not a release checklist",
+      "Date",
+      "Source",
+      "Prompt / event",
+      "Project shape",
+      "Expected Navi behavior",
+      "Actual behavior",
+      "User / maintainer judgment",
+      "Category",
+      "Decision",
+      "Follow-up",
+      "English `what's next` produced a Chinese Navi map",
+      "Repeated meaningless `continue` prompts",
+      "Completed worktree raised whether the main session should wait",
+      "External readers could confuse Navi with Along",
+      "Validation and testing consumed too much workflow space",
+      "Implemented in alpha.3",
+      "alpha.5 pause semantics",
+      "alpha.8 decision handoff quality",
+      "alpha.7 coordination layer",
+      "public narrative alignment",
+      "alpha.6 Work Mode",
+    ]) {
+      expect(evidenceLog).toContain(expected);
+    }
+  });
+
   it("documents the current Navi-first public narrative in the root README", async () => {
     const readme = await readRepoText("README.md");
 
