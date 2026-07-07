@@ -74,6 +74,27 @@ describe("navi init planning", () => {
     expect(map).toContain("This map only establishes where Navi should look first.");
   });
 
+  it("installs alpha 10 map maintenance guidance in the generated project map", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const map = await fs.readFile(path.join(project, "docs/along/project-maps/navi-project-map.md"), "utf8");
+
+    for (const expected of [
+      "## Map Maintenance",
+      "This map is a navigation baseline, not a task log.",
+      "Update it when navigation judgment changes",
+      "current stage, focus, main track, map type, source-of-truth files, or project direction changes",
+      "Do not update it for ordinary file edits, tests, commits, pushes, temporary status notes, or bounded subtasks that do not change overall navigation.",
+      "Map updates are durable project writes.",
+      "Codex/Navi may suggest a small patch, but user approval is required before writing.",
+    ]) {
+      expect(map).toContain(expected);
+    }
+  });
+
   it("installs prompt-language-following rules for generated Navi maps", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });
@@ -235,6 +256,21 @@ describe("navi init planning", () => {
     ]) {
       expect(agents).toContain(expected);
     }
+  });
+
+  it("installs alpha 10 map maintenance trigger guidance for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    expect(agents).toContain(
+      "If the Project/Rhythm Map seems stale or misleading, suggest a small map update and ask for user approval before writing it.",
+    );
+    expect(agents).not.toContain("This map is a navigation baseline, not a task log.");
+    expect(agents).not.toContain("Update it when navigation judgment changes");
   });
 
   it("rejects stale create actions when a target file appears after planning", async () => {

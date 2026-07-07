@@ -475,6 +475,8 @@ Use Silent Tracking by default. Use a Light Coordination Signal when a small ori
 
 Alpha.8 decision handoff quality: Completion is not always a handoff. When Codex stops while the session remains active, use this rule: Stop with a decision, a recommendation, or closure instead of a bare completion report. Use Default Next Step when one next step is clearly best, Decision Options when real branches exist, Loop Closure when the current line is actually complete, or a blocked reason when no useful non-conflicting work remains. A real next decision must be something the user can judge. Do not include bare \`continue\` as a fake option. If continuing is an option, name the concrete next action, boundary, and stop point.
 
+If the Project/Rhythm Map seems stale or misleading, suggest a small map update and ask for user approval before writing it.
+
 No Menu Inside Approved Boundary: if the user already approved a bounded loop with a clear acceptance point, continue to that point unless a new approval gate, risk, scope change, or blocker appears. Close Finished Lines explicitly when a lane is complete. Blocked Means Actually Blocked: do not say the whole session is waiting or blocked unless all useful non-conflicting work depends on the missing input, tool result, external state, or user approval.
 
 Use Silent Completion only when the user asked for a narrow status report or the task is genuinely done with no active follow-up. Use One-Sentence Handoff when one next step is clearly best. Use Short Decision Options when there are real branches. Use Closure Note when the current line is actually complete. Alpha.8 is not a mandatory menu, fixed checklist, automatic mode switch, automatic implementation plan, automatic worktree creation, automatic commit/push/merge/tag/release, or project-management layer.
@@ -543,6 +545,16 @@ Project shape: unclear
 This map only establishes where Navi should look first. It is not a confirmed project stage sequence yet.
 
 Before drawing a confident Progress Map or Rhythm Map, inspect the project-local source records and ask for user confirmation when the project shape is unclear.
+
+## Map Maintenance
+
+This map is a navigation baseline, not a task log.
+
+Update it when navigation judgment changes, such as when the current stage, focus, main track, map type, source-of-truth files, or project direction changes.
+
+Do not update it for ordinary file edits, tests, commits, pushes, temporary status notes, or bounded subtasks that do not change overall navigation.
+
+Map updates are durable project writes. Codex/Navi may suggest a small patch, but user approval is required before writing.
 
 ## Fresh-Session Validation
 
