@@ -4,6 +4,13 @@
 
 This design was drafted on 2026-07-07 after a maintainer-side calibration sample where a successful `git push origin main` closed the merge lane but did not show the next user decision.
 
+The first draft was written too early, before the design was discussed with the user. The confirmed design below reflects the later design discussion on 2026-07-07:
+
+- alpha.11 solves lane-closure decision invisibility, not all pause semantics;
+- output should default to a light natural-language handoff, not a mandatory menu;
+- trigger scope is recognizable lane closure where the next user-relevant decision would otherwise be invisible;
+- implementation should stay docs/prompt-backed and narrow.
+
 This is a design artifact only. It does not approve implementation, worktree execution, `navi init` changes, README edits, release preparation, GitHub Release changes, npm publication, marketplace publication, runtime UI, background automation, Memory v2, agent adapters, delegation, or write delegation.
 
 ## Product Context
@@ -25,6 +32,26 @@ Push succeeded. main is synced. No release mode.
 ```
 
 That status was true, but it did not answer what the user should decide next. The user had to type `继续`, which was avoidable friction.
+
+## Problem Definition
+
+Alpha.11 solves **lane-closure decision invisibility**.
+
+This means:
+
+```text
+A local work lane has closed, but the user cannot tell whether to stop, continue, review, merge, push, start planning, enter release mode, record calibration evidence, or move to a different design question.
+```
+
+The problem is not that every answer needs a next-step menu. The problem is that a technically correct closeout can still be incomplete when the session remains active and the next user-relevant decision is hidden.
+
+Good alpha.11 behavior depends on one judgment:
+
+```text
+Is the next decision already visible to the user?
+```
+
+If yes, keep the answer short and do not add structure. If no, add the smallest useful next-decision signal.
 
 ## Product Goal
 
@@ -64,18 +91,23 @@ If Navi only reports status, non-expert users may respond with `continue` becaus
 
 When Codex/Navi closes a lane and the session remains active, it should add a small next-decision handoff.
 
-Good handoff shapes:
+Alpha.11 should choose the lightest sufficient output shape:
 
-- **Closure:** "This line is complete; no further action is needed unless you want a release."
-- **Default next step:** "Next recommended step: record this calibration sample, then start alpha.11 design."
-- **Real options:** "Next decision: push, start implementation planning, or stop here."
-- **Blocked reason:** "No useful next step remains until the worktree result arrives."
+1. **Explicit closure** when the line is genuinely done.
+2. **One default recommendation** when one next step is clearly best.
+3. **Short options** when real branches exist.
+4. **Approval gate** when continuing would cross a boundary.
+5. **Blocked reason** when no useful non-conflicting work remains.
 
-The handoff should be short. It should not become a full Progress Map unless the user asks for broader orientation or the session is visibly losing direction.
+The default should be one natural-language sentence. Use 2-4 short options only when there are real branches. Use a Progress Map only when the user asks for broader orientation or the session is visibly losing direction.
+
+Do not include bare `continue` or `继续` as an option. If continuing is meaningful, name the concrete action, boundary, and stop point.
 
 ## Lane Closure Moments
 
-Alpha.11 should especially apply after:
+Alpha.11 should apply when a recognizable lane closes and the next user-relevant decision would otherwise be invisible.
+
+It should especially apply after:
 
 - commit succeeds;
 - merge succeeds;
@@ -88,6 +120,20 @@ Alpha.11 should especially apply after:
 - a release-adjacent check finishes but Release mode has not been approved.
 
 These moments are common points where Codex currently says something true but incomplete.
+
+## Non-Trigger Cases
+
+Alpha.11 should not add a lane-closure handoff when:
+
+- the user asked only for a narrow status answer, such as whether a push succeeded;
+- the current task is genuinely complete and there is no active follow-up;
+- the user gave a clear chained instruction, such as "commit and push";
+- the session is inside an already-approved bounded loop with a clear acceptance point;
+- the answer already includes explicit closure or a visible next decision;
+- adding options would create fake branches;
+- continuing would cross a release, push, commit, scope expansion, cross-project edit, or other approval gate.
+
+When continuing would cross an approval gate, the correct behavior is to name that gate and ask for approval, not to present it as ordinary continuation.
 
 ## Decision Selection
 
@@ -160,6 +206,10 @@ It should not:
 
 It should only improve the final sentence or short handoff when a lane just closed.
 
+Push completion is not automatic release preparation. After push, Navi may say release planning is an available option when relevant, but it must not imply Release mode is the default next step unless the user has explicitly chosen release work.
+
+Documentation closeout is not design confirmation. A written or committed design draft should not be called complete until the user has had the intended design discussion and approved the design direction.
+
 ## Implementation Surface
 
 If implemented, the likely surface should remain docs-backed and narrow:
@@ -215,6 +265,7 @@ Alpha.11 succeeds if:
 - real options appear only when real branches exist;
 - Navi does not add heavy structure to ordinary short answers;
 - Release mode is still explicit and never implied by a successful push.
+- written design artifacts are not mistaken for approved design decisions.
 
 ## Risks
 
