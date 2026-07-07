@@ -88,3 +88,16 @@ Use `docs/along/calibration/decision-rubric.md` to classify entries. Every entry
 - Category: Overreach.
 - Decision: Implemented.
 - Follow-up: Addressed through alpha.6 Work Mode and release-mode boundary.
+
+## 2026-07-07 - Push success ended without a next decision
+
+- Date: 2026-07-07
+- Source: Main Navi maintainer session after alpha.10 merge and push.
+- Prompt / event: After `main` was pushed successfully, the response reported the push result and said no release mode was entered, but did not provide a next decision. The user had to type `继续` and identified it as another meaningless continue.
+- Project shape: Navi product development with a main session supervising design, implementation worktrees, merge, and push lanes.
+- Expected Navi behavior: When a lane closes but the session remains active, Navi/Codex should give the smallest useful next-decision signal: a recommended next action, real options, or explicit closure. A successful push closes the merge lane, not necessarily the whole product conversation.
+- Actual behavior: The response gave a correct status closeout but no next decision, leaving the user with no visible action except `继续`.
+- User / maintainer judgment: This is a real continuation-friction sample. Alpha.8 made handoff quality visible, but push/merge/lane-closure moments still need sharper behavior.
+- Category: Friction.
+- Decision: Design.
+- Follow-up: Start alpha.11 design for lane-closure next-decision handoff.
