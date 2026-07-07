@@ -273,6 +273,32 @@ describe("navi init planning", () => {
     expect(agents).not.toContain("Update it when navigation judgment changes");
   });
 
+  it("installs alpha 11 lane closure handoff rules for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Alpha.11 lane closure handoff",
+      "Lane closure is not automatically session closure",
+      "smallest useful next-decision signal",
+      "explicit closure",
+      "one default recommendation",
+      "short real options",
+      "approval gate",
+      "blocked reason",
+      "Push completion is not automatic release preparation",
+      "Documentation closeout is not design confirmation",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+
+    expect(agents).not.toContain("## Alpha 11 Lane Closure Next-Decision Handoff");
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

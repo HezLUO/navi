@@ -699,6 +699,128 @@ Alpha.8 is not a mandatory menu in every response, not a fixed checklist after e
 
 Alpha.8 should improve the final step of supervision without creating more process text than the user needs.
 
+## Alpha 11 Lane Closure Next-Decision Handoff
+
+Alpha.11 specializes alpha.8 decision handoff quality for the moment after a lane closes.
+
+Alpha.8 answers:
+
+```text
+When Codex gives control back, is the next decision visible and useful?
+```
+
+Alpha.11 answers:
+
+```text
+After this lane closed, is the next user-relevant decision already visible?
+```
+
+The goal is:
+
+```text
+When a lane closes, Navi should either close the whole line explicitly or surface the smallest useful next decision, so the user is not forced to type "continue" to discover what remains.
+```
+
+This is prompt/docs-backed supervision. It is not a runtime scheduler, project manager, automatic release flow, state machine, or task database.
+
+### Core Principle
+
+Lane closure is not automatically session closure.
+
+A commit, merge, push, worktree completion, review completion, validation pass, calibration record, or design/documentation write can close one lane while the session still has useful next decisions.
+
+### Problem Definition
+
+Alpha.11 solves lane-closure decision invisibility.
+
+Lane-closure decision invisibility means:
+
+```text
+A local work lane has closed, but the user cannot tell whether to stop, continue, review, merge, push, start planning, enter release mode, record calibration evidence, or move to a different design question.
+```
+
+The key internal question is:
+
+```text
+Is the next decision already visible to the user?
+```
+
+If yes, keep the answer short and do not add structure. If no, add the smallest useful next-decision signal.
+
+### Handoff Shapes
+
+Use the lightest sufficient handoff shape:
+
+- Explicit Closure: the lane and whole line are genuinely done.
+- One Default Recommendation: one next step is clearly best and does not cross an unapproved boundary.
+- Short Real Options: two to four real branches exist and the user can judge among them.
+- Approval Gate: continuing would cross a write, commit, push, release, mode-change, scope-expansion, cross-project, or risk-acceptance boundary.
+- Blocked Reason: no useful non-conflicting work remains without missing input, a tool result, external state, or user approval.
+
+Do not include bare `continue` or `继续` as an option. If continuing is meaningful, name the concrete action, boundary, and stop point.
+
+### Lane Closure Triggers
+
+Apply alpha.11 when a recognizable lane closes and the next user-relevant decision would otherwise be invisible.
+
+Common triggers:
+
+- commit succeeds;
+- merge succeeds;
+- push succeeds;
+- worktree implementation completes;
+- worktree review completes;
+- targeted validation passes;
+- calibration sample is recorded;
+- documentation or design line is written;
+- release-adjacent check finishes but Release mode has not been approved.
+
+### Non-Trigger Cases
+
+Do not add a lane-closure handoff when:
+
+- the user asked only for a narrow status answer, such as whether a push succeeded;
+- the current task is genuinely complete and there is no active follow-up;
+- the user gave a clear chained instruction, such as `commit and push`;
+- the session is inside an already-approved bounded loop with a clear acceptance point;
+- the answer already includes explicit closure or a visible next decision;
+- adding options would create fake branches;
+- continuing would cross an approval gate that should be named directly.
+
+### Examples
+
+Bad:
+
+```text
+Pushed to origin/main. No release mode.
+```
+
+Good:
+
+```text
+Pushed to origin/main. The implementation lane is closed and we are not in Release mode. Next recommended step: decide whether to enter implementation planning for alpha.11 or stop with the design recorded.
+```
+
+Good:
+
+```text
+Commit is created. Next decision: push it, create the implementation worktree, or stop here.
+```
+
+Good:
+
+```text
+The worktree completed. This creates a review/merge option; the main session can still continue non-conflicting design unless the result changes the current premise.
+```
+
+### Alpha.11 Boundaries
+
+Alpha.11 is not a mandatory menu, not automatic implementation planning, not automatic worktree creation, not automatic commit, push, merge, tag, release, or release preparation, not a project manager or scheduler, not runtime UI, not local app behavior, not background watcher behavior, not Memory v2, not agent adapters, not delegation or write delegation, not npm publication, and not marketplace distribution.
+
+Push completion is not automatic release preparation. Mention release planning only as an option when relevant, and do not enter Release mode without explicit user approval.
+
+Documentation closeout is not design confirmation. A written or committed design draft should not be called complete until the user has had the intended design discussion and approved the design direction.
+
 ## Progress Map
 
 A Progress Map is the default Navi response for progress and next-step confusion.

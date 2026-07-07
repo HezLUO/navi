@@ -567,6 +567,51 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 11 lane closure next-decision handoff", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Alpha.11 lane closure handoff",
+      "Lane closure is not automatically session closure",
+      "lane-closure decision invisibility",
+      "smallest useful next-decision signal",
+      "explicit closure",
+      "one default recommendation",
+      "short real options",
+      "approval gate",
+      "blocked reason",
+      "Push completion is not automatic release preparation",
+      "Documentation closeout is not design confirmation",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "## Alpha 11 Lane Closure Next-Decision Handoff",
+      "Alpha.11 answers",
+      "Lane closure is not automatically session closure",
+      "lane-closure decision invisibility",
+      "Is the next decision already visible to the user?",
+      "Explicit Closure",
+      "One Default Recommendation",
+      "Short Real Options",
+      "Approval Gate",
+      "Blocked Reason",
+      "Lane Closure Triggers",
+      "Non-Trigger Cases",
+      "Push completion is not automatic release preparation",
+      "Documentation closeout is not design confirmation",
+      "not a mandatory menu",
+      "not automatic release preparation",
+      "not a project manager or scheduler",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
