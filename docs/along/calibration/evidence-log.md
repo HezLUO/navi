@@ -1,7 +1,7 @@
 # Navi Maintainer Calibration Evidence Log
 
 Status: maintainer-side calibration evidence
-Last updated: 2026-07-07
+Last updated: 2026-07-08
 
 This log records real or semi-real Navi usage samples that change product judgment. This log is not a release checklist, not a test report, and not proof of full product correctness.
 
@@ -101,3 +101,16 @@ Use `docs/along/calibration/decision-rubric.md` to classify entries. Every entry
 - Category: Friction.
 - Decision: Design.
 - Follow-up: Start alpha.11 design for lane-closure next-decision handoff.
+
+## 2026-07-08 - Quietness gate reduced over-structured handoffs
+
+- Date: 2026-07-08
+- Source: Main Navi maintainer session after alpha.11 lane-closure handoff and alpha.12 quietness design.
+- Prompt / event: Recent lane closeouts and supervision responses were checked against the alpha.12 Quietness Gate. Some responses correctly exposed a real next decision, while others used more mode framing or numbered options than the moment required.
+- Project shape: Navi product development with a main session supervising design, worktree review, merge, push, and follow-on product planning.
+- Expected Navi behavior: Navi should choose the smallest surface that creates user control gain. If a response only needs a direct answer, embedded hint, or one-sentence handoff, it should not expand into a full mode frame or option set.
+- Actual behavior: The alpha.11 push/review moments showed that next-decision handoff was useful, but nearby status checks such as checking whether a worktree was complete could have been quieter. They needed a direct check plus a light handoff, not a full supervision structure.
+- User / maintainer judgment: This is a valid alpha.12 calibration sample. Alpha.11 reduces meaningless `continue` after lane closure, but without a quietness gate the product can swing into pseudo-supervision and create a different kind of friction.
+- Category: Overreach.
+- Decision: Design.
+- Follow-up: Use this sample as calibration evidence for alpha.12 Quietness / Rule Density Control. Later implementation should apply the quietness gate before choosing any Navi map, handoff, or option surface.
