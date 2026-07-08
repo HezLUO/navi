@@ -299,6 +299,37 @@ describe("navi init planning", () => {
     expect(agents).not.toContain("## Alpha 11 Lane Closure Next-Decision Handoff");
   });
 
+  it("installs alpha 12 quietness gate rules for generated Navi triggers", async () => {
+    const project = await makeProject();
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+
+    await applyInitPlan(plan);
+
+    const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Alpha.12 quietness gate",
+      "No control gain, no Navi surface",
+      "Control gain means Navi changes what the user can understand, decide, stop, approve, or redirect.",
+      "Silent Direct Answer",
+      "Embedded Hint",
+      "One-Sentence Handoff",
+      "Short Options",
+      "Full Map",
+      "narrow status questions",
+      "clear chained instructions",
+      "approved bounded loops",
+      "lightweight design confirmations",
+      "no-real-branch moments",
+      "pseudo-supervision",
+      "fake branches",
+    ]) {
+      expect(agents).toContain(expected);
+    }
+
+    expect(agents).not.toContain("## Alpha 12 Quietness And Rule Density Control");
+  });
+
   it("rejects stale create actions when a target file appears after planning", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });

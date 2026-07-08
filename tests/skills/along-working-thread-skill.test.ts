@@ -612,6 +612,52 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 12 quietness and rule density control", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+
+    for (const expected of [
+      "Alpha.12 quietness gate",
+      "No control gain, no Navi surface",
+      "Control gain means Navi changes what the user can understand, decide, stop, approve, or redirect.",
+      "Use the lightest sufficient surface",
+      "Silent Direct Answer",
+      "Embedded Hint",
+      "One-Sentence Handoff",
+      "Short Options",
+      "Full Map",
+      "narrow status questions",
+      "clear chained instructions",
+      "approved bounded loops",
+      "lightweight design confirmations",
+      "fake branches",
+      "pseudo-supervision",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(template).toContain(expected);
+    }
+
+    for (const expected of [
+      "## Alpha 12 Quietness And Rule Density Control",
+      "Alpha.12 answers",
+      "No control gain, no Navi surface",
+      "Orientation Gain",
+      "Decision Gain",
+      "Boundary Gain",
+      "Risk Gain",
+      "Coordination Gain",
+      "Quietness Ladder",
+      "Must-Stay-Quiet Cases",
+      "Must-Not-Stay-Quiet Cases",
+      "Pseudo-Supervision",
+      "Alpha.12 is not a runtime classifier",
+      "Alpha.12 is not a new mandatory output format",
+    ]) {
+      expect(reference).toContain(expected);
+    }
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
