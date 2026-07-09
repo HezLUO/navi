@@ -50,6 +50,8 @@ describe("navi init planning", () => {
       ["create", "docs/along/project-maps/navi-project-map.md"],
     ]);
     expect(output).toContain("Navi init preview");
+    expect(output).toContain("This does not install Navi again.");
+    expect(output).toContain("It adds project-local guidance and a starter map for this project.");
     expect(output).toContain("No files were changed");
     expect(output).toContain("navi init --target");
     expect(output).toContain("接下来我们应该做什么？");
@@ -60,12 +62,16 @@ describe("navi init planning", () => {
   it("writes AGENTS.md and a provisional project map only behind --write", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });
+    const output = renderInitPlan(plan);
 
     await applyInitPlan(plan);
 
     const agents = await fs.readFile(path.join(project, "AGENTS.md"), "utf8");
     const map = await fs.readFile(path.join(project, "docs/along/project-maps/navi-project-map.md"), "utf8");
 
+    expect(output).toContain("Navi init applied");
+    expect(output).toContain("This does not install Navi again.");
+    expect(output).toContain("It adds project-local guidance and a starter map for this project.");
     expect(agents).toContain(NAVI_AGENTS_BLOCK_START);
     expect(agents).toContain("## Navi Progress Map Rules");
     expect(agents).toContain("keep Navi quiet");
@@ -654,10 +660,11 @@ describe("navi init planning", () => {
 });
 
 describe("navi init CLI helpers", () => {
-  it("parses target and write flags", () => {
-    expect(parseInitArgs(["--target", "/tmp/demo", "--write"], "/tmp/fallback")).toEqual({
+  it("parses target, write, and suggest-map flags", () => {
+    expect(parseInitArgs(["--target", "/tmp/demo", "--write", "--suggest-map"], "/tmp/fallback")).toEqual({
       targetDir: "/tmp/demo",
       write: true,
+      suggestMap: true,
     });
   });
 
@@ -732,5 +739,93 @@ describe("navi init CLI helpers", () => {
     expect(stdout.join("")).toContain("Navi init preview");
     expect(stdout.join("")).toContain("No files were changed");
     expect(await exists(path.join(project, "AGENTS.md"))).toBe(false);
+  });
+
+  it("renders a suggested map preview without writing files", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "README.md"),
+      "# Demo Product\n\nThis project has a design plan, implementation work, tests, and release preparation.\n",
+    );
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+
+    const code = await runNaviInitCli(["--target", project, "--suggest-map"], {
+      cwd: process.cwd(),
+      stdout: (text) => stdout.push(text),
+      stderr: (text) => stderr.push(text),
+    });
+
+    const output = stdout.join("");
+    expect(code).toBe(0);
+    expect(stderr.join("")).toBe("");
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("No files were changed.");
+    expect(output).toContain("Evidence read:");
+    expect(output).toContain("README.md");
+    expect(output).toContain("Project shape hint: linear");
+    expect(output).toContain("Project progress");
+    expect(output).toContain("Needs confirmation before becoming a stable map.");
+    expect(await exists(path.join(project, "AGENTS.md"))).toBe(false);
+    expect(await exists(path.join(project, "docs/along/project-maps/navi-project-map.md"))).toBe(false);
+  });
+
+  it("renders a flowing Rhythm Map preview for recurring workflow evidence", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "PROJECT_STATE.md"),
+      "# Application Workflow\n\nCurrent state: weekly screening, waiting for feedback, follow-up cycles, and refreshed outreach records.\n",
+    );
+    await fs.writeFile(
+      path.join(project, "STATUS.md"),
+      "# Status\n\nThe project tracks application waiting states and feedback follow-up.\n",
+    );
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("Project shape hint: flowing");
+    expect(output).toContain("Project rhythm");
+    expect(output).toContain("Current track");
+    expect(output).toContain("Evidence read:");
+    expect(output).toContain("PROJECT_STATE.md");
+    expect(output).toContain("STATUS.md");
+    expect(output).not.toContain("Map status: confirmed");
+  });
+
+  it("does not render a concrete map when evidence is unclear", async () => {
+    const project = await makeProject();
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("Project shape hint: unclear");
+    expect(output).toContain("Not enough evidence for a reliable map preview.");
+    expect(output).toContain("Then rerun navi init --suggest-map.");
+    expect(output).not.toContain("Project progress");
+    expect(output).not.toContain("Project rhythm");
+  });
+
+  it("combines suggest-map and write without writing the suggested map", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "README.md"),
+      "# Delivery Project\n\nA one-time deliverable with plan, implementation, validation, and release notes.\n",
+    );
+
+    const plan = await buildInitPlan({ targetDir: project, write: true, suggestMap: true });
+    const output = renderInitPlan(plan);
+    await applyInitPlan(plan);
+
+    const map = await fs.readFile(path.join(project, "docs/along/project-maps/navi-project-map.md"), "utf8");
+
+    expect(output).toContain("Navi init applied");
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("Suggested map was not written.");
+    expect(output).toContain("Project shape hint: linear");
+    expect(map).toContain("Map status: provisional");
+    expect(map).toContain("Project shape: unclear");
+    expect(map).not.toContain("Project progress");
+    expect(map).not.toContain("Map status: confirmed");
   });
 });

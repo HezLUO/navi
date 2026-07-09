@@ -12,6 +12,9 @@ export const VALIDATION_PROMPT = `请只读，不要修改文件、不要提交�
 
 const AGENTS_RELATIVE_PATH = "AGENTS.md";
 const PROJECT_MAP_RELATIVE_PATH = "docs/along/project-maps/navi-project-map.md";
+const EVIDENCE_SNIPPET_BYTES = 12 * 1024;
+const EVIDENCE_TOTAL_BYTES = 160 * 1024;
+const IGNORED_EVIDENCE_DIRS = new Set([".git", "node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
 
 export type InitActionKind = "create" | "modify" | "skip";
 
@@ -22,6 +25,24 @@ export interface InitAction {
   summary: string;
   content?: string;
   previousContent?: string;
+}
+
+export type ProjectShapeHint = "linear" | "flowing" | "mixed" | "unclear";
+export type SuggestionConfidence = "high" | "medium" | "low";
+
+export interface EvidenceSnippet {
+  relativePath: string;
+  text: string;
+}
+
+export interface SuggestedMapPreview {
+  evidenceRead: string[];
+  shape: ProjectShapeHint;
+  confidence: SuggestionConfidence;
+  suggestedView?: "Project Map" | "Rhythm Map";
+  mapText?: string;
+  why: string[];
+  uncertainOrMissing: string[];
 }
 
 type CreateInitAction = InitAction & {
@@ -47,11 +68,13 @@ export interface InitPlan {
   targetDir: string;
   actions: InitAction[];
   validationPrompt: string;
+  suggestedMapPreview?: SuggestedMapPreview;
 }
 
 export interface InitOptions {
   targetDir?: string;
   write?: boolean;
+  suggestMap?: boolean;
 }
 
 export interface NaviInitIo {
@@ -92,6 +115,7 @@ export function parseInitArgs(args: string[], cwd = process.cwd()): Required<Ini
   const parsed: Required<InitOptions> = {
     targetDir: path.resolve(cwd),
     write: false,
+    suggestMap: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -112,6 +136,11 @@ export function parseInitArgs(args: string[], cwd = process.cwd()): Required<Ini
       continue;
     }
 
+    if (arg === "--suggest-map") {
+      parsed.suggestMap = true;
+      continue;
+    }
+
     throw new InitArgsError(`Unknown option: ${arg}`);
   }
 
@@ -129,12 +158,14 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
     await planAgentsAction(agentsPath),
     await planProjectMapAction(targetDir, mapPath),
   ];
+  const suggestedMapPreview = options.suggestMap ? await suggestProjectMap(targetDir) : undefined;
 
   return {
     mode: options.write ? "write" : "dry-run",
     targetDir,
     actions,
     validationPrompt: VALIDATION_PROMPT,
+    suggestedMapPreview,
   };
 }
 
@@ -164,6 +195,8 @@ export function renderInitPlan(plan: InitPlan): string {
   const isDryRun = plan.mode === "dry-run";
   lines.push(isDryRun ? "Navi init preview" : "Navi init applied");
   lines.push(`Target: ${plan.targetDir}`);
+  lines.push("This does not install Navi again.");
+  lines.push("It adds project-local guidance and a starter map for this project.");
   lines.push("");
 
   for (const action of plan.actions) {
@@ -181,6 +214,11 @@ export function renderInitPlan(plan: InitPlan): string {
     lines.push("No files needed changes.");
   } else {
     lines.push("Files were changed according to the plan above.");
+  }
+
+  if (plan.suggestedMapPreview) {
+    lines.push("");
+    lines.push(renderSuggestedMapPreview(plan.suggestedMapPreview, plan.mode));
   }
 
   lines.push("");
@@ -206,7 +244,7 @@ export async function runNaviInitCli(
     options = parseInitArgs(args, io.cwd);
   } catch (error) {
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
-    io.stderr("Usage: navi init [--target <path>] [--write]\n");
+    io.stderr("Usage: navi init [--target <path>] [--write] [--suggest-map]\n");
     return 1;
   }
 
@@ -566,6 +604,259 @@ Map updates are durable project writes. Codex/Navi may suggest a small patch, bu
 ${VALIDATION_PROMPT}
 \`\`\`
 `;
+}
+
+async function suggestProjectMap(targetDir: string): Promise<SuggestedMapPreview> {
+  const snippets = await collectEvidenceSnippets(targetDir);
+  return buildSuggestedMapPreview(snippets);
+}
+
+async function collectEvidenceSnippets(targetDir: string): Promise<EvidenceSnippet[]> {
+  const snippets: EvidenceSnippet[] = [];
+  let remainingBytes = EVIDENCE_TOTAL_BYTES;
+
+  for (const relativePath of await listEvidenceCandidateFiles(targetDir)) {
+    if (remainingBytes <= 0) {
+      break;
+    }
+
+    const absolutePath = resolveTargetPath(targetDir, relativePath);
+    const raw = await fs.readFile(absolutePath, "utf8");
+    const text = raw.slice(0, Math.min(EVIDENCE_SNIPPET_BYTES, remainingBytes));
+    remainingBytes -= Buffer.byteLength(text, "utf8");
+    snippets.push({ relativePath, text });
+  }
+
+  return snippets;
+}
+
+async function listEvidenceCandidateFiles(targetDir: string): Promise<string[]> {
+  const candidates: string[] = [];
+  await collectEvidenceCandidateFiles(targetDir, ".", candidates);
+  return candidates.sort((left, right) => evidencePriority(left) - evidencePriority(right) || left.localeCompare(right));
+}
+
+async function collectEvidenceCandidateFiles(
+  targetDir: string,
+  relativeDir: string,
+  candidates: string[],
+): Promise<void> {
+  const absoluteDir = relativeDir === "." ? targetDir : resolveTargetPath(targetDir, relativeDir);
+  let entries;
+  try {
+    entries = await fs.readdir(absoluteDir, { withFileTypes: true });
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+
+  for (const entry of entries) {
+    const relativePath = relativeDir === "." ? entry.name : path.posix.join(relativeDir, entry.name);
+    if (entry.isDirectory()) {
+      if (!IGNORED_EVIDENCE_DIRS.has(entry.name)) {
+        await collectEvidenceCandidateFiles(targetDir, relativePath, candidates);
+      }
+      continue;
+    }
+
+    if (entry.isFile() && isEvidenceCandidate(relativePath)) {
+      candidates.push(relativePath);
+    }
+  }
+}
+
+function isEvidenceCandidate(relativePath: string): boolean {
+  const normalized = relativePath.split(path.sep).join("/");
+  const basename = path.posix.basename(normalized);
+  const lowerPath = normalized.toLowerCase();
+  const lowerBase = basename.toLowerCase();
+
+  if (
+    lowerBase.endsWith(".lock") ||
+    lowerBase.endsWith(".png") ||
+    lowerBase.endsWith(".jpg") ||
+    lowerBase.endsWith(".jpeg") ||
+    lowerBase.endsWith(".gif") ||
+    lowerBase.endsWith(".pdf") ||
+    lowerBase.endsWith(".zip")
+  ) {
+    return false;
+  }
+
+  return (
+    lowerBase.startsWith("readme") ||
+    lowerBase === "agents.md" ||
+    lowerBase === "project_state.md" ||
+    lowerBase.startsWith("todo") ||
+    lowerBase.startsWith("status") ||
+    lowerBase === "package.json" ||
+    lowerBase === "pyproject.toml" ||
+    (lowerPath.startsWith("docs/along/project-maps/") && lowerBase.endsWith(".md")) ||
+    (lowerPath.includes("/handoff") && lowerBase.endsWith(".md")) ||
+    (lowerPath.includes("/workflow") && lowerBase.endsWith(".md")) ||
+    (lowerPath.includes("/plan") && lowerBase.endsWith(".md"))
+  );
+}
+
+function evidencePriority(relativePath: string): number {
+  const lower = relativePath.toLowerCase();
+  if (lower === "agents.md") return 0;
+  if (lower.startsWith("docs/along/project-maps/")) return 1;
+  if (lower === "project_state.md") return 2;
+  if (lower.startsWith("readme")) return 3;
+  if (lower.startsWith("todo") || lower.startsWith("status")) return 4;
+  if (lower.includes("/workflow") || lower.includes("/handoff") || lower.includes("/plan")) return 5;
+  if (lower === "package.json" || lower === "pyproject.toml") return 6;
+  return 99;
+}
+
+function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPreview {
+  const combined = snippets.map((snippet) => `${snippet.relativePath}\n${snippet.text}`).join("\n").toLowerCase();
+  const evidenceRead = snippets.map((snippet) => snippet.relativePath);
+  const flowingScore = scoreSignals(combined, [
+    "application",
+    "internship",
+    "recruiting",
+    "outreach",
+    "research",
+    "operations",
+    "waiting",
+    "follow-up",
+    "feedback",
+    "screening",
+    "refresh",
+    "cycle",
+    "workflow",
+    "handoff",
+  ]);
+  const linearScore = scoreSignals(combined, [
+    "milestone",
+    "spec",
+    "design",
+    "implementation",
+    "validation",
+    "release",
+    "deliverable",
+    "build",
+    "test",
+    "package.json",
+  ]);
+
+  if (snippets.length === 0 || (flowingScore < 2 && linearScore < 2)) {
+    return {
+      evidenceRead,
+      shape: "unclear",
+      confidence: "low",
+      why: ["Not enough project evidence was found for a reliable shape hint."],
+      uncertainOrMissing: ["Add or confirm PROJECT_STATE.md, README, task/status files, or a project map."],
+    };
+  }
+
+  if (flowingScore >= 2 && linearScore >= 2) {
+    return {
+      evidenceRead,
+      shape: "mixed",
+      confidence: "medium",
+      suggestedView: "Rhythm Map",
+      mapText: renderFlowingPreviewMap(),
+      why: ["Found both recurring workflow signals and bounded delivery signals."],
+      uncertainOrMissing: ["Confirm whether Navi should orient this project as a recurring workflow or a bounded delivery."],
+    };
+  }
+
+  if (flowingScore > linearScore) {
+    return {
+      evidenceRead,
+      shape: "flowing",
+      confidence: flowingScore >= 4 ? "high" : "medium",
+      suggestedView: "Rhythm Map",
+      mapText: renderFlowingPreviewMap(),
+      why: ["Found recurring workflow, waiting, feedback, or follow-up signals."],
+      uncertainOrMissing: ["Confirm the rhythm labels before treating this as a stable map."],
+    };
+  }
+
+  return {
+    evidenceRead,
+    shape: "linear",
+    confidence: linearScore >= 4 ? "high" : "medium",
+    suggestedView: "Project Map",
+    mapText: renderLinearPreviewMap(),
+    why: ["Found bounded delivery, implementation, validation, build, or release signals."],
+    uncertainOrMissing: ["Confirm the stage labels before treating this as a stable map."],
+  };
+}
+
+function scoreSignals(text: string, signals: string[]): number {
+  return signals.reduce((score, signal) => score + (text.includes(signal) ? 1 : 0), 0);
+}
+
+function renderLinearPreviewMap(): string {
+  return `Project progress
+[Goal] -> [Design/plan] -> [Implementation] -> [Validation] -> [Delivery]
+                         ^
+                    Current position`;
+}
+
+function renderFlowingPreviewMap(): string {
+  return `Project rhythm
+[Cycle/source refresh] + [Screening/selection] + [Preparation/execution] + [Follow-up/feedback]
+                                      ^
+                                  Current focus
+
+Current track
+[Read records] -> [Choose small loop] -> [Execute] -> [Record/wait]`;
+}
+
+function renderSuggestedMapPreview(preview: SuggestedMapPreview, mode: InitPlan["mode"]): string {
+  const lines: string[] = [];
+  lines.push("Navi suggested project map preview");
+  lines.push(mode === "write" ? "Suggested map was not written." : "No files were changed.");
+  lines.push("");
+  lines.push("Evidence read:");
+  if (preview.evidenceRead.length === 0) {
+    lines.push("- none");
+  } else {
+    for (const evidence of preview.evidenceRead) {
+      lines.push(`- ${evidence}`);
+    }
+  }
+  lines.push("");
+  lines.push(`Project shape hint: ${preview.shape} (${preview.confidence} confidence)`);
+  lines.push("Needs confirmation before becoming a stable map.");
+  lines.push("");
+
+  if (preview.mapText && preview.confidence !== "low") {
+    lines.push("Suggested map:");
+    lines.push("```text");
+    lines.push(preview.mapText);
+    lines.push("```");
+    lines.push("");
+  } else {
+    lines.push("Not enough evidence for a reliable map preview.");
+    lines.push("");
+  }
+
+  lines.push("Why this map:");
+  for (const reason of preview.why) {
+    lines.push(`- ${reason}`);
+  }
+  lines.push("");
+  lines.push("Uncertain or missing:");
+  for (const missing of preview.uncertainOrMissing) {
+    lines.push(`- ${missing}`);
+  }
+  lines.push("");
+  lines.push("Next step:");
+  lines.push("- Run navi init --target . --write to add project-local guidance and a starter map.");
+  lines.push("- Review or edit the suggested map before treating it as stable.");
+  if (preview.shape === "unclear" || preview.confidence === "low") {
+    lines.push("- Then rerun navi init --suggest-map.");
+  }
+
+  return lines.join("\n");
 }
 
 async function listExistingProjectMaps(targetDir: string): Promise<string[]> {
