@@ -2,6 +2,17 @@
 
 Navi Project Initialization is the minimum reliable way to connect Navi to a target project.
 
+Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.
+
+Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
+
+In product terms:
+
+```text
+global install = enables the Navi skill/plugin capability
+navi init      = adds project-local guidance and a starter map for this project
+```
+
 The product lesson from fresh-session calibration is that a global skill can be installed and readable without being implicitly selected for ordinary next-step questions. The reliable V1 path is therefore:
 
 ```text
@@ -53,6 +64,14 @@ When applied with `--write`, the minimum project-local setup creates or updates:
 7. Run a fresh-session validation with an ordinary prompt, such as `what's next`, `where are we`, `continue`, or `接下来我们应该做什么？`.
 
 If the project shape is unclear, write only a provisional trigger source and ask which project record should become the source of truth. Do not draw a confident stable map.
+
+## Suggested Map Preview
+
+`navi init --suggest-map` performs read-only evidence discovery and prints a suggested Project Map or Rhythm Map preview.
+
+It does not write the suggestion to disk, does not mark the map as confirmed, does not call a model, and does not read other Codex threads or source-thread history.
+
+`--suggest-map` and `--write` may be combined. In that case, `--write` applies only the standard project-local initialization files, while the suggested map remains terminal output only.
 
 ## Boundaries
 

@@ -658,6 +658,25 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
+  it("documents alpha 13 global install versus project initialization boundary", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
+
+    for (const expected of [
+      "Navi is installed globally once",
+      "navi init initializes a target project",
+      "does not install Navi again",
+      "project-local initialization is the reliable path",
+    ]) {
+      expect(skill).toContain(expected);
+      expect(reference).toContain(expected);
+      expect(initDoc).toContain(expected);
+    }
+
+    expect(skill).not.toContain("navi init --suggest-map --accept-suggested-map");
+  });
+
   it("documents the Navi Project Map model and source priority", async () => {
     const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");

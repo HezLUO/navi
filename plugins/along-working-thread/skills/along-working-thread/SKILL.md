@@ -158,6 +158,9 @@ Before acting on a Working Thread, read:
 - Project Map guidance uses source priority: user-confirmed map, active Working Thread or project record, approved plan or spec, most recent unrejected Navi map, then provisional map.
 - project-local handoff files, session logs, PROJECT_STATE, TODO files, trackers, and workflow records are valid project records when they are inside the target project directory; do not treat them as forbidden source-thread history.
 - if the target repo has `docs/along/project-maps/`, read the matching confirmed Project Map record before drawing a Progress Map from memory or recent conversation.
+- Navi is installed globally once; navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.
+- Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
+- If a broad progress or next-step prompt appears in a project that lacks project-local Navi guidance, avoid a confident stable map; recommend `navi init` as project configuration and offer only a provisional judgment if the user wants to continue without initialization.
 - Do not downgrade non-code long-running workspaces to ordinary advice. Application, recruiting, outreach, research, and operations workspaces can be flowing projects when they have recurring cycles, parallel routes, external feedback, or user decision gates.
 - when a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip: a single-line stage strip plus a current-position marker and a plain-language explanation.
 - if the Project Map is unreliable, Navi must not draw a confident stable bar; it may give a provisional map only when clearly marked as awaiting confirmation.

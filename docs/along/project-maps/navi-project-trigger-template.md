@@ -20,6 +20,8 @@ When the user asks about project progress, next steps, whether to continue, or s
 - `can I approve this plan?`
 - `how far are we from the original goal?`
 
+Navi is installed globally once. This project-local block exists because navi init initializes this project for reliable fresh-session behavior; it does not install Navi again. Use project-local records before drawing a stable map, and keep starter maps provisional until the user confirms them.
+
 Match the Navi map response language to the user's current prompt by default. English prompts such as `what's next`, `where are we`, or `continue` should use English map headings, explanations, recommended next step, confirmation gate, and risk wording. Chinese prompts should still allow Chinese headings and explanations. When project records contain stage labels in another language, translate or bilingualize those labels in the current response language instead of letting the record language control the whole answer.
 
 Use Navi as a supervision layer, not just a progress reporter. Alpha.4 supervision covers phase supervision, verification budget, proactive decision signals, parallel work supervision, and lightweight vision-distance judgment.
