@@ -36,14 +36,28 @@ describe("Navi global bootstrap planning", () => {
     expect(planGlobalAgentsContent(block, "install").kind).toBe("skip");
   });
 
-  it("removes only the exact managed region", () => {
+  it("removes only the exact managed region and preserves adjacent bytes", () => {
     const before = "before\n";
     const after = "after\n";
     const existing = `${before}${renderGlobalBootstrapBlock()}\n${after}`;
     const action = planGlobalAgentsContent(existing, "remove");
 
     expect(action.kind).toBe("remove");
-    expect(action.content).toBe(`${before}${after}`);
+    expect(action.content).toBe(`${before}\n${after}`);
+  });
+
+  it.each([
+    ["before", "after"],
+    ["before\n", "after"],
+    ["before", "\nafter"],
+    ["before\r\n", "\r\nafter"],
+  ])("preserves every byte immediately outside the managed region", (before, after) => {
+    const existing = `${before}${renderGlobalBootstrapBlock()}${after}`;
+
+    expect(planGlobalAgentsContent(existing, "remove")).toMatchObject({
+      kind: "remove",
+      content: `${before}${after}`,
+    });
   });
 
   it.each([

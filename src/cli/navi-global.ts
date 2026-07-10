@@ -83,12 +83,10 @@ export function planGlobalAgentsContent(
   }
 
   if (operation === "remove") {
-    const contentEnd = text.slice(end).startsWith("\n") ? end + 1 : end;
-
     return {
       kind: "remove",
       summary: "Remove the Navi bootstrap block from global instructions.",
-      content: `${text.slice(0, start)}${text.slice(contentEnd)}`,
+      content: `${text.slice(0, start)}${text.slice(end)}`,
       previousContent: existing,
     };
   }
