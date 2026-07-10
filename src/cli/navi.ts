@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
-import { runNaviInitCli } from "./navi-init.ts";
+
+const { runNaviInitCli } = await import(
+  new URL("./navi-init.ts", import.meta.url).href
+) as typeof import("./navi-init");
 
 export const NAVI_USAGE = "Usage: navi <init|setup|doctor> [options]";
 
