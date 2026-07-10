@@ -1,11 +1,20 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
-import { runNaviDoctorCli } from "./navi-doctor";
-import { runNaviSetupCli } from "./navi-global";
 
-const { runNaviInitCli } = await import(
-  new URL("./navi-init.ts", import.meta.url).href
-) as typeof import("./navi-init");
+async function runNaviInit(args: string[]): Promise<number> {
+  const { runNaviInitCli } = await import(new URL("./navi-init.ts", import.meta.url).href) as typeof import("./navi-init");
+  return runNaviInitCli(args);
+}
+
+async function runNaviSetup(args: string[]): Promise<number> {
+  const { runNaviSetupCli } = await import(new URL("./navi-global.ts", import.meta.url).href) as typeof import("./navi-global");
+  return runNaviSetupCli(args);
+}
+
+async function runNaviDoctor(args: string[]): Promise<number> {
+  const { runNaviDoctorCli } = await import(new URL("./navi-doctor.ts", import.meta.url).href) as typeof import("./navi-doctor");
+  return runNaviDoctorCli(args);
+}
 
 export const NAVI_USAGE = "Usage: navi <init|setup|doctor> [options]";
 
@@ -20,9 +29,9 @@ export interface NaviCliIo {
 const DEFAULT_IO: NaviCliIo = {
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
-  runInit: runNaviInitCli,
-  runSetup: runNaviSetupCli,
-  runDoctor: runNaviDoctorCli,
+  runInit: runNaviInit,
+  runSetup: runNaviSetup,
+  runDoctor: runNaviDoctor,
 };
 
 export async function runNaviCli(args: string[], io: NaviCliIo = DEFAULT_IO): Promise<number> {

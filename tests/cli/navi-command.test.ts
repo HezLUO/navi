@@ -1,7 +1,19 @@
+import { spawnSync } from "node:child_process";
 import { describe, expect, it, vi } from "vitest";
 import { NAVI_USAGE, runNaviCli } from "../../src/cli/navi";
 
 describe("Navi command dispatcher", () => {
+  it("runs init when the TypeScript CLI entrypoint is invoked directly by Node", () => {
+    const result = spawnSync(process.execPath, ["src/cli/navi.ts", "init", "--target", process.cwd()], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("Navi init preview");
+  });
+
   it("dispatches init without exposing the Along runtime", async () => {
     const stdout: string[] = [];
     const stderr: string[] = [];
