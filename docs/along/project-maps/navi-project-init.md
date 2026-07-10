@@ -37,7 +37,7 @@ Use this when a user wants Navi to supervise an existing project, especially whe
 
 It is most useful for non-expert supervision, long-running work, flowing projects, or projects where fresh sessions repeatedly lose the user's current map.
 
-## Minimum install output
+## Minimum initialization output
 
 When applied with `--write`, the minimum project-local setup creates or updates:
 

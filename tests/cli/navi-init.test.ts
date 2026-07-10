@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   NAVI_AGENTS_BLOCK_START,
   applyInitPlan,
@@ -31,7 +31,32 @@ async function exists(filePath: string): Promise<boolean> {
   }
 }
 
+async function snapshotFiles(root: string): Promise<Record<string, string>> {
+  const files: Record<string, string> = {};
+
+  async function walk(relativeDir: string): Promise<void> {
+    const absoluteDir = relativeDir === "" ? root : path.join(root, relativeDir);
+    const entries = await fs.readdir(absoluteDir, { withFileTypes: true });
+
+    for (const entry of entries.sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0)) {
+      const relativePath = path.join(relativeDir, entry.name);
+      const normalized = relativePath.split(path.sep).join("/");
+      const absolutePath = path.join(root, relativePath);
+
+      if (entry.isDirectory()) {
+        await walk(relativePath);
+      } else if (entry.isFile()) {
+        files[normalized] = await fs.readFile(absolutePath, "utf8");
+      }
+    }
+  }
+
+  await walk("");
+  return files;
+}
+
 afterEach(async () => {
+  vi.restoreAllMocks();
   await Promise.all([...tempRoots].map((root) => fs.rm(root, { recursive: true, force: true })));
   tempRoots.clear();
 });
@@ -59,6 +84,21 @@ describe("navi init planning", () => {
     expect(await exists(path.join(project, "docs/along/project-maps/navi-project-map.md"))).toBe(false);
   });
 
+  it("keeps the complete file tree unchanged during dry-run preview", async () => {
+    const project = await makeProject();
+    await fs.mkdir(path.join(project, "docs"));
+    await fs.writeFile(path.join(project, "README.md"), "# Existing\n");
+    await fs.writeFile(path.join(project, "docs/plan.md"), "# Plan\n\nDesign and validation notes.\n");
+    const before = await snapshotFiles(project);
+
+    const plan = await buildInitPlan({ targetDir: project, write: false, suggestMap: true });
+    const output = renderInitPlan(plan);
+    await applyInitPlan(plan);
+
+    expect(output).toContain("Navi suggested project map preview");
+    await expect(snapshotFiles(project)).resolves.toEqual(before);
+  });
+
   it("writes AGENTS.md and a provisional project map only behind --write", async () => {
     const project = await makeProject();
     const plan = await buildInitPlan({ targetDir: project, write: true });
@@ -78,6 +118,24 @@ describe("navi init planning", () => {
     expect(map).toContain("# Navi Project Map");
     expect(map).toContain("Map status: provisional");
     expect(map).toContain("This map only establishes where Navi should look first.");
+  });
+
+  it("writes identical starter files with or without suggest-map", async () => {
+    const plainProject = await makeProject();
+    const suggestedProject = await makeProject();
+
+    const plainPlan = await buildInitPlan({ targetDir: plainProject, write: true });
+    const suggestedPlan = await buildInitPlan({ targetDir: suggestedProject, write: true, suggestMap: true });
+    await applyInitPlan(plainPlan);
+    await applyInitPlan(suggestedPlan);
+
+    const plainAgents = await fs.readFile(path.join(plainProject, "AGENTS.md"), "utf8");
+    const suggestedAgents = await fs.readFile(path.join(suggestedProject, "AGENTS.md"), "utf8");
+    const plainMap = await fs.readFile(path.join(plainProject, "docs/along/project-maps/navi-project-map.md"), "utf8");
+    const suggestedMap = await fs.readFile(path.join(suggestedProject, "docs/along/project-maps/navi-project-map.md"), "utf8");
+
+    expect(suggestedAgents).toBe(plainAgents);
+    expect(suggestedMap.replaceAll(path.basename(suggestedProject), path.basename(plainProject))).toBe(plainMap);
   });
 
   it("installs alpha 10 map maintenance guidance in the generated project map", async () => {
@@ -765,9 +823,24 @@ describe("navi init CLI helpers", () => {
     expect(output).toContain("README.md");
     expect(output).toContain("Project shape hint: linear");
     expect(output).toContain("Project progress");
+    expect(output).toContain("Position: unconfirmed");
+    expect(output).not.toContain("Current position");
     expect(output).toContain("Needs confirmation before becoming a stable map.");
     expect(await exists(path.join(project, "AGENTS.md"))).toBe(false);
     expect(await exists(path.join(project, "docs/along/project-maps/navi-project-map.md"))).toBe(false);
+  });
+
+  it("quotes the actual target in dry-run suggest-map apply guidance", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-init-other-cwd-"));
+    tempRoots.add(root);
+    const project = path.join(root, "other-target");
+    await fs.mkdir(project);
+    await fs.writeFile(path.join(project, "README.md"), "# Other\n\nDesign, implementation, validation, and release.\n");
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain(`Apply with: navi init --target ${JSON.stringify(project)} --write`);
+    expect(output).not.toContain("navi init --target . --write");
   });
 
   it("renders a flowing Rhythm Map preview for recurring workflow evidence", async () => {
@@ -786,6 +859,8 @@ describe("navi init CLI helpers", () => {
     expect(output).toContain("Navi suggested project map preview");
     expect(output).toContain("Project shape hint: flowing");
     expect(output).toContain("Project rhythm");
+    expect(output).toContain("Focus: unconfirmed");
+    expect(output).not.toContain("Current focus");
     expect(output).toContain("Current track");
     expect(output).toContain("Evidence read:");
     expect(output).toContain("PROJECT_STATE.md");
@@ -801,9 +876,107 @@ describe("navi init CLI helpers", () => {
     expect(output).toContain("Navi suggested project map preview");
     expect(output).toContain("Project shape hint: unclear");
     expect(output).toContain("Not enough evidence for a reliable map preview.");
-    expect(output).toContain("Then rerun navi init --suggest-map.");
+    expect(output).toContain(`Then rerun navi init --target ${JSON.stringify(project)} --suggest-map.`);
+    expect(output).not.toContain("--target . --write");
     expect(output).not.toContain("Project progress");
     expect(output).not.toContain("Project rhythm");
+  });
+
+  it("does not let generated Navi starter files turn an empty project into a concrete suggestion", async () => {
+    const project = await makeProject();
+
+    await applyInitPlan(await buildInitPlan({ targetDir: project, write: true }));
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("Project shape hint: unclear");
+    expect(output).not.toContain("Project progress");
+    expect(output).not.toContain("Project rhythm");
+  });
+
+  it("does not treat negated project keywords as positive shape evidence", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "README.md"),
+      "# Not Yet\n\nThis project does not have a design plan, implementation work, validation, tests, build, deliverable, milestone, spec, or release notes yet.\n",
+    );
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Project shape hint: unclear");
+    expect(output).toContain("Not enough evidence for a reliable map preview.");
+    expect(output).not.toContain("high confidence");
+    expect(output).not.toContain("Project progress");
+  });
+
+  it("keeps shallow single-file keyword evidence below high confidence", async () => {
+    const project = await makeProject();
+    await fs.writeFile(path.join(project, "README.md"), "# Sketch\n\nDesign implementation validation release.\n");
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Project shape hint: linear (medium confidence)");
+    expect(output).not.toContain("high confidence");
+    expect(output).toContain("Position: unconfirmed");
+  });
+
+  it("does not fully read large evidence candidates before bounding snippets", async () => {
+    const project = await makeProject();
+    const readmePath = path.join(project, "README.md");
+    await fs.writeFile(readmePath, `# Large\n\n${"design implementation validation release ".repeat(10000)}\n`);
+    const originalReadFile = fs.readFile.bind(fs);
+    const readFileSpy = vi.spyOn(fs, "readFile");
+    readFileSpy.mockImplementation(async (...args: Parameters<typeof fs.readFile>) => {
+      const [filePath] = args;
+      if (path.resolve(String(filePath)) === readmePath) {
+        throw new Error("full candidate read should not happen");
+      }
+      return originalReadFile(...args);
+    });
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("README.md");
+  });
+
+  it("keeps evidence lists bounded and deterministic for many candidates", async () => {
+    const project = await makeProject();
+    for (let index = 0; index < 90; index += 1) {
+      await fs.writeFile(
+        path.join(project, `README-${String(index).padStart(2, "0")}.md`),
+        `# Candidate ${index}\n\nDesign and validation notes.\n`,
+      );
+    }
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+    const evidenceLines = output.split("\n").filter((line) => line.startsWith("- README-"));
+
+    expect(evidenceLines.length).toBeLessThanOrEqual(50);
+    expect(evidenceLines[0]).toBe("- README-00.md");
+    expect(evidenceLines).not.toContain("- README-89.md");
+  });
+
+  it("skips evidence candidates that disappear before they can be read", async () => {
+    const project = await makeProject();
+    const readmePath = path.join(project, "README.md");
+    await fs.writeFile(readmePath, "# Vanishing\n\nDesign implementation validation release.\n");
+    const originalOpen = fs.open.bind(fs);
+    const openSpy = vi.spyOn(fs, "open");
+    openSpy.mockImplementation(async (...args: Parameters<typeof fs.open>) => {
+      const [filePath] = args;
+      if (path.resolve(String(filePath)) === readmePath) {
+        const error = new Error("gone") as NodeJS.ErrnoException;
+        error.code = "ENOENT";
+        throw error;
+      }
+      return originalOpen(...args);
+    });
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Navi suggested project map preview");
+    expect(output).toContain("Project shape hint: unclear");
   });
 
   it("combines suggest-map and write without writing the suggested map", async () => {
@@ -822,6 +995,8 @@ describe("navi init CLI helpers", () => {
     expect(output).toContain("Navi init applied");
     expect(output).toContain("Navi suggested project map preview");
     expect(output).toContain("Suggested map was not written.");
+    expect(output).not.toContain("Run navi init --target . --write");
+    expect(output).not.toContain("Apply with:");
     expect(output).toContain("Project shape hint: linear");
     expect(map).toContain("Map status: provisional");
     expect(map).toContain("Project shape: unclear");

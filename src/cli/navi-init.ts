@@ -14,6 +14,9 @@ const AGENTS_RELATIVE_PATH = "AGENTS.md";
 const PROJECT_MAP_RELATIVE_PATH = "docs/along/project-maps/navi-project-map.md";
 const EVIDENCE_SNIPPET_BYTES = 12 * 1024;
 const EVIDENCE_TOTAL_BYTES = 160 * 1024;
+const MAX_EVIDENCE_CANDIDATES = 50;
+const MAX_EVIDENCE_DIRS_VISITED = 120;
+const MAX_EVIDENCE_ENTRIES_VISITED = 600;
 const IGNORED_EVIDENCE_DIRS = new Set([".git", "node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
 
 export type InitActionKind = "create" | "modify" | "skip";
@@ -61,6 +64,17 @@ type WritableInitAction = CreateInitAction | ModifyInitAction;
 interface PreflightedWrite {
   action: WritableInitAction;
   writePath: string;
+}
+
+interface EvidenceCollectionState {
+  candidates: string[];
+  directoriesVisited: number;
+  entriesVisited: number;
+}
+
+interface ShapeScore {
+  score: number;
+  files: Set<string>;
 }
 
 export interface InitPlan {
@@ -218,7 +232,7 @@ export function renderInitPlan(plan: InitPlan): string {
 
   if (plan.suggestedMapPreview) {
     lines.push("");
-    lines.push(renderSuggestedMapPreview(plan.suggestedMapPreview, plan.mode));
+    lines.push(renderSuggestedMapPreview(plan.suggestedMapPreview, plan));
   }
 
   lines.push("");
@@ -621,8 +635,16 @@ async function collectEvidenceSnippets(targetDir: string): Promise<EvidenceSnipp
     }
 
     const absolutePath = resolveTargetPath(targetDir, relativePath);
-    const raw = await fs.readFile(absolutePath, "utf8");
-    const text = raw.slice(0, Math.min(EVIDENCE_SNIPPET_BYTES, remainingBytes));
+    const raw = await readEvidenceSnippet(absolutePath, Math.min(EVIDENCE_SNIPPET_BYTES, remainingBytes));
+    if (raw === undefined) {
+      continue;
+    }
+
+    const text = normalizeEvidenceSnippet(relativePath, raw);
+    if (text.trim().length === 0) {
+      continue;
+    }
+
     remainingBytes -= Buffer.byteLength(text, "utf8");
     snippets.push({ relativePath, text });
   }
@@ -631,16 +653,31 @@ async function collectEvidenceSnippets(targetDir: string): Promise<EvidenceSnipp
 }
 
 async function listEvidenceCandidateFiles(targetDir: string): Promise<string[]> {
-  const candidates: string[] = [];
-  await collectEvidenceCandidateFiles(targetDir, ".", candidates);
-  return candidates.sort((left, right) => evidencePriority(left) - evidencePriority(right) || left.localeCompare(right));
+  const state: EvidenceCollectionState = {
+    candidates: [],
+    directoriesVisited: 0,
+    entriesVisited: 0,
+  };
+  await collectEvidenceCandidateFiles(targetDir, ".", state);
+  return state.candidates
+    .sort((left, right) => evidencePriority(left) - evidencePriority(right) || compareCodePoint(left, right))
+    .slice(0, MAX_EVIDENCE_CANDIDATES);
 }
 
 async function collectEvidenceCandidateFiles(
   targetDir: string,
   relativeDir: string,
-  candidates: string[],
+  state: EvidenceCollectionState,
 ): Promise<void> {
+  if (
+    state.candidates.length >= MAX_EVIDENCE_CANDIDATES ||
+    state.directoriesVisited >= MAX_EVIDENCE_DIRS_VISITED ||
+    state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED
+  ) {
+    return;
+  }
+
+  state.directoriesVisited += 1;
   const absoluteDir = relativeDir === "." ? targetDir : resolveTargetPath(targetDir, relativeDir);
   let entries;
   try {
@@ -652,19 +689,77 @@ async function collectEvidenceCandidateFiles(
     throw error;
   }
 
-  for (const entry of entries) {
+  for (const entry of entries.sort((left, right) => compareCodePoint(left.name, right.name))) {
+    if (
+      state.candidates.length >= MAX_EVIDENCE_CANDIDATES ||
+      state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED
+    ) {
+      return;
+    }
+
+    state.entriesVisited += 1;
     const relativePath = relativeDir === "." ? entry.name : path.posix.join(relativeDir, entry.name);
     if (entry.isDirectory()) {
       if (!IGNORED_EVIDENCE_DIRS.has(entry.name)) {
-        await collectEvidenceCandidateFiles(targetDir, relativePath, candidates);
+        await collectEvidenceCandidateFiles(targetDir, relativePath, state);
       }
       continue;
     }
 
     if (entry.isFile() && isEvidenceCandidate(relativePath)) {
-      candidates.push(relativePath);
+      state.candidates.push(relativePath);
     }
   }
+}
+
+async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Promise<string | undefined> {
+  let handle;
+  try {
+    handle = await fs.open(absolutePath, "r");
+    const buffer = Buffer.alloc(maxBytes);
+    const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);
+    return buffer.subarray(0, bytesRead).toString("utf8");
+  } catch (error) {
+    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM", "EISDIR"].includes(error.code ?? "")) {
+      return undefined;
+    }
+    throw error;
+  } finally {
+    await handle?.close();
+  }
+}
+
+function normalizeEvidenceSnippet(relativePath: string, text: string): string {
+  if (relativePath === AGENTS_RELATIVE_PATH && text.includes(NAVI_AGENTS_BLOCK_START)) {
+    return stripNaviAgentsBlock(text);
+  }
+
+  if (relativePath === PROJECT_MAP_RELATIVE_PATH && isDefaultStarterMap(text)) {
+    return "";
+  }
+
+  return text;
+}
+
+function stripNaviAgentsBlock(text: string): string {
+  let result = text;
+  while (result.includes(NAVI_AGENTS_BLOCK_START)) {
+    const start = result.indexOf(NAVI_AGENTS_BLOCK_START);
+    const end = result.indexOf(NAVI_AGENTS_BLOCK_END, start);
+    if (end === -1) {
+      return result.slice(0, start);
+    }
+    result = `${result.slice(0, start)}${result.slice(end + NAVI_AGENTS_BLOCK_END.length)}`;
+  }
+  return result;
+}
+
+function isDefaultStarterMap(text: string): boolean {
+  return (
+    text.includes("# Navi Project Map") &&
+    text.includes("Map status: provisional") &&
+    text.includes("This map only establishes where Navi should look first.")
+  );
 }
 
 function isEvidenceCandidate(relativePath: string): boolean {
@@ -712,10 +807,13 @@ function evidencePriority(relativePath: string): number {
   return 99;
 }
 
+function compareCodePoint(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPreview {
-  const combined = snippets.map((snippet) => `${snippet.relativePath}\n${snippet.text}`).join("\n").toLowerCase();
   const evidenceRead = snippets.map((snippet) => snippet.relativePath);
-  const flowingScore = scoreSignals(combined, [
+  const flowingScore = scoreEvidenceSignals(snippets, [
     "application",
     "internship",
     "recruiting",
@@ -731,7 +829,7 @@ function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPrev
     "workflow",
     "handoff",
   ]);
-  const linearScore = scoreSignals(combined, [
+  const linearScore = scoreEvidenceSignals(snippets, [
     "milestone",
     "spec",
     "design",
@@ -744,7 +842,7 @@ function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPrev
     "package.json",
   ]);
 
-  if (snippets.length === 0 || (flowingScore < 2 && linearScore < 2)) {
+  if (snippets.length === 0 || (flowingScore.score < 2 && linearScore.score < 2)) {
     return {
       evidenceRead,
       shape: "unclear",
@@ -754,7 +852,7 @@ function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPrev
     };
   }
 
-  if (flowingScore >= 2 && linearScore >= 2) {
+  if (flowingScore.score >= 2 && linearScore.score >= 2) {
     return {
       evidenceRead,
       shape: "mixed",
@@ -766,11 +864,11 @@ function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPrev
     };
   }
 
-  if (flowingScore > linearScore) {
+  if (flowingScore.score > linearScore.score) {
     return {
       evidenceRead,
       shape: "flowing",
-      confidence: flowingScore >= 4 ? "high" : "medium",
+      confidence: suggestionConfidence(flowingScore),
       suggestedView: "Rhythm Map",
       mapText: renderFlowingPreviewMap(),
       why: ["Found recurring workflow, waiting, feedback, or follow-up signals."],
@@ -781,7 +879,7 @@ function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPrev
   return {
     evidenceRead,
     shape: "linear",
-    confidence: linearScore >= 4 ? "high" : "medium",
+    confidence: suggestionConfidence(linearScore),
     suggestedView: "Project Map",
     mapText: renderLinearPreviewMap(),
     why: ["Found bounded delivery, implementation, validation, build, or release signals."],
@@ -789,31 +887,100 @@ function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPrev
   };
 }
 
-function scoreSignals(text: string, signals: string[]): number {
-  return signals.reduce((score, signal) => score + (text.includes(signal) ? 1 : 0), 0);
+function scoreEvidenceSignals(snippets: EvidenceSnippet[], signals: string[]): ShapeScore {
+  const files = new Set<string>();
+  let score = 0;
+
+  for (const snippet of snippets) {
+    const text = snippet.text.toLowerCase();
+    for (const signal of signals) {
+      if (hasPositiveSignal(text, signal)) {
+        score += 1;
+        files.add(snippet.relativePath);
+      }
+    }
+  }
+
+  return { score, files };
+}
+
+function hasPositiveSignal(text: string, signal: string): boolean {
+  let startIndex = 0;
+  while (startIndex < text.length) {
+    const index = text.indexOf(signal, startIndex);
+    if (index === -1) {
+      return false;
+    }
+
+    const prefix = text.slice(Math.max(0, index - 80), index);
+    const sentence = sentenceAround(text, index);
+    if (!hasNegationNearSignal(prefix) && !hasNegationInSentence(sentence)) {
+      return true;
+    }
+
+    startIndex = index + signal.length;
+  }
+
+  return false;
+}
+
+function hasNegationNearSignal(prefix: string): boolean {
+  return /\b(no|not|without|lacks?|missing)\b[\s\w,;:/-]{0,80}$/.test(prefix) || /\bdoes\s+not\s+have\b[\s\w,;:/-]{0,80}$/.test(prefix);
+}
+
+function sentenceAround(text: string, index: number): string {
+  const boundaries = [".", "!", "?", "\n"];
+  let start = 0;
+  for (const boundary of boundaries) {
+    const boundaryIndex = text.lastIndexOf(boundary, index);
+    if (boundaryIndex >= start) {
+      start = boundaryIndex + boundary.length;
+    }
+  }
+
+  let end = text.length;
+  for (const boundary of boundaries) {
+    const boundaryIndex = text.indexOf(boundary, index);
+    if (boundaryIndex !== -1 && boundaryIndex < end) {
+      end = boundaryIndex;
+    }
+  }
+
+  return text.slice(start, end);
+}
+
+function hasNegationInSentence(sentence: string): boolean {
+  return /\b(no|not|without|lacks?|missing)\b/.test(sentence) || /\bdoes\s+not\s+have\b/.test(sentence);
+}
+
+function suggestionConfidence(score: ShapeScore): SuggestionConfidence {
+  if (score.score >= 4 && score.files.size >= 2) {
+    return "high";
+  }
+  return "medium";
 }
 
 function renderLinearPreviewMap(): string {
   return `Project progress
 [Goal] -> [Design/plan] -> [Implementation] -> [Validation] -> [Delivery]
                          ^
-                    Current position`;
+                    Position: unconfirmed`;
 }
 
 function renderFlowingPreviewMap(): string {
   return `Project rhythm
 [Cycle/source refresh] + [Screening/selection] + [Preparation/execution] + [Follow-up/feedback]
                                       ^
-                                  Current focus
+                               Focus: unconfirmed
 
 Current track
 [Read records] -> [Choose small loop] -> [Execute] -> [Record/wait]`;
 }
 
-function renderSuggestedMapPreview(preview: SuggestedMapPreview, mode: InitPlan["mode"]): string {
+function renderSuggestedMapPreview(preview: SuggestedMapPreview, plan: InitPlan): string {
   const lines: string[] = [];
   lines.push("Navi suggested project map preview");
-  lines.push(mode === "write" ? "Suggested map was not written." : "No files were changed.");
+  lines.push(plan.mode === "write" ? "Suggested map was not written." : "No files were changed.");
   lines.push("");
   lines.push("Evidence read:");
   if (preview.evidenceRead.length === 0) {
@@ -850,10 +1017,14 @@ function renderSuggestedMapPreview(preview: SuggestedMapPreview, mode: InitPlan[
   }
   lines.push("");
   lines.push("Next step:");
-  lines.push("- Run navi init --target . --write to add project-local guidance and a starter map.");
   lines.push("- Review or edit the suggested map before treating it as stable.");
+  if (plan.mode === "dry-run") {
+    lines.push(`- Run navi init --target ${JSON.stringify(plan.targetDir)} --write to add project-local guidance and a starter map.`);
+  } else {
+    lines.push("- Standard starter files have already been applied; no second init write is needed.");
+  }
   if (preview.shape === "unclear" || preview.confidence === "low") {
-    lines.push("- Then rerun navi init --suggest-map.");
+    lines.push(`- Then rerun navi init --target ${JSON.stringify(plan.targetDir)} --suggest-map.`);
   }
 
   return lines.join("\n");

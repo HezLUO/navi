@@ -23,6 +23,18 @@
 - Do not call a model, read other Codex threads, or rely on source-thread history.
 - Use targeted validation: `npm test -- tests/cli/navi-init.test.ts`, `npm test -- tests/skills/along-working-thread-skill.test.ts` if skill docs change, `npm run verify:plugin-package` if package copies change, and `git diff --check`.
 
+## Review Correction
+
+The original implementation snippets below are superseded by code review remediation:
+
+- Evidence reading must use bounded byte reads and must not `readFile` an entire candidate before truncating.
+- Evidence traversal must have conservative directory, entry, candidate, and byte limits, with deterministic non-locale sorting.
+- Unreadable, irrelevant, or race-disappearing evidence candidates should be skipped rather than failing the whole suggestion.
+- Navi-managed `AGENTS.md` blocks and the default provisional starter map are not shape evidence for later suggestions.
+- Keyword-based previews must not claim a real current position or current focus; template markers should remain unconfirmed unless explicit position evidence exists.
+- Dry-run preview guidance must quote the actual target directory, and write-mode preview output must not suggest running the same initialization write again.
+- Documentation language should describe global install once plus per-project initialization/configuration, not installing Navi into the target project.
+
 ---
 
 ## File Structure
@@ -618,10 +630,14 @@ function renderSuggestedMapPreview(preview: SuggestedMapPreview, mode: InitPlan[
   }
   lines.push("");
   lines.push("Next step:");
-  lines.push("- Run navi init --target . --write to add project-local guidance and a starter map.");
   lines.push("- Review or edit the suggested map before treating it as stable.");
+  if (plan.mode === "dry-run") {
+    lines.push(`- Run navi init --target ${JSON.stringify(plan.targetDir)} --write to add project-local guidance and a starter map.`);
+  } else {
+    lines.push("- Standard starter files have already been applied; no second init write is needed.");
+  }
   if (preview.shape === "unclear" || preview.confidence === "low") {
-    lines.push("- Then rerun navi init --suggest-map.");
+    lines.push(`- Then rerun navi init --target ${JSON.stringify(plan.targetDir)} --suggest-map.`);
   }
 
   return lines.join("\n");

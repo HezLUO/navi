@@ -961,14 +961,14 @@ describe("Along Working Thread Codex skill", () => {
     }
   });
 
-  it("documents Navi project initialization as the reliable install path", async () => {
+  it("documents Navi project initialization as the reliable configuration path", async () => {
     const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
     const readme = await readRepoText("plugins/along-working-thread/README.md");
     const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
 
     for (const expected of [
       "Navi Project Initialization",
-      "install Navi into a target project",
+      "configure Navi for a target project",
       "global skill plus project-local trigger source",
       "ask for user confirmation before writing durable project files",
     ]) {
@@ -985,7 +985,7 @@ describe("Along Working Thread Codex skill", () => {
 
     for (const expected of [
       "# Navi Project Initialization",
-      "Minimum install output",
+      "Minimum initialization output",
       "AGENTS.md",
       "docs/along/project-maps/",
       "Project Map or Rhythm Map",
@@ -995,6 +995,9 @@ describe("Along Working Thread Codex skill", () => {
     ]) {
       expect(initDoc).toContain(expected);
     }
+
+    expect(reference).not.toContain("install Navi into a target project");
+    expect(initDoc).not.toContain("Minimum install output");
   });
 
   it("documents degraded state rules for unreliable project maps", async () => {

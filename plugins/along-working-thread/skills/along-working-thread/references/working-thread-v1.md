@@ -1009,13 +1009,13 @@ Project-local trigger sources should explicitly say that read-only checks of TOD
 
 ### Navi Project Initialization
 
-Navi Project Initialization is the minimum reliable path to install Navi into a target project. It uses the global skill plus project-local trigger source plus project-local Project Map or Rhythm Map.
+Navi Project Initialization is the minimum reliable path to configure Navi for a target project. It uses the global skill plus project-local trigger source plus project-local Project Map or Rhythm Map.
 
 Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again. Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
 
 Use initialization when a user wants reliable Navi behavior in an existing project, especially after fresh-session validation shows that ordinary next-step prompts do not implicitly select the global skill. The setup should inspect the target project, classify the project shape, draft the trigger source, draft the map, and ask for user confirmation before writing durable project files.
 
-Minimum install output:
+Minimum initialization output:
 
 - a short Navi trigger source in `AGENTS.md` or the target project's equivalent instruction file;
 - a target-project map under `docs/along/project-maps/` when the project has a stable enough shape;

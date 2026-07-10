@@ -14,7 +14,7 @@ if (command === "init") {
 }
 
 if (command !== "start") {
-  console.error(`Unknown command "${command}". Use: navi init [--target <path>] [--write] or along start`);
+  console.error(`Unknown command "${command}". Use: navi init [--target <path>] [--write] [--suggest-map] or along start`);
   process.exit(1);
 }
 
