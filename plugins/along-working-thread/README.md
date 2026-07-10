@@ -135,7 +135,7 @@ The package skill is a distribution copy and must stay in exact sync with the ca
 
 ## Use from repo
 
-This package is intended for developers who already understand Codex plugins or skills.
+This package is intended for developers who already understand Codex plugins or skills. Source alpha requires explicit plugin installation from this package before global setup; `navi setup` does not install the plugin for you.
 
 For local experimentation, use the package directory as the plugin source:
 
@@ -143,15 +143,20 @@ For local experimentation, use the package directory as the plugin source:
 plugins/along-working-thread
 ```
 
-This plugin source package still requires explicit local Codex plugin or skill setup. The repository also includes a narrow target-project initializer:
+After explicit plugin installation, link the source CLI and complete the global first-use flow:
 
 ```bash
-npm run navi -- init --target /path/to/target-project
+npm link
+navi doctor
+navi setup
+navi setup --write
+navi init
+navi init --write
 ```
 
-`navi init` previews project-local Navi files for the target project; add `--write` to apply the preview. It does not install or sync the global Codex plugin or skill.
+`navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. `navi setup` configures global discovery and does not initialize a target project. `navi init` previews project-local Navi files for one target project; an agent may run `navi init --write` only after explicit user approval. It does not reinstall the plugin.
 
-This package is ready for GitHub source alpha testing. Public Codex marketplace release remains deferred.
+The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `src/web` is not the Navi alpha UI.
 
 ## Verify package
 

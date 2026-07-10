@@ -4,6 +4,13 @@ Navi Project Initialization is the minimum reliable way to connect Navi to a tar
 
 Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.
 
+```text
+navi setup = global first-use discovery
+navi init = one target project's reliable guidance
+```
+
+`navi setup` does not initialize a target project. `navi init` does not reinstall the plugin. An agent may run `navi init --write` only after explicit user approval.
+
 Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
 
 In product terms:

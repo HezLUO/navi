@@ -1206,7 +1206,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "`navi init`",
       "source package verification",
       "npm run verify:plugin-package",
-      "npm run navi -- init --target /path/to/target-project",
+      "navi init --write",
       "Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.",
       "Along is the parent/lab context and broader long-term product family.",
       "should be understandable without knowing Along",
@@ -1271,13 +1271,65 @@ describe("Along Working Thread repo-contained plugin package", () => {
     }
   });
 
+  it("documents the source-alpha setup and project-init boundary", async () => {
+    const [englishReadme, chineseReadme, packageReadme, initDoc, debt] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/along-working-thread/README.md"),
+      readRepoText("docs/along/project-maps/navi-project-init.md"),
+      readRepoText("docs/along/navi-product-debt.md"),
+    ]);
+
+    for (const readme of [englishReadme, chineseReadme, packageReadme]) {
+      for (const expected of [
+        "npm link",
+        "navi doctor",
+        "navi setup",
+        "navi setup --write",
+        "navi init",
+        "navi init --write",
+      ]) {
+        expect(readme).toContain(expected);
+      }
+    }
+
+    expect(englishReadme).toContain("Setup once -> approve project init once -> use natural language");
+    for (const expected of [
+      "explicit plugin installation",
+      "does not initialize a target project",
+      "does not reinstall the plugin",
+      "not a normal daily step",
+      "npm/marketplace/one-click installation remains out of scope",
+      "`src/web` is not the Navi alpha UI",
+    ]) {
+      expect(englishReadme).toContain(expected);
+      expect(packageReadme).toContain(expected);
+    }
+    expect(chineseReadme).toContain("全局 setup 一次 -> 每个项目批准 init 一次 -> 之后使用自然语言");
+    for (const expected of [
+      "显式 plugin 安装",
+      "不会初始化目标项目",
+      "不会重新安装 plugin",
+      "不是日常步骤",
+      "公开 npm/marketplace/一键安装仍不在范围内",
+      "`src/web` 不是 Navi alpha UI",
+    ]) {
+      expect(chineseReadme).toContain(expected);
+    }
+    expect(initDoc).toContain("navi setup = global first-use discovery");
+    expect(initDoc).toContain("navi init = one target project's reliable guidance");
+    expect(initDoc).toContain("may run `navi init --write` only after explicit user approval");
+    expect(debt).toContain("Source-alpha bootstrap is implemented");
+    expect(debt).toContain("Public distribution remains open");
+  });
+
   it("documents shipped navi init scope in debt and roadmap docs", async () => {
     const debt = await readRepoText("docs/along/navi-product-debt.md");
     const roadmap = await readRepoText("docs/along/roadmaps/navi-post-alpha-roadmap.md");
 
     for (const expected of [
-      "Status: partly addressed",
-      "partly productized through the narrow project-local `navi init` initializer",
+      "Status: source-alpha addressed; public distribution open",
+      "Source-alpha bootstrap is implemented",
     ]) {
       expect(debt).toContain(expected);
     }

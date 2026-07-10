@@ -14,32 +14,25 @@ Navi is an independent open-source product for supervising expert agents. It is 
 
 This repository is the canonical open-source alpha home for Navi. Current main branch behavior includes Progress/Rhythm Maps, Challenge Layer, pause semantics, stage/vision supervision, and coordination guidance. Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.
 
-## Try Navi Alpha In 5 Minutes
+## Source-alpha setup
 
-This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. It is not yet an npm package, public marketplace listing, or one-click global installer.
+This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. Public npm/marketplace/one-click installation remains out of scope.
+
+First complete the explicit plugin installation described in the [package README](./plugins/along-working-thread/README.md). Then, from this repository, run:
 
 ```bash
-git clone https://github.com/HezLUO/navi.git
-cd navi
 npm install
-npm run verify:plugin-package
+npm link
+navi doctor
+navi setup
+navi setup --write
 ```
 
-That verifies the repo-contained Navi plugin source package.
+`navi doctor` is troubleshooting, not a normal daily step. It checks the source-alpha prerequisites and points to the appropriate repair when something is missing.
 
-To try Navi in a real target project, preview the project-local setup:
+Setup once -> approve project init once -> use natural language
 
-```bash
-npm run navi -- init --target /path/to/target-project
-```
-
-Apply the setup only after reviewing the preview:
-
-```bash
-npm run navi -- init --target /path/to/target-project --write
-```
-
-Project-local setup is explicit and dry-run by default. `navi init` prepares `AGENTS.md`, `docs/along/project-maps/navi-project-map.md`, and a fresh-session validation prompt inside the target project. It does not install the global Codex plugin or skill.
+`navi setup` configures global discovery only: it does not initialize a target project. In each target project, preview the project-local guidance with `navi init`, then an agent may run `navi init --write` only after explicit user approval. `navi init` does not reinstall the plugin.
 
 For more setup detail, follow:
 
@@ -173,7 +166,8 @@ plugins/along-working-thread
 This alpha includes a narrow project-local initializer:
 
 ```bash
-npm run navi -- init --target /path/to/target-project
+navi init
+navi init --write
 ```
 
 The initializer is dry-run by default and only writes with `--write`. It prepares the target project for Navi behavior; it does not install or sync the global Codex plugin or skill.
@@ -207,6 +201,8 @@ Reusable setup docs:
 MCP, runtime, local app, background presence, companion memory, and adapter surfaces are experimental or later layers unless explicitly called out for a focused validation pass.
 
 The repository still contains older Along companion ideas, including local memory, Shared Desk, soundscape, and `.along/` runtime concepts. Treat those as historical or future-facing context, not the current recommended Navi installation path.
+
+`src/web` is not the Navi alpha UI.
 
 ## Release Notes
 

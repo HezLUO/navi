@@ -77,7 +77,7 @@ Recommended fix:
 
 ### 3. Installation And Initialization Debt
 
-Status: partly addressed
+Status: source-alpha addressed; public distribution open
 Priority: high before broader real-use validation
 
 Problem:
@@ -88,7 +88,7 @@ Fresh-session calibration showed that global skill auto-routing can be inconsist
 global skill + project-local trigger source + project-local Project Map
 ```
 
-That path is now partly productized through the narrow project-local `navi init` initializer, but global plugin installation, one-click sync, npm release, marketplace release, and clearer user docs remain open distribution work.
+Source-alpha bootstrap is implemented through explicit plugin installation, `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Public distribution remains open: npm publication, public marketplace, stable installer, PATH management, and one-click sync are still separate work.
 
 Why it matters:
 
