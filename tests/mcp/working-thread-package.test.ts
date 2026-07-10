@@ -9,10 +9,10 @@ describe("Working Thread MCP package wiring", () => {
     expect(packageJson.scripts["mcp:working-thread"]).toBe(
       "tsx src/mcp/working-thread-server.ts",
     );
-    expect(packageJson.scripts.navi).toBe("tsx src/cli/index.ts");
+    expect(packageJson.scripts.navi).toBe("tsx src/cli/navi.ts");
 
     expect(packageJson.bin).toEqual({
-      navi: "src/cli/index.ts",
+      navi: "src/cli/navi.ts",
       along: "src/cli/index.ts",
     });
   });
@@ -28,7 +28,7 @@ describe("Working Thread MCP package wiring", () => {
     try {
       const result = spawnSync(
         process.execPath,
-        ["src/cli/index.ts", "init", "--target", project],
+        ["src/cli/navi.ts", "init", "--target", project],
         {
           cwd: process.cwd(),
           encoding: "utf8",
