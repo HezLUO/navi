@@ -1,68 +1,47 @@
-# Navi Alpha 14 Project State Snapshot Design
+# Navi Alpha 14 Confirmed Project State Design
 
 ## Status
 
-This design was discussed and approved in conversation on 2026-07-10 while alpha.13 implementation remediation continued in a separate worktree.
+This design was revised and approved in conversation on 2026-07-10.
 
-This is a design artifact only. It does not approve implementation, worktree execution, commits, pushes, release preparation, npm publication, marketplace publication, runtime UI, background automation, Memory v2, agent adapters, delegation, or write delegation.
+The original alpha.14 proposal created an uncalibrated `.navi/state.md` during
+`navi init --write`. That approach is superseded. Alpha.14 now creates Project
+State only after Navi has enough reliable navigation evidence, shows the user a
+compact preview, and receives approval.
 
-Alpha.14 belongs primarily to the **Project Integration** product layer. It introduces the first project-local state snapshot for independent Navi. It should not become another broad User Supervision rule layer or a hidden runtime database.
+This design does not approve code implementation, worktree execution, release
+preparation, tags, publication, runtime UI, background automation, Memory v2,
+agent adapters, delegation, or write delegation.
 
 ## Product Context
 
-Navi should stand independently as a product. Along may integrate Navi later, but Navi must not depend on Along for its identity, project state, installation model, or core behavior.
+Navi should stand independently as a product. Along may consume Navi later, but
+Navi must not depend on Along for its identity, project state, installation
+model, or core behavior.
 
-The current alpha surface is still:
+The current product surface is still:
 
 ```text
 skill/plugin behavior
 + project-local guidance
-+ project maps
++ Project Maps
 + navi init
 ```
 
-Alpha.13 improves how Navi initializes and reads a target project. The next gap is continuity: a Project Map explains the route, but it does not reliably say what the project is trying to achieve now, which work currently matters, what is happening in parallel, or which decision should come next in a fresh session.
-
-Alpha.14 adds a compact, human-readable project state snapshot without introducing runtime storage.
+Project Maps improve structural orientation, but a fresh session may still need
+to reconstruct the current goal, stage, focus, parallel work, and next decision
+from scattered documents and recent activity. Alpha.14 introduces an optional,
+compact navigation snapshot for projects where saving that state would
+materially reduce future reconstruction.
 
 ## Problem Definition
 
-Project evidence is usually distributed across README files, specs, plans, commits, task records, handoffs, and conversation context. A fresh session can inspect those sources, but it may still reconstruct the current situation incorrectly or spend too much time rediscovering it.
+Project evidence is commonly distributed across README files, specs, plans,
+commits, task records, handoffs, and user instructions. Reading all of it can be
+expensive, and the latest activity can be mistaken for the project's actual
+direction.
 
-Three existing artifacts solve different problems:
-
-- a Project Map describes the stable route or rhythm of the project;
-- a handoff transfers detailed context between sessions or owners;
-- ordinary project documents contain evidence and history.
-
-None of them is a deliberately compact answer to:
-
-```text
-What is this project trying to achieve?
-What stage is it in?
-What is the main focus now?
-What relevant work is running in parallel?
-What is the next real decision?
-When should the agent continue, and when should it stop?
-```
-
-Without this snapshot, Navi can have a map but still lose the user's current navigation state.
-
-## Product Goal
-
-Alpha.14 should give initialized projects one compact project-local state snapshot that fresh Navi sessions can read first, challenge against newer evidence, and propose updating only when future navigation would materially change.
-
-The goal is:
-
-```text
-Create a small, readable navigation snapshot for the current project.
-Treat it as a useful declared state, not unquestionable truth.
-Keep durable updates user-approved.
-```
-
-## Core Product Model
-
-Alpha.14 distinguishes three artifacts.
+Three artifacts answer different questions:
 
 | Artifact | Primary question | Expected stability | Detail level |
 | --- | --- | --- | --- |
@@ -70,15 +49,28 @@ Alpha.14 distinguishes three artifacts.
 | Project State | Where are we now, and what decision matters next? | Changes at meaningful boundaries | Compact |
 | Handoff | What context does another session or owner need to continue safely? | Written for a transfer event | Detailed |
 
-Project State must not replace the Project Map or handoff.
+Project State must not become another task list, transcript, or runtime memory
+store.
+
+## Product Goal
+
+Alpha.14 should let Navi save one compact, human-readable project-local
+navigation snapshot only when:
+
+1. the state is sufficiently known;
+2. the user can review the proposed content;
+3. saving it will improve a future session; and
+4. the user approves the durable write.
+
+The governing model is:
 
 ```text
 Project Map   = route and structure
-Project State = current navigation snapshot
+Project State = confirmed current navigation snapshot
 Handoff       = session-transfer package
 ```
 
-## State Location And Format
+## State Location And Ownership
 
 The first version uses:
 
@@ -86,325 +78,330 @@ The first version uses:
 .navi/state.md
 ```
 
-The file is Markdown, not JSON.
+The file is Markdown, not JSON. It remains readable and editable without a
+runtime, and it fits Navi's current docs-backed product surface.
 
-Markdown is preferred because the state must remain:
+Project State is optional. A project without `.navi/state.md` remains fully
+usable with Navi. `navi init --write` must not create the file, and alpha.14 does
+not add a `navi state` command.
 
-- readable and editable by the user;
-- inspectable by an agent without a runtime;
-- suitable for ordinary source control when the user chooses to track it;
-- compatible with Navi's current docs-backed alpha surface;
-- independent of Along-specific storage paths.
+The file must not contain secrets, hidden model memory, private conversation
+history, hidden reasoning, or source-thread data that does not already belong in
+the target project.
 
-The file must not contain secrets, hidden model memory, private conversation history, or source-thread data that does not already belong in the target project.
+## Delayed Creation
 
-## State Structure
+### Eligibility Gate
 
-The initial structure is:
+Navi may offer to create `.navi/state.md` only when all of the following are
+true:
+
+- the project is likely to continue across sessions rather than end as a narrow
+  one-shot task;
+- the project goal is clear;
+- the current product or delivery stage is reliable;
+- the current main-session focus is clear;
+- one real next decision can be named;
+- those navigation facts were provided or confirmed by the user;
+- `.navi/state.md` does not already exist; and
+- saving the snapshot would materially reduce future reconstruction.
+
+Navi must not offer creation when:
+
+- the map or judgment is provisional;
+- the task is narrow and likely to end in the current session;
+- the project is closing rather than continuing;
+- any required core field remains unclear;
+- a state file already exists;
+- the user already rejected creation in the current session; or
+- the offer would interrupt an already-approved bounded execution loop.
+
+There is no timer, prompt count, token threshold, or fixed number of sessions.
+Eligibility is based on navigation quality and future utility.
+
+### Preview And Approval
+
+When eligible, Navi should use one short sentence to offer saving the confirmed
+navigation state. Before writing, it must show this compact preview:
+
+```text
+Goal: ...
+Stage: ...
+Focus: ...
+Next decision: ...
+Stop boundary: ...
+```
+
+The user approves or rejects the proposed durable write. Navi must not create an
+empty template first and ask the user to fill it later.
+
+## State Contract
+
+An initial file uses this structure:
 
 ```md
 # Navi Project State
 
+State status: user-confirmed
+
 ## Project Goal
-Unclear - needs calibration.
+<confirmed project outcome>
 
 ## Current Stage
-Unclear - needs calibration.
+<confirmed product or delivery stage>
 
 ## Current Focus
-Unclear - review project evidence and choose the current focus.
+<single main-session focus>
 
 ## Parallel Work
 None.
 
 ## Next Decision
-Confirm the project goal, current stage, current focus, and next real decision.
+<one decision the user can actually judge>
 
 ## Stop / Continue Policy
-Continue through reversible inspection and drafting. Stop before irreversible writes, broad scope changes, release decisions, or when the next decision is unclear.
+<current bounded continuation rule and stop boundary>
 
 ## Evidence
-- Created by `navi init --write`.
-- Review README, project docs, specs, plans, recent commits, and user instructions before treating this state as current.
+- <project-local source or current user confirmation>
+- User confirmed on YYYY-MM-DD.
 
 ## Last Updated
-Created by `navi init --write`; not yet calibrated.
+YYYY-MM-DD - Created after user confirmation.
 ```
 
-### Project Goal
+The required core fields are `Project Goal`, `Current Stage`, `Current Focus`,
+and `Next Decision`. They must not contain `Unclear`, placeholder instructions,
+or invented certainty when the file is created.
 
-Names the outcome the project is currently trying to achieve. It should describe the target, not the latest task.
+`Parallel Work` may contain `None.`. When present, a parallel item records only
+work that can affect a later decision, including its status and return condition.
+It is not a general task list.
 
-### Current Stage
+`Stop / Continue Policy` must match the active Work Mode and the user's approved
+execution boundary. `Evidence` must cite at least one project-local source or
+current user confirmation.
 
-Names the target project's current product or delivery stage. It is not Navi's Work Mode and should not silently substitute Navi's own alpha stages for the target project's stages.
+Project State must not include transcripts, source-thread metadata, hidden
+reasoning, test logs, percentage-complete guesses, long risk registers, or
+general task backlogs.
 
-### Current Focus
+## Reading And Authority
 
-Names the single main focus that should guide the current main session. This replaces internal lane terminology in the user-facing state file.
+When `.navi/state.md` exists, Navi should read it early for orientation, then
+challenge it against the current prompt and relevant newer project evidence.
 
-### Parallel Work
-
-Lists only concurrent work that may affect a later decision, such as an implementation worktree, external review, calibration session, CI result, or stakeholder response.
-
-Do not use this section as a general task list. If a parallel item has its own future decision or return condition, record it with that item instead of creating a second project-wide `Next Decision`.
-
-### Next Decision
-
-Contains one primary next decision for the project. It should name something the user can actually judge, not `continue`, `keep working`, or a local mechanical step.
-
-### Stop / Continue Policy
-
-States the current bounded continuation rule: what can proceed without another interruption and which boundary requires user control.
-
-### Evidence
-
-Names the project-local sources that support or should challenge the snapshot. It is a source guide, not a transcript or test log.
-
-### Last Updated
-
-Explains when and why the navigation snapshot last changed. It should make an uncalibrated starter state visibly different from a user-confirmed state.
-
-## Compactness Rule
-
-`state.md` should stay compact and quickly readable, but alpha.14 does not impose a literal one-screen or line-count limit.
-
-The governing rule is:
+Project State is a navigation cache, not unquestionable truth:
 
 ```text
-Only information that directly changes current navigation belongs in state.md.
+current user instruction
+> newer relevant approved project evidence
+> stored Project State
 ```
 
-Detailed background, test output, risk analysis, long task lists, rejected alternatives, implementation history, and transfer instructions belong in README files, specs, plans, issue trackers, or handoffs.
+Ordinary low-level edits or test results do not automatically invalidate a
+still-correct state. A state conflict matters only when it could change current
+navigation, a stop boundary, or the next decision.
 
-Compactness matters because a long state file recreates the reconstruction problem alpha.14 is meant to solve. Readability matters more than an arbitrary visual limit.
+## Update Lifecycle
 
-## `navi init` Behavior
+Navi considers an update only when a navigation fact changes materially:
 
-`navi init --write` should create `.navi/state.md` by default as part of project initialization.
+- Project Goal;
+- Current Stage;
+- Current Focus;
+- relevant Parallel Work, including its return condition;
+- Next Decision; or
+- Stop / Continue Policy.
 
-The first write uses the conservative starter state shown above.
+Routine file edits, targeted test results, commits, pushes, temporary debugging,
+and a user saying `continue` inside an approved loop do not justify state churn.
 
-It must not:
+Alpha.14 uses a hybrid maintenance rule:
 
-- infer a complete project state from shallow evidence;
-- convert the alpha.13 suggested map into a confirmed state;
-- overwrite an existing `.navi/state.md`;
-- silently calibrate unclear fields;
-- mark the starter state as user-confirmed;
-- write anything in default dry-run mode.
+- when a state change is a direct consequence of an already-approved bounded
+  write lane, Navi may include the smallest state patch in that lane without
+  creating a second `continue` gate;
+- when no current approval covers the durable state change, Navi waits for a
+  meaningful stage closure or decision point, previews the change, and asks for
+  approval;
+- Navi never rewrites state from an uncertain inference; and
+- unrelated user-authored content must be preserved.
 
-The starter state is intentionally useful but incomplete. Its job is to establish the state contract and make missing calibration visible.
+There is no periodic refresh, per-turn rewrite, modification-time expiry,
+background watcher, freshness score, or automatic repair.
 
-Alpha.13 semantics remain separate:
+## Missing, Invalid, And Opt-Out Behavior
 
-```text
---write       = durable standard project initialization, including starter state
---suggest-map = terminal-only project-shape preview
-```
+- A missing state file is normal and must not reduce Navi's basic usefulness.
+- If the user rejects creation, Navi must not offer again in the same session.
+- If the user deletes an existing state file, treat deletion as an opt-out. Do
+  not recreate it unless the user explicitly asks or explicitly approves a new
+  proposal later.
+- If the file is incomplete or malformed, use only clearly readable content,
+  lower confidence, and do not repair it silently.
+- If state conflicts with the current prompt or newer evidence, the newer source
+  wins; surface the conflict only when it affects navigation or a decision.
+- If the file cannot be read, mention it only when that failure matters to the
+  current request. Navi itself must continue to work.
+- Repair or replacement uses the same compact preview and approval boundary as
+  initial creation.
 
-`--suggest-map` must not populate or rewrite `.navi/state.md` automatically.
+Alpha.14 adds no schema migration, automatic backup, recovery database, or
+background reconciliation.
 
-## Reading Strategy
+## Version Control Policy
 
-Navi should read `.navi/state.md` early when orienting in an initialized project, then compare it with relevant project evidence.
+Navi does not decide whether `.navi/state.md` belongs in source control.
 
-Reading state first does not make state authoritative forever.
+After creating or updating the file, Navi must not automatically:
 
-```text
-Read the declared snapshot first.
-Check whether current user instructions or newer project evidence challenge it.
-Use the conflict to reduce confidence or suggest calibration.
-Do not silently rewrite the file.
-```
+- run `git add`;
+- create a commit;
+- modify `.gitignore`; or
+- repeatedly remind the user about tracking status.
 
-Current user instructions take precedence over stored state. Newer approved specs, plans, handoffs, project records, or clearly relevant repository changes may show that the state is stale. Ordinary low-level activity should not automatically displace a still-valid state.
-
-## Stale-State Suspicion
-
-Alpha.14 uses trigger-based suspicion, not an algorithmic freshness score.
-
-Treat `.navi/state.md` as possibly stale when one or more of these conditions appears:
-
-- the user changes the goal, priority, or current focus;
-- a recent lane closure means the recorded focus or next decision has ended;
-- the user's prompt conflicts with the recorded `Next Decision`;
-- a newer approved spec, plan, handoff, or project record materially changes navigation;
-- clearly relevant recent repository evidence shows the recorded lane is complete or superseded;
-- the file still contains starter or unclear values;
-- the state and Project Map disagree about the current route or stage.
-
-Stale suspicion should change Navi's confidence and may justify an update proposal. It must not trigger automatic writes.
-
-Alpha.14 does not add:
-
-- modification-time scoring;
-- automatic Git history parsing on every prompt;
-- background file watching;
-- confidence percentages;
-- a freshness daemon;
-- automatic state repair.
-
-## Update Policy
-
-`.navi/state.md` is manually or semi-manually maintained. Navi may notice that navigation changed and propose a patch, but the file is not an automatically synchronized status feed.
-
-Navi should suggest updating `.navi/state.md` only when the change would improve future fresh-session navigation.
-
-Good update moments include:
-
-- the project goal changes;
-- the current stage changes;
-- the main focus changes materially;
-- a relevant parallel lane starts, finishes, blocks, or changes the next decision;
-- the primary next decision changes;
-- the stop/continue boundary changes;
-- a lane or phase closes and the old state would mislead a fresh session;
-- the starter state is calibrated for the first time.
-
-Do not suggest an update for:
-
-- ordinary file edits;
-- targeted test results that do not change navigation;
-- routine commits or pushes;
-- temporary debugging progress;
-- small implementation details;
-- a user saying `continue` inside an already-bounded loop;
-- information that belongs only in a handoff or task log.
-
-Durable updates require explicit user approval. After approval, Navi should make the smallest sufficient patch and preserve unrelated user-authored content.
+Teams may commit shared navigation state. A user may keep personal or sensitive
+state local. Navi follows the target project's existing policy.
 
 ## Quietness And Output Behavior
 
-Project State is primarily a reading and continuity input. It is not a mandatory response template.
-
-Navi should not print every state section on every turn. Alpha.12 quietness still applies:
+Project State is an input to supervision, not a mandatory response template.
+Alpha.12 still applies:
 
 ```text
 No control gain, no Navi surface.
 ```
 
-State should become visible only when it materially improves orientation, exposes a conflict, clarifies a stop/continue boundary, identifies a real next decision, or supports a user-approved update.
+Navi should expose state only when doing so improves orientation, reveals a
+material conflict, clarifies a stop boundary, identifies a real next decision,
+or supports an approved state write.
 
 ## Multi-Lane Behavior
 
 Alpha.14 does not turn Navi into a scheduler.
 
-For concurrent work:
+- `Current Focus` names the main-session focus.
+- `Parallel Work` records only concurrent work that can affect a later decision.
+- `Next Decision` remains the single primary project decision.
+- A parallel item's return condition stays with that item.
+- Worktree completion creates a review option but does not automatically replace
+  the main focus.
 
-- `Current Focus` names the main-session focus;
-- `Parallel Work` records only relevant concurrent lanes;
-- `Next Decision` remains the single primary project decision;
-- a parallel lane's future return condition stays inside its `Parallel Work` entry;
-- a completed worktree creates a review option but does not automatically replace the main focus.
+## `navi init` Boundary
 
-This keeps the state understandable without flattening every task into one queue.
+`navi init` remains project bootstrap, not state calibration.
 
-## Navi And Along Boundary
-
-The `.navi/state.md` path is owned by Navi's independent product model.
-
-Along may later consume, display, or enrich Navi project state, but alpha.14 must not require:
-
-- an Along runtime;
-- `.along/` storage;
-- Along Shared Desk;
-- Along relationship modes;
-- Along memory or delegation systems.
-
-This preserves the possibility that Navi remains a standalone product or becomes one component inside Along later.
+- default dry-run does not write `.navi/state.md`;
+- `navi init --write` does not create `.navi/state.md`;
+- `--suggest-map` remains terminal-only and does not create or populate state;
+- the generated project trigger may explain how Navi should read an existing
+  state and when it may offer delayed creation; and
+- initialization remains useful when state is absent.
 
 ## Expected Implementation Surface
 
-A later implementation plan may touch only the smallest relevant surfaces:
+A later implementation should touch only the smallest relevant surfaces:
 
-- `src/cli/navi-init.ts` for starter-state planning and safe writes;
-- targeted CLI tests for dry-run, creation, preservation, and option separation;
-- the canonical Navi skill/reference for state reading, stale suspicion, and update approval rules;
+- the canonical Navi skill and full reference;
+- the generated and documented target-project trigger contract;
+- project-initialization documentation;
 - exact packaged skill copies when canonical files change;
-- project-initialization documentation and targeted documentation tests.
+- targeted skill and CLI contract tests.
 
-Implementation should use targeted validation. Alpha.14 design does not authorize full tests, release preparation, tags, pushes, publication, or external target-project writes.
+The CLI implementation may change only to synchronize generated trigger wording
+and to prove that initialization does not create state. Alpha.14 must not add a
+state action, state writer, state command, or state-specific filesystem planner.
+
+Because the Global Bootstrap implementation changes overlapping trigger, skill,
+and test surfaces, alpha.14 implementation must start from main only after that
+work is reviewed and merged.
 
 ## Acceptance Criteria
 
-Alpha.14 implementation will be acceptable when:
+Alpha.14 is acceptable when:
 
-1. default `navi init` dry-run previews `.navi/state.md` without writing it;
-2. `navi init --write` creates the conservative starter state when absent;
-3. an existing `.navi/state.md` is preserved;
-4. `--suggest-map` remains terminal-only and does not populate state;
-5. fresh-session guidance reads state early but challenges it when newer evidence conflicts;
-6. starter or conflicting state is clearly treated as uncalibrated or possibly stale;
-7. Navi suggests state updates only at meaningful navigation boundaries;
-8. every durable state update requires explicit user approval;
-9. state remains distinct from Project Map, handoff, task log, and runtime memory;
-10. canonical and packaged skill copies remain synchronized when changed.
+1. projects without `.navi/state.md` continue to use Navi normally;
+2. `navi init --write` does not create `.navi/state.md`;
+3. insufficient or provisional evidence does not trigger a creation offer;
+4. eligible creation uses one compact preview and waits for approval;
+5. a newly created state has no unclear required core field;
+6. existing state is read early but cannot override current user instruction or
+   newer relevant approved evidence;
+7. routine execution progress does not trigger update requests;
+8. material navigation changes follow the hybrid update rule;
+9. rejection or deletion does not cause automatic recreation;
+10. Navi does not stage, commit, ignore, or automatically synchronize state;
+11. state remains distinct from Project Map, handoff, task log, and runtime
+    memory; and
+12. targeted tests and package verification cover the changed contracts without
+    requiring release-level validation.
 
 ## Risks And Mitigations
 
-### Stale State Becomes False Authority
+### State Becomes False Authority
 
-Risk: a compact file may look more authoritative than the evidence supporting it.
+Risk: a compact file looks more authoritative than its evidence.
 
-Mitigation: state-first reading is paired with evidence challenge, visible starter status, trigger-based stale suspicion, and user-approved updates.
+Mitigation: require confirmed creation, preserve source priority, and surface
+only material conflicts.
 
-### State Duplicates Other Documents
+### Creation Adds More Friction
 
-Risk: the snapshot becomes another long project report.
+Risk: Navi interrupts useful work to offer another file.
 
-Mitigation: keep only navigation-changing information in state; route detail to the Project Map and transfer detail to handoffs.
+Mitigation: use the eligibility gate, suppress repeated offers, and wait for a
+natural decision boundary.
 
-### Rule Density Increases Again
+### State Becomes Another Report
 
-Risk: alpha.14 adds more prompt-backed behavior after alpha.12 capped supervision noise.
+Risk: the snapshot accumulates history and task details.
 
-Mitigation: treat state as a compact input, preserve quietness, and avoid mandatory state-shaped responses.
+Mitigation: include only information that directly changes current navigation.
 
-### Parallel Work Turns Into Project Management
+### Prompt-Backed Behavior Varies
 
-Risk: `Parallel Work` becomes a task database or scheduler.
+Risk: model behavior depends on context quality and target-project evidence.
 
-Mitigation: include only lanes that affect later decisions and keep one primary `Next Decision`.
+Mitigation: keep the contract explicit, test canonical and packaged copies, and
+calibrate later in real projects rather than adding runtime machinery now.
 
-### Sensitive Information Enters Source Control
+### Sensitive Information Enters Git
 
-Risk: users may place private context in a project-local state file.
+Risk: current project state may contain information unsuitable for sharing.
 
-Mitigation: generated content contains no secrets or conversation history; documentation should tell users to keep sensitive information out and choose whether the file belongs in source control.
+Mitigation: prohibit secrets and automatic Git actions; leave tracking policy to
+the project and user.
 
 ## Non-Goals
 
 Alpha.14 is not:
 
-- a runtime state database;
-- JSON schema infrastructure;
+- automatic state creation during `navi init`;
+- an empty or uncalibrated starter state;
+- a `navi state` CLI command;
+- a runtime state database or JSON schema;
 - automatic project-state inference;
-- automatic Git or filesystem monitoring;
-- a background watcher;
-- a project-management system;
-- a task queue;
-- a worktree scheduler;
-- a replacement for Project Maps or handoffs;
-- automatic state write-back;
-- Memory v2;
-- an agent adapter;
-- delegation or write delegation;
+- periodic refresh, background watching, or freshness scoring;
+- a project-management system, task queue, or worktree scheduler;
+- automatic Git staging, commits, or `.gitignore` edits;
+- Memory v2, an agent adapter, delegation, or write delegation;
 - a local or desktop Navi UI;
-- an Along Shared Desk rebrand;
+- an Along Shared Desk rebrand; or
 - a release decision.
 
-`src/web` remains historical Along Shared Desk / future capability evidence and is outside this design.
+`src/web` remains historical Along Shared Desk / future capability evidence and
+is outside this design.
 
 ## Deferred Directions
 
-The following questions are intentionally deferred until the Markdown snapshot proves useful in real projects:
+The following remain future product decisions until delayed, confirmed Markdown
+state proves useful in real projects:
 
-- whether Navi needs a dedicated `navi state` command;
-- whether structured metadata should accompany Markdown later;
-- whether a runtime should watch or reconcile state;
-- whether Along should display or enrich Navi state;
-- whether state should support cross-project aggregation;
-- whether agents should propose state patches through a formal adapter.
-
-These are later product decisions, not alpha.14 implementation requirements.
+- a dedicated `navi state` command;
+- structured metadata alongside Markdown;
+- formal state patch tooling;
+- runtime watching or reconciliation;
+- Along display or enrichment;
+- cross-project aggregation; and
+- agent adapter integration.
