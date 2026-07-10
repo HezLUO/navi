@@ -18,7 +18,23 @@ const EVIDENCE_TOTAL_BYTES = 160 * 1024;
 const MAX_EVIDENCE_CANDIDATES = 50;
 const MAX_EVIDENCE_DIRS_VISITED = 120;
 const MAX_EVIDENCE_ENTRIES_VISITED = 600;
+const MAX_EVIDENCE_ENTRIES_PER_DIR = 160;
 const IGNORED_EVIDENCE_DIRS = new Set([".git", "node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
+const KNOWN_EVIDENCE_RELATIVE_PATHS = [
+  AGENTS_RELATIVE_PATH,
+  PROJECT_MAP_RELATIVE_PATH,
+  "PROJECT_STATE.md",
+  "README.md",
+  "README",
+  "STATUS.md",
+  "TODO.md",
+];
+const NEGATION_WORD_PATTERN =
+  String.raw`(?:no|not|without|lacks?|missing|cannot|(?:aren|can|couldn|didn|doesn|don|hadn|hasn|haven|isn|mightn|mustn|needn|shan|shouldn|wasn|weren|won|wouldn)['’]t)`;
+const NEGATION_NEAR_SIGNAL_PATTERN = new RegExp(String.raw`\b${NEGATION_WORD_PATTERN}\b[\s\w,;:/'’-]{0,80}$`);
+const EXPANDED_NEGATION_NEAR_SIGNAL_PATTERN = /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b[\s\w,;:/-]{0,80}$/;
+const NEGATION_IN_SENTENCE_PATTERN = new RegExp(String.raw`\b${NEGATION_WORD_PATTERN}\b`);
+const EXPANDED_NEGATION_IN_SENTENCE_PATTERN = /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b/;
 
 export type InitActionKind = "create" | "modify" | "skip";
 
@@ -648,7 +664,7 @@ async function collectEvidenceSnippets(targetDir: string): Promise<EvidenceSnipp
 
     remainingBytes -= raw.bytesRead;
 
-    const text = normalizeEvidenceSnippet(relativePath, raw.text);
+    const text = normalizeEvidenceSnippet(targetDir, relativePath, raw.text);
     if (text.trim().length === 0) {
       continue;
     }
@@ -665,9 +681,10 @@ async function listEvidenceCandidateFiles(targetDir: string): Promise<string[]> 
     directoriesVisited: 0,
     entriesVisited: 0,
   };
-  await addKnownEvidenceCandidateIfFile(targetDir, AGENTS_RELATIVE_PATH, state);
+  for (const relativePath of KNOWN_EVIDENCE_RELATIVE_PATHS) {
+    await addKnownEvidenceCandidateIfFile(targetDir, relativePath, state);
+  }
   await collectEvidenceCandidateFiles(targetDir, "docs/along/project-maps", state);
-  await addKnownEvidenceCandidateIfFile(targetDir, "PROJECT_STATE.md", state);
   await collectEvidenceCandidateFiles(targetDir, ".", state);
   return state.candidates
     .sort((left, right) => evidencePriority(left) - evidencePriority(right) || compareCodePoint(left, right))
@@ -715,7 +732,7 @@ async function readBoundedEvidenceDirectoryEntries(
   try {
     const directory = await fs.opendir(absoluteDir);
     for await (const entry of directory) {
-      if (state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED) {
+      if (entries.length >= MAX_EVIDENCE_ENTRIES_PER_DIR || state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED) {
         break;
       }
 
@@ -816,12 +833,12 @@ async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Prom
   }
 }
 
-function normalizeEvidenceSnippet(relativePath: string, text: string): string {
+function normalizeEvidenceSnippet(targetDir: string, relativePath: string, text: string): string {
   if (relativePath === AGENTS_RELATIVE_PATH && text.includes(NAVI_AGENTS_BLOCK_START)) {
     return stripNaviAgentsBlock(text);
   }
 
-  if (relativePath === PROJECT_MAP_RELATIVE_PATH && isDefaultStarterMap(text)) {
+  if (relativePath === PROJECT_MAP_RELATIVE_PATH && isDefaultStarterMap(targetDir, text)) {
     return "";
   }
 
@@ -841,12 +858,8 @@ function stripNaviAgentsBlock(text: string): string {
   return result;
 }
 
-function isDefaultStarterMap(text: string): boolean {
-  return normalizeStarterMapForComparison(text) === normalizeStarterMapForComparison(renderProjectMap("<project>"));
-}
-
-function normalizeStarterMapForComparison(text: string): string {
-  return text.replace(/\r\n/g, "\n").trimEnd().replace(/^Project: .*$/m, "Project: <project>");
+function isDefaultStarterMap(targetDir: string, text: string): boolean {
+  return text === renderProjectMap(targetDir);
 }
 
 function isEvidenceCandidate(relativePath: string): boolean {
@@ -1012,10 +1025,7 @@ function hasPositiveSignal(text: string, signal: string): boolean {
 }
 
 function hasNegationNearSignal(prefix: string): boolean {
-  return (
-    /\b(no|not|without|lacks?|missing|doesn['’]t|isn['’]t|hasn['’]t|haven['’]t|can['’]t|won['’]t)\b[\s\w,;:/'’-]{0,80}$/.test(prefix) ||
-    /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b[\s\w,;:/-]{0,80}$/.test(prefix)
-  );
+  return NEGATION_NEAR_SIGNAL_PATTERN.test(prefix) || EXPANDED_NEGATION_NEAR_SIGNAL_PATTERN.test(prefix);
 }
 
 function sentenceAround(text: string, index: number): string {
@@ -1040,10 +1050,7 @@ function sentenceAround(text: string, index: number): string {
 }
 
 function hasNegationInSentence(sentence: string): boolean {
-  return (
-    /\b(no|not|without|lacks?|missing|doesn['’]t|isn['’]t|hasn['’]t|haven['’]t|can['’]t|won['’]t)\b/.test(sentence) ||
-    /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b/.test(sentence)
-  );
+  return NEGATION_IN_SENTENCE_PATTERN.test(sentence) || EXPANDED_NEGATION_IN_SENTENCE_PATTERN.test(sentence);
 }
 
 function suggestionConfidence(score: ShapeScore): SuggestionConfidence {

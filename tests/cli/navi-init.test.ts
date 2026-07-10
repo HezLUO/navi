@@ -1023,6 +1023,24 @@ describe("navi init CLI helpers", () => {
     expect(evidenceLines.length).toBeLessThanOrEqual(50);
   });
 
+  it("does not let unrelated files in one priority directory starve root README evidence", async () => {
+    const project = await makeProject();
+    const mapDir = path.join(project, "docs/along/project-maps");
+    await fs.mkdir(mapDir, { recursive: true });
+    for (let index = 0; index < 600; index += 1) {
+      await fs.writeFile(path.join(mapDir, `unrelated-${String(index).padStart(3, "0")}.txt`), "not evidence\n");
+    }
+    await fs.writeFile(
+      path.join(project, "README.md"),
+      "# Delivery\n\nThis project has design, implementation, validation, tests, build, and release work.\n",
+    );
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("- README.md");
+    expect(output).toContain("Project shape hint: linear");
+  });
+
   it("skips unreadable nested evidence directories without aborting suggestion", async () => {
     const project = await makeProject();
     const nestedDir = path.join(project, "workflow-records");
@@ -1119,9 +1137,41 @@ describe("navi init CLI helpers", () => {
     expect(output).toContain("Project shape hint: linear");
   });
 
+  it("keeps evidence when only the starter map Project line is edited", async () => {
+    const project = await makeProject();
+    await applyInitPlan(await buildInitPlan({ targetDir: project, write: true }));
+    const mapPath = path.join(project, "docs/along/project-maps/navi-project-map.md");
+    const map = await fs.readFile(mapPath, "utf8");
+    await fs.writeFile(
+      mapPath,
+      map.replace(
+        /^Project: .*$/m,
+        "Project: Application workflow with waiting feedback, follow-up, screening, and refresh cycles",
+      ),
+    );
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("- docs/along/project-maps/navi-project-map.md");
+    expect(output).toContain("Project shape hint: flowing");
+  });
+
   it("does not infer shape from substring matches inside unrelated words", async () => {
     const project = await makeProject();
     await fs.writeFile(path.join(project, "README.md"), "# Words\n\nWe respect users and keep latest notes.\n");
+
+    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
+
+    expect(output).toContain("Project shape hint: unclear");
+    expect(output).not.toContain("Project progress");
+  });
+
+  it("does not treat common n't contractions as positive shape evidence", async () => {
+    const project = await makeProject();
+    await fs.writeFile(
+      path.join(project, "README.md"),
+      "# Draft\n\nWe don't have design or implementation. We aren't doing validation. We didn't build tests or prepare release work.\n",
+    );
 
     const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
 
