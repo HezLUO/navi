@@ -1,6 +1,6 @@
 ---
 name: along-working-thread
-description: 'Use when any active Codex project needs Working Thread continuity or Navi supervision for non-expert progress/next-step/stop/wait/approval/vision-distance confusion, including 现在做到哪了, 我看不懂, 接下来, 继续吧, should I stop, should I wait, is this enough, or 这个方案可以吗; also use for high-impact drift challenges, Challenge Briefs, or wrap-up with user confirmation. Do not use for one-off coding tasks, background automation, or implementation without project supervision.'
+description: "Use for broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability questions in any active Codex project, including what's next, where are we, 接下来, 现在到哪, and 继续吧; keeps narrow tasks quiet."
 ---
 
 # Along Working Thread
@@ -161,6 +161,9 @@ Before acting on a Working Thread, read:
 - Navi is installed globally once; navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.
 - Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
 - If a broad progress or next-step prompt appears in a project that lacks project-local Navi guidance, avoid a confident stable map; recommend `navi init` as project configuration and offer only a provisional judgment if the user wants to continue without initialization.
+- The global bootstrap is an always-visible first-use routing instruction, not a second copy of Navi. When it finds project-local guidance, full supervision belongs to this skill and the project record.
+- When a global-bootstrap prompt reaches Navi without project-local guidance, give at most one provisional judgment, identify or confirm the project root, and ask before project initialization; do not repeat the init reminder in the same session after the user declines.
+- The bootstrap is prompt-backed, not a runtime interceptor, background watcher, or always-on presence.
 - Do not downgrade non-code long-running workspaces to ordinary advice. Application, recruiting, outreach, research, and operations workspaces can be flowing projects when they have recurring cycles, parallel routes, external feedback, or user decision gates.
 - when a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip: a single-line stage strip plus a current-position marker and a plain-language explanation.
 - if the Project Map is unreliable, Navi must not draw a confident stable bar; it may give a provisional map only when clearly marked as awaiting confirmation.

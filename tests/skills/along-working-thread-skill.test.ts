@@ -98,12 +98,15 @@ describe("Along Working Thread Codex skill", () => {
     const parsed = await parseWithPyYaml(frontmatter);
 
     expect(parsed.name).toBe("along-working-thread");
-    expect(parsed.description).toEqual(expect.stringContaining("Working Thread continuity"));
+    expect(parsed.description).toEqual(
+      "Use for broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability questions in any active Codex project, including what's next, where are we, 接下来, 现在到哪, and 继续吧; keeps narrow tasks quiet.",
+    );
     expect(parsed.description).toEqual(expect.stringContaining("any active Codex project"));
-    expect(parsed.description).toEqual(expect.stringContaining("non-expert progress"));
-    expect(parsed.description).toEqual(expect.stringContaining("现在做到哪了"));
-    expect(parsed.description).toEqual(expect.stringContaining("我看不懂"));
+    expect(parsed.description).toEqual(expect.stringContaining("what's next"));
+    expect(parsed.description).toEqual(expect.stringContaining("where are we"));
     expect(parsed.description).toEqual(expect.stringContaining("接下来"));
+    expect(parsed.description).toEqual(expect.stringContaining("现在到哪"));
+    expect(parsed.description).toEqual(expect.stringContaining("继续吧"));
     expect(parsed.description).not.toEqual(expect.stringContaining("Use in the Along project"));
   });
 
@@ -119,7 +122,8 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("background runtime");
     expect(skill).toContain("references/working-thread-v1.md");
     expect(metadata).toContain("display_name: Navi");
-    expect(metadata).toContain("Use Navi for Progress Maps");
+    expect(metadata).toContain("broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability");
+    expect(metadata).toContain("keep narrow tasks quiet");
     expect(metadata).toContain("allow_implicit_invocation: true");
   });
 
@@ -137,6 +141,21 @@ describe("Along Working Thread Codex skill", () => {
     expect(reference).toContain("First Working Thread creation requires user confirmation");
     expect(reference).toContain("Durable write-back requires user confirmation");
     expect(reference).toContain("Do not implement Core/MCP");
+  });
+
+  it("defines the global bootstrap handoff boundary", async () => {
+    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const reference = await readRepoText(
+      ".agents/skills/along-working-thread/references/working-thread-v1.md",
+    );
+
+    for (const text of [skill, reference]) {
+      expect(text).toContain("global bootstrap");
+      expect(text).toContain("project-local Navi guidance");
+      expect(text).toContain("provisional judgment");
+      expect(text).toContain("do not repeat the init reminder in the same session");
+      expect(text).toContain("prompt-backed, not a runtime interceptor");
+    }
   });
 
   it("documents tightened drift behavior and bounded write-back rules", async () => {
@@ -1314,21 +1333,18 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.interface.displayName).toBe("Navi");
     expect(manifest.interface.developerName).toBe("Navi Contributors");
     expect(manifest.interface.shortDescription).toBe(
-      "Navi Progress Maps and Challenge Layer continuity for active Codex sessions.",
+      "Project progress, next-step, stop/wait, and plan-reliability guidance.",
     );
     expect(manifest.interface.longDescription).toContain("turn-bound self-initiation");
     expect(manifest.interface.longDescription).toContain("not background autonomy");
     expect(manifest.interface.category).toBe("Productivity");
     expect(manifest.interface.capabilities).toContain("Interactive");
     expect(manifest.interface.defaultPrompt).toEqual([
-      "Resume the current Working Thread.",
-      "Give me a Navi Progress Map for the current work.",
-      "Explain what is done, what remains, and what I need to confirm.",
-      "Help me wrap up this phase.",
-      "Check whether this direction drifts from our thread.",
-      "Check whether this is a self-certification moment.",
-      "Turn this challenge into a lightweight validation.",
+      "Show where this project stands, what comes next, and what I need to decide.",
+      "Should we continue, stop, wait, or move to the next stage?",
+      "Check whether this project needs Navi initialization before giving a stable map.",
     ]);
+    expect(manifest.interface.defaultPrompt).toHaveLength(3);
     expect(manifest.name).toBe("along-working-thread");
     expect(manifest.interface.longDescription).toContain("legacy skill id remains along-working-thread");
     const formerDeveloperName = ["Ja", "mes"].join("");
@@ -1364,15 +1380,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.description).toContain("Challenge Layer");
     expect(manifest.keywords).toEqual(expect.arrayContaining(["challenge-layer", "validation"]));
-    expect(manifest.interface.shortDescription).toContain("Challenge Layer");
     expect(manifest.interface.longDescription).toContain("Challenge Moment");
     expect(manifest.interface.longDescription).toContain("not background autonomy");
-    expect(manifest.interface.defaultPrompt).toEqual(
-      expect.arrayContaining([
-        "Check whether this is a self-certification moment.",
-        "Turn this challenge into a lightweight validation.",
-      ]),
-    );
 
     expect(readme).toContain("## Challenge Layer");
     expect(readme).toContain("Challenge Moment");
@@ -1395,20 +1404,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "plugins/along-working-thread/skills/along-working-thread/agents/openai.yaml",
     );
 
-    expect(agentMetadata).toContain("Navi Progress Maps");
-    expect(agentMetadata).toContain("supervision");
-    expect(agentMetadata).toContain("pause/continue");
-    expect(agentMetadata).toContain("stage/vision");
-    expect(agentMetadata).toContain("coordination");
-    expect(agentMetadata).toContain("Rhythm Maps");
-    expect(agentMetadata).toContain("progress, next-step, confusion, continue, or plan-reliability");
-    expect(agentMetadata).toContain("接下来");
-    expect(agentMetadata).toContain("现在做到哪");
-    expect(agentMetadata).toContain("我看不懂");
-    expect(agentMetadata).toContain("继续吧");
-    expect(agentMetadata).toContain("这个方案可以吗");
-    expect(agentMetadata).toContain("ordinary clear execution requests");
-    expect(agentMetadata).toContain("stay quiet");
+    expect(agentMetadata).toContain("broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability");
+    expect(agentMetadata).toContain("keep narrow tasks quiet");
     expect(agentMetadata).toContain("allow_implicit_invocation: true");
   });
 
@@ -1429,13 +1426,10 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(packageJson.description).toContain("maps, challenge, pause, stage/vision, and coordination guidance");
 
     for (const metadata of [canonicalMetadata, pluginMetadata]) {
-      expect(metadata).toContain("display_name: Navi");
-      expect(metadata).toContain("Navi supervision");
-      expect(metadata).toContain("Progress/Rhythm Maps");
-      expect(metadata).toContain("pause/continue");
-      expect(metadata).toContain("stage/vision");
-      expect(metadata).toContain("coordination");
-      expect(metadata).toContain("ordinary clear execution requests stay quiet");
+      expect(metadata).toContain("broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability");
+      expect(metadata).toContain("keep narrow tasks quiet");
+      expect(metadata).toContain("allow_implicit_invocation: true");
+      expect(metadata.length).toBeLessThan(700);
     }
   });
 
@@ -1459,16 +1453,16 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.description).toContain("Navi");
     expect(manifest.description).toContain("Progress Map");
     expect(manifest.keywords).toEqual(expect.arrayContaining(["navi", "progress-map"]));
-    expect(manifest.interface.shortDescription).toContain("Navi");
+    expect(manifest.interface.shortDescription).toContain("Project progress");
     expect(manifest.interface.longDescription).toContain("non-expert users");
     expect(manifest.interface.longDescription).toContain("Progress Map");
     expect(manifest.interface.longDescription).toContain("not background autonomy");
-    expect(manifest.interface.defaultPrompt).toEqual(
-      expect.arrayContaining([
-        "Give me a Navi Progress Map for the current work.",
-        "Explain what is done, what remains, and what I need to confirm.",
-      ]),
-    );
+    expect(manifest.interface.defaultPrompt).toEqual([
+      "Show where this project stands, what comes next, and what I need to decide.",
+      "Should we continue, stop, wait, or move to the next stage?",
+      "Check whether this project needs Navi initialization before giving a stable map.",
+    ]);
+    expect(manifest.interface.defaultPrompt).toHaveLength(3);
 
     expect(readme).toContain("## Navi");
     expect(readme).toContain("Progress Map");
