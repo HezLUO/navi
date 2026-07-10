@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
+import { runNaviDoctorCli } from "./navi-doctor";
+import { runNaviSetupCli } from "./navi-global";
 
 const { runNaviInitCli } = await import(
   new URL("./navi-init.ts", import.meta.url).href
@@ -11,12 +13,16 @@ export interface NaviCliIo {
   stdout: (text: string) => void;
   stderr: (text: string) => void;
   runInit: (args: string[]) => Promise<number>;
+  runSetup: (args: string[]) => Promise<number>;
+  runDoctor: (args: string[]) => Promise<number>;
 }
 
 const DEFAULT_IO: NaviCliIo = {
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
   runInit: runNaviInitCli,
+  runSetup: runNaviSetupCli,
+  runDoctor: runNaviDoctorCli,
 };
 
 export async function runNaviCli(args: string[], io: NaviCliIo = DEFAULT_IO): Promise<number> {
@@ -24,6 +30,14 @@ export async function runNaviCli(args: string[], io: NaviCliIo = DEFAULT_IO): Pr
 
   if (command === "init") {
     return io.runInit(commandArgs);
+  }
+
+  if (command === "setup") {
+    return io.runSetup(commandArgs);
+  }
+
+  if (command === "doctor") {
+    return io.runDoctor(commandArgs);
   }
 
   io.stderr(`${NAVI_USAGE}\n`);
