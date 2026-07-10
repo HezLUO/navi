@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import path from "node:path";
 
 export const NAVI_AGENTS_BLOCK_START = "<!-- NAVI:START -->";
@@ -70,6 +71,11 @@ interface EvidenceCollectionState {
   candidates: string[];
   directoriesVisited: number;
   entriesVisited: number;
+}
+
+interface EvidenceReadResult {
+  text: string;
+  bytesRead: number;
 }
 
 interface ShapeScore {
@@ -223,7 +229,7 @@ export function renderInitPlan(plan: InitPlan): string {
   const writableActions = plan.actions.filter((action) => action.kind === "create" || action.kind === "modify");
   if (isDryRun) {
     lines.push("No files were changed.");
-    lines.push(`Apply with: navi init --target ${JSON.stringify(plan.targetDir)} --write`);
+    lines.push(`Apply with: navi init --target ${quotePosixShellArg(plan.targetDir)} --write`);
   } else if (writableActions.length === 0) {
     lines.push("No files needed changes.");
   } else {
@@ -640,12 +646,13 @@ async function collectEvidenceSnippets(targetDir: string): Promise<EvidenceSnipp
       continue;
     }
 
-    const text = normalizeEvidenceSnippet(relativePath, raw);
+    remainingBytes -= raw.bytesRead;
+
+    const text = normalizeEvidenceSnippet(relativePath, raw.text);
     if (text.trim().length === 0) {
       continue;
     }
 
-    remainingBytes -= Buffer.byteLength(text, "utf8");
     snippets.push({ relativePath, text });
   }
 
@@ -658,6 +665,9 @@ async function listEvidenceCandidateFiles(targetDir: string): Promise<string[]> 
     directoriesVisited: 0,
     entriesVisited: 0,
   };
+  await addKnownEvidenceCandidateIfFile(targetDir, AGENTS_RELATIVE_PATH, state);
+  await collectEvidenceCandidateFiles(targetDir, "docs/along/project-maps", state);
+  await addKnownEvidenceCandidateIfFile(targetDir, "PROJECT_STATE.md", state);
   await collectEvidenceCandidateFiles(targetDir, ".", state);
   return state.candidates
     .sort((left, right) => evidencePriority(left) - evidencePriority(right) || compareCodePoint(left, right))
@@ -670,7 +680,6 @@ async function collectEvidenceCandidateFiles(
   state: EvidenceCollectionState,
 ): Promise<void> {
   if (
-    state.candidates.length >= MAX_EVIDENCE_CANDIDATES ||
     state.directoriesVisited >= MAX_EVIDENCE_DIRS_VISITED ||
     state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED
   ) {
@@ -678,26 +687,9 @@ async function collectEvidenceCandidateFiles(
   }
 
   state.directoriesVisited += 1;
-  const absoluteDir = relativeDir === "." ? targetDir : resolveTargetPath(targetDir, relativeDir);
-  let entries;
-  try {
-    entries = await fs.readdir(absoluteDir, { withFileTypes: true });
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
+  const entries = await readBoundedEvidenceDirectoryEntries(targetDir, relativeDir, state);
 
   for (const entry of entries.sort((left, right) => compareCodePoint(left.name, right.name))) {
-    if (
-      state.candidates.length >= MAX_EVIDENCE_CANDIDATES ||
-      state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED
-    ) {
-      return;
-    }
-
-    state.entriesVisited += 1;
     const relativePath = relativeDir === "." ? entry.name : path.posix.join(relativeDir, entry.name);
     if (entry.isDirectory()) {
       if (!IGNORED_EVIDENCE_DIRS.has(entry.name)) {
@@ -707,18 +699,113 @@ async function collectEvidenceCandidateFiles(
     }
 
     if (entry.isFile() && isEvidenceCandidate(relativePath)) {
-      state.candidates.push(relativePath);
+      addEvidenceCandidate(state, relativePath);
     }
   }
 }
 
-async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Promise<string | undefined> {
+async function readBoundedEvidenceDirectoryEntries(
+  targetDir: string,
+  relativeDir: string,
+  state: EvidenceCollectionState,
+): Promise<Dirent[]> {
+  const absoluteDir = relativeDir === "." ? targetDir : resolveTargetPath(targetDir, relativeDir);
+  const entries: Dirent[] = [];
+
+  try {
+    const directory = await fs.opendir(absoluteDir);
+    for await (const entry of directory) {
+      if (state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED) {
+        break;
+      }
+
+      state.entriesVisited += 1;
+      entries.push(entry);
+    }
+  } catch (error) {
+    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM"].includes(error.code ?? "")) {
+      return [];
+    }
+    throw error;
+  }
+
+  return entries;
+}
+
+async function addKnownEvidenceCandidateIfFile(
+  targetDir: string,
+  relativePath: string,
+  state: EvidenceCollectionState,
+): Promise<void> {
+  if (!isEvidenceCandidate(relativePath)) {
+    return;
+  }
+
+  let stat;
+  try {
+    stat = await fs.lstat(resolveTargetPath(targetDir, relativePath));
+  } catch (error) {
+    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM"].includes(error.code ?? "")) {
+      return;
+    }
+    throw error;
+  }
+
+  if (stat.isFile()) {
+    addEvidenceCandidate(state, relativePath);
+  }
+}
+
+function addEvidenceCandidate(state: EvidenceCollectionState, relativePath: string): void {
+  if (state.candidates.includes(relativePath)) {
+    return;
+  }
+
+  state.candidates.push(relativePath);
+  state.candidates.sort(
+    (left, right) => evidencePriority(left) - evidencePriority(right) || compareCodePoint(left, right),
+  );
+  if (state.candidates.length > MAX_EVIDENCE_CANDIDATES) {
+    state.candidates.length = MAX_EVIDENCE_CANDIDATES;
+  }
+}
+
+async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Promise<EvidenceReadResult | undefined> {
+  if (maxBytes <= 0) {
+    return { text: "", bytesRead: 0 };
+  }
+
   let handle;
   try {
     handle = await fs.open(absolutePath, "r");
-    const buffer = Buffer.alloc(maxBytes);
-    const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);
-    return buffer.subarray(0, bytesRead).toString("utf8");
+    const stat = await handle.stat();
+    if (stat.size <= maxBytes) {
+      const buffer = Buffer.alloc(maxBytes);
+      const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);
+      return {
+        text: buffer.subarray(0, bytesRead).toString("utf8"),
+        bytesRead,
+      };
+    }
+
+    const headBytes = Math.ceil(maxBytes / 2);
+    const tailBytes = maxBytes - headBytes;
+    const headBuffer = Buffer.alloc(headBytes);
+    const headRead = await handle.read(headBuffer, 0, headBytes, 0);
+    const tailBuffer = Buffer.alloc(tailBytes);
+    const tailRead =
+      tailBytes === 0
+        ? { bytesRead: 0 }
+        : await handle.read(tailBuffer, 0, tailBytes, Math.max(0, stat.size - tailBytes));
+
+    return {
+      text: [
+        headBuffer.subarray(0, headRead.bytesRead).toString("utf8"),
+        "\n\n[Navi evidence omitted between bounded head and tail]\n\n",
+        tailBuffer.subarray(0, tailRead.bytesRead).toString("utf8"),
+      ].join(""),
+      bytesRead: headRead.bytesRead + tailRead.bytesRead,
+    };
   } catch (error) {
     if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM", "EISDIR"].includes(error.code ?? "")) {
       return undefined;
@@ -747,7 +834,7 @@ function stripNaviAgentsBlock(text: string): string {
     const start = result.indexOf(NAVI_AGENTS_BLOCK_START);
     const end = result.indexOf(NAVI_AGENTS_BLOCK_END, start);
     if (end === -1) {
-      return result.slice(0, start);
+      return result;
     }
     result = `${result.slice(0, start)}${result.slice(end + NAVI_AGENTS_BLOCK_END.length)}`;
   }
@@ -755,11 +842,11 @@ function stripNaviAgentsBlock(text: string): string {
 }
 
 function isDefaultStarterMap(text: string): boolean {
-  return (
-    text.includes("# Navi Project Map") &&
-    text.includes("Map status: provisional") &&
-    text.includes("This map only establishes where Navi should look first.")
-  );
+  return normalizeStarterMapForComparison(text) === normalizeStarterMapForComparison(renderProjectMap("<project>"));
+}
+
+function normalizeStarterMapForComparison(text: string): string {
+  return text.replace(/\r\n/g, "\n").trimEnd().replace(/^Project: .*$/m, "Project: <project>");
 }
 
 function isEvidenceCandidate(relativePath: string): boolean {
@@ -905,27 +992,30 @@ function scoreEvidenceSignals(snippets: EvidenceSnippet[], signals: string[]): S
 }
 
 function hasPositiveSignal(text: string, signal: string): boolean {
-  let startIndex = 0;
-  while (startIndex < text.length) {
-    const index = text.indexOf(signal, startIndex);
-    if (index === -1) {
-      return false;
-    }
+  const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(signal)}([^a-z0-9]|$)`, "g");
+  let match;
 
+  while ((match = pattern.exec(text)) !== null) {
+    const index = match.index + match[1].length;
     const prefix = text.slice(Math.max(0, index - 80), index);
     const sentence = sentenceAround(text, index);
     if (!hasNegationNearSignal(prefix) && !hasNegationInSentence(sentence)) {
       return true;
     }
 
-    startIndex = index + signal.length;
+    if (pattern.lastIndex === match.index) {
+      pattern.lastIndex += 1;
+    }
   }
 
   return false;
 }
 
 function hasNegationNearSignal(prefix: string): boolean {
-  return /\b(no|not|without|lacks?|missing)\b[\s\w,;:/-]{0,80}$/.test(prefix) || /\bdoes\s+not\s+have\b[\s\w,;:/-]{0,80}$/.test(prefix);
+  return (
+    /\b(no|not|without|lacks?|missing|doesn['’]t|isn['’]t|hasn['’]t|haven['’]t|can['’]t|won['’]t)\b[\s\w,;:/'’-]{0,80}$/.test(prefix) ||
+    /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b[\s\w,;:/-]{0,80}$/.test(prefix)
+  );
 }
 
 function sentenceAround(text: string, index: number): string {
@@ -950,7 +1040,10 @@ function sentenceAround(text: string, index: number): string {
 }
 
 function hasNegationInSentence(sentence: string): boolean {
-  return /\b(no|not|without|lacks?|missing)\b/.test(sentence) || /\bdoes\s+not\s+have\b/.test(sentence);
+  return (
+    /\b(no|not|without|lacks?|missing|doesn['’]t|isn['’]t|hasn['’]t|haven['’]t|can['’]t|won['’]t)\b/.test(sentence) ||
+    /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b/.test(sentence)
+  );
 }
 
 function suggestionConfidence(score: ShapeScore): SuggestionConfidence {
@@ -963,15 +1056,13 @@ function suggestionConfidence(score: ShapeScore): SuggestionConfidence {
 function renderLinearPreviewMap(): string {
   return `Project progress
 [Goal] -> [Design/plan] -> [Implementation] -> [Validation] -> [Delivery]
-                         ^
-                    Position: unconfirmed`;
+Stage placement: unconfirmed`;
 }
 
 function renderFlowingPreviewMap(): string {
   return `Project rhythm
 [Cycle/source refresh] + [Screening/selection] + [Preparation/execution] + [Follow-up/feedback]
-                                      ^
-                               Focus: unconfirmed
+Focus placement: unconfirmed
 
 Current track
 [Read records] -> [Choose small loop] -> [Execute] -> [Record/wait]`;
@@ -1019,12 +1110,12 @@ function renderSuggestedMapPreview(preview: SuggestedMapPreview, plan: InitPlan)
   lines.push("Next step:");
   lines.push("- Review or edit the suggested map before treating it as stable.");
   if (plan.mode === "dry-run") {
-    lines.push(`- Run navi init --target ${JSON.stringify(plan.targetDir)} --write to add project-local guidance and a starter map.`);
+    lines.push(`- Run navi init --target ${quotePosixShellArg(plan.targetDir)} --write to add project-local guidance and a starter map.`);
   } else {
     lines.push("- Standard starter files have already been applied; no second init write is needed.");
   }
   if (preview.shape === "unclear" || preview.confidence === "low") {
-    lines.push(`- Then rerun navi init --target ${JSON.stringify(plan.targetDir)} --suggest-map.`);
+    lines.push(`- Then rerun navi init --target ${quotePosixShellArg(plan.targetDir)} --suggest-map.`);
   }
 
   return lines.join("\n");
@@ -1073,6 +1164,14 @@ async function lstatIfExists(filePath: string) {
 function isPathInside(parentPath: string, childPath: string): boolean {
   const relative = path.relative(parentPath, childPath);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function quotePosixShellArg(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
