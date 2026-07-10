@@ -173,6 +173,57 @@ describe("Navi doctor", () => {
     expect((await buildNaviDoctorReport(options, dependencies)).checks.find((check) => check.id === "package-cache")?.status).toBe("fail");
   });
 
+  it("treats cache and source root symlinks as cache mismatches without traversing them", async () => {
+    const fixture = await makeDoctorFixture();
+    const cacheTarget = path.join(fixture.root, "cache-target");
+    await copyPackageToCache(fixture.packageRoot, cacheTarget);
+    await fs.symlink(cacheTarget, fixture.cacheRoot);
+    const options = {
+      codexHome: fixture.codexHome,
+      projectDir: fixture.projectDir,
+      packageRoot: fixture.packageRoot,
+      cacheRoot: fixture.cacheRoot,
+    };
+    const dependencies = { inspectPlugin: async () => enabledPlugin };
+
+    expect((await buildNaviDoctorReport(options, dependencies)).checks.find((check) => check.id === "package-cache")?.status).toBe("fail");
+
+    await fs.unlink(fixture.cacheRoot);
+    await copyPackageToCache(cacheTarget, fixture.cacheRoot);
+    const packageTarget = path.join(fixture.root, "package-target");
+    await fs.rename(fixture.packageRoot, packageTarget);
+    await fs.symlink(packageTarget, fixture.packageRoot);
+    expect((await buildNaviDoctorReport(options, dependencies)).checks.find((check) => check.id === "package-cache")?.status).toBe("fail");
+  });
+
+  it("warns when the cache root is a broken symlink", async () => {
+    const fixture = await makeDoctorFixture();
+    await fs.symlink(path.join(fixture.root, "missing-cache"), fixture.cacheRoot);
+
+    const report = await buildNaviDoctorReport(
+      { codexHome: fixture.codexHome, projectDir: fixture.projectDir, packageRoot: fixture.packageRoot, cacheRoot: fixture.cacheRoot },
+      { inspectPlugin: async () => enabledPlugin },
+    );
+
+    expect(report.checks.find((check) => check.id === "package-cache")).toMatchObject({ status: "warn" });
+  });
+
+  it("warns when the cache root cannot be read", async () => {
+    const fixture = await makeDoctorFixture();
+    await copyPackageToCache(fixture.packageRoot, fixture.cacheRoot);
+    await fs.chmod(fixture.cacheRoot, 0o000);
+    try {
+      const report = await buildNaviDoctorReport(
+        { codexHome: fixture.codexHome, projectDir: fixture.projectDir, packageRoot: fixture.packageRoot, cacheRoot: fixture.cacheRoot },
+        { inspectPlugin: async () => enabledPlugin },
+      );
+
+      expect(report.checks.find((check) => check.id === "package-cache")).toMatchObject({ status: "warn" });
+    } finally {
+      await fs.chmod(fixture.cacheRoot, 0o700);
+    }
+  });
+
   it("rejects all doctor command-line options", async () => {
     const stderr: string[] = [];
     const code = await runNaviDoctorCli(["--write"], { stdout: () => undefined, stderr: (text) => stderr.push(text) });

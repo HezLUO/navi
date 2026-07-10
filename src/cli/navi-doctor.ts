@@ -134,6 +134,9 @@ function buildPluginCheck(plugin: NaviPluginStatus): DoctorCheck {
 }
 
 async function buildManifestCheck(packageRoot: string): Promise<DoctorCheck> {
+  if (!(await isDirectory(packageRoot))) {
+    return { id: "manifest", status: "fail", summary: "Plugin manifest is unavailable or invalid.", repair: MANIFEST_REPAIR };
+  }
   const manifestPath = path.join(packageRoot, ".codex-plugin", "plugin.json");
   try {
     const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8")) as { interface?: { defaultPrompt?: unknown } };
@@ -170,16 +173,28 @@ async function buildGlobalBootstrapCheck(codexHome: string): Promise<DoctorCheck
 }
 
 async function buildPackageCacheCheck(packageRoot: string, cacheRoot: string): Promise<DoctorCheck> {
-  let cacheAvailable: boolean;
+  let cacheRootType: RootType;
   try {
-    cacheAvailable = await isDirectory(cacheRoot);
+    cacheRootType = await getRootType(cacheRoot);
   } catch {
     return { id: "package-cache", status: "warn", summary: "Navi plugin cache is unavailable for comparison." };
   }
-  if (!cacheAvailable) {
+  if (cacheRootType === "unavailable") {
     return { id: "package-cache", status: "warn", summary: "Navi plugin cache is unavailable for comparison." };
   }
-  if (!(await isDirectory(packageRoot))) {
+  if (cacheRootType === "symlink") {
+    return { id: "package-cache", status: "fail", summary: "Navi source package and cache differ.", repair: "Refresh the installed Navi plugin cache from the verified source package." };
+  }
+  let packageRootType: RootType;
+  try {
+    packageRootType = await getRootType(packageRoot);
+  } catch {
+    return { id: "package-cache", status: "warn", summary: "Navi source package is unavailable for cache comparison." };
+  }
+  if (packageRootType === "symlink") {
+    return { id: "package-cache", status: "fail", summary: "Navi source package and cache differ.", repair: "Refresh the installed Navi plugin cache from the verified source package." };
+  }
+  if (packageRootType !== "directory") {
     return { id: "package-cache", status: "warn", summary: "Navi source package is unavailable for cache comparison." };
   }
   try {
@@ -215,9 +230,36 @@ async function readOptional(filePath: string): Promise<string | undefined> {
 
 async function isDirectory(directory: string): Promise<boolean> {
   try {
-    return (await fs.stat(directory)).isDirectory();
+    return (await fs.lstat(directory)).isDirectory();
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+type RootType = "directory" | "symlink" | "unavailable";
+
+async function getRootType(root: string): Promise<RootType> {
+  try {
+    const metadata = await fs.lstat(root);
+    if (metadata.isDirectory()) return "directory";
+    if (metadata.isSymbolicLink()) {
+      return (await isBrokenSymbolicLink(root)) ? "unavailable" : "symlink";
+    }
+    return "unavailable";
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return "unavailable";
+    throw error;
+  }
+}
+
+async function isBrokenSymbolicLink(linkPath: string): Promise<boolean> {
+  const target = await fs.readlink(linkPath);
+  try {
+    await fs.lstat(path.resolve(path.dirname(linkPath), target));
+    return false;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return true;
     throw error;
   }
 }
