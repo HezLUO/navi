@@ -7,9 +7,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
-const sourceSkillDir = path.join(repoRoot, ".agents/skills/along-working-thread");
-const packageDir = path.join(repoRoot, "plugins/along-working-thread");
-const packagedSkillDir = path.join(packageDir, "skills/along-working-thread");
+const sourceSkillDir = path.join(repoRoot, ".agents/skills/navi");
+const packageDir = path.join(repoRoot, "plugins/navi");
+const packagedSkillDir = path.join(packageDir, "skills/navi");
+const marketplacePath = path.join(repoRoot, ".agents/plugins/marketplace.json");
 const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
 const validatorPath = path.join(
   codexHome,
@@ -17,71 +18,80 @@ const validatorPath = path.join(
 );
 
 function run(command, args) {
-  const result = spawnSync(command, args, {
-    cwd: repoRoot,
-    stdio: "inherit",
-  });
+  const result = spawnSync(command, args, { cwd: repoRoot, stdio: "inherit" });
 
-  if (result.error) {
-    throw result.error;
+  if (result.error) throw result.error;
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+function fail(message) {
+  console.error(message);
+  process.exit(1);
+}
+
+function readJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (error) {
+    fail(`Invalid JSON at ${filePath}: ${error instanceof Error ? error.message : error}`);
+  }
+}
+
+function assertCurrentPackageMetadata() {
+  const manifest = readJson(path.join(packageDir, ".codex-plugin/plugin.json"));
+  const marketplace = readJson(marketplacePath);
+
+  if (manifest?.name !== "navi") fail("Plugin manifest must use the navi identifier.");
+  if (marketplace?.name !== "navi-source") fail("Marketplace must be named navi-source.");
+  if (marketplace?.interface?.displayName !== "Navi Source") {
+    fail("Marketplace display name must be Navi Source.");
+  }
+  if (!Array.isArray(marketplace?.plugins) || marketplace.plugins.length !== 1) {
+    fail("Marketplace must contain exactly one Navi plugin entry.");
   }
 
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+  const [plugin] = marketplace.plugins;
+  if (
+    plugin?.name !== "navi" ||
+    plugin?.source?.source !== "local" ||
+    plugin?.source?.path !== "./plugins/navi" ||
+    plugin?.policy?.installation !== "AVAILABLE" ||
+    plugin?.policy?.authentication !== "ON_INSTALL" ||
+    plugin?.category !== "Productivity"
+  ) {
+    fail("Marketplace Navi entry does not match the source-alpha policy.");
   }
 }
 
 function listFiles(dir) {
-  return fs
-    .readdirSync(dir, { withFileTypes: true })
-    .flatMap((entry) => {
-      const entryPath = path.join(dir, entry.name);
-
-      if (entry.isDirectory()) {
-        return listFiles(entryPath).map((nested) => path.join(entry.name, nested));
-      }
-
-      return [entry.name];
-    })
-    .sort()
-    .map((filePath) => filePath.split(path.sep).join("/"));
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) return listFiles(entryPath).map((nested) => path.join(entry.name, nested));
+    return [entry.name];
+  }).sort().map((filePath) => filePath.split(path.sep).join("/"));
 }
 
 function assertSameDirectory(sourceDir, targetDir) {
   const sourceFiles = listFiles(sourceDir);
   const targetFiles = listFiles(targetDir);
-
-  if (JSON.stringify(sourceFiles) !== JSON.stringify(targetFiles)) {
-    console.error("Packaged skill file list differs from source skill.");
-    console.error("Source files:", sourceFiles);
-    console.error("Packaged files:", targetFiles);
-    process.exit(1);
-  }
+  if (JSON.stringify(sourceFiles) !== JSON.stringify(targetFiles)) fail("Packaged skill file list differs from source skill.");
 
   for (const relativePath of sourceFiles) {
-    const source = fs.readFileSync(path.join(sourceDir, relativePath));
-    const target = fs.readFileSync(path.join(targetDir, relativePath));
-
-    if (!source.equals(target)) {
-      console.error(`Packaged skill drift detected: ${relativePath}`);
-      process.exit(1);
+    if (!fs.readFileSync(path.join(sourceDir, relativePath)).equals(fs.readFileSync(path.join(targetDir, relativePath)))) {
+      fail(`Packaged skill drift detected: ${relativePath}`);
     }
   }
 }
 
 if (!fs.existsSync(validatorPath)) {
-  console.error(`Missing Codex plugin validator: ${validatorPath}`);
-  console.error("Install or enable the plugin-creator system skill before running package verification.");
-  process.exit(1);
+  fail(`Missing Codex plugin validator: ${validatorPath}\nInstall or enable the plugin-creator system skill before running package verification.`);
 }
 
-console.log("Running Along Working Thread skill/package tests...");
-run("npm", ["test", "--", "tests/skills/along-working-thread-skill.test.ts"]);
-
+assertCurrentPackageMetadata();
+console.log("Running Navi skill/package tests...");
+run("npm", ["test", "--", "tests/skills/navi-skill.test.ts"]);
 console.log("Validating Codex plugin manifest...");
 run("python3", [validatorPath, packageDir]);
-
 console.log("Checking source/package skill drift...");
 assertSameDirectory(sourceSkillDir, packagedSkillDir);
-
-console.log("Along Working Thread repo package verification passed.");
+console.log("Navi repo package verification passed.");

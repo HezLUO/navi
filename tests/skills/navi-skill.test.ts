@@ -92,29 +92,27 @@ async function parseWithPyYaml(source: string): Promise<Record<string, unknown>>
 
 describe("Along Working Thread Codex skill", () => {
   it("uses plugin-validator-compatible YAML frontmatter", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const frontmatter = extractFrontmatter(skill);
 
     const parsed = await parseWithPyYaml(frontmatter);
 
-    expect(parsed.name).toBe("along-working-thread");
+    expect(parsed.name).toBe("navi");
     expect(parsed.description).toEqual(
-      "Use for broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability questions in any active Codex project, including what's next, where are we, 接下来, 现在到哪, and 继续吧; keeps narrow tasks quiet.",
+      "Use when any active Codex project needs Navi supervision for non-expert progress, next-step, stop, wait, approval, coordination, or vision-distance confusion.",
     );
     expect(parsed.description).toEqual(expect.stringContaining("any active Codex project"));
-    expect(parsed.description).toEqual(expect.stringContaining("what's next"));
-    expect(parsed.description).toEqual(expect.stringContaining("where are we"));
-    expect(parsed.description).toEqual(expect.stringContaining("接下来"));
-    expect(parsed.description).toEqual(expect.stringContaining("现在到哪"));
-    expect(parsed.description).toEqual(expect.stringContaining("继续吧"));
+    expect(parsed.description).toEqual(expect.stringContaining("Navi supervision"));
+    expect(parsed.description).toEqual(expect.stringContaining("non-expert progress"));
+    expect(parsed.description).toEqual(expect.stringContaining("vision-distance confusion"));
     expect(parsed.description).not.toEqual(expect.stringContaining("Use in the Along project"));
   });
 
   it("defines a repo-scoped skill with explicit V1 boundaries", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const metadata = await readRepoText(".agents/skills/along-working-thread/agents/openai.yaml");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const metadata = await readRepoText(".agents/skills/navi/agents/openai.yaml");
 
-    expect(skill).toContain("name: along-working-thread");
+    expect(skill).toContain("name: navi");
     expect(skill).toContain("description:");
     expect(skill).toContain("turn-bound self-initiation");
     expect(skill).toContain("must not silently create");
@@ -128,7 +126,7 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents the V1 workflow, drift levels, and confirmation gates", async () => {
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     expect(reference).toContain("Working Thread");
     expect(reference).toContain("Start / Resume Briefing");
@@ -144,9 +142,9 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("defines the global bootstrap handoff boundary", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(
-      ".agents/skills/along-working-thread/references/working-thread-v1.md",
+      ".agents/skills/navi/references/working-thread-v1.md",
     );
 
     for (const text of [skill, reference]) {
@@ -159,8 +157,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents tightened drift behavior and bounded write-back rules", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     expect(skill).toContain("ordinary requests stay quiet");
     expect(skill).toContain("Do not plan the drifted direction before user confirmation");
@@ -183,8 +181,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents Challenge Layer behavior and lightweight validation", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "Challenge Layer",
@@ -219,8 +217,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents Navi Progress Map behavior for non-expert users", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "Navi",
@@ -280,10 +278,10 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 4 phase, validation, and parallel-work supervision", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const readme = await readRepoText("plugins/navi/README.md");
 
     for (const expected of [
       "phase supervision",
@@ -370,8 +368,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 5 pause semantics and decision-point stopping", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -428,8 +426,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 6 stage and vision supervision", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -486,8 +484,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 7 coordination layer supervision", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -537,8 +535,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 8 decision handoff quality", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -587,8 +585,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 11 lane closure next-decision handoff", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -632,8 +630,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 12 quietness and rule density control", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -678,8 +676,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents alpha 13 global install versus project initialization boundary", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
 
     for (const expected of [
@@ -697,8 +695,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents the Navi Project Map model and source priority", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "Project Map",
@@ -765,8 +763,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents compact horizontal rendering and mandatory current-position explanation", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "compact horizontal progress strip",
@@ -787,9 +785,9 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents two-layer map defaults and local-only exceptions", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
+    const readme = await readRepoText("plugins/navi/README.md");
 
     const normalizedReference = reference.toLowerCase();
     const normalizedSkill = skill.toLowerCase();
@@ -816,8 +814,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents Navi Rhythm Map behavior for flowing projects", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "Rhythm Map",
@@ -852,7 +850,7 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents Rhythm Map rendering, examples, and downgrade behavior", async () => {
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "项目节奏",
@@ -887,8 +885,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents prompt-language following for Progress and Rhythm Maps", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -912,8 +910,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents source classification for non-code flowing workspaces", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "project-local handoff files",
@@ -942,8 +940,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents project-local Navi trigger sources and reusable template", async () => {
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
+    const readme = await readRepoText("plugins/navi/README.md");
     const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
@@ -981,8 +979,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents Navi project initialization as the reliable configuration path", async () => {
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
+    const readme = await readRepoText("plugins/navi/README.md");
     const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
 
     for (const expected of [
@@ -1020,8 +1018,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents degraded state rules for unreliable project maps", async () => {
-    const skill = await readRepoText(".agents/skills/along-working-thread/SKILL.md");
-    const reference = await readRepoText(".agents/skills/along-working-thread/references/working-thread-v1.md");
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "should not draw a confident stable bar",
@@ -1037,7 +1035,7 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents graphical progress bar validation in the package README", async () => {
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
+    const readme = await readRepoText("plugins/navi/README.md");
 
     for (const expected of [
       "Project Map",
@@ -1053,8 +1051,8 @@ describe("Along Working Thread Codex skill", () => {
   });
 
   it("documents Rhythm Map validation in the package README and version boundary", async () => {
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
-    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+    const readme = await readRepoText("plugins/navi/README.md");
+    const version = await readRepoText("plugins/navi/VERSION.md");
 
     for (const expected of [
       "Rhythm Map",
@@ -1131,6 +1129,44 @@ describe("Along Working Thread Codex skill", () => {
 });
 
 describe("Along Working Thread repo-contained plugin package", () => {
+  it("uses the Navi package identity and source marketplace catalog", async () => {
+    const canonicalSkillRoot = path.join(repoRoot, ".agents", "skills", "navi");
+    const pluginRoot = path.join(repoRoot, "plugins", "navi");
+    const packagedSkillRoot = path.join(pluginRoot, "skills", "navi");
+
+    const [canonicalSkill, packagedSkill, manifestSource, marketplaceSource] = await Promise.all([
+      fs.readFile(path.join(canonicalSkillRoot, "SKILL.md"), "utf8"),
+      fs.readFile(path.join(packagedSkillRoot, "SKILL.md"), "utf8"),
+      fs.readFile(path.join(pluginRoot, ".codex-plugin", "plugin.json"), "utf8"),
+      fs.readFile(path.join(repoRoot, ".agents", "plugins", "marketplace.json"), "utf8"),
+    ]);
+    const canonicalFrontmatter = await parseWithPyYaml(extractFrontmatter(canonicalSkill));
+    const packagedFrontmatter = await parseWithPyYaml(extractFrontmatter(packagedSkill));
+    const pluginManifest = JSON.parse(manifestSource) as { name: string };
+    const marketplace = JSON.parse(marketplaceSource) as {
+      name: string;
+      plugins: Array<{
+        name: string;
+        source: { source: string; path: string };
+        policy: { installation: string; authentication: string };
+        category: string;
+      }>;
+    };
+
+    expect(canonicalFrontmatter.name).toBe("navi");
+    expect(packagedFrontmatter.name).toBe("navi");
+    expect(pluginManifest.name).toBe("navi");
+    expect(marketplace.name).toBe("navi-source");
+    expect(marketplace.plugins).toEqual([
+      expect.objectContaining({
+        name: "navi",
+        source: { source: "local", path: "./plugins/navi" },
+        policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+        category: "Productivity",
+      }),
+    ]);
+  });
+
   it("documents alpha 9 maintainer calibration evidence", async () => {
     const rubric = await readRepoText("docs/along/calibration/decision-rubric.md");
     const evidenceLog = await readRepoText("docs/along/calibration/evidence-log.md");
@@ -1275,7 +1311,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     const [englishReadme, chineseReadme, packageReadme, initDoc, debt] = await Promise.all([
       readRepoText("README.md"),
       readRepoText("README.zh-CN.md"),
-      readRepoText("plugins/along-working-thread/README.md"),
+      readRepoText("plugins/navi/README.md"),
       readRepoText("docs/along/project-maps/navi-project-init.md"),
       readRepoText("docs/along/navi-product-debt.md"),
     ]);
@@ -1344,18 +1380,18 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
   it("ships the minimal repo-contained plugin package layout and manifest", async () => {
     for (const requiredPath of [
-      "plugins/along-working-thread/.codex-plugin/plugin.json",
-      "plugins/along-working-thread/README.md",
-      "plugins/along-working-thread/VERSION.md",
-      "plugins/along-working-thread/skills/along-working-thread/SKILL.md",
-      "plugins/along-working-thread/skills/along-working-thread/agents/openai.yaml",
-      "plugins/along-working-thread/skills/along-working-thread/references/working-thread-v1.md",
+      "plugins/navi/.codex-plugin/plugin.json",
+      "plugins/navi/README.md",
+      "plugins/navi/VERSION.md",
+      "plugins/navi/skills/navi/SKILL.md",
+      "plugins/navi/skills/navi/agents/openai.yaml",
+      "plugins/navi/skills/navi/references/working-thread-v1.md",
     ]) {
       expect(await repoPathExists(requiredPath), requiredPath).toBe(true);
     }
 
     const manifest = JSON.parse(
-      await readRepoText("plugins/along-working-thread/.codex-plugin/plugin.json"),
+      await readRepoText("plugins/navi/.codex-plugin/plugin.json"),
     ) as {
       name: string;
       version: string;
@@ -1374,7 +1410,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       };
     };
 
-    expect(manifest.name).toBe("along-working-thread");
+    expect(manifest.name).toBe("navi");
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.skills).toBe("./skills/");
     expect(manifest.author.name).toBe("Navi Contributors");
@@ -1397,17 +1433,17 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "Check whether this project needs Navi initialization before giving a stable map.",
     ]);
     expect(manifest.interface.defaultPrompt).toHaveLength(3);
-    expect(manifest.name).toBe("along-working-thread");
-    expect(manifest.interface.longDescription).toContain("legacy skill id remains along-working-thread");
+    expect(manifest.name).toBe("navi");
+    expect(manifest.interface.longDescription).not.toContain("legacy skill id remains along-working-thread");
     const formerDeveloperName = ["Ja", "mes"].join("");
     expect(JSON.stringify(manifest)).not.toContain(formerDeveloperName);
 
     for (const forbiddenPath of [
-      "plugins/along-working-thread/.mcp.json",
-      "plugins/along-working-thread/.app.json",
-      "plugins/along-working-thread/hooks",
-      "plugins/along-working-thread/assets",
-      "plugins/along-working-thread/dist",
+      "plugins/navi/.mcp.json",
+      "plugins/navi/.app.json",
+      "plugins/navi/hooks",
+      "plugins/navi/assets",
+      "plugins/navi/dist",
     ]) {
       expect(await repoPathExists(forbiddenPath), forbiddenPath).toBe(false);
     }
@@ -1415,7 +1451,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
   it("positions the package as a Challenge Layer without expanding runtime scope", async () => {
     const manifest = JSON.parse(
-      await readRepoText("plugins/along-working-thread/.codex-plugin/plugin.json"),
+      await readRepoText("plugins/navi/.codex-plugin/plugin.json"),
     ) as {
       version: string;
       description: string;
@@ -1426,8 +1462,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
         defaultPrompt: string[];
       };
     };
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
-    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+    const readme = await readRepoText("plugins/navi/README.md");
+    const version = await readRepoText("plugins/navi/VERSION.md");
 
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.description).toContain("Challenge Layer");
@@ -1453,7 +1489,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
   it("documents Navi entry routing in agent metadata without forcing ordinary requests", async () => {
     const agentMetadata = await readRepoText(
-      "plugins/along-working-thread/skills/along-working-thread/agents/openai.yaml",
+      "plugins/navi/skills/navi/agents/openai.yaml",
     );
 
     expect(agentMetadata).toContain("broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability");
@@ -1466,9 +1502,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
       description: string;
       private: boolean;
     };
-    const canonicalMetadata = await readRepoText(".agents/skills/along-working-thread/agents/openai.yaml");
+    const canonicalMetadata = await readRepoText(".agents/skills/navi/agents/openai.yaml");
     const pluginMetadata = await readRepoText(
-      "plugins/along-working-thread/skills/along-working-thread/agents/openai.yaml",
+      "plugins/navi/skills/navi/agents/openai.yaml",
     );
 
     expect(packageJson.private).toBe(true);
@@ -1487,7 +1523,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
   it("positions the package around Navi Progress Map without expanding runtime scope", async () => {
     const manifest = JSON.parse(
-      await readRepoText("plugins/along-working-thread/.codex-plugin/plugin.json"),
+      await readRepoText("plugins/navi/.codex-plugin/plugin.json"),
     ) as {
       version: string;
       description: string;
@@ -1498,8 +1534,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
         defaultPrompt: string[];
       };
     };
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
-    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+    const readme = await readRepoText("plugins/navi/README.md");
+    const version = await readRepoText("plugins/navi/VERSION.md");
 
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.description).toContain("Navi");
@@ -1542,8 +1578,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
   });
 
   it("keeps the packaged skill copy in exact sync with the repo skill source", async () => {
-    const sourceDir = ".agents/skills/along-working-thread";
-    const packagedDir = "plugins/along-working-thread/skills/along-working-thread";
+    const sourceDir = ".agents/skills/navi";
+    const packagedDir = "plugins/navi/skills/navi";
 
     const sourceFiles = await listRepoFiles(sourceDir);
     const packagedFiles = await listRepoFiles(packagedDir);
@@ -1559,8 +1595,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
   });
 
   it("documents restrained positioning, validation, and version boundaries", async () => {
-    const readme = await readRepoText("plugins/along-working-thread/README.md");
-    const version = await readRepoText("plugins/along-working-thread/VERSION.md");
+    const readme = await readRepoText("plugins/navi/README.md");
+    const version = await readRepoText("plugins/navi/VERSION.md");
 
     expect(readme).toContain("# Navi");
     expect(readme).toContain("Navi helps non-expert users understand, supervise, and steer expert agents.");

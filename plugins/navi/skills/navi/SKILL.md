@@ -1,17 +1,17 @@
 ---
-name: along-working-thread
-description: "Use for broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability questions in any active Codex project, including what's next, where are we, 接下来, 现在到哪, and 继续吧; keeps narrow tasks quiet."
+name: navi
+description: Use when any active Codex project needs Navi supervision for non-expert progress, next-step, stop, wait, approval, coordination, or vision-distance confusion.
 ---
 
-# Along Working Thread
+# Navi
 
-Use this skill to make Codex behave in an Along-like way inside an installed, active Codex project.
+Use this skill for Navi supervision inside an installed, active Codex project.
 
-The current V1 product surface of Along is **Navi**: a non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents.
+Navi is an independent non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents. Along is its origin and lab context.
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, alpha.7 **coordination layer**, alpha.8 **decision handoff quality**, alpha.11 **lane closure handoff**, and alpha.12 **quietness gate**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Alpha.12 prevents pseudo-supervision by applying the rule: No control gain, no Navi surface. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum. Along remains the broader long-term product vision.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, alpha.7 **coordination layer**, alpha.8 **decision handoff quality**, alpha.11 **lane closure handoff**, and alpha.12 **quietness gate**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Alpha.12 prevents pseudo-supervision by applying the rule: No control gain, no Navi surface. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 
