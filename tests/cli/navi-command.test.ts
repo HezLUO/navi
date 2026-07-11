@@ -26,7 +26,7 @@ describe("Navi command dispatcher", () => {
 
       expect(init.status, init.stderr).toBe(0);
       expect(init.stdout).toContain("Navi init preview");
-      expect(setup.status, setup.stderr).toBe(0);
+      expect(setup.status, setup.stderr).toBe(1);
       expect(setup.stdout).toContain("Navi setup configures global discovery");
       expect(doctor.status).toBe(1);
       expect(doctor.stdout).toContain("[fail] plugin:");

@@ -10,7 +10,9 @@ async function runNaviSetup(args: string[]): Promise<number> {
 
 async function runNaviDoctor(args: string[]): Promise<number> {
   const { runNaviDoctorCli } = await import(new URL("./navi-doctor.ts", import.meta.url).href) as typeof import("./navi-doctor");
-  return runNaviDoctorCli(args);
+  return runNaviDoctorCli(args, undefined, undefined, {
+    cliRoot: new URL("../..", import.meta.url).pathname,
+  });
 }
 
 export const NAVI_USAGE = "Usage: navi <init|setup|doctor> [options]";

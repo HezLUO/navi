@@ -1,301 +1,136 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import {
-  inspectInstalledNaviPlugin,
-  NAVI_GLOBAL_BLOCK_END,
-  NAVI_GLOBAL_BLOCK_START,
-  planGlobalAgentsContent,
-  type NaviPluginStatus,
-} from "./navi-global";
+import { fileURLToPath } from "node:url";
+import { assertUnlinkedArtifact, resolveCanonicalCodexHome } from "./navi-codex-home";
+import { NAVI_GLOBAL_BLOCK_END, NAVI_GLOBAL_BLOCK_START, planGlobalAgentsContent } from "./navi-global";
 import { NAVI_AGENTS_BLOCK_END, NAVI_AGENTS_BLOCK_START } from "./navi-init";
+import { inspectNaviInstallation, type NaviInstallationStatus } from "./navi-installation";
+import { inspectTransaction } from "./navi-transaction";
 
 export type DoctorCheckStatus = "pass" | "warn" | "fail";
-
 export interface DoctorCheck {
-  id: "cli" | "plugin" | "manifest" | "global-bootstrap" | "package-cache" | "project-init";
+  id: "cli" | "plugin" | "manifest" | "global-bootstrap" | "package-cache" | "project-init" | "transaction";
   status: DoctorCheckStatus;
   summary: string;
   repair?: string;
 }
-
 export interface NaviDoctorReport {
+  requestedCodexHome: string;
   codexHome: string;
+  cliRoot: string;
   projectDir: string;
   checks: DoctorCheck[];
 }
-
 export interface NaviDoctorOptions {
   codexHome?: string;
   projectDir?: string;
-  packageRoot?: string;
-  cacheRoot?: string;
+  cliRoot?: string;
 }
-
 export interface NaviDoctorDependencies {
-  inspectPlugin?: () => Promise<NaviPluginStatus>;
+  inspectInstallation?: () => Promise<NaviInstallationStatus>;
 }
+export interface NaviDoctorIo { stdout: (text: string) => void; stderr: (text: string) => void; }
 
-export interface NaviDoctorIo {
-  stdout: (text: string) => void;
-  stderr: (text: string) => void;
-}
-
-const DEFAULT_IO: NaviDoctorIo = {
-  stdout: (text) => process.stdout.write(text),
-  stderr: (text) => process.stderr.write(text),
-};
-
+const DEFAULT_IO: NaviDoctorIo = { stdout: (text) => process.stdout.write(text), stderr: (text) => process.stderr.write(text) };
+const DEFAULT_CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const GLOBAL_REPAIR = "Run navi setup, review the preview, then run navi setup --write.";
 const PROJECT_REPAIR = "Run navi init, review the preview, then run navi init --write.";
-const PLUGIN_REPAIR = "Install and enable the source-alpha Navi plugin before running navi setup --write.";
-const MANIFEST_REPAIR = "Reduce plugin interface.defaultPrompt to at most 3 entries.";
-const IGNORED_PACKAGE_ENTRIES = new Set([".git", "node_modules", ".DS_Store", "Thumbs.db"]);
+const SOURCE_REPAIR = "Install and enable navi@navi-source before running navi setup --write.";
 
-export async function buildNaviDoctorReport(
-  options: NaviDoctorOptions = {},
-  dependencies: NaviDoctorDependencies = {},
-): Promise<NaviDoctorReport> {
-  const codexHome = path.resolve(options.codexHome ?? process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"));
+export async function buildNaviDoctorReport(options: NaviDoctorOptions = {}, dependencies: NaviDoctorDependencies = {}): Promise<NaviDoctorReport> {
+  const requestedCodexHome = path.resolve(options.codexHome ?? process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"));
+  const canonical = await resolveCanonicalCodexHome(requestedCodexHome);
+  const cliRoot = path.resolve(options.cliRoot ?? DEFAULT_CLI_ROOT);
   const projectDir = path.resolve(options.projectDir ?? process.cwd());
-  const packageRoot = path.resolve(options.packageRoot ?? path.join(process.cwd(), "plugins", "along-working-thread"));
-  const plugin = await (dependencies.inspectPlugin ?? inspectInstalledNaviPlugin)();
-  const cacheRoot = path.resolve(
-    options.cacheRoot ?? path.join(codexHome, "plugins", "cache", "personal", "along-working-thread", plugin.version?.replace(/^v/, "") ?? "0.1.0"),
-  );
-
+  const installation = await (dependencies.inspectInstallation ?? inspectNaviInstallation)();
+  const sourcePath = installation.current?.sourcePath ? path.resolve(installation.current.sourcePath) : undefined;
   return {
-    codexHome,
+    requestedCodexHome: canonical.requestedPath,
+    codexHome: canonical.canonicalPath,
+    cliRoot,
     projectDir,
     checks: [
-      await buildCliCheck(packageRoot),
-      buildPluginCheck(plugin),
-      await buildManifestCheck(packageRoot),
-      await buildGlobalBootstrapCheck(codexHome),
-      await buildPackageCacheCheck(packageRoot, cacheRoot),
+      await buildCliCheck(cliRoot),
+      buildPluginCheck(installation),
+      await buildManifestCheck(installation, sourcePath),
+      await buildGlobalBootstrapCheck(canonical.canonicalPath),
+      await buildPackageCacheCheck(sourcePath),
       await buildProjectInitCheck(projectDir),
+      await buildTransactionCheck(canonical.canonicalPath),
     ],
   };
 }
 
 export function renderNaviDoctorReport(report: NaviDoctorReport): string {
-  return `${report.checks.flatMap((check) => [
+  const roots = report.requestedCodexHome === report.codexHome ? [] : [
+    `Requested CODEX_HOME: ${report.requestedCodexHome}`,
+    `Canonical CODEX_HOME: ${report.codexHome}`,
+  ];
+  return `${[...roots, ...report.checks.flatMap((check) => [
     `[${check.status}] ${check.id}: ${check.summary}`,
     ...(check.repair ? [`  Repair: ${check.repair}`] : []),
-  ]).join("\n")}\n`;
+  ])].join("\n")}\n`;
 }
 
-export async function runNaviDoctorCli(
-  args: string[],
-  io: NaviDoctorIo = DEFAULT_IO,
-  dependencies: NaviDoctorDependencies = {},
-): Promise<number> {
-  if (args.length > 0) {
-    io.stderr("Usage: navi doctor\n");
-    return 1;
-  }
-
+export async function runNaviDoctorCli(args: string[], io: NaviDoctorIo = DEFAULT_IO, dependencies: NaviDoctorDependencies = {}, options: NaviDoctorOptions = {}): Promise<number> {
+  if (args.length > 0) { io.stderr("Usage: navi doctor\n"); return 1; }
   try {
-    const report = await buildNaviDoctorReport({}, dependencies);
+    const report = await buildNaviDoctorReport(options, dependencies);
     io.stdout(renderNaviDoctorReport(report));
     return report.checks.some((check) => check.status === "fail") ? 1 : 0;
-  } catch (error) {
-    io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
-    return 1;
-  }
+  } catch (error) { io.stderr(`${error instanceof Error ? error.message : String(error)}\n`); return 1; }
 }
 
-async function buildCliCheck(packageRoot: string): Promise<DoctorCheck> {
-  if (await isDirectory(packageRoot)) {
-    return { id: "cli", status: "pass", summary: "Navi source package is available." };
-  }
-  return {
-    id: "cli",
-    status: "fail",
-    summary: "Navi source package is unavailable.",
-    repair: "Run navi from a checked-out Navi source package.",
-  };
+async function buildCliCheck(cliRoot: string): Promise<DoctorCheck> {
+  return await isDirectory(cliRoot)
+    ? { id: "cli", status: "pass", summary: "Navi CLI root is available." }
+    : { id: "cli", status: "fail", summary: "Navi CLI root is unavailable.", repair: "Run navi from a checked-out Navi source package." };
 }
-
-function buildPluginCheck(plugin: NaviPluginStatus): DoctorCheck {
-  if (plugin.installed && plugin.enabled) {
-    return {
-      id: "plugin",
-      status: "pass",
-      summary: `Navi plugin is installed and enabled${plugin.version ? ` (${plugin.version}).` : "."}`,
-    };
+function buildPluginCheck(status: NaviInstallationStatus): DoctorCheck {
+  switch (status.kind) {
+    case "current": return { id: "plugin", status: "pass", summary: `Navi plugin is installed and enabled${status.current?.version ? ` (${status.current.version}).` : "."}` };
+    case "legacy": return { id: "plugin", status: "fail", summary: `Only legacy plugin ${status.legacy?.selector ?? "along-working-thread"} is installed.`, repair: `${SOURCE_REPAIR} Remove ${status.legacy?.selector ?? "the legacy plugin"} after migration.` };
+    case "conflict": return { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy?.selector ?? "along-working-thread"} are both installed.`, repair: `Remove ${status.legacy?.selector ?? "the legacy plugin"}, then rerun navi doctor.` };
+    case "uninspectable": return { id: "plugin", status: "fail", summary: `Navi plugin installation could not be inspected${status.diagnostic ? `: ${status.diagnostic}` : "."}`, repair: "Repair codex plugin list, then rerun navi doctor." };
+    case "missing": return { id: "plugin", status: "fail", summary: "Navi plugin is missing or disabled.", repair: SOURCE_REPAIR };
   }
-  return {
-    id: "plugin",
-    status: "fail",
-    summary: "Navi plugin is missing or disabled.",
-    repair: PLUGIN_REPAIR,
-  };
 }
-
-async function buildManifestCheck(packageRoot: string): Promise<DoctorCheck> {
-  if (!(await isDirectory(packageRoot))) {
-    return { id: "manifest", status: "fail", summary: "Plugin manifest is unavailable or invalid.", repair: MANIFEST_REPAIR };
-  }
-  const manifestPath = path.join(packageRoot, ".codex-plugin", "plugin.json");
+async function buildManifestCheck(status: NaviInstallationStatus, sourcePath: string | undefined): Promise<DoctorCheck> {
+  if (status.kind !== "current" || !sourcePath) return { id: "manifest", status: "warn", summary: "Navi plugin source is unavailable; manifest inspection is incomplete." };
   try {
-    const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8")) as { interface?: { defaultPrompt?: unknown } };
+    const manifest = JSON.parse(await fs.readFile(path.join(sourcePath, ".codex-plugin", "plugin.json"), "utf8")) as { interface?: { defaultPrompt?: unknown } };
     const prompts = manifest.interface?.defaultPrompt;
-    if (Array.isArray(prompts) && prompts.length <= 3) {
-      return { id: "manifest", status: "pass", summary: "Plugin manifest defaultPrompt contains at most 3 entries." };
-    }
-    if (Array.isArray(prompts)) {
-      return {
-        id: "manifest",
-        status: "fail",
-        summary: "Plugin manifest defaultPrompt must contain at most 3 entries.",
-        repair: MANIFEST_REPAIR,
-      };
-    }
-    return { id: "manifest", status: "fail", summary: "Plugin manifest defaultPrompt is missing or invalid.", repair: MANIFEST_REPAIR };
-  } catch {
-    return { id: "manifest", status: "fail", summary: "Plugin manifest is unavailable or invalid.", repair: MANIFEST_REPAIR };
-  }
+    if (Array.isArray(prompts) && prompts.length <= 3) return { id: "manifest", status: "pass", summary: "Installed Navi plugin manifest defaultPrompt contains at most 3 entries." };
+    return { id: "manifest", status: "fail", summary: "Installed Navi plugin manifest defaultPrompt must contain at most 3 entries.", repair: "Reduce plugin interface.defaultPrompt to at most 3 entries." };
+  } catch { return { id: "manifest", status: "warn", summary: "Navi plugin source is unavailable; manifest inspection is incomplete." }; }
 }
-
 async function buildGlobalBootstrapCheck(codexHome: string): Promise<DoctorCheck> {
-  const content = await readOptional(path.join(codexHome, "AGENTS.md"));
-  if (content !== undefined && planGlobalAgentsContent(content, "install").kind === "skip") {
-    return { id: "global-bootstrap", status: "pass", summary: "Navi global bootstrap is installed." };
-  }
-  const hasMarkers = content?.includes(NAVI_GLOBAL_BLOCK_START) || content?.includes(NAVI_GLOBAL_BLOCK_END);
-  return {
-    id: "global-bootstrap",
-    status: "fail",
-    summary: hasMarkers ? "Navi global bootstrap markers are damaged or unrecognized." : "Navi global bootstrap is not installed.",
-    repair: GLOBAL_REPAIR,
-  };
+  const target = path.join(codexHome, "AGENTS.md");
+  try { await assertUnlinkedArtifact(target); } catch { return { id: "global-bootstrap", status: "fail", summary: "Global AGENTS.md is unsafe to inspect.", repair: "Replace the AGENTS.md symlink with a regular file before running navi setup." }; }
+  const content = await readOptional(target);
+  if (content !== undefined && planGlobalAgentsContent(content, "install").kind === "skip") return { id: "global-bootstrap", status: "pass", summary: "Navi global bootstrap is installed." };
+  const markers = content?.includes(NAVI_GLOBAL_BLOCK_START) || content?.includes(NAVI_GLOBAL_BLOCK_END);
+  return { id: "global-bootstrap", status: "fail", summary: markers ? "Navi global bootstrap markers are damaged or unrecognized." : "Navi global bootstrap is not installed.", repair: GLOBAL_REPAIR };
 }
-
-async function buildPackageCacheCheck(packageRoot: string, cacheRoot: string): Promise<DoctorCheck> {
-  let cacheRootType: RootType;
-  try {
-    cacheRootType = await getRootType(cacheRoot);
-  } catch {
-    return { id: "package-cache", status: "warn", summary: "Navi plugin cache is unavailable for comparison." };
-  }
-  if (cacheRootType === "unavailable") {
-    return { id: "package-cache", status: "warn", summary: "Navi plugin cache is unavailable for comparison." };
-  }
-  if (cacheRootType === "symlink") {
-    return { id: "package-cache", status: "fail", summary: "Navi source package and cache differ.", repair: "Refresh the installed Navi plugin cache from the verified source package." };
-  }
-  let packageRootType: RootType;
-  try {
-    packageRootType = await getRootType(packageRoot);
-  } catch {
-    return { id: "package-cache", status: "warn", summary: "Navi source package is unavailable for cache comparison." };
-  }
-  if (packageRootType === "symlink") {
-    return { id: "package-cache", status: "fail", summary: "Navi source package and cache differ.", repair: "Refresh the installed Navi plugin cache from the verified source package." };
-  }
-  if (packageRootType !== "directory") {
-    return { id: "package-cache", status: "warn", summary: "Navi source package is unavailable for cache comparison." };
-  }
-  try {
-    return await samePackageTree(packageRoot, cacheRoot)
-      ? { id: "package-cache", status: "pass", summary: "Navi source package and cache are aligned." }
-      : { id: "package-cache", status: "fail", summary: "Navi source package and cache differ.", repair: "Refresh the installed Navi plugin cache from the verified source package." };
-  } catch {
-    return { id: "package-cache", status: "warn", summary: "Navi plugin cache is unavailable for comparison." };
-  }
+async function buildPackageCacheCheck(sourcePath: string | undefined): Promise<DoctorCheck> {
+  if (!sourcePath) return { id: "package-cache", status: "warn", summary: "Navi source/cache evidence is unavailable; inspection is incomplete." };
+  return { id: "package-cache", status: "warn", summary: "Navi installation reports a source path but no separate cache path; inspection is incomplete." };
 }
-
 async function buildProjectInitCheck(projectDir: string): Promise<DoctorCheck> {
   const content = await readOptional(path.join(projectDir, "AGENTS.md"));
-  if (content !== undefined && hasSingleCompleteMarkerPair(content, NAVI_AGENTS_BLOCK_START, NAVI_AGENTS_BLOCK_END)) {
-    return { id: "project-init", status: "pass", summary: "This project has project-local Navi guidance." };
-  }
-  return {
-    id: "project-init",
-    status: "warn",
-    summary: "This project does not have project-local Navi guidance.",
-    repair: PROJECT_REPAIR,
-  };
+  if (content !== undefined && hasSingleCompleteMarkerPair(content, NAVI_AGENTS_BLOCK_START, NAVI_AGENTS_BLOCK_END)) return { id: "project-init", status: "pass", summary: "This project has project-local Navi guidance." };
+  return { id: "project-init", status: "warn", summary: "This project does not have project-local Navi guidance.", repair: PROJECT_REPAIR };
 }
-
-async function readOptional(filePath: string): Promise<string | undefined> {
-  try {
-    return await fs.readFile(filePath, "utf8");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
-    throw error;
+async function buildTransactionCheck(codexHome: string): Promise<DoctorCheck> {
+  const transaction = await inspectTransaction(codexHome);
+  switch (transaction.kind) {
+    case "none": return { id: "transaction", status: "pass", summary: "No pending Navi setup transaction." };
+    case "recoverable-cleanup": case "recoverable-restore": return { id: "transaction", status: "fail", summary: "A recoverable Navi setup transaction needs recovery.", repair: "Run navi setup --write to recover, then rerun navi setup." };
+    case "live-lock": return { id: "transaction", status: "fail", summary: "A Navi setup transaction is currently active." };
+    case "conflict": return { id: "transaction", status: "fail", summary: `Navi setup transaction requires manual resolution: ${transaction.diagnostic}` };
   }
 }
-
-async function isDirectory(directory: string): Promise<boolean> {
-  try {
-    return (await fs.lstat(directory)).isDirectory();
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-    throw error;
-  }
-}
-
-type RootType = "directory" | "symlink" | "unavailable";
-
-async function getRootType(root: string): Promise<RootType> {
-  try {
-    const metadata = await fs.lstat(root);
-    if (metadata.isDirectory()) return "directory";
-    if (metadata.isSymbolicLink()) {
-      return (await isBrokenSymbolicLink(root)) ? "unavailable" : "symlink";
-    }
-    return "unavailable";
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return "unavailable";
-    throw error;
-  }
-}
-
-async function isBrokenSymbolicLink(linkPath: string): Promise<boolean> {
-  const target = await fs.readlink(linkPath);
-  try {
-    await fs.lstat(path.resolve(path.dirname(linkPath), target));
-    return false;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return true;
-    throw error;
-  }
-}
-
-function hasSingleCompleteMarkerPair(content: string, startMarker: string, endMarker: string): boolean {
-  const start = content.indexOf(startMarker);
-  return start !== -1 && start === content.lastIndexOf(startMarker) && content.indexOf(endMarker, start) !== -1 && content.indexOf(endMarker) === content.lastIndexOf(endMarker);
-}
-
-async function samePackageTree(leftRoot: string, rightRoot: string): Promise<boolean> {
-  const [left, right] = await Promise.all([readPackageTree(leftRoot), readPackageTree(rightRoot)]);
-  if (left === undefined || right === undefined) return false;
-  if (left.size !== right.size) return false;
-  for (const [relativePath, contents] of left) {
-    const otherContents = right.get(relativePath);
-    if (otherContents === undefined || !otherContents.equals(contents)) return false;
-  }
-  return true;
-}
-
-async function readPackageTree(root: string): Promise<Map<string, Buffer> | undefined> {
-  const files = new Map<string, Buffer>();
-  async function visit(directory: string): Promise<boolean> {
-    for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
-      if (entry.isSymbolicLink()) return false;
-      if (IGNORED_PACKAGE_ENTRIES.has(entry.name)) continue;
-      const absolutePath = path.join(directory, entry.name);
-      if (entry.isDirectory()) {
-        if (!(await visit(absolutePath))) return false;
-      } else if (entry.isFile()) {
-        files.set(path.relative(root, absolutePath), await fs.readFile(absolutePath));
-      } else {
-        return false;
-      }
-    }
-    return true;
-  }
-  return (await visit(root)) ? files : undefined;
-}
+async function readOptional(filePath: string): Promise<string | undefined> { try { return await fs.readFile(filePath, "utf8"); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; } }
+async function isDirectory(directory: string): Promise<boolean> { try { return (await fs.lstat(directory)).isDirectory(); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return false; throw error; } }
+function hasSingleCompleteMarkerPair(content: string, startMarker: string, endMarker: string): boolean { const start = content.indexOf(startMarker); return start !== -1 && start === content.lastIndexOf(startMarker) && content.indexOf(endMarker, start) !== -1 && content.indexOf(endMarker) === content.lastIndexOf(endMarker); }
