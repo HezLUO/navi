@@ -71,6 +71,31 @@ export interface NaviSetupDependencies {
   runCommand?: RunCommand;
 }
 
+function setupBlockReason(plan: GlobalSetupPlan): string | undefined {
+  if (plan.action.kind === "conflict") {
+    return `${plan.action.summary} Repair the Navi-managed AGENTS.md block manually, then rerun navi setup.`;
+  }
+
+  if (plan.operation === "install" && plan.action.kind !== "skip" && (
+    plan.plugin.kind !== "current" ||
+    !plan.plugin.current?.installed ||
+    !plan.plugin.current.enabled
+  )) {
+    return pluginRepairText(plan.plugin);
+  }
+
+  switch (plan.transaction.kind) {
+    case "none":
+    case "recoverable-restore":
+    case "recoverable-cleanup":
+      return undefined;
+    case "live-lock":
+      return "Another Navi setup transaction is active; wait for it to finish and retry.";
+    case "conflict":
+      return `Resolve the Navi setup transaction manually, then retry. ${plan.transaction.diagnostic}`;
+  }
+}
+
 /** @deprecated Compatibility adapter for doctor callers pending its Task 7 migration. */
 export async function inspectInstalledNaviPlugin(
   runCommand: RunCommand = defaultRunCommand,
@@ -253,10 +278,8 @@ export async function applyGlobalSetupPlan(
   plan: GlobalSetupPlan,
 ): Promise<"applied" | "recovered"> {
   if (plan.mode === "dry-run" || plan.action.kind === "skip") return "applied";
-  if (plan.action.kind === "conflict") throw new Error(plan.action.summary);
-  if (plan.operation === "install" && (plan.plugin.kind !== "current" || !plan.plugin.current?.installed || !plan.plugin.current.enabled)) {
-    throw new Error(pluginRepairText(plan.plugin));
-  }
+  const blocked = setupBlockReason(plan);
+  if (blocked) throw new Error(blocked);
 
   if (plan.transaction.kind === "recoverable-restore" || plan.transaction.kind === "recoverable-cleanup") {
     await recoverTransaction(plan.codexHome, plan.transaction);
@@ -281,6 +304,7 @@ export async function applyGlobalSetupPlan(
 export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
   const availability = pluginAvailability(plan.plugin);
   const apply = plan.operation === "remove" ? "navi setup --remove --write" : "navi setup --write";
+  const blocked = setupBlockReason(plan);
   return [
     `Navi setup configures global discovery at ${plan.agentsPath}; it does not initialize a project.`,
     ...(plan.requestedCodexHome === plan.codexHome
@@ -293,7 +317,7 @@ export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
     `Transaction state: ${plan.transaction.kind}.`,
     `Planned action: ${plan.action.kind} — ${plan.action.summary}`,
     "No files were written.",
-    `Apply with: ${apply}`,
+    ...(blocked ? [`Setup is blocked: ${blocked}`] : [`Apply with: ${apply}`]),
     ...(plan.operation === "remove" ? ["The plugin, CLI, and project-local files remain."] : []),
   ].join("\n");
 }
@@ -318,7 +342,7 @@ export async function runNaviSetupCli(
     const plan = await buildGlobalSetupPlan({ codexHome: dependencies.codexHome, write, remove }, dependencies);
     if (!write) {
       io.stdout(`${renderGlobalSetupPlan(plan)}\n`);
-      return 0;
+      return setupBlockReason(plan) ? 1 : 0;
     }
     const result = await applyGlobalSetupPlan(plan);
     if (result === "recovered") {

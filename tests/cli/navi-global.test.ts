@@ -323,6 +323,95 @@ describe("Navi global setup", () => {
     expect(output.join("")).toContain("navi setup --write");
   });
 
+  it.each([
+    ["managed-block conflict", async (codexHome: string) => {
+      await fs.writeFile(
+        path.join(codexHome, "AGENTS.md"),
+        `${NAVI_GLOBAL_BLOCK_START}\nuser-edited\n${NAVI_GLOBAL_BLOCK_END}`,
+      );
+    }, enabledInstallation],
+    ["missing plugin", async () => undefined, missingInstallation],
+    ["disabled plugin", async () => undefined, {
+      kind: "missing" as const,
+      current: { ...enabledInstallation.current, enabled: false },
+      raw: "disabled",
+    }],
+    ["legacy-only plugin", async () => undefined, {
+      kind: "legacy" as const,
+      legacy: {
+        selector: "along-working-thread@personal",
+        pluginName: "along-working-thread",
+        installed: true,
+        enabled: true,
+        raw: "legacy",
+      },
+      raw: "legacy",
+    }],
+    ["dual plugin installation", async () => undefined, {
+      kind: "conflict" as const,
+      current: enabledInstallation.current,
+      legacy: {
+        selector: "along-working-thread@personal",
+        pluginName: "along-working-thread",
+        installed: true,
+        enabled: true,
+        raw: "legacy",
+      },
+      raw: "both",
+    }],
+    ["ambiguous transaction", async (codexHome: string) => {
+      await Promise.all([
+        fs.writeFile(path.join(codexHome, ".AGENTS.md.navi-transaction-first.json"), "{}"),
+        fs.writeFile(path.join(codexHome, ".AGENTS.md.navi-transaction-second.json"), "{}"),
+      ]);
+    }, enabledInstallation],
+  ])("blocks a %s preview without offering an unsafe write command", async (_name, arrange, installation) => {
+    const codexHome = await makeTempCodexHome();
+    await arrange(codexHome);
+    const output: string[] = [];
+
+    const code = await runNaviSetupCli([], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
+      codexHome,
+      inspectInstallation: async () => installation,
+    });
+
+    expect(code).not.toBe(0);
+    expect(output.join("")).not.toContain("Apply with:");
+    expect(output.join("")).not.toContain("navi setup --write");
+  });
+
+  it("blocks an unsafe CODEX_HOME without offering an unsafe write command", async () => {
+    const root = await makeTempCodexHome();
+    const unsafeRoot = path.join(root, "missing");
+    const output: string[] = [];
+
+    const code = await runNaviSetupCli([], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
+      codexHome: unsafeRoot,
+      inspectInstallation: async () => enabledInstallation,
+    });
+
+    expect(code).not.toBe(0);
+    expect(output.join("")).not.toContain("Apply with:");
+    expect(output.join("")).not.toContain("navi setup --write");
+  });
+
+  it.each([
+    ["install", [], "navi setup --write"],
+    ["remove", ["--remove"], "navi setup --remove --write"],
+  ])("renders a safe %s preview with its apply command", async (_name, args, applyCommand) => {
+    const codexHome = await makeTempCodexHome();
+    const output: string[] = [];
+
+    const code = await runNaviSetupCli(args, { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
+      codexHome,
+      inspectInstallation: async () => enabledInstallation,
+    });
+
+    expect(code).toBe(0);
+    expect(output.join("")).toContain("Apply with:");
+    expect(output.join("")).toContain(applyCommand);
+  });
+
   it("explains that removal leaves plugin, CLI, and project-local files intact", async () => {
     const codexHome = await makeTempCodexHome();
     const output: string[] = [];
