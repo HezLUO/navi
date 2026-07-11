@@ -193,6 +193,8 @@ Required stop points include:
 - choosing between materially different product directions;
 - resolving a failed check that requires code or behavior changes.
 
+An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits for its worktree parent and bounded subagents. Do not request separate approval for each such commit; report the commit when the task closes. This never authorizes an unplanned commit, a commit with unknown staged content, history rewriting, merge, push, tag, release, a user request not to commit, project-owned instructions outside the Navi managed block, cross-project changes, scope expansion, or known-risk acceptance.
+
 ### Pause Reason Rule
 
 When Navi stops proactively, it should explain the pause reason briefly and say what would happen if the user approves continuing.

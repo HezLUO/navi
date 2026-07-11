@@ -1594,6 +1594,31 @@ describe("Along Working Thread repo-contained plugin package", () => {
     }
   });
 
+  it("uses scoped plan authorization for listed local task commits without weakening approval boundaries", async () => {
+    const [canonicalSkill, canonicalReference, packagedSkill, packagedReference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/skills/navi/references/working-thread-v1.md"),
+    ]);
+
+    for (const contract of [canonicalSkill, canonicalReference, packagedSkill, packagedReference]) {
+      expect(contract).toContain("approved bounded implementation or worktree plan");
+      expect(contract).toContain("explicitly planned local task commits");
+      expect(contract).toContain("Do not request separate approval for each such commit");
+      expect(contract).toContain("unknown staged content");
+      expect(contract).toContain("history rewriting");
+      expect(contract).toContain("merge, push, tag, release");
+      expect(contract).not.toContain("Stop for user approval before file writes outside the approved mode, commits, pushes");
+      expect(contract).toContain("unplanned commit");
+      expect(contract).toContain("user request not to commit");
+      expect(contract).toContain("project-owned instructions outside the Navi managed block");
+      expect(contract).toContain("cross-project");
+      expect(contract).toContain("scope expansion");
+      expect(contract).toContain("known-risk acceptance");
+    }
+  });
+
   it("documents restrained positioning, validation, and version boundaries", async () => {
     const readme = await readRepoText("plugins/navi/README.md");
     const version = await readRepoText("plugins/navi/VERSION.md");

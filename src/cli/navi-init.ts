@@ -126,6 +126,13 @@ class InitArgsError extends Error {
   }
 }
 
+class NaviManagedBlockError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NaviManagedBlockError";
+  }
+}
+
 export function resolveTargetPath(targetDir: string, relativePath: string): string {
   const resolvedTarget = path.resolve(targetDir);
 
@@ -322,25 +329,76 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
     };
   }
 
-  if (existing.includes(NAVI_AGENTS_BLOCK_START)) {
+  const managedBlock = findNaviManagedBlock(existing);
+
+  if (managedBlock === undefined) {
+    const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+    return {
+      kind: "modify",
+      relativePath: AGENTS_RELATIVE_PATH,
+      absolutePath: agentsPath,
+      summary: "Append the project-local Navi trigger source while preserving existing instructions.",
+      content: `${existing}${separator}${block}\n`,
+      previousContent: existing,
+    };
+  }
+
+  if (managedBlock.content === block) {
     return {
       kind: "skip",
       relativePath: AGENTS_RELATIVE_PATH,
       absolutePath: agentsPath,
-      summary: "A Navi-managed trigger block already exists.",
+      summary: "The current Navi-managed trigger block already exists.",
     };
   }
 
-  const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+  if (managedBlock.content !== KNOWN_NAVI_AGENTS_BLOCKS[0]) {
+    throw new NaviManagedBlockError(
+      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
+    );
+  }
+
   return {
     kind: "modify",
     relativePath: AGENTS_RELATIVE_PATH,
     absolutePath: agentsPath,
-    summary: "Append the project-local Navi trigger source while preserving existing instructions.",
-    content: `${existing}${separator}${block}\n`,
+    summary: "Upgrade the exact deployed Navi-managed trigger block while preserving project-owned instructions.",
+    content: `${existing.slice(0, managedBlock.start)}${block}${existing.slice(managedBlock.end)}`,
     previousContent: existing,
   };
 }
+
+function findNaviManagedBlock(existing: string): { start: number; end: number; content: string } | undefined {
+  const starts = countOccurrences(existing, NAVI_AGENTS_BLOCK_START);
+  const ends = countOccurrences(existing, NAVI_AGENTS_BLOCK_END);
+
+  if (starts === 0 && ends === 0) {
+    return undefined;
+  }
+
+  if (starts !== 1 || ends !== 1) {
+    throw new NaviManagedBlockError(
+      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
+    );
+  }
+
+  const start = existing.indexOf(NAVI_AGENTS_BLOCK_START);
+  const markerEnd = existing.indexOf(NAVI_AGENTS_BLOCK_END, start);
+  if (markerEnd === -1) {
+    throw new NaviManagedBlockError(
+      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
+    );
+  }
+
+  const end = markerEnd + NAVI_AGENTS_BLOCK_END.length;
+  return { start, end, content: existing.slice(start, end) };
+}
+
+function countOccurrences(text: string, needle: string): number {
+  return text.split(needle).length - 1;
+}
+
+const SCOPED_COMMIT_AUTHORIZATION = "An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits for its worktree parent and bounded subagents. Do not request separate approval for each such commit; report the commit when the task closes. This does not authorize a commit with unknown staged content, history rewriting, merge, push, tag, release, a user request not to commit, project-owned instructions outside the Navi managed block, cross-project changes, scope expansion, or known-risk acceptance.";
 
 async function planProjectMapAction(targetDir: string, mapPath: string): Promise<InitAction> {
   const existingMaps = await listExistingProjectMaps(targetDir);
@@ -486,7 +544,7 @@ async function writeModifiedFile(writePath: string, action: ModifyInitAction): P
   await fs.writeFile(writePath, action.content);
 }
 
-function renderAgentsBlock(): string {
+export function renderAgentsBlock(includeScopedCommitAuthorization = true): string {
   return `${NAVI_AGENTS_BLOCK_START}
 ## Navi Progress Map Rules
 
@@ -517,7 +575,7 @@ Recommend stopping when continued validation will not change the current decisio
 
 Alpha.5 pause semantics: the goal is to continue inside a bounded, already-approved loop and stop at decisions the user can actually judge. When the next action, boundary, and acceptance point are already clear, continue to the already-defined acceptance point instead of stopping at each local sub-step. Do not stop just because a local sub-step finished, such as a doc write, read-only status check, or \`git diff --check\` passing.
 
-Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases, cross-project edits, mode changes, scope expansion, validation-budget escalation, or known-risk acceptance. When stopping, explain the pause reason in one sentence and say what continuing would do.
+Stop for user approval before file writes outside the approved mode, ${includeScopedCommitAuthorization ? "unplanned commits" : "commits"}, pushes, tags, releases, cross-project edits, mode changes, scope expansion, validation-budget escalation, or known-risk acceptance.${includeScopedCommitAuthorization ? ` ${SCOPED_COMMIT_AUTHORIZATION}` : ""} When stopping, explain the pause reason in one sentence and say what continuing would do.
 
 Use a light continuation contract when a multi-step loop is clear: continue to the next stated acceptance point, stop before the next approval gate, and do not expand scope. Do not turn this into a fixed block for every answer.
 
@@ -601,6 +659,8 @@ If the user gives a clear execution command with the next action, boundary, and 
 Read-only checks of task files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks. For these tasks, report the requested facts directly; do not output a Progress Map or Rhythm Map unless the user also asks what those facts mean for overall progress, next steps, confusion, or plan reliability.
 ${NAVI_AGENTS_BLOCK_END}`;
 }
+
+const KNOWN_NAVI_AGENTS_BLOCKS = [renderAgentsBlock(false), renderAgentsBlock()] as const;
 
 function renderProjectMap(targetDir: string): string {
   const projectName = path.basename(targetDir);
