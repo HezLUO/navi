@@ -14,8 +14,7 @@
   },
   "homepage": "https://github.com/HezLUO/navi#readme",
   "bin": {
-    "navi": "src/cli/navi.ts",
-    "along": "src/cli/index.ts"
+    "navi": "src/cli/navi-bin.mjs"
   },
   "scripts": {
     "dev": "tsx src/server/index.ts",

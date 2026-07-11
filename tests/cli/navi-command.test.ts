@@ -1,17 +1,43 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { NAVI_USAGE, runNaviCli } from "../../src/cli/navi";
 
 describe("Navi command dispatcher", () => {
-  it("runs init when the TypeScript CLI entrypoint is invoked directly by Node", () => {
-    const result = spawnSync(process.execPath, ["src/cli/navi.ts", "init", "--target", process.cwd()], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-    });
+  it("runs every command through the JavaScript wrapper from an unrelated directory", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "navi-wrapper-"));
+    const project = path.join(root, "project");
+    const codexHome = path.join(root, "codex-home");
+    const wrapper = path.resolve(process.cwd(), "src/cli/navi-bin.mjs");
+    mkdirSync(project);
+    mkdirSync(codexHome);
 
-    expect(result.status).toBe(0);
-    expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Navi init preview");
+    try {
+      const execute = (args: string[]) => spawnSync(process.execPath, [wrapper, ...args], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env, CODEX_HOME: codexHome },
+      });
+      const init = execute(["init", "--target", project]);
+      const setup = execute(["setup"]);
+      const doctor = execute(["doctor"]);
+
+      expect(init.status, init.stderr).toBe(0);
+      expect(init.stdout).toContain("Navi init preview");
+      expect(setup.status, setup.stderr).toBe(0);
+      expect(setup.stdout).toContain("Navi setup configures global discovery");
+      expect(doctor.status).toBe(1);
+      expect(doctor.stdout).toContain("[fail] plugin:");
+
+      for (const result of [init, setup, doctor]) {
+        expect(result.stderr).not.toContain("ERR_MODULE_NOT_FOUND");
+        expect(result.stderr).not.toContain("along start");
+      }
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
   });
 
   it("dispatches init without exposing the Along runtime", async () => {

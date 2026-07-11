@@ -1,6 +1,3 @@
-#!/usr/bin/env node
-import { pathToFileURL } from "node:url";
-
 async function runNaviInit(args: string[]): Promise<number> {
   const { runNaviInitCli } = await import(new URL("./navi-init.ts", import.meta.url).href) as typeof import("./navi-init");
   return runNaviInitCli(args);
@@ -51,11 +48,4 @@ export async function runNaviCli(args: string[], io: NaviCliIo = DEFAULT_IO): Pr
 
   io.stderr(`${NAVI_USAGE}\n`);
   return 1;
-}
-
-const isDirectExecution =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (isDirectExecution) {
-  process.exit(await runNaviCli(process.argv.slice(2)));
 }
