@@ -13,13 +13,22 @@ import {
 } from "../../src/cli/navi-global";
 
 const tempRoots: string[] = [];
-const enabledPlugin = {
-  installed: true,
-  enabled: true,
-  version: "0.1.0",
-  sourcePath: "/tmp/personal/along-working-thread",
-  raw: "along-working-thread@personal  installed, enabled  0.1.0  /tmp/personal/along-working-thread",
+const enabledInstallation = {
+  kind: "current" as const,
+  current: {
+    selector: "navi@navi-source",
+    pluginName: "navi",
+    marketplaceName: "navi-source",
+    installed: true,
+    enabled: true,
+    version: "0.1.0",
+    sourcePath: "/tmp/source/plugins/navi",
+    raw: "navi@navi-source  Installed, Enabled  0.1.0  /tmp/source/plugins/navi",
+  },
+  raw: "navi@navi-source  Installed, Enabled  0.1.0  /tmp/source/plugins/navi",
 };
+
+const missingInstallation = { kind: "missing" as const, raw: "" };
 
 async function makeTempCodexHome(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-global-"));
@@ -101,7 +110,7 @@ describe("Navi global setup", () => {
     const codexHome = await makeTempCodexHome();
     const plan = await buildGlobalSetupPlan(
       { codexHome, write: false, remove: false },
-      { inspectPlugin: async () => enabledPlugin },
+      { inspectInstallation: async () => enabledInstallation },
     );
 
     await applyGlobalSetupPlan(plan);
@@ -114,16 +123,35 @@ describe("Navi global setup", () => {
     const codexHome = await makeTempCodexHome();
     const plan = await buildGlobalSetupPlan(
       { codexHome, write: true, remove: false },
-      { inspectPlugin: async () => ({ installed: false, enabled: false, raw: "" }) },
+      { inspectInstallation: async () => missingInstallation },
     );
 
-    await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/plugin.*installed and enabled/i);
+    await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/installed and enabled/i);
+    await expect(fs.access(path.join(codexHome, "AGENTS.md"))).rejects.toThrow();
+  });
+
+  it.each([
+    ["legacy-only", { kind: "legacy", legacy: { selector: "along-working-thread@personal", pluginName: "along-working-thread", installed: true, enabled: true, raw: "legacy" }, raw: "legacy" }, /migrate the legacy plugin/i],
+    ["dual installation", { kind: "conflict", current: enabledInstallation.current, legacy: { selector: "along-working-thread@personal", pluginName: "along-working-thread", installed: true, enabled: true, raw: "legacy" }, raw: "both" }, /both Navi and the legacy plugin/i],
+    ["disabled current", { kind: "missing", current: { ...enabledInstallation.current, enabled: false }, raw: "disabled" }, /enable the current plugin/i],
+    ["uninspectable list", { kind: "uninspectable", raw: "failure" }, /could not inspect codex plugins/i],
+  ] as const)("refuses %s installation preflight with repair text", async (_name, installation, repair) => {
+    const codexHome = await makeTempCodexHome();
+    const output: string[] = [];
+
+    const code = await runNaviSetupCli(["--write"], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
+      codexHome,
+      inspectInstallation: async () => installation,
+    });
+
+    expect(code).toBe(1);
+    expect(output.join("")).toMatch(repair);
     await expect(fs.access(path.join(codexHome, "AGENTS.md"))).rejects.toThrow();
   });
 
   it("creates global instructions on --write", async () => {
     const codexHome = await makeTempCodexHome();
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await applyGlobalSetupPlan(plan);
 
@@ -135,7 +163,7 @@ describe("Navi global setup", () => {
     const agentsPath = path.join(codexHome, "AGENTS.md");
     const existing = `${renderGlobalBootstrapBlock()}\n`;
     await fs.writeFile(agentsPath, existing);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await applyGlobalSetupPlan(plan);
 
@@ -147,7 +175,7 @@ describe("Navi global setup", () => {
     const agentsPath = path.join(codexHome, "AGENTS.md");
     const existing = `before\n${renderGlobalBootstrapBlock()}after`;
     await fs.writeFile(agentsPath, existing);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await applyGlobalSetupPlan(plan);
 
@@ -158,7 +186,7 @@ describe("Navi global setup", () => {
     const codexHome = await makeTempCodexHome();
     const agentsPath = path.join(codexHome, "AGENTS.md");
     await fs.writeFile(agentsPath, `before${renderGlobalBootstrapBlock()}after`);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true, remove: true }, { inspectPlugin: async () => ({ installed: false, enabled: false, raw: "" }) });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true, remove: true }, { inspectInstallation: async () => missingInstallation });
 
     await applyGlobalSetupPlan(plan);
 
@@ -173,7 +201,7 @@ describe("Navi global setup", () => {
     const codexHome = await makeTempCodexHome();
     const agentsPath = path.join(codexHome, "AGENTS.md");
     await fs.writeFile(agentsPath, existing);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/unsafe|modified|conflict/i);
     await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe(existing);
@@ -185,7 +213,7 @@ describe("Navi global setup", () => {
     const agentsPath = path.join(codexHome, "AGENTS.md");
     await fs.writeFile(outside, "outside");
     await fs.symlink(outside, agentsPath);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/symlink/i);
     await expect(fs.readFile(outside, "utf8")).resolves.toBe("outside");
@@ -197,7 +225,7 @@ describe("Navi global setup", () => {
     const codexHome = path.join(root, "linked");
     await fs.mkdir(physical);
     await fs.symlink(physical, codexHome);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/symlink/i);
   });
@@ -206,7 +234,7 @@ describe("Navi global setup", () => {
     const codexHome = await makeTempCodexHome();
     const agentsPath = path.join(codexHome, "AGENTS.md");
     await fs.writeFile(agentsPath, "before");
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
     await fs.writeFile(agentsPath, "changed");
 
     await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/changed/i);
@@ -215,7 +243,7 @@ describe("Navi global setup", () => {
 
   it("cleans up the temporary file when rename fails", async () => {
     const codexHome = await makeTempCodexHome();
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectPlugin: async () => enabledPlugin });
+    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
 
     await expect(applyGlobalSetupPlan(plan, {
       rename: async () => { throw new Error("rename failed"); },
@@ -230,7 +258,7 @@ describe("Navi global setup", () => {
 
     const code = await runNaviSetupCli([], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
       codexHome,
-      inspectPlugin: async () => enabledPlugin,
+      inspectInstallation: async () => enabledInstallation,
     });
 
     expect(code).toBe(0);
@@ -245,7 +273,7 @@ describe("Navi global setup", () => {
 
     const code = await runNaviSetupCli(["--remove"], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
       codexHome,
-      inspectPlugin: async () => enabledPlugin,
+      inspectInstallation: async () => enabledInstallation,
     });
 
     expect(code).toBe(0);

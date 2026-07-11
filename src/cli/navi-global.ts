@@ -1,8 +1,14 @@
-import { execFile as execFileCallback } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { promisify } from "node:util";
+import {
+  defaultRunCommand,
+  inspectNaviInstallation,
+  type NaviInstallationStatus,
+  type RunCommand,
+} from "./navi-installation";
+
+export type { RunCommand } from "./navi-installation";
 
 export const NAVI_GLOBAL_BLOCK_START = "<!-- NAVI:GLOBAL-BOOTSTRAP:START -->";
 export const NAVI_GLOBAL_BLOCK_END = "<!-- NAVI:GLOBAL-BOOTSTRAP:END -->";
@@ -17,6 +23,7 @@ export interface GlobalAgentsAction {
   previousContent?: string;
 }
 
+/** @deprecated Use NaviInstallationStatus and inspectNaviInstallation instead. */
 export interface NaviPluginStatus {
   installed: boolean;
   enabled: boolean;
@@ -24,11 +31,6 @@ export interface NaviPluginStatus {
   sourcePath?: string;
   raw: string;
 }
-
-export type RunCommand = (
-  command: string,
-  args: string[],
-) => Promise<{ code: number; stdout: string; stderr: string }>;
 
 export interface GlobalSetupOptions {
   codexHome?: string;
@@ -41,7 +43,7 @@ export interface GlobalSetupPlan {
   operation: GlobalSetupOperation;
   codexHome: string;
   agentsPath: string;
-  plugin: NaviPluginStatus;
+  plugin: NaviInstallationStatus;
   action: GlobalAgentsAction;
 }
 
@@ -52,55 +54,56 @@ export interface NaviSetupIo {
 
 export interface NaviSetupDependencies {
   codexHome?: string;
-  inspectPlugin?: () => Promise<NaviPluginStatus>;
+  inspectInstallation?: () => Promise<NaviInstallationStatus>;
   runCommand?: RunCommand;
   rename?: (oldPath: string, newPath: string) => Promise<void>;
 }
 
-const execFile = promisify(execFileCallback);
-
-const unavailablePlugin = (raw: string): NaviPluginStatus => ({
-  installed: false,
-  enabled: false,
-  raw,
-});
-
-const defaultRunCommand: RunCommand = async (command, args) => {
-  try {
-    const { stdout, stderr } = await execFile(command, args, { encoding: "utf8" });
-    return { code: 0, stdout, stderr };
-  } catch (error) {
-    const failed = error as { code?: number; stdout?: string; stderr?: string };
-    return {
-      code: typeof failed.code === "number" ? failed.code : 1,
-      stdout: failed.stdout ?? "",
-      stderr: failed.stderr ?? "",
-    };
-  }
-};
-
+/** @deprecated Compatibility adapter for doctor callers pending its Task 7 migration. */
 export async function inspectInstalledNaviPlugin(
   runCommand: RunCommand = defaultRunCommand,
 ): Promise<NaviPluginStatus> {
-  const result = await runCommand("codex", ["plugin", "list"]);
-  if (result.code !== 0) return unavailablePlugin(result.stderr || result.stdout);
-
-  const row = result.stdout.split(/\r?\n/).find((line) =>
-    line.trimStart().startsWith("along-working-thread@"),
-  );
-  if (!row) return unavailablePlugin(result.stderr);
-
-  const columns = row.trim().split(/\s{2,}/);
-  const state = columns[1] ?? "";
-  const version = columns.find((column) => /^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(column));
-  const sourcePath = columns.find((column) => column.startsWith("/") || column.startsWith("~"));
+  const status = await inspectNaviInstallation(runCommand);
+  const row = status.current;
   return {
-    installed: /installed/i.test(state),
-    enabled: /enabled/i.test(state),
-    ...(version ? { version } : {}),
-    ...(sourcePath ? { sourcePath } : {}),
-    raw: row,
+    installed: row?.installed ?? false,
+    enabled: row?.enabled ?? false,
+    ...(row?.version ? { version: row.version } : {}),
+    ...(row?.sourcePath ? { sourcePath: row.sourcePath } : {}),
+    raw: status.raw,
   };
+}
+
+function pluginAvailability(status: NaviInstallationStatus): string {
+  switch (status.kind) {
+    case "current":
+      return "installed and enabled";
+    case "legacy":
+      return `legacy-only (${status.legacy?.selector ?? "along-working-thread"})`;
+    case "conflict":
+      return "conflicted by both Navi and legacy installations";
+    case "uninspectable":
+      return "uninspectable";
+    case "missing":
+      return status.current ? "installed but disabled" : "missing";
+  }
+}
+
+function pluginRepairText(status: NaviInstallationStatus): string {
+  switch (status.kind) {
+    case "legacy":
+      return `Navi setup requires navi@navi-source; migrate the legacy plugin ${status.legacy?.selector ?? "along-working-thread"} first.`;
+    case "conflict":
+      return "Navi setup is blocked because both Navi and the legacy plugin are installed; remove the legacy plugin first.";
+    case "uninspectable":
+      return "Navi setup could not inspect codex plugins; repair codex plugin list and retry.";
+    case "missing":
+      return status.current
+        ? "Navi setup requires navi@navi-source to be installed and enabled; enable the current plugin first."
+        : "Navi setup requires navi@navi-source to be installed and enabled.";
+    case "current":
+      return "Navi setup requires navi@navi-source to be installed and enabled.";
+  }
 }
 
 export function renderGlobalBootstrapBlock(): string {
@@ -221,9 +224,9 @@ export async function buildGlobalSetupPlan(
   const agentsPath = path.join(codexHome, "AGENTS.md");
   const [existing, plugin] = await Promise.all([
     readAgentsContent(agentsPath),
-    dependencies.inspectPlugin
-      ? dependencies.inspectPlugin()
-      : inspectInstalledNaviPlugin(dependencies.runCommand),
+    dependencies.inspectInstallation
+      ? dependencies.inspectInstallation()
+      : inspectNaviInstallation(dependencies.runCommand),
   ]);
   const operation: GlobalSetupOperation = options.remove ? "remove" : "install";
   return {
@@ -272,8 +275,8 @@ export async function applyGlobalSetupPlan(
 ): Promise<void> {
   if (plan.mode === "dry-run" || plan.action.kind === "skip") return;
   if (plan.action.kind === "conflict") throw new Error(plan.action.summary);
-  if (plan.operation === "install" && (!plan.plugin.installed || !plan.plugin.enabled)) {
-    throw new Error("Navi setup requires the along-working-thread plugin to be installed and enabled.");
+  if (plan.operation === "install" && (plan.plugin.kind !== "current" || !plan.plugin.current?.installed || !plan.plugin.current.enabled)) {
+    throw new Error(pluginRepairText(plan.plugin));
   }
 
   await assertUnchanged(plan.agentsPath, plan.action.previousContent);
@@ -316,11 +319,11 @@ export async function applyGlobalSetupPlan(
 }
 
 export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
-  const availability = plan.plugin.installed && plan.plugin.enabled ? "installed and enabled" : "unavailable";
+  const availability = pluginAvailability(plan.plugin);
   const apply = plan.operation === "remove" ? "navi setup --remove --write" : "navi setup --write";
   return [
     `Navi setup configures global discovery at ${plan.agentsPath}; it does not initialize a project.`,
-    `Plugin preflight: along-working-thread is ${availability}.`,
+    `Plugin preflight: Navi is ${availability}.`,
     `Planned action: ${plan.action.kind} — ${plan.action.summary}`,
     "No files were written.",
     `Apply with: ${apply}`,
