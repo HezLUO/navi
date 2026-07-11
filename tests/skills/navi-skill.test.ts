@@ -1246,9 +1246,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.",
       "Along is the parent/lab context and broader long-term product family.",
       "should be understandable without knowing Along",
-      "Some internal ids, paths, and package directories still use `along-working-thread` for alpha compatibility.",
-      "legacy/internal naming",
-      "not the customer-facing product name",
+      "Current installation, discovery, and project triggers use Navi identifiers only.",
+      "legacy installation identifier",
+      "explicit doctor-guided migration",
       "MCP, runtime, local app, background presence",
       "older Along companion ideas",
     ]) {
@@ -1266,7 +1266,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     const promiseIndex = readme.indexOf("Navi helps non-expert users understand, supervise, and steer expert agents.");
     const alongIndex = readme.indexOf("Along is the parent/lab context");
     const compatibilityIndex = readme.indexOf(
-      "Some internal ids, paths, and package directories still use `along-working-thread`",
+      "Current installation, discovery, and project triggers use Navi identifiers only.",
     );
 
     expect(promiseIndex).toBeGreaterThanOrEqual(0);
@@ -1292,9 +1292,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "Navi 会说明项目现在在哪里、还缺什么、是否应该继续、什么时候该停、验证做到什么程度够，以及并行工作应该等待还是继续。",
       "Along 是 parent/lab context 和更长期的产品家族。",
       "不应该要求读者先理解 Along 才能理解 Navi",
-      "一些内部 id、路径和 package directory 仍会因为 alpha compatibility 使用 `along-working-thread`。",
-      "legacy/internal naming",
-      "不是面向用户的产品名",
+      "当前 installation、discovery 和 project triggers 只使用 Navi identifiers。",
+      "legacy installation identifier",
+      "doctor-guided migration",
     ]) {
       expect(readme).toContain(expected);
     }
@@ -1331,7 +1331,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
     expect(englishReadme).toContain("Setup once -> approve project init once -> use natural language");
     for (const expected of [
-      "explicit plugin installation",
+      "explicit",
       "does not initialize a target project",
       "does not reinstall the plugin",
       "not a normal daily step",
@@ -1343,7 +1343,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     }
     expect(chineseReadme).toContain("全局 setup 一次 -> 每个项目批准 init 一次 -> 之后使用自然语言");
     for (const expected of [
-      "显式 plugin 安装",
+      "用户明确执行的 source-alpha 操作",
       "不会初始化目标项目",
       "不会重新安装 plugin",
       "不是日常步骤",
@@ -1357,6 +1357,53 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(initDoc).toContain("may run `navi init --write` only after explicit user approval");
     expect(debt).toContain("Source-alpha bootstrap is implemented");
     expect(debt).toContain("Public distribution remains open");
+  });
+
+  it("documents the Navi-only source installation and explicit legacy migration path", async () => {
+    const [englishReadme, chineseReadme, packageReadme, initDoc, debt] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+      readRepoText("docs/along/project-maps/navi-project-init.md"),
+      readRepoText("docs/along/navi-product-debt.md"),
+    ]);
+
+    for (const readme of [englishReadme, chineseReadme, packageReadme]) {
+      for (const expected of [
+        'codex plugin marketplace add "$PWD"',
+        "codex plugin add navi@navi-source",
+        "npm link",
+        "navi doctor",
+        "navi setup",
+        "navi setup --write",
+      ]) {
+        expect(readme).toContain(expected);
+      }
+    }
+
+    for (const expected of [
+      "navi setup --remove",
+      "navi setup --remove --write",
+      "codex plugin remove navi@navi-source",
+      "codex plugin marketplace remove navi-source",
+      "npm unlink -g navi",
+      "global Codex/plugin/npm state",
+    ]) {
+      expect(englishReadme).toContain(expected);
+      expect(packageReadme).toContain(expected);
+    }
+
+    expect(chineseReadme).toContain("全局 Codex/plugin/npm 状态");
+    expect(initDoc).toContain("legacy-only");
+    expect(initDoc).toContain("dual-install");
+    expect(initDoc).toContain("navi doctor");
+    expect(debt).toContain("navi@navi-source");
+    expect(debt).toContain("legacy migration");
+
+    for (const primaryInstallDoc of [englishReadme, chineseReadme, packageReadme]) {
+      expect(primaryInstallDoc).not.toContain("codex plugin add along-working-thread");
+    }
+    expect(packageReadme).not.toContain("Navi is the current V1 product surface of Along.");
   });
 
   it("documents shipped navi init scope in debt and roadmap docs", async () => {
@@ -1625,7 +1672,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
 
     expect(readme).toContain("# Navi");
     expect(readme).toContain("Navi helps non-expert users understand, supervise, and steer expert agents.");
-    expect(readme).toContain("The internal legacy package id remains `along-working-thread`.");
+    expect(readme).toContain("`along-working-thread` is a legacy installation identifier.");
     expect(readme).toContain("## What it is");
     expect(readme).toContain("## What it is not");
     expect(readme).toContain("Codex plugin source package");

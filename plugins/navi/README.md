@@ -2,9 +2,9 @@
 
 Navi helps non-expert users understand, supervise, and steer expert agents.
 
-Navi is the current V1 product surface of Along. This Codex plugin source package centers Navi's V1 alpha behavior on Progress/Rhythm Maps and Challenge Layer behavior while helping active Codex sessions carry project judgment with user confirmation. Along remains the broader long-term product vision.
+Navi is an independent source-alpha product for supervising expert agents. This Codex plugin source package provides Navi's current Progress/Rhythm Maps and Challenge Layer behavior while helping active Codex sessions carry project judgment with user confirmation. Along is its origin and broader product-family context, not a prerequisite for installing or using Navi.
 
-The internal legacy package id remains `along-working-thread`. That id is kept for compatibility with the existing skill path, package layout, local installs, and tests.
+`along-working-thread` is a legacy installation identifier. It is retained only for explicit doctor-guided migration; it is not a current package path, selector, skill id, or new-user installation path.
 
 ## What it is
 
@@ -15,8 +15,6 @@ The internal legacy package id remains `along-working-thread`. That id is kept f
 - A way to preserve Working Thread continuity, drift awareness, and wrap-up discipline.
 
 ## Navi
-
-Navi is Along's current V1 product surface for non-expert users supervising expert agents.
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
 
@@ -111,13 +109,13 @@ It packages the current validated skill-first behavior. It does not add new runt
 ## Package layout
 
 ```text
-plugins/along-working-thread/
+plugins/navi/
   .codex-plugin/
     plugin.json
   README.md
   VERSION.md
   skills/
-    along-working-thread/
+    navi/
       SKILL.md
       agents/
         openai.yaml
@@ -128,24 +126,20 @@ plugins/along-working-thread/
 The canonical source skill remains:
 
 ```text
-.agents/skills/along-working-thread
+.agents/skills/navi
 ```
 
 The package skill is a distribution copy and must stay in exact sync with the canonical source skill.
 
 ## Use from repo
 
-This package is intended for developers who already understand Codex plugins or skills. Source alpha requires explicit plugin installation from this package before global setup; `navi setup` does not install the plugin for you.
-
-For local experimentation, use the package directory as the plugin source:
-
-```text
-plugins/along-working-thread
-```
-
-After explicit plugin installation, link the source CLI and complete the global first-use flow:
+This package is intended for developers who already understand Codex plugins or skills. Source alpha requires an explicit, user-run installation; `navi setup` does not install the plugin for you. Verify the source before adding its local marketplace. From the repository root:
 
 ```bash
+npm install
+npm run verify:plugin-package
+codex plugin marketplace add "$PWD"
+codex plugin add navi@navi-source
 npm link
 navi doctor
 navi setup
@@ -154,9 +148,23 @@ navi init
 navi init --write
 ```
 
-`navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. `navi setup` configures global discovery and does not initialize a target project. `navi init` previews project-local Navi files for one target project; an agent may run `navi init --write` only after explicit user approval. It does not reinstall the plugin.
+These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. `navi setup` configures global discovery and does not initialize a target project. `navi init` previews project-local Navi files for one target project; an agent may run `navi init --write` only after explicit user approval. It does not reinstall the plugin.
 
 The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `src/web` is not the Navi alpha UI.
+
+### Legacy migration and removal
+
+`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. For a legacy-only installation, add `navi@navi-source`, run doctor again, upgrade only an exact previewed project trigger with `navi init --write`, verify the target project, then explicitly remove the legacy selector shown by doctor. For a dual-install state, resolve the duplicate deliberately; do not assume a legacy marketplace selector.
+
+To remove this source-alpha setup yourself:
+
+```bash
+navi setup --remove
+navi setup --remove --write
+codex plugin remove navi@navi-source
+codex plugin marketplace remove navi-source
+npm unlink -g navi
+```
 
 ## Verify package
 
@@ -170,7 +178,7 @@ The verification checks:
 
 - existing Navi / Along Working Thread skill tests;
 - plugin manifest validity;
-- exact drift between `.agents/skills/along-working-thread` and `plugins/along-working-thread/skills/along-working-thread`.
+- exact drift between `.agents/skills/navi` and `plugins/navi/skills/navi`.
 
 ## Fresh-session validation checklist
 

@@ -11,6 +11,10 @@ navi init = one target project's reliable guidance
 
 `navi setup` does not initialize a target project. `navi init` does not reinstall the plugin. An agent may run `navi init --write` only after explicit user approval.
 
+Before project initialization, run `navi doctor` if source-alpha setup is uncertain. A `legacy-only` result means the current Navi plugin must be installed by the user before initialization; a `dual-install` result means the duplicate plugin state must be deliberately resolved. Doctor reports the actual legacy selector when available, but does not install, remove, or migrate global plugins automatically.
+
+The source-alpha installation and removal operations mutate global Codex/plugin/npm state. Keep them separate from this target-project flow: `navi init` only previews or writes the current project's managed trigger and map files.
+
 Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
 
 In product terms:

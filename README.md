@@ -18,21 +18,38 @@ This repository is the canonical open-source alpha home for Navi. Current main b
 
 This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. Public npm/marketplace/one-click installation remains out of scope.
 
-First complete the explicit plugin installation described in the [package README](./plugins/along-working-thread/README.md). Then, from this repository, run:
+Verify the checked-out source before installation, then run this sequence from the repository root:
 
 ```bash
 npm install
+npm run verify:plugin-package
+codex plugin marketplace add "$PWD"
+codex plugin add navi@navi-source
 npm link
 navi doctor
 navi setup
 navi setup --write
 ```
 
-`navi doctor` is troubleshooting, not a normal daily step. It checks the source-alpha prerequisites and points to the appropriate repair when something is missing.
+These are explicit user-run source-alpha operations. They mutate global Codex/plugin/npm state (including Codex configuration or cache and npm's global link state); `navi setup` does not install a plugin or run them for you. `navi doctor` is troubleshooting, not a normal daily step. It checks the source-alpha prerequisites and points to the appropriate repair when something is missing.
 
 Setup once -> approve project init once -> use natural language
 
 `navi setup` configures global discovery only: it does not initialize a target project. In each target project, preview the project-local guidance with `navi init`, then an agent may run `navi init --write` only after explicit user approval. `navi init` does not reinstall the plugin.
+
+### Legacy migration and removal
+
+If `navi doctor` reports a legacy-only installation or a dual-install conflict, do not remove or migrate a plugin automatically. Install the current Navi plugin first, use `navi init --write` only to upgrade an exact previewed project trigger, verify that project, then explicitly remove the legacy selector reported by `navi doctor`.
+
+To remove this source-alpha setup yourself:
+
+```bash
+navi setup --remove
+navi setup --remove --write
+codex plugin remove navi@navi-source
+codex plugin marketplace remove navi-source
+npm unlink -g navi
+```
 
 For more setup detail, follow:
 
@@ -92,10 +109,10 @@ Use Along to understand origin and future-family context. Use Navi to understand
 Current V1 uses skill/plugin behavior with project-local docs. The repo-contained Codex plugin source package lives at:
 
 ```text
-plugins/along-working-thread
+plugins/navi
 ```
 
-Some internal ids, paths, and package directories still use `along-working-thread` for alpha compatibility. Treat that as legacy/internal naming, not the customer-facing product name.
+Current installation, discovery, and project triggers use Navi identifiers only. `along-working-thread` is a legacy installation identifier: keep it only for explicit doctor-guided migration, not for a new installation.
 
 Navi V1 is docs-backed and turn-bound. It works while an active agent session is running; it does not watch files, send notifications, or act when Codex is closed.
 
@@ -157,11 +174,7 @@ npm test
 npm run typecheck
 ```
 
-For local Codex plugin experimentation, use this package source directory:
-
-```text
-plugins/along-working-thread
-```
+For local Codex plugin experimentation, use `plugins/navi` through the source marketplace commands above.
 
 This alpha includes a narrow project-local initializer:
 
@@ -180,7 +193,7 @@ The most useful alpha feedback is evidence from real or realistic target project
 - Did flowing projects use Rhythm Maps instead of misleading completion bars?
 - Did Challenge Layer behavior catch weak assumptions or self-certifying momentum without becoming constant critique?
 - Did narrow factual checks and clear execution requests stay quiet?
-- Did the `along-working-thread` compatibility name confuse installation or review?
+- Did `navi doctor` make a legacy-only or dual-install diagnostic understandable without changing global state automatically?
 
 ## Project-Local Setup
 

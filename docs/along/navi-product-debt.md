@@ -28,17 +28,17 @@ Recommended public plugin surface:
 ```text
 Display name: Navi
 Short description: Progress maps and decision guidance for non-expert users supervising expert agents.
-Internal or legacy id: along-working-thread
+Legacy migration identifier: along-working-thread
 ```
 
-Do not rename the internal skill id, package directory, MCP server name, or docs paths in a casual patch. Those names are already used by tests, package verification, and local installation. Treat a full rename as a compatibility migration.
+Current source-alpha identifiers are `navi`, `plugins/navi`, `.agents/skills/navi`, `navi-source`, and `navi@navi-source`. Keep `along-working-thread` only for legacy migration and historical records; do not teach it as a new-user installation selector.
 
 ## Debt Items
 
 ### 1. Public Naming Debt
 
-Status: open
-Priority: high before public release
+Status: source-alpha addressed; legacy migration remains a calibration concern
+Priority: high before broader distribution
 
 Problem:
 
@@ -51,8 +51,8 @@ Non-expert users and external adopters should not need to understand "Working Th
 Recommended fix:
 
 - Change user-facing display name and README title to Navi.
-- Keep `along-working-thread` as the internal/legacy id until a migration is intentionally planned.
-- Add a short compatibility note wherever the old name remains.
+- Keep `along-working-thread` only as a doctor-guided legacy migration identifier.
+- Keep current installation, discovery, generated triggers, package paths, and skill ids Navi-first.
 
 ### 2. Top-Level Product Narrative Debt
 
@@ -88,7 +88,7 @@ Fresh-session calibration showed that global skill auto-routing can be inconsist
 global skill + project-local trigger source + project-local Project Map
 ```
 
-Source-alpha bootstrap is implemented through explicit plugin installation, `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Public distribution remains open: npm publication, public marketplace, stable installer, PATH management, and one-click sync are still separate work.
+Source-alpha bootstrap is implemented through explicit user-run marketplace setup (`navi-source` and `navi@navi-source`), `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Legacy migration is explicit: doctor diagnoses legacy-only and dual-install states, while the user installs or removes global plugins. Public distribution remains open: npm publication, public marketplace, stable installer, PATH management, and one-click sync are still separate work.
 
 Why it matters:
 
