@@ -297,15 +297,15 @@ describe("Navi global setup", () => {
     await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe("changed");
   });
 
-  it("cleans up the temporary file when rename fails", async () => {
+  it("does not overwrite a target that appears after a create plan", async () => {
     const codexHome = await makeTempCodexHome();
     const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
+    const agentsPath = path.join(codexHome, "AGENTS.md");
+    await fs.writeFile(agentsPath, "concurrent content");
 
-    await expect(applyGlobalSetupPlan(plan, {
-      rename: async () => { throw new Error("rename failed"); },
-    })).rejects.toThrow("rename failed");
+    await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/changed/i);
 
-    await expect(fs.readdir(codexHome)).resolves.toEqual([]);
+    await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe("concurrent content");
   });
 
   it("renders setup as global discovery configuration, not project initialization", async () => {

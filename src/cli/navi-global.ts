@@ -12,6 +12,12 @@ import {
   type NaviInstallationStatus,
   type RunCommand,
 } from "./navi-installation";
+import {
+  applyAgentsTransaction,
+  inspectTransaction,
+  recoverTransaction,
+  type TransactionInspection,
+} from "./navi-transaction";
 
 export type { RunCommand } from "./navi-installation";
 
@@ -50,6 +56,7 @@ export interface GlobalSetupPlan {
   codexHome: string;
   agentsPath: string;
   plugin: NaviInstallationStatus;
+  transaction: TransactionInspection;
   action: GlobalAgentsAction;
 }
 
@@ -62,7 +69,6 @@ export interface NaviSetupDependencies {
   codexHome?: string;
   inspectInstallation?: () => Promise<NaviInstallationStatus>;
   runCommand?: RunCommand;
-  rename?: (oldPath: string, newPath: string) => Promise<void>;
 }
 
 /** @deprecated Compatibility adapter for doctor callers pending its Task 7 migration. */
@@ -223,11 +229,12 @@ export async function buildGlobalSetupPlan(
   const { canonicalPath: codexHome } = await resolveCanonicalCodexHome(requestedCodexHome);
   const agentsPath = confinedCodexPath(codexHome, "AGENTS.md");
   await assertUnlinkedArtifact(agentsPath);
-  const [existing, plugin] = await Promise.all([
+  const [existing, plugin, transaction] = await Promise.all([
     readAgentsContent(agentsPath),
     dependencies.inspectInstallation
       ? dependencies.inspectInstallation()
       : inspectNaviInstallation(dependencies.runCommand),
+    inspectTransaction(codexHome),
   ]);
   const operation: GlobalSetupOperation = options.remove ? "remove" : "install";
   return {
@@ -237,87 +244,38 @@ export async function buildGlobalSetupPlan(
     codexHome,
     agentsPath,
     plugin,
+    transaction,
     action: planGlobalAgentsContent(existing, operation),
   };
 }
 
-async function assertNoSymlink(filePath: string, rootPath = filePath): Promise<void> {
-  const resolved = path.resolve(filePath);
-  const root = path.resolve(rootPath);
-  const relative = path.relative(root, resolved);
-  if (relative.startsWith("..") || path.isAbsolute(relative)) throw new Error(`Invalid setup path: ${resolved}`);
-  const segments = relative.split(path.sep).filter(Boolean);
-  let current = root;
-  try {
-    if ((await fs.lstat(current)).isSymbolicLink()) throw new Error(`Refusing symlinked setup path: ${current}`);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
-  for (const segment of segments) {
-    current = path.join(current, segment);
-    try {
-      if ((await fs.lstat(current)).isSymbolicLink()) {
-        throw new Error(`Refusing symlinked setup path: ${current}`);
-      }
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
-      throw error;
-    }
-  }
-}
-
-async function assertUnchanged(agentsPath: string, expected: string | undefined): Promise<void> {
-  const current = await readAgentsContent(agentsPath);
-  if (current !== expected) throw new Error("Global AGENTS.md changed after setup was planned.");
-}
-
 export async function applyGlobalSetupPlan(
   plan: GlobalSetupPlan,
-  dependencies: Pick<NaviSetupDependencies, "rename"> = {},
-): Promise<void> {
-  if (plan.mode === "dry-run" || plan.action.kind === "skip") return;
+): Promise<"applied" | "recovered"> {
+  if (plan.mode === "dry-run" || plan.action.kind === "skip") return "applied";
   if (plan.action.kind === "conflict") throw new Error(plan.action.summary);
   if (plan.operation === "install" && (plan.plugin.kind !== "current" || !plan.plugin.current?.installed || !plan.plugin.current.enabled)) {
     throw new Error(pluginRepairText(plan.plugin));
   }
 
-  await assertUnchanged(plan.agentsPath, plan.action.previousContent);
-  await assertNoSymlink(plan.codexHome);
-  await assertUnlinkedArtifact(plan.agentsPath);
-  const parent = path.dirname(plan.agentsPath);
-  const parentStats = await fs.stat(parent);
-  if (!parentStats.isDirectory()) throw new Error(`CODEX_HOME is not a directory: ${parent}`);
-
-  const content = plan.action.content ?? "";
-  if (plan.action.kind === "remove" && content.length === 0) {
-    await assertUnchanged(plan.agentsPath, plan.action.previousContent);
-    await fs.unlink(plan.agentsPath);
-    return;
+  if (plan.transaction.kind === "recoverable-restore" || plan.transaction.kind === "recoverable-cleanup") {
+    await recoverTransaction(plan.codexHome, plan.transaction);
+    return "recovered";
   }
+  if (plan.transaction.kind !== "none") throw new Error(`Navi setup is blocked by transaction state: ${plan.transaction.kind}.`);
 
-  let tempPath: string | undefined;
-  let renamed = false;
-  try {
-    tempPath = path.join(parent, `.AGENTS.md.navi-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-    let mode = 0o600;
-    try {
-      mode = (await fs.stat(plan.agentsPath)).mode & 0o777;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-    const handle = await fs.open(tempPath, "wx", mode);
-    try {
-      await handle.writeFile(content, "utf8");
-      await handle.sync();
-    } finally {
-      await handle.close();
-    }
-    await assertUnchanged(plan.agentsPath, plan.action.previousContent);
-    await (dependencies.rename ?? fs.rename)(tempPath, plan.agentsPath);
-    renamed = true;
-  } finally {
-    if (tempPath && !renamed) await fs.rm(tempPath, { force: true });
-  }
+  const operation = plan.action.kind === "create"
+    ? "create"
+    : plan.action.kind === "remove" && (plan.action.content ?? "").length === 0
+      ? "remove"
+      : "modify";
+  await applyAgentsTransaction({
+    root: plan.codexHome,
+    operation,
+    expectedContent: plan.action.previousContent,
+    ...(operation === "remove" ? {} : { desiredContent: plan.action.content ?? "" }),
+  });
+  return "applied";
 }
 
 export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
@@ -332,6 +290,7 @@ export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
           `Canonical CODEX_HOME: ${plan.codexHome}`,
         ]),
     `Plugin preflight: Navi is ${availability}.`,
+    `Transaction state: ${plan.transaction.kind}.`,
     `Planned action: ${plan.action.kind} — ${plan.action.summary}`,
     "No files were written.",
     `Apply with: ${apply}`,
@@ -361,7 +320,11 @@ export async function runNaviSetupCli(
       io.stdout(`${renderGlobalSetupPlan(plan)}\n`);
       return 0;
     }
-    await applyGlobalSetupPlan(plan, dependencies);
+    const result = await applyGlobalSetupPlan(plan);
+    if (result === "recovered") {
+      io.stdout("Recovered the prior Navi setup transaction. Rerun the requested setup command to continue.\n");
+      return 0;
+    }
     io.stdout(`${plan.action.summary}\n`);
     if (remove) io.stdout("The plugin, CLI, and project-local files remain.\n");
     return 0;
