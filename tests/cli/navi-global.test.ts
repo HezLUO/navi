@@ -3,6 +3,11 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  assertUnlinkedArtifact,
+  confinedCodexPath,
+  resolveCanonicalCodexHome,
+} from "../../src/cli/navi-codex-home";
+import {
   applyGlobalSetupPlan,
   buildGlobalSetupPlan,
   NAVI_GLOBAL_BLOCK_END,
@@ -10,6 +15,7 @@ import {
   planGlobalAgentsContent,
   renderGlobalBootstrapBlock,
   runNaviSetupCli,
+  renderGlobalSetupPlan,
 } from "../../src/cli/navi-global";
 
 const tempRoots: string[] = [];
@@ -106,6 +112,69 @@ describe("Navi global bootstrap planning", () => {
 });
 
 describe("Navi global setup", () => {
+  it("canonicalizes an existing physical CODEX_HOME directory", async () => {
+    const codexHome = await makeTempCodexHome();
+
+    await expect(resolveCanonicalCodexHome(codexHome)).resolves.toEqual({
+      requestedPath: path.resolve(codexHome),
+      canonicalPath: await fs.realpath(codexHome),
+    });
+  });
+
+  it("uses the physical root when CODEX_HOME is a user-facing symlink", async () => {
+    const root = await makeTempCodexHome();
+    const physical = path.join(root, "physical");
+    const requested = path.join(root, "linked");
+    await fs.mkdir(physical);
+    await fs.symlink(physical, requested);
+
+    const plan = await buildGlobalSetupPlan(
+      { codexHome: requested },
+      { inspectInstallation: async () => enabledInstallation },
+    );
+
+    expect(plan.requestedCodexHome).toBe(path.resolve(requested));
+    expect(plan.codexHome).toBe(await fs.realpath(physical));
+    expect(plan.agentsPath).toBe(path.join(await fs.realpath(physical), "AGENTS.md"));
+    expect(renderGlobalSetupPlan(plan)).toContain(`Requested CODEX_HOME: ${path.resolve(requested)}`);
+    expect(renderGlobalSetupPlan(plan)).toContain(`Canonical CODEX_HOME: ${await fs.realpath(physical)}`);
+  });
+
+  it.each([
+    ["missing", async (root: string) => path.join(root, "missing")],
+    ["non-directory", async (root: string) => {
+      const file = path.join(root, "file");
+      await fs.writeFile(file, "not a directory");
+      return file;
+    }],
+  ])("rejects a %s CODEX_HOME", async (_name, makePath) => {
+    const root = await makeTempCodexHome();
+    await expect(makePath(root).then(resolveCanonicalCodexHome)).rejects.toThrow(/CODEX_HOME/i);
+  });
+
+  it("confines managed artifacts to basenames beneath the canonical root", async () => {
+    const codexHome = await makeTempCodexHome();
+
+    expect(confinedCodexPath(codexHome, "AGENTS.md")).toBe(path.join(codexHome, "AGENTS.md"));
+    expect(() => confinedCodexPath(codexHome, "../AGENTS.md")).toThrow(/confined|basename/i);
+    expect(() => confinedCodexPath(codexHome, path.join(codexHome, "AGENTS.md"))).toThrow(/confined|basename/i);
+  });
+
+  it("rejects symlinked managed artifacts while allowing missing or regular files", async () => {
+    const codexHome = await makeTempCodexHome();
+    const target = path.join(codexHome, "target");
+    const agents = path.join(codexHome, "AGENTS.md");
+    const transaction = path.join(codexHome, ".AGENTS.md.navi-transaction-test.json");
+    await fs.writeFile(target, "content");
+    await fs.symlink(target, agents);
+    await fs.symlink(target, transaction);
+
+    await expect(assertUnlinkedArtifact(path.join(codexHome, "missing"))).resolves.toBe("missing");
+    await expect(assertUnlinkedArtifact(target)).resolves.toBe("file");
+    await expect(assertUnlinkedArtifact(agents)).rejects.toThrow(/symlink/i);
+    await expect(assertUnlinkedArtifact(transaction)).rejects.toThrow(/symlink/i);
+  });
+
   it("keeps setup dry-run read-only", async () => {
     const codexHome = await makeTempCodexHome();
     const plan = await buildGlobalSetupPlan(
@@ -213,21 +282,8 @@ describe("Navi global setup", () => {
     const agentsPath = path.join(codexHome, "AGENTS.md");
     await fs.writeFile(outside, "outside");
     await fs.symlink(outside, agentsPath);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
-
-    await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/symlink/i);
+    await expect(buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation })).rejects.toThrow(/symlink/i);
     await expect(fs.readFile(outside, "utf8")).resolves.toBe("outside");
-  });
-
-  it("refuses a symlinked parent", async () => {
-    const root = await makeTempCodexHome();
-    const physical = path.join(root, "physical");
-    const codexHome = path.join(root, "linked");
-    await fs.mkdir(physical);
-    await fs.symlink(physical, codexHome);
-    const plan = await buildGlobalSetupPlan({ codexHome, write: true }, { inspectInstallation: async () => enabledInstallation });
-
-    await expect(applyGlobalSetupPlan(plan)).rejects.toThrow(/symlink/i);
   });
 
   it("refuses when the file changed between plan and apply", async () => {

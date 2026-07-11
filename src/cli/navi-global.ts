@@ -2,6 +2,11 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  assertUnlinkedArtifact,
+  confinedCodexPath,
+  resolveCanonicalCodexHome,
+} from "./navi-codex-home";
+import {
   defaultRunCommand,
   inspectNaviInstallation,
   type NaviInstallationStatus,
@@ -41,6 +46,7 @@ export interface GlobalSetupOptions {
 export interface GlobalSetupPlan {
   mode: "dry-run" | "write";
   operation: GlobalSetupOperation;
+  requestedCodexHome: string;
   codexHome: string;
   agentsPath: string;
   plugin: NaviInstallationStatus;
@@ -211,17 +217,12 @@ export async function buildGlobalSetupPlan(
   options: GlobalSetupOptions,
   dependencies: NaviSetupDependencies = {},
 ): Promise<GlobalSetupPlan> {
-  const codexHome = path.resolve(
+  const requestedCodexHome = path.resolve(
     options.codexHome ?? dependencies.codexHome ?? process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"),
   );
-  try {
-    const stats = await fs.stat(codexHome);
-    if (!stats.isDirectory()) throw new Error(`CODEX_HOME is not a directory: ${codexHome}`);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
-
-  const agentsPath = path.join(codexHome, "AGENTS.md");
+  const { canonicalPath: codexHome } = await resolveCanonicalCodexHome(requestedCodexHome);
+  const agentsPath = confinedCodexPath(codexHome, "AGENTS.md");
+  await assertUnlinkedArtifact(agentsPath);
   const [existing, plugin] = await Promise.all([
     readAgentsContent(agentsPath),
     dependencies.inspectInstallation
@@ -232,6 +233,7 @@ export async function buildGlobalSetupPlan(
   return {
     mode: options.write ? "write" : "dry-run",
     operation,
+    requestedCodexHome,
     codexHome,
     agentsPath,
     plugin,
@@ -281,7 +283,7 @@ export async function applyGlobalSetupPlan(
 
   await assertUnchanged(plan.agentsPath, plan.action.previousContent);
   await assertNoSymlink(plan.codexHome);
-  await assertNoSymlink(plan.agentsPath, plan.codexHome);
+  await assertUnlinkedArtifact(plan.agentsPath);
   const parent = path.dirname(plan.agentsPath);
   const parentStats = await fs.stat(parent);
   if (!parentStats.isDirectory()) throw new Error(`CODEX_HOME is not a directory: ${parent}`);
@@ -323,6 +325,12 @@ export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
   const apply = plan.operation === "remove" ? "navi setup --remove --write" : "navi setup --write";
   return [
     `Navi setup configures global discovery at ${plan.agentsPath}; it does not initialize a project.`,
+    ...(plan.requestedCodexHome === plan.codexHome
+      ? []
+      : [
+          `Requested CODEX_HOME: ${plan.requestedCodexHome}`,
+          `Canonical CODEX_HOME: ${plan.codexHome}`,
+        ]),
     `Plugin preflight: Navi is ${availability}.`,
     `Planned action: ${plan.action.kind} — ${plan.action.summary}`,
     "No files were written.",
