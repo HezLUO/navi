@@ -245,6 +245,38 @@ The upgrade is still dry-run first. It preserves all bytes outside the managed r
 
 This change must not infer project state, rewrite project maps, or edit arbitrary Along references.
 
+## Scoped Commit Authorization
+
+The previously generated Navi block incorrectly classifies every local commit as a fresh user-approval boundary. That rule conflicts with Navi's own continue-through and no-menu-inside-approved-boundary rules, and it conflicts with Subagent-Driven Development plans that explicitly use local task commits as reviewable checkpoints.
+
+An approved bounded implementation or worktree loop authorizes the local commits explicitly included in that plan when all of these conditions hold:
+
+- the commit contains only files inside the approved task scope;
+- it excludes user changes that existed before the loop;
+- it is a normal local checkpoint, not a history rewrite;
+- it does not merge into main, push, tag, release, or modify another project;
+- no new scope, risk, or specification conflict has appeared;
+- the user did not explicitly request changes without commits.
+
+The agent may report those commits, but must not pause for separate approval after every task. Approval propagates from the user-approved loop to its worktree parent and bounded subagents. The worktree stops after the planned tasks and targeted verification at the review/merge decision, not at every local commit.
+
+User approval remains required before:
+
+- a commit not covered by the approved loop;
+- staging unknown, pre-existing, or out-of-scope changes;
+- amend, rebase, squash, reset, force-push, or other history rewriting;
+- merging a worktree into main;
+- pushing, tagging, releasing, or crossing a project boundary;
+- scope expansion, mode escalation, or explicit known-risk acceptance.
+
+Project governance remains authoritative. A user-authored rule outside the Navi managed block may still require approval for every commit. Navi changes only its managed block and its canonical/package skill contract; it does not rewrite project-owned instructions.
+
+The current generated rule must use this semantic contract:
+
+```text
+An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits. Do not request separate approval for each such commit. Stop before merge, push, tag, release, history rewriting, cross-project changes, scope expansion, unknown staged content, or any commit not covered by the approved loop.
+```
+
 ## Product Boundary
 
 This remediation owns Navi's current alpha surface:
@@ -297,3 +329,4 @@ The branch is ready for another merge review when:
 7. Exact old project triggers can be upgraded with explicit approval; edited triggers remain untouched.
 8. Installing Navi exposes no `along` executable and no new-user `along-working-thread` selector.
 9. Targeted verification passes without touching real global or target-project state.
+10. Planned local task commits continue without repeated approval, while merge, push, release, history rewrite, unknown staged content, and project-owned governance remain protected.

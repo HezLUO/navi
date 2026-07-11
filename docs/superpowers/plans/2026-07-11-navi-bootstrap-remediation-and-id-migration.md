@@ -24,6 +24,9 @@
 - Tests use temporary roots and injected command results. Direct probes use temporary cwd and temporary CODEX_HOME only.
 - Run targeted tests, plugin verification, typecheck, and `git diff --check`. Do not run the full test suite or production build by default.
 - Each task ends in a focused commit. Stop after review-ready verification and report commit IDs; do not merge or push.
+- The user's approval of this bounded implementation plan authorizes every local task commit explicitly listed below. Do not request separate approval for those commits.
+- Stop before an unplanned commit, unknown or out-of-scope staged content, history rewriting, merge, push, tag, release, cross-project change, scope expansion, mode escalation, or known-risk acceptance.
+- A user-authored project rule outside a Navi managed block remains authoritative and is never rewritten by this plan.
 
 ---
 
@@ -533,17 +536,37 @@ git commit -m "fix: inspect navi doctor from authoritative roots"
 **Files:**
 - Modify: `src/cli/navi-init.ts`
 - Modify: `tests/cli/navi-init.test.ts`
+- Modify: `.agents/skills/navi/SKILL.md`
+- Modify: `.agents/skills/navi/references/working-thread-v1.md`
+- Modify: `plugins/navi/skills/navi/SKILL.md`
+- Modify: `plugins/navi/skills/navi/references/working-thread-v1.md`
+- Modify: `tests/skills/navi-skill.test.ts`
 
 **Interfaces:**
 - `renderAgentsBlock()` renders current Navi-only guidance.
 - A `KNOWN_NAVI_AGENTS_BLOCKS` collection contains the exact previously deployed alpha.13 block plus the current block.
 - Planning adds `conflict` only if the existing public action type is safely extended; otherwise it throws a typed planning error that the CLI renders nonzero without apply guidance.
+- The generated block and canonical/package skill contract use scoped commit authorization instead of treating every local commit as an independent approval gate.
 
 - [ ] **Step 1: Add exact old-block upgrade tests**
 
 Copy the deployed pre-migration generated block into a test fixture as an exact literal. Assert dry-run reports an update, preserves bytes before/after the markers, does not write, and `--write` replaces only the managed block with the Navi-only version.
 
 Add a one-character edited legacy block fixture. Assert nonzero refusal, unchanged bytes, and no `Apply with:` line. Add duplicate/incomplete marker fixtures with the same refusal.
+
+Add static contract assertions for the generated block and both skill copies:
+
+```ts
+expect(contract).toContain("approved bounded implementation or worktree plan");
+expect(contract).toContain("explicitly planned local task commits");
+expect(contract).toContain("Do not request separate approval for each such commit");
+expect(contract).toContain("unknown staged content");
+expect(contract).toContain("history rewriting");
+expect(contract).toContain("merge, push, tag, release");
+expect(contract).not.toContain("Stop for user approval before file writes outside the approved mode, commits, pushes");
+```
+
+Assert separately that the contract preserves explicit user control: an unplanned commit, a user request not to commit, project-owned instructions outside the Navi marker, merge, push, tag, release, history rewriting, cross-project changes, scope expansion, and known-risk acceptance remain approval boundaries.
 
 - [ ] **Step 2: Verify red state**
 
@@ -555,13 +578,18 @@ Expected: FAIL because current init does not model a real previous generated blo
 
 - [ ] **Step 3: Implement exact recognized upgrade**
 
-Extract the managed region by marker offsets. Upgrade only when it equals the exact old generated block. Keep all outside bytes unchanged. Render the current block with only Navi product/skill identifiers. Do not scan arbitrary project files or replace ordinary Along text.
+Extract the managed region by marker offsets. Upgrade only when it equals the exact old generated block. Keep all outside bytes unchanged. Render the current block with only Navi product/skill identifiers and the scoped commit authorization contract.
+
+Replace the absolute commit-approval sentence in the canonical skill and reference with the same semantics. Keep canonical and packaged copies byte-identical. Approval from a bounded implementation plan propagates to its worktree parent and bounded subagents for listed local task commits; those tasks report commits without stopping. Do not weaken merge, push, tag, release, history-rewrite, cross-project, scope, risk, or project-owned instruction gates.
+
+Do not scan arbitrary project files, replace ordinary Along text, modify `sub_ag_ski`, or alter Subagent-Driven Development itself.
 
 - [ ] **Step 4: Run focused tests and commit**
 
 ```bash
-npm test -- tests/cli/navi-init.test.ts
-git add src/cli/navi-init.ts tests/cli/navi-init.test.ts
+npm test -- tests/cli/navi-init.test.ts tests/skills/navi-skill.test.ts
+npm run verify:plugin-package
+git add src/cli/navi-init.ts tests/cli/navi-init.test.ts .agents/skills/navi plugins/navi/skills/navi tests/skills/navi-skill.test.ts
 git commit -m "fix: migrate legacy navi project triggers"
 ```
 
