@@ -1,10 +1,10 @@
-# Along Working Thread 0.1.0
+# Navi 0.1.0
 
 `0.1.0` is the current turn-bound self-initiation package version. It centers Navi's V1 alpha behavior on Progress/Rhythm Maps and Challenge Layer while preserving Working Thread continuity.
 
-`0.1.0-alpha.1` is the latest GitHub source-release label for this repo-contained package. The plugin manifest remains at `0.1.0` for compatibility with the existing package id, local installs, and tests.
+`0.1.0-alpha.3` is the latest GitHub source-release label for this repo-contained package. The plugin manifest remains at `0.1.0` for compatibility with the existing package id, local installs, and tests.
 
-This pass documents Navi as Along's current V1 product surface for non-expert progress and next-step questions. Progress/Rhythm Maps and Challenge Layer are the current V1 alpha mechanisms, not the whole long-term Along product. It is a documentation-only behavior update, not a runtime capability upgrade.
+This pass documents Navi as an independent product for non-expert supervision of expert agents. Progress/Rhythm Maps and Challenge Layer are the current V1 alpha mechanisms within Navi; Along is its origin, parent/lab context, and possible future-family context. It is a documentation-only behavior update, not a runtime capability upgrade.
 
 The alpha release is suitable for developers who want to inspect, fork, or install the Codex plugin source package manually. It is not an npm release, not a public Codex marketplace release, and not a broader product launch.
 

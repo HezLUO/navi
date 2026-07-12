@@ -999,7 +999,7 @@ For fresh sessions, these project-local records are often the correct source for
 
 ### Project-Local Navi Trigger Source
 
-Do not rely only on global skill auto-routing for Navi. In fresh sessions, the Along Working Thread skill may be installed and readable but not implicitly selected for an ordinary next-step prompt. A project-local trigger source is a reliability layer that makes Navi discoverable from the target project itself.
+Do not rely only on global skill auto-routing for Navi. In fresh sessions, the Navi skill may be installed and readable but not implicitly selected for an ordinary next-step prompt. A project-local trigger source is a reliability layer that makes Navi discoverable from the target project itself.
 
 When a supervised project needs reliable Navi behavior, add a short project-local trigger source to the target project's `AGENTS.md` or equivalent agent instruction file. The trigger source should say that progress, next-step, continue, confusion, and plan-reliability questions should first receive a compact Navi map before ordinary task advice.
 
@@ -1250,7 +1250,7 @@ Default personality:
 
 ## Challenge Layer
 
-Challenge Layer is the V1 product frame for Along inside existing agents.
+Challenge Layer is a V1 Navi product behavior inside existing agents.
 
 Its job is not to criticize every decision. Its job is to notice when the current project momentum may be proving itself too easily.
 

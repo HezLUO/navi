@@ -76,7 +76,7 @@ Navi uses Challenge Layer behavior when a project map reveals risk.
 
 A **Challenge Moment** happens when Codex may be treating momentum as evidence: direction drift, premature execution, weak assumptions, or implementation success being treated as product proof.
 
-A **Challenge Brief** is the short response Along should produce at that moment:
+A **Challenge Brief** is the short response Navi should produce at that moment:
 
 1. what it noticed;
 2. why it matters against the Working Thread;
@@ -102,7 +102,7 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 ## Current stage
 
-This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.1`.
+This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.3`.
 
 It packages the current validated skill-first behavior. It does not add new runtime, memory, presence, adapter, or delegation capabilities. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 
@@ -180,31 +180,31 @@ npm run verify:plugin-package
 
 The verification checks:
 
-- existing Navi / Along Working Thread skill tests;
+- existing Navi skill tests;
 - plugin manifest validity;
 - exact drift between `.agents/skills/navi` and `plugins/navi/skills/navi`.
 
 ## Fresh-session validation checklist
 
-Use fresh Codex sessions in both the Along project and at least one non-Along target project. These checks validate the current Challenge Layer stage; they do not prove background autonomy, runtime behavior, or long-term product feeling.
+Use fresh Codex sessions in the Navi source repository and at least one non-Navi target project. These checks validate the current Challenge Layer stage; they do not prove background autonomy, runtime behavior, or long-term product feeling.
 
 ### Recovery
 
 ```text
-Please restore the current Along Working Thread and tell me what we should do next.
+Please restore the current Navi Working Thread and tell me what we should do next.
 ```
 
 Expected: Codex reads the Working Thread record, names the current Challenge Layer judgment, and keeps the next move focused on real-use calibration rather than new implementation.
 
 ### Navi Progress Map
 
-In a non-Along target project where the package is installed:
+In a non-Navi target project where the package is installed:
 
 ```text
 现在做到哪了？我看不懂。
 ```
 
-Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. It may inspect the target project's source-of-truth before outputting the Progress Map. The map should describe the target project's own stable stage sequence when one can be inferred, not Along's or Navi's implementation stages.
+Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. It may inspect the target project's source-of-truth before outputting the Progress Map. The map should describe the target project's own stable stage sequence when one can be inferred, not the Navi source repository's implementation stages.
 
 ```text
 接下来我们应该做什么？

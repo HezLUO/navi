@@ -37,12 +37,12 @@ Current source-alpha identifiers are `navi`, `plugins/navi`, `.agents/skills/nav
 
 ### 1. Public Naming Debt
 
-Status: source-alpha addressed; legacy migration remains a calibration concern
+Status: source-alpha identifiers addressed; legacy migration remains a calibration concern
 Priority: high before broader distribution
 
 Problem:
 
-The user-facing behavior is now Navi, but the plugin display name, skill id, package directory, canonical skill path, and several docs still lead with `Along Working Thread`.
+The user-facing behavior is now Navi, and source-alpha installation, discovery, package paths, and skill ids are Navi-first. Remaining `along-working-thread` references must stay confined to explicit legacy migration or clearly historical records.
 
 Why it matters:
 
@@ -56,7 +56,7 @@ Recommended fix:
 
 ### 2. Top-Level Product Narrative Debt
 
-Status: open
+Status: source-alpha package narrative addressed; broader public-release alignment remains open
 Priority: high before public release
 
 Problem:

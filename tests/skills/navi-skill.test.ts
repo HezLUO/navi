@@ -1696,6 +1696,9 @@ describe("Along Working Thread repo-contained plugin package", () => {
   it("documents restrained positioning, validation, and version boundaries", async () => {
     const readme = await readRepoText("plugins/navi/README.md");
     const version = await readRepoText("plugins/navi/VERSION.md");
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/working-thread-v1.md",
+    );
 
     expect(readme).toContain("# Navi");
     expect(readme).toContain("Navi helps non-expert users understand, supervise, and steer expert agents.");
@@ -1709,13 +1712,17 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(readme).toContain("not a replacement for Codex, Hermes, Claude Code, or other agents");
     expect(readme).toContain("npm run verify:plugin-package");
     expect(readme).toContain("Fresh-session validation checklist");
-    expect(readme).toContain("Please restore the current Along Working Thread");
+    expect(readme).toContain("Please restore the current Navi Working Thread");
     expect(readme).toContain("rate usefulness, self-initiation, co-creator feel, and annoyance");
 
-    expect(version).toContain("# Along Working Thread 0.1.0");
-    expect(version).toContain("Along's current V1 product surface");
-    expect(version).toContain("not the whole long-term Along product");
+    expect(version).toContain("# Navi 0.1.0");
+    expect(version).toContain("0.1.0-alpha.3");
+    expect(version).toContain("independent product");
+    expect(version).not.toContain("Navi as Along's current V1 product surface");
     expect(version).toContain("not a runtime capability upgrade");
     expect(version).toContain("Do not bump to 0.2.0");
+
+    expect(reference).toContain("the Navi skill may be installed and readable");
+    expect(reference).not.toContain("the Along Working Thread skill may be installed and readable");
   });
 });
