@@ -1,3 +1,6 @@
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+
 async function runNaviInit(args: string[]): Promise<number> {
   const { runNaviInitCli } = await import(new URL("./navi-init.ts", import.meta.url).href) as typeof import("./navi-init");
   return runNaviInitCli(args);
@@ -11,7 +14,7 @@ async function runNaviSetup(args: string[]): Promise<number> {
 async function runNaviDoctor(args: string[]): Promise<number> {
   const { runNaviDoctorCli } = await import(new URL("./navi-doctor.ts", import.meta.url).href) as typeof import("./navi-doctor");
   return runNaviDoctorCli(args, undefined, undefined, {
-    cliRoot: new URL("../..", import.meta.url).pathname,
+    cliRoot: resolveNaviCliRoot(),
   });
 }
 
@@ -50,4 +53,7 @@ export async function runNaviCli(args: string[], io: NaviCliIo = DEFAULT_IO): Pr
 
   io.stderr(`${NAVI_USAGE}\n`);
   return 1;
+}
+export function resolveNaviCliRoot(moduleUrl: string = import.meta.url): string {
+  return path.resolve(fileURLToPath(new URL("../..", moduleUrl)));
 }

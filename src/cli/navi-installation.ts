@@ -28,8 +28,8 @@ export type RunCommand = (
 ) => Promise<{ code: number; stdout: string; stderr: string }>;
 
 const execFile = promisify(execFileCallback);
-const VERSION = /^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/;
 const SELECTOR = /^([^@\s]+)@([^@\s]+)$/;
+const CURRENT_SELECTOR = "navi@navi-source";
 
 export const defaultRunCommand: RunCommand = async (command, args) => {
   try {
@@ -52,9 +52,11 @@ export function parsePluginListRows(output: string): PluginListRow[] {
     const [, selector, state, remainder] = row;
     const selectorMatch = SELECTOR.exec(selector);
     if (!selectorMatch) return [];
-    const columns = remainder.trim().split(/\s+/).filter(Boolean);
-    const version = columns.find((column) => VERSION.test(column));
-    const sourcePath = columns.find((column) => column.startsWith("/") || column.startsWith("~"));
+    const versionMatch = /(?:^|\s)(v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?)(?=\s|$)/.exec(remainder);
+    const version = versionMatch?.[1];
+    const sourcePath = versionMatch
+      ? remainder.slice(versionMatch.index + versionMatch[0].length).trim()
+      : undefined;
     return [{
       selector,
       pluginName: selectorMatch[1],
@@ -85,10 +87,31 @@ export async function inspectNaviInstallation(
   if (rows.length === 0 && result.stdout.trim()) {
     return { kind: "uninspectable", raw, diagnostic: "codex plugin list output could not be parsed." };
   }
-  const current = rows.find((row) => row.pluginName === "navi");
+  const naviRows = rows.filter((row) => row.pluginName === "navi");
+  const exactCurrentRows = naviRows.filter((row) => row.selector === CURRENT_SELECTOR);
+  const alternateNaviRows = naviRows.filter((row) => row.selector !== CURRENT_SELECTOR);
+  const current = exactCurrentRows[0] ?? alternateNaviRows[0];
   const legacy = rows.find((row) => row.pluginName === "along-working-thread");
 
-  if (current?.installed && legacy?.installed) return { kind: "conflict", current, legacy, raw };
+  if (alternateNaviRows.length > 0) {
+    return {
+      kind: "conflict",
+      current,
+      ...(legacy ? { legacy } : {}),
+      raw,
+      diagnostic: `Navi is installed from a non-authoritative selector: ${alternateNaviRows.map((row) => row.selector).join(", ")}.`,
+    };
+  }
+  if (exactCurrentRows.length > 1) {
+    return {
+      kind: "conflict",
+      current,
+      ...(legacy ? { legacy } : {}),
+      raw,
+      diagnostic: `Navi is installed more than once from ${CURRENT_SELECTOR}.`,
+    };
+  }
+  if (current?.installed && legacy?.installed) return { kind: "conflict", current, legacy, raw, diagnostic: "Both current Navi and legacy plugins are installed." };
   if (current?.installed && current.enabled) return { kind: "current", current, ...(legacy ? { legacy } : {}), raw };
   if (legacy?.installed) return { kind: "legacy", ...(current ? { current } : {}), legacy, raw };
   return { kind: "missing", ...(current ? { current } : {}), ...(legacy ? { legacy } : {}), raw };

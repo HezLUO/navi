@@ -3,9 +3,15 @@ import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { NAVI_USAGE, runNaviCli } from "../../src/cli/navi";
+import { NAVI_USAGE, resolveNaviCliRoot, runNaviCli } from "../../src/cli/navi";
 
 describe("Navi command dispatcher", () => {
+  it("decodes the CLI root from its module URL", () => {
+    expect(resolveNaviCliRoot("file:///Users/james/Codex%20Project/Navi/src/cli/navi.ts")).toBe(
+      "/Users/james/Codex Project/Navi",
+    );
+  });
+
   it("runs every command through the JavaScript wrapper from an unrelated directory", () => {
     const root = mkdtempSync(path.join(tmpdir(), "navi-wrapper-"));
     const project = path.join(root, "project");
