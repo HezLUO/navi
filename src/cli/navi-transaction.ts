@@ -5,236 +5,70 @@ import { assertUnlinkedArtifact, confinedCodexPath } from "./navi-codex-home";
 
 export type TransactionOperation = "create" | "modify" | "remove";
 export type TransactionStage = "prepared" | "backed-up" | "published";
-
-export interface NaviTransactionRecord {
-  id: string;
-  operation: TransactionOperation;
-  target: "AGENTS.md";
-  stageFile?: string;
-  backupFile?: string;
-  expectedHash?: string;
-  desiredHash?: string;
-  stage: TransactionStage;
-  createdAt: string;
-}
-
+export type TransactionCheckpoint = "after-plan-verification" | "after-backup-move" | "before-publish" | "after-publish" | "before-cleanup";
+export interface TransactionCheckpointPaths { targetPath: string; transactionDir: string; manifestPath: string; stagePath: string; backupPath: string; lockPath: string; }
+export interface TransactionDependencies { isProcessAlive?: (pid: number) => Promise<boolean | undefined>; checkpoint?: (name: TransactionCheckpoint, paths: TransactionCheckpointPaths) => Promise<void>; }
+export interface NaviTransactionManifest { version: 1; id: string; operation: TransactionOperation; target: "AGENTS.md"; stage: TransactionStage; expectedHash?: string; desiredHash?: string; pid: number; createdAt: string; }
+export interface NaviTransactionLock { version: 1; id: string; pid: number; }
+/** @deprecated Compatibility name for callers that consumed the prior manifest type. */
+export type NaviTransactionRecord = NaviTransactionManifest;
 export type TransactionInspection =
-  | { kind: "none" }
-  | { kind: "live-lock"; lockPath: string }
-  | { kind: "recoverable-restore"; record: NaviTransactionRecord; manifestPath: string }
-  | { kind: "recoverable-cleanup"; record: NaviTransactionRecord; manifestPath: string }
-  | { kind: "conflict"; diagnostic: string; record?: NaviTransactionRecord; manifestPath?: string };
-
+  | { kind: "none" } | { kind: "live-lock"; lockPath: string }
+  | { kind: "recoverable-restore"; record: NaviTransactionManifest; manifestPath: string }
+  | { kind: "recoverable-cleanup"; record: NaviTransactionManifest; manifestPath: string }
+  | { kind: "conflict"; diagnostic: string; record?: NaviTransactionManifest; manifestPath?: string };
 export type RecoverableInspection = Extract<TransactionInspection, { kind: "recoverable-restore" | "recoverable-cleanup" }>;
+export interface ApplyTransactionInput { root: string; operation: TransactionOperation; expectedContent?: string; desiredContent?: string; id?: string; dependencies?: TransactionDependencies; }
 
-export interface ApplyTransactionInput {
-  root: string;
-  operation: TransactionOperation;
-  expectedContent?: string;
-  desiredContent?: string;
-  id?: string;
+const PREFIX = ".AGENTS.md.navi-transaction-"; const LOCK = ".AGENTS.md.navi-lock";
+const digest = (value: string) => createHash("sha256").update(value).digest("hex");
+const isHash = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/i.test(value);
+const artifact = (root: string, name: string) => confinedCodexPath(root, name);
+async function syncDirectory(root: string) { const handle = await fs.open(root, "r"); try { await handle.sync(); } finally { await handle.close(); } }
+async function writeExclusive(file: string, text: string, mode = 0o600) { const handle = await fs.open(file, "wx", mode); try { await handle.writeFile(text); await handle.sync(); } finally { await handle.close(); } }
+async function replaceOwned(file: string, text: string) { const handle = await fs.open(file, "r+"); try { await handle.truncate(0); await handle.writeFile(text); await handle.sync(); } finally { await handle.close(); } }
+async function content(file: string): Promise<string | undefined> { try { if (await assertUnlinkedArtifact(file) !== "file") return undefined; return await fs.readFile(file, "utf8"); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; } }
+function paths(root: string, id: string): TransactionCheckpointPaths { const transactionDir = artifact(root, `${PREFIX}${id}`); return { targetPath: artifact(root, "AGENTS.md"), transactionDir, manifestPath: path.join(transactionDir, "manifest.json"), stagePath: path.join(transactionDir, "stage"), backupPath: path.join(transactionDir, "backup"), lockPath: artifact(root, LOCK) }; }
+function assertManifest(value: unknown, expectedId: string): asserts value is NaviTransactionManifest {
+  const m = value as Partial<NaviTransactionManifest> & Record<string, unknown>;
+  if (m.version !== 1 || m.id !== expectedId || m.target !== "AGENTS.md" || !["create", "modify", "remove"].includes(m.operation ?? "") || !["prepared", "backed-up", "published"].includes(m.stage ?? "") || !Number.isInteger(m.pid) || m.pid! <= 0 || typeof m.createdAt !== "string" || !m.createdAt || "stageFile" in m || "backupFile" in m) throw new Error("Transaction manifest is invalid or names unowned artifacts.");
+  if (m.operation === "create") { if (!isHash(m.desiredHash) || m.expectedHash !== undefined) throw new Error("Create manifest has invalid hashes."); }
+  if (m.operation === "modify" && (!isHash(m.expectedHash) || !isHash(m.desiredHash))) throw new Error("Modify manifest has invalid hashes.");
+  if (m.operation === "remove" && (!isHash(m.expectedHash) || m.desiredHash !== undefined)) throw new Error("Remove manifest has invalid hashes.");
 }
-
-const LOCK = ".AGENTS.md.navi-lock";
-const TRANSACTION_PREFIX = ".AGENTS.md.navi-transaction-";
-
-function hash(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
+async function findManifest(root: string): Promise<{ record: NaviTransactionManifest; manifestPath: string; paths: TransactionCheckpointPaths } | undefined> {
+  const entries = await fs.readdir(root, { withFileTypes: true }); const found = entries.filter((entry) => entry.name.startsWith(PREFIX));
+  if (!found.length) return undefined; if (found.length !== 1) throw new Error("Multiple Navi transaction directories require manual resolution.");
+  const entry = found[0]; if (!entry.isDirectory() || entry.isSymbolicLink()) throw new Error("Transaction directory is not a regular directory.");
+  const id = entry.name.slice(PREFIX.length); if (!id || path.basename(id) !== id) throw new Error("Transaction directory has an invalid owner.");
+  const p = paths(root, id); const raw = await content(p.manifestPath); if (!raw) throw new Error("Transaction manifest is missing."); let record: unknown; try { record = JSON.parse(raw); } catch { throw new Error("Transaction manifest is not valid JSON."); } assertManifest(record, id); return { record, manifestPath: p.manifestPath, paths: p };
 }
+async function alive(pid: number, dependencies: TransactionDependencies) { if (dependencies.isProcessAlive) return dependencies.isProcessAlive(pid); try { process.kill(pid, 0); return true; } catch (error) { return (error as NodeJS.ErrnoException).code === "ESRCH" ? false : undefined; } }
+async function clean(root: string, p: TransactionCheckpointPaths) { await fs.rm(p.transactionDir, { recursive: true }); const lock = await content(p.lockPath); if (lock) { let parsed: NaviTransactionLock; try { parsed = JSON.parse(lock) as NaviTransactionLock; } catch { throw new Error("Transaction lock is malformed."); } if (parsed.version !== 1 || parsed.id !== path.basename(p.transactionDir).slice(PREFIX.length) || !Number.isInteger(parsed.pid) || parsed.pid <= 0) throw new Error("Transaction lock does not match cleanup evidence."); await fs.unlink(p.lockPath); } await syncDirectory(root); }
 
-function artifact(root: string, basename: string): string {
-  return confinedCodexPath(root, basename);
+export async function inspectTransaction(root: string, dependencies: TransactionDependencies = {}): Promise<TransactionInspection> {
+  let found: Awaited<ReturnType<typeof findManifest>>; try { found = await findManifest(root); } catch (error) { return { kind: "conflict", diagnostic: (error as Error).message }; }
+  const lockPath = artifact(root, LOCK); let lockRaw: string | undefined; try { lockRaw = await content(lockPath); } catch (error) { return { kind: "conflict", diagnostic: (error as Error).message }; }
+  if (lockRaw !== undefined) {
+    let lock: NaviTransactionLock; try { lock = JSON.parse(lockRaw) as NaviTransactionLock; } catch { return { kind: "conflict", diagnostic: "Transaction lock is malformed." }; }
+    if (lock.version !== 1 || !Number.isInteger(lock.pid) || lock.pid <= 0 || !found || lock.id !== found.record.id || lock.pid !== found.record.pid) return { kind: "conflict", diagnostic: "Transaction lock does not match its manifest.", ...(found ? { record: found.record, manifestPath: found.manifestPath } : {}) };
+    const running = await alive(lock.pid, dependencies); if (running === true) return { kind: "live-lock", lockPath }; if (running === undefined) return { kind: "conflict", diagnostic: "Transaction lock liveness cannot be determined.", record: found.record, manifestPath: found.manifestPath };
+  }
+  if (!found) return { kind: "none" }; const { record, manifestPath, paths: p } = found; const target = await content(p.targetPath); const stage = await content(p.stagePath); const backup = await content(p.backupPath);
+  const conflict = (diagnostic: string): TransactionInspection => ({ kind: "conflict", diagnostic, record, manifestPath });
+  if (record.operation === "create") { if (stage === undefined || digest(stage) !== record.desiredHash) return conflict("Create transaction stage is missing or has unexpected content."); if (record.stage === "prepared" && target === undefined) return { kind: "recoverable-cleanup", record, manifestPath }; if (record.stage === "published" && target !== undefined && digest(target) === record.desiredHash) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Create transaction requires manual resolution."); }
+  if (record.operation === "modify") { if (stage === undefined || digest(stage) !== record.desiredHash) return conflict("Modify transaction stage is missing or has unexpected content."); if (record.stage === "prepared" && target !== undefined && digest(target) === record.expectedHash) return { kind: "recoverable-cleanup", record, manifestPath }; if (backup === undefined || digest(backup) !== record.expectedHash) return conflict("Transaction backup is missing or has unexpected content."); if (record.stage === "backed-up" && target === undefined) return { kind: "recoverable-restore", record, manifestPath }; if (record.stage === "published" && target !== undefined && digest(target) === record.desiredHash) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Transaction target has unexpected content."); }
+  if (record.stage === "prepared" && target !== undefined && digest(target) === record.expectedHash) return { kind: "recoverable-cleanup", record, manifestPath }; if (backup === undefined || digest(backup) !== record.expectedHash) return conflict("Transaction backup is missing or has unexpected content."); if (record.stage === "published" && target === undefined) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Transaction target has unexpected content.");
 }
-
-async function syncDirectory(root: string): Promise<void> {
-  const handle = await fs.open(root, "r");
-  try {
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-}
-
-async function writeExclusive(filePath: string, content: string): Promise<void> {
-  const handle = await fs.open(filePath, "wx", 0o600);
-  try {
-    await handle.writeFile(content, "utf8");
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-}
-
-async function updateOwnedFile(filePath: string, content: string): Promise<void> {
-  const handle = await fs.open(filePath, "r+");
-  try {
-    await handle.truncate(0);
-    await handle.writeFile(content, "utf8");
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-}
-
-async function readContent(filePath: string): Promise<string | undefined> {
-  try {
-    await assertUnlinkedArtifact(filePath);
-    return await fs.readFile(filePath, "utf8");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
-    throw error;
-  }
-}
-
-async function removeOwned(paths: Iterable<string>): Promise<void> {
-  for (const filePath of paths) {
-    try {
-      await assertUnlinkedArtifact(filePath);
-      await fs.unlink(filePath);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-  }
-}
-
-function assertRecord(record: NaviTransactionRecord): void {
-  if (!record.id || record.target !== "AGENTS.md" || !["create", "modify", "remove"].includes(record.operation) || !["prepared", "backed-up", "published"].includes(record.stage)) {
-    throw new Error("Transaction manifest is invalid.");
-  }
-  for (const name of [record.stageFile, record.backupFile]) {
-    if (name && path.basename(name) !== name) throw new Error("Transaction manifest contains an unsafe artifact path.");
-  }
-}
-
-async function readManifest(root: string): Promise<{ record: NaviTransactionRecord; manifestPath: string } | undefined> {
-  const entries = await fs.readdir(root);
-  const manifests = entries.filter((entry) => entry.startsWith(TRANSACTION_PREFIX) && entry.endsWith(".json"));
-  if (manifests.length === 0) return undefined;
-  if (manifests.length !== 1) throw new Error("Multiple Navi transaction manifests require manual resolution.");
-  const manifestPath = artifact(root, manifests[0]);
-  const contents = await readContent(manifestPath);
-  if (!contents) throw new Error("Transaction manifest disappeared during inspection.");
-  let record: NaviTransactionRecord;
-  try {
-    record = JSON.parse(contents) as NaviTransactionRecord;
-  } catch {
-    throw new Error("Transaction manifest is not valid JSON.");
-  }
-  assertRecord(record);
-  return { record, manifestPath };
-}
-
-async function cleanupRecord(root: string, record: NaviTransactionRecord, manifestPath: string): Promise<void> {
-  const paths = [record.stageFile, record.backupFile].filter((name): name is string => Boolean(name)).map((name) => artifact(root, name));
-  await removeOwned([...paths, manifestPath]);
-  await syncDirectory(root);
-}
-
-export async function inspectTransaction(root: string): Promise<TransactionInspection> {
-  const lockPath = artifact(root, LOCK);
-  const lock = await assertUnlinkedArtifact(lockPath);
-  if (lock === "file") return { kind: "live-lock", lockPath };
-
-  let manifest: { record: NaviTransactionRecord; manifestPath: string } | undefined;
-  try {
-    manifest = await readManifest(root);
-  } catch (error) {
-    return { kind: "conflict", diagnostic: (error as Error).message };
-  }
-  if (!manifest) return { kind: "none" };
-
-  const { record, manifestPath } = manifest;
-  const target = await readContent(artifact(root, record.target));
-  const backup = record.backupFile ? await readContent(artifact(root, record.backupFile)) : undefined;
-  if (record.operation === "create") {
-    if (target !== undefined && record.desiredHash && hash(target) === record.desiredHash) {
-      return { kind: "recoverable-cleanup", record, manifestPath };
-    }
-    return { kind: "conflict", diagnostic: "Create transaction requires manual resolution.", record, manifestPath };
-  }
-  if (!record.expectedHash || !record.backupFile || backup === undefined || hash(backup) !== record.expectedHash) {
-    return { kind: "conflict", diagnostic: "Transaction backup is missing or has unexpected content.", record, manifestPath };
-  }
-  if (target === undefined) return { kind: "recoverable-restore", record, manifestPath };
-  if (record.operation === "modify" && record.desiredHash && hash(target) === record.desiredHash) {
-    return { kind: "recoverable-cleanup", record, manifestPath };
-  }
-  if (record.operation === "remove" && target === undefined) return { kind: "recoverable-cleanup", record, manifestPath };
-  return { kind: "conflict", diagnostic: "Transaction target has unexpected content.", record, manifestPath };
-}
-
-export async function recoverTransaction(root: string, inspection: RecoverableInspection): Promise<void> {
-  const targetPath = artifact(root, "AGENTS.md");
-  const backupPath = artifact(root, inspection.record.backupFile!);
-  if (inspection.kind === "recoverable-restore") {
-    await assertUnlinkedArtifact(targetPath);
-    await assertUnlinkedArtifact(backupPath);
-    await fs.link(backupPath, targetPath);
-    await syncDirectory(root);
-  }
-  await cleanupRecord(root, inspection.record, inspection.manifestPath);
-}
-
+export async function recoverTransaction(root: string, inspection: RecoverableInspection): Promise<void> { const p = paths(root, inspection.record.id); if (inspection.kind === "recoverable-restore") { if (await content(p.targetPath) !== undefined) throw new Error("Cannot restore over an existing AGENTS.md."); await fs.link(p.backupPath, p.targetPath); await syncDirectory(root); } await clean(root, p); }
 export async function applyAgentsTransaction(input: ApplyTransactionInput): Promise<void> {
-  const root = path.resolve(input.root);
-  const targetPath = artifact(root, "AGENTS.md");
-  const id = input.id ?? randomUUID();
-  if (path.basename(id) !== id) throw new Error("Transaction id must be a basename.");
-  const lockPath = artifact(root, LOCK);
-  const manifestPath = artifact(root, `${TRANSACTION_PREFIX}${id}.json`);
-  const stageFile = `.AGENTS.md.navi-stage-${id}`;
-  const backupFile = `.AGENTS.md.navi-backup-${id}`;
-  const stagePath = artifact(root, stageFile);
-  const backupPath = artifact(root, backupFile);
-  const owned = new Set<string>();
-
-  await assertUnlinkedArtifact(targetPath);
-  await writeExclusive(lockPath, id);
-  owned.add(lockPath);
-  try {
-    const initial = await readContent(targetPath);
-    if (input.operation === "create" ? initial !== undefined : initial !== input.expectedContent) {
-      throw new Error("Global AGENTS.md changed after setup was planned.");
-    }
-    if (input.operation !== "remove" && input.desiredContent === undefined) throw new Error("Transaction desired content is required.");
-    const record: NaviTransactionRecord = {
-      id,
-      operation: input.operation,
-      target: "AGENTS.md",
-      ...(input.operation === "remove" ? {} : { stageFile }),
-      ...(input.operation === "create" ? {} : { backupFile, expectedHash: hash(input.expectedContent ?? "") }),
-      ...(input.operation === "remove" ? {} : { desiredHash: hash(input.desiredContent!) }),
-      stage: "prepared",
-      createdAt: new Date().toISOString(),
-    };
-    if (record.stageFile) {
-      await writeExclusive(stagePath, input.desiredContent!);
-      owned.add(stagePath);
-    }
-    await writeExclusive(manifestPath, JSON.stringify(record));
-    owned.add(manifestPath);
-
-    if (input.operation !== "create") {
-      const current = await readContent(targetPath);
-      if (current !== input.expectedContent) throw new Error("Global AGENTS.md changed after setup was planned.");
-      await fs.link(targetPath, backupPath);
-      owned.add(backupPath);
-      if (await readContent(backupPath) !== input.expectedContent) throw new Error("Global AGENTS.md backup has unexpected content.");
-      await fs.unlink(targetPath);
-      record.stage = "backed-up";
-      await updateOwnedFile(manifestPath, JSON.stringify(record));
-    }
-    if (record.stageFile) {
-      await fs.link(stagePath, targetPath);
-      record.stage = "published";
-      await updateOwnedFile(manifestPath, JSON.stringify(record));
-    }
-    await syncDirectory(root);
-    await removeOwned([...owned].filter((filePath) => filePath !== lockPath));
-    await removeOwned([lockPath]);
-    await syncDirectory(root);
-  } catch (error) {
-    await removeOwned([...owned].filter((filePath) => filePath === stagePath || filePath === lockPath));
-    throw error;
-  }
+  const root = path.resolve(input.root); const id = input.id ?? randomUUID(); if (path.basename(id) !== id) throw new Error("Transaction id must be a basename."); const p = paths(root, id); const deps = input.dependencies ?? {}; await fs.mkdir(p.transactionDir, { mode: 0o700 });
+  try { await writeExclusive(p.lockPath, JSON.stringify({ version: 1, id, pid: process.pid } satisfies NaviTransactionLock)); const initial = await content(p.targetPath); if ((input.operation === "create" && initial !== undefined) || (input.operation !== "create" && initial !== input.expectedContent)) throw new Error("Global AGENTS.md changed after setup was planned."); if (input.operation !== "remove" && input.desiredContent === undefined) throw new Error("Transaction desired content is required."); const record: NaviTransactionManifest = { version: 1, id, operation: input.operation, target: "AGENTS.md", pid: process.pid, ...(input.operation === "create" ? { desiredHash: digest(input.desiredContent!) } : { expectedHash: digest(input.expectedContent ?? ""), ...(input.operation === "modify" ? { desiredHash: digest(input.desiredContent!) } : {}) }), stage: "prepared", createdAt: new Date().toISOString() }; if (input.operation !== "remove") await writeExclusive(p.stagePath, input.desiredContent!); await writeExclusive(p.manifestPath, JSON.stringify(record)); await deps.checkpoint?.("after-plan-verification", p);
+    if (input.operation !== "create") { if (await content(p.targetPath) !== input.expectedContent) throw new Error("Global AGENTS.md changed after setup was planned."); await fs.rename(p.targetPath, p.backupPath); if (await content(p.backupPath) !== input.expectedContent) throw new Error("Global AGENTS.md backup has unexpected content."); record.stage = "backed-up"; await replaceOwned(p.manifestPath, JSON.stringify(record)); await deps.checkpoint?.("after-backup-move", p); }
+    if (input.operation !== "remove") { await deps.checkpoint?.("before-publish", p); if (await content(p.targetPath) !== undefined) throw new Error("Global AGENTS.md appeared before publication."); await fs.link(p.stagePath, p.targetPath); if (await content(p.targetPath) !== input.desiredContent) throw new Error("Global AGENTS.md publication has unexpected content."); }
+    record.stage = "published"; await replaceOwned(p.manifestPath, JSON.stringify(record)); await deps.checkpoint?.("after-publish", p); await deps.checkpoint?.("before-cleanup", p);
+    if (input.operation !== "remove" && await content(p.targetPath) !== input.desiredContent) throw new Error("Global AGENTS.md changed after publication.");
+    if (input.operation === "remove" && await content(p.targetPath) !== undefined) throw new Error("Global AGENTS.md reappeared after removal.");
+    await clean(root, p);
+  } catch (error) { await syncDirectory(root); throw error; }
 }

@@ -164,7 +164,7 @@ describe("Navi global setup", () => {
     const codexHome = await makeTempCodexHome();
     const target = path.join(codexHome, "target");
     const agents = path.join(codexHome, "AGENTS.md");
-    const transaction = path.join(codexHome, ".AGENTS.md.navi-transaction-test.json");
+    const transaction = path.join(codexHome, ".AGENTS.md.navi-transaction-test");
     await fs.writeFile(target, "content");
     await fs.symlink(target, agents);
     await fs.symlink(target, transaction);
@@ -186,6 +186,35 @@ describe("Navi global setup", () => {
 
     expect(plan.action.kind).toBe("create");
     await expect(fs.access(path.join(codexHome, "AGENTS.md"))).rejects.toThrow();
+  });
+
+  it("recovers a pending transaction before plugin or planned-action preflight", async () => {
+    const codexHome = await makeTempCodexHome();
+    const transactionDir = path.join(codexHome, ".AGENTS.md.navi-transaction-recover");
+    await fs.mkdir(transactionDir, { mode: 0o700 });
+    await fs.writeFile(path.join(transactionDir, "backup"), "old");
+    await fs.writeFile(path.join(transactionDir, "stage"), "desired");
+    await fs.writeFile(
+      path.join(transactionDir, "manifest.json"),
+      JSON.stringify({
+        version: 1,
+        id: "recover",
+        pid: 99,
+        operation: "modify",
+        target: "AGENTS.md",
+        expectedHash: "cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4",
+        desiredHash: "b60b935389f7cf68e7877a80a4ded0dfc93e248b8807932536e1de0f771d259b",
+        stage: "backed-up",
+        createdAt: "2026-07-11T00:00:00.000Z",
+      }),
+    );
+    const plan = await buildGlobalSetupPlan(
+      { codexHome, write: true },
+      { inspectInstallation: async () => missingInstallation },
+    );
+
+    await expect(applyGlobalSetupPlan(plan)).resolves.toBe("recovered");
+    await expect(fs.readFile(path.join(codexHome, "AGENTS.md"), "utf8")).resolves.toBe("old");
   });
 
   it("refuses setup writes when the plugin is unavailable", async () => {
@@ -361,8 +390,8 @@ describe("Navi global setup", () => {
     }],
     ["ambiguous transaction", async (codexHome: string) => {
       await Promise.all([
-        fs.writeFile(path.join(codexHome, ".AGENTS.md.navi-transaction-first.json"), "{}"),
-        fs.writeFile(path.join(codexHome, ".AGENTS.md.navi-transaction-second.json"), "{}"),
+        fs.mkdir(path.join(codexHome, ".AGENTS.md.navi-transaction-first")),
+        fs.mkdir(path.join(codexHome, ".AGENTS.md.navi-transaction-second")),
       ]);
     }, enabledInstallation],
   ])("blocks a %s preview without offering an unsafe write command", async (_name, arrange, installation) => {
@@ -378,6 +407,7 @@ describe("Navi global setup", () => {
     expect(code).not.toBe(0);
     expect(output.join("")).not.toContain("Apply with:");
     expect(output.join("")).not.toContain("navi setup --write");
+    expect(output.join("")).not.toMatch(/force|delete the lock/i);
   });
 
   it("blocks an unsafe CODEX_HOME without offering an unsafe write command", async () => {

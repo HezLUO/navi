@@ -33,6 +33,10 @@ navi setup --write
 
 这些都是用户明确执行的 source-alpha 操作，会修改全局 Codex/plugin/npm 状态（包括 Codex configuration 或 cache，以及 npm 的全局 link state）；`navi setup` 不会替你安装 plugin 或执行这些操作。`navi doctor` 用于 troubleshooting，不是日常步骤；它会检查 source-alpha 前提条件并指出缺失时的修复方向。
 
+### Setup transaction 安全边界
+
+全局 setup 使用可恢复的 transaction directory 和 cooperative same-user lock。它会验证已批准的字节、发布时不替换已有 target，并保留已检测到的 third-party content 供人工处理。这是 cooperative-concurrency 安全边界，不声称能够对抗同一用户的并发原子性；不要删除 lock 或强制执行处于 conflict 的 setup。
+
 全局 setup 一次 -> 每个项目批准 init 一次 -> 之后使用自然语言
 
 `navi setup` 只配置全局 discovery，不会初始化目标项目。每个目标项目中，先用 `navi init` 预览 project-local guidance；只有得到用户明确批准后，agent 才可运行 `navi init --write`。`navi init` 不会重新安装 plugin。

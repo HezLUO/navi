@@ -53,12 +53,13 @@ describe("Navi doctor", () => {
 
   it("fails recoverable transactions with recovery guidance and live transactions without it", async () => {
     const f = await fixture();
-    await fs.writeFile(path.join(f.codexHome, ".AGENTS.md.navi-backup-test"), "old");
-    await fs.writeFile(path.join(f.codexHome, ".AGENTS.md.navi-transaction-test.json"), JSON.stringify({ id: "test", operation: "modify", target: "AGENTS.md", backupFile: ".AGENTS.md.navi-backup-test", expectedHash: createHash("sha256").update("old").digest("hex"), stage: "backed-up", createdAt: new Date().toISOString() }));
+    const transaction = path.join(f.codexHome, ".AGENTS.md.navi-transaction-test"); await fs.mkdir(transaction, { mode: 0o700 });
+    await fs.writeFile(path.join(transaction, "backup"), "old"); await fs.writeFile(path.join(transaction, "stage"), "desired");
+    await fs.writeFile(path.join(transaction, "manifest.json"), JSON.stringify({ version: 1, id: "test", pid: 99, operation: "modify", target: "AGENTS.md", expectedHash: createHash("sha256").update("old").digest("hex"), desiredHash: createHash("sha256").update("desired").digest("hex"), stage: "backed-up", createdAt: new Date().toISOString() }));
     const recoverable = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
     expect(recoverable.checks.find((check) => check.id === "transaction")?.status).toBe("fail");
     expect(recoverable.checks.find((check) => check.id === "transaction")?.repair).toContain("navi setup --write");
-    await fs.rm(path.join(f.codexHome, ".AGENTS.md.navi-transaction-test.json")); await fs.writeFile(path.join(f.codexHome, ".AGENTS.md.navi-lock"), "lock");
+    await fs.rm(transaction, { recursive: true }); await fs.writeFile(path.join(f.codexHome, ".AGENTS.md.navi-lock"), "lock");
     const live = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
     expect(live.checks.find((check) => check.id === "transaction")?.status).toBe("fail");
   });

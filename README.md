@@ -33,6 +33,10 @@ navi setup --write
 
 These are explicit user-run source-alpha operations. They mutate global Codex/plugin/npm state (including Codex configuration or cache and npm's global link state); `navi setup` does not install a plugin or run them for you. `navi doctor` is troubleshooting, not a normal daily step. It checks the source-alpha prerequisites and points to the appropriate repair when something is missing.
 
+### Setup transaction safety
+
+Global setup uses a recoverable transaction directory and a cooperative same-user lock. It verifies approved bytes, publishes without replacing an existing target, and preserves detected third-party content for manual resolution. This is a cooperative-concurrency boundary, not a claim of adversarial same-user atomicity; do not delete a lock or force a conflicted setup.
+
 Setup once -> approve project init once -> use natural language
 
 `navi setup` configures global discovery only: it does not initialize a target project. In each target project, preview the project-local guidance with `navi init`, then an agent may run `navi init --write` only after explicit user approval. `navi init` does not reinstall the plugin.

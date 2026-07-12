@@ -277,15 +277,16 @@ export async function buildGlobalSetupPlan(
 export async function applyGlobalSetupPlan(
   plan: GlobalSetupPlan,
 ): Promise<"applied" | "recovered"> {
-  if (plan.mode === "dry-run" || plan.action.kind === "skip") return "applied";
-  const blocked = setupBlockReason(plan);
-  if (blocked) throw new Error(blocked);
+  if (plan.mode === "dry-run") return "applied";
 
   if (plan.transaction.kind === "recoverable-restore" || plan.transaction.kind === "recoverable-cleanup") {
     await recoverTransaction(plan.codexHome, plan.transaction);
     return "recovered";
   }
   if (plan.transaction.kind !== "none") throw new Error(`Navi setup is blocked by transaction state: ${plan.transaction.kind}.`);
+  if (plan.action.kind === "skip") return "applied";
+  const blocked = setupBlockReason(plan);
+  if (blocked) throw new Error(blocked);
 
   const operation = plan.action.kind === "create"
     ? "create"

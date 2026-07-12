@@ -150,6 +150,10 @@ navi init --write
 
 These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. `navi setup` configures global discovery and does not initialize a target project. `navi init` previews project-local Navi files for one target project; an agent may run `navi init --write` only after explicit user approval. It does not reinstall the plugin.
 
+### Setup transaction safety
+
+Global setup uses a recoverable transaction directory and a cooperative same-user lock. It verifies approved bytes, publishes without replacing an existing target, and preserves detected third-party content for manual resolution. This is a cooperative-concurrency boundary, not a claim of adversarial same-user atomicity; do not delete a lock or force a conflicted setup.
+
 The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `src/web` is not the Navi alpha UI.
 
 ### Legacy migration and removal
