@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 
-Status: Approved in design discussion on 2026-07-11
+Status: Approved in design discussion on 2026-07-11; filesystem threat model revised and approved on 2026-07-13
 
 ## Summary
 
@@ -187,46 +187,70 @@ A symlink in the user-facing path to CODEX_HOME is allowed only as a route to an
 
 Missing, non-directory, unresolvable, or confinement-violating roots are hard failures. Project-local `navi init` keeps its existing path model; this remediation does not refactor it into the global transaction system.
 
-## Portable Recoverable Transaction
+## Filesystem Threat Model
 
-Global AGENTS writes use a portable, recoverable transaction under canonical CODEX_HOME:
+The source alpha uses a **cooperative same-user concurrency model**.
+
+Navi must protect against crashes, duplicate Navi setup runs, ordinary concurrent edits, stale plans, symlinks, malformed transaction evidence, and content changes visible at its deterministic transaction checkpoints. It uses exact-byte hashes, an exclusive Navi lock, confined artifacts, no-replace publication, backups, fsync, and conservative recovery.
+
+Navi does not claim to resist a malicious process running with the same user permissions and deliberately racing individual filesystem system calls. Pure Node filesystem APIs do not provide a portable directory-handle-relative primitive that combines no-follow, no-replace, and compare-and-move semantics against that adversary. This limitation must be described as a security boundary, not hidden behind an unprovable atomicity claim.
+
+This narrower model does not permit known unsafe behavior. Navi still must remove the observed link/verify/unlink deletion window, reject unowned manifest paths, preserve third-party content when a conflict is detected, and avoid claiming completion when recovery evidence is incomplete.
+
+## Cooperative Recoverable Transaction
+
+Global AGENTS writes use one exclusive transaction directory under canonical CODEX_HOME:
 
 ```text
 .AGENTS.md.navi-lock
-.AGENTS.md.navi-transaction-<id>.json
-.AGENTS.md.navi-stage-<id>
-.AGENTS.md.navi-backup-<id>
+.AGENTS.md.navi-transaction-<id>/
+  manifest.json
+  stage
+  backup
 ```
 
-The lock is created with exclusive `wx`. The transaction record contains operation, artifact filenames, content hashes, transaction stage, and timestamp, but no user instruction content.
+The transaction directory is created exclusively with mode `0700`. `manifest.json` records the transaction ID, operation, fixed target name, exact content hashes, stage, PID, and timestamp, but no user instruction content and no caller-controlled artifact path. `stage` and `backup` are fixed children of the verified transaction directory.
+
+The lock records transaction ID and PID. A matching lock whose PID is confirmed alive means another Navi transaction is active. A PID confirmed absent permits conservative inspection of the matching transaction evidence. A missing, malformed, mismatched, or uninspectable lock/manifest relationship is a conflict. Navi never deletes a lock based only on age; a matching stale lock is removed only as part of a verified recovery or committed-state cleanup.
 
 For create:
 
-1. Write and fsync the stage file.
-2. Publish with a no-overwrite hard link from stage to `AGENTS.md`.
-3. Fsync the directory.
-4. Remove transaction artifacts only after committed state is verified.
+1. Create and fsync the transaction directory, stage, manifest, and lock.
+2. Verify `AGENTS.md` remains absent.
+3. Publish with a no-replace hard link from stage to `AGENTS.md`.
+4. Verify the published hash and fsync the canonical directory.
+5. Remove only the verified transaction directory and matching lock after committed state is rechecked.
 
 For modify or remove:
 
-1. Verify the target still exactly matches the approved previous bytes.
-2. Move the target to a unique backup.
-3. Verify the backup exactly matches the approved previous bytes.
-4. For modify, publish the stage with a no-overwrite hard link.
-5. Fsync the directory and verify the committed state.
-6. Clean backup and transaction artifacts only after success.
+1. Verify the target is a regular unlinked file whose bytes equal the approved previous bytes.
+2. Move the target into the exclusive transaction directory as fixed child `backup`.
+3. Re-read and hash `backup`. If it differs, do not publish. Restore it only with a no-replace operation when the target remains absent; otherwise preserve both and report conflict.
+4. For modify, publish fixed child `stage` to `AGENTS.md` with a no-replace hard link and verify the desired hash.
+5. For remove, target absence plus the expected backup is the committed removed state. A later third-party target is never deleted.
+6. Fsync and clean the matching transaction evidence only after rechecking committed state.
 
-Any unexpected third content, missing evidence, failed exclusive create, symlink, live lock, or ambiguous state stops without overwriting. A backup is retained whenever it may be needed to recover user content.
+The implementation exposes test-only checkpoints after plan verification, after backup move, before publish, after publish, and before cleanup. Tests may create or replace `AGENTS.md` at those checkpoints and must prove that detected third-party content is not deleted or overwritten. These tests demonstrate cooperative handling; they do not claim adversarial same-user atomicity inside a single system call.
 
-Recovery is conservative:
+Recovery is operation-specific:
 
-- desired target plus expected old backup: finish cleanup of a committed transaction;
-- missing target plus expected old backup: restore the backup;
-- target or backup with unexpected content: preserve both and report conflict;
-- live lock: refuse;
-- lock without complete transaction evidence: conflict, with no age-based deletion.
+| Operation | Target | Evidence | Result |
+| --- | --- | --- | --- |
+| create | missing | expected stage | clean unpublished transaction; rerun |
+| create | desired hash | expected stage | clean committed transaction |
+| create | other content | any | conflict; preserve evidence |
+| modify | expected hash | move not started | clean unpublished transaction; rerun |
+| modify | missing | expected backup | restore backup with no-replace; rerun |
+| modify | desired hash | expected backup | clean committed transaction |
+| modify | other content | backup exists | conflict; preserve both |
+| remove | expected hash | move not started | clean unpublished transaction; rerun |
+| remove | missing | expected backup | clean committed removal |
+| remove | other content | backup exists | conflict; preserve both |
+| any | any | malformed schema, ownership, hash, or lock evidence | conflict; preserve evidence |
 
-Dry-run previews recovery. `navi setup --write` performs only an unambiguous recovery and then exits, requiring the user to rerun the requested install/remove operation. Doctor reports transaction state without changing it.
+Recovery inspection and execution take precedence over current action `skip`, plugin availability, and new mutation planning. `navi setup --write` performs only one unambiguous recovery and exits, requiring the user to rerun the requested install/remove operation. It never recovers and applies a new mutation in one invocation. Doctor reports transaction state without changing it.
+
+Normal setup output does not expose transaction internals. Troubleshooting documentation should state that Navi protects cooperative local operations and crash recovery but does not claim protection against a malicious same-user process deliberately racing filesystem calls. Conflict output names retained evidence without suggesting forced lock deletion or overwrite.
 
 ## Conflict And Exit Semantics
 
@@ -304,6 +328,8 @@ Implementation uses targeted tests only:
 
 - CLI dispatcher/bin tests;
 - global setup transaction and recovery tests;
+- deterministic cooperative-concurrency checkpoint tests;
+- malformed transaction ownership and unrelated-file preservation tests;
 - doctor path/plugin-state tests;
 - project-init legacy-block upgrade tests;
 - skill/package synchronization tests;
@@ -324,7 +350,7 @@ The branch is ready for another merge review when:
 2. Direct `navi init`, `navi setup`, and `navi doctor` execution works outside the repository cwd.
 3. Doctor uses bin, plugin source, project, cache, and canonical CODEX_HOME roots correctly.
 4. Legacy-only and dual-install states receive truthful migration/conflict guidance.
-5. Global setup cannot silently overwrite or delete concurrent user changes and can conservatively recover interrupted transactions.
+5. Under the documented cooperative same-user threat model, global setup removes the known deletion window, never knowingly overwrites or deletes detected third-party content, rejects unowned transaction evidence, and conservatively recovers interrupted create/modify/remove operations.
 6. Conflict previews return nonzero and never recommend `--write`.
 7. Exact old project triggers can be upgraded with explicit approval; edited triggers remain untouched.
 8. Installing Navi exposes no `along` executable and no new-user `along-working-thread` selector.
