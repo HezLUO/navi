@@ -37,6 +37,9 @@ const DEFAULT_CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
 const GLOBAL_REPAIR = "Run navi setup, review the preview, then run navi setup --write.";
 const PROJECT_REPAIR = "Run navi init, review the preview, then run navi init --write.";
 const SOURCE_REPAIR = "Install and enable navi@navi-source before running navi setup --write.";
+function migrationRepair(legacySelector: string): string {
+  return `Install and enable navi@navi-source, preview an exact project trigger upgrade with navi init, run navi init --write only after approval, validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
+}
 
 export async function buildNaviDoctorReport(options: NaviDoctorOptions = {}, dependencies: NaviDoctorDependencies = {}): Promise<NaviDoctorReport> {
   const requestedCodexHome = path.resolve(options.codexHome ?? process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"));
@@ -90,8 +93,8 @@ async function buildCliCheck(cliRoot: string): Promise<DoctorCheck> {
 function buildPluginCheck(status: NaviInstallationStatus): DoctorCheck {
   switch (status.kind) {
     case "current": return { id: "plugin", status: "pass", summary: `Navi plugin is installed and enabled${status.current?.version ? ` (${status.current.version}).` : "."}` };
-    case "legacy": return { id: "plugin", status: "fail", summary: `Only legacy plugin ${status.legacy?.selector ?? "along-working-thread"} is installed.`, repair: `${SOURCE_REPAIR} Remove ${status.legacy?.selector ?? "the legacy plugin"} after migration.` };
-    case "conflict": return { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy?.selector ?? "along-working-thread"} are both installed.`, repair: `Remove ${status.legacy?.selector ?? "the legacy plugin"}, then rerun navi doctor.` };
+    case "legacy": return { id: "plugin", status: "fail", summary: `Only legacy plugin ${status.legacy?.selector ?? "along-working-thread"} is installed.`, repair: migrationRepair(status.legacy?.selector ?? "along-working-thread") };
+    case "conflict": return { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy?.selector ?? "along-working-thread"} are both installed.`, repair: migrationRepair(status.legacy?.selector ?? "along-working-thread") };
     case "uninspectable": return { id: "plugin", status: "fail", summary: `Navi plugin installation could not be inspected${status.diagnostic ? `: ${status.diagnostic}` : "."}`, repair: "Repair codex plugin list, then rerun navi doctor." };
     case "missing": return { id: "plugin", status: "fail", summary: "Navi plugin is missing or disabled.", repair: SOURCE_REPAIR };
   }
@@ -115,7 +118,7 @@ async function buildGlobalBootstrapCheck(codexHome: string): Promise<DoctorCheck
 }
 async function buildPackageCacheCheck(sourcePath: string | undefined): Promise<DoctorCheck> {
   if (!sourcePath) return { id: "package-cache", status: "warn", summary: "Navi source/cache evidence is unavailable; inspection is incomplete." };
-  return { id: "package-cache", status: "warn", summary: "Navi installation reports a source path but no separate cache path; inspection is incomplete." };
+  return { id: "package-cache", status: "warn", summary: "Navi installation reports one source path but no separate cache evidence; inspection is incomplete." };
 }
 async function buildProjectInitCheck(projectDir: string): Promise<DoctorCheck> {
   const content = await readOptional(path.join(projectDir, "AGENTS.md"));

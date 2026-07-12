@@ -43,7 +43,7 @@ Setup once -> approve project init once -> use natural language
 
 ### Legacy migration and removal
 
-If `navi doctor` reports a legacy-only installation or a dual-install conflict, do not remove or migrate a plugin automatically. Install the current Navi plugin first, use `navi init --write` only to upgrade an exact previewed project trigger, verify that project, then explicitly remove the legacy selector reported by `navi doctor`.
+If `navi doctor` reports a legacy-only installation or a dual-install conflict, do not remove or migrate a plugin automatically. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init`; after approval run `navi init --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`.
 
 To remove this source-alpha setup yourself:
 

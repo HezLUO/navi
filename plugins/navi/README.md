@@ -158,7 +158,7 @@ The bootstrap block is an always-visible routing layer, not full Navi behavior. 
 
 ### Legacy migration and removal
 
-`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. For a legacy-only installation, add `navi@navi-source`, run doctor again, upgrade only an exact previewed project trigger with `navi init --write`, verify the target project, then explicitly remove the legacy selector shown by doctor. For a dual-install state, resolve the duplicate deliberately; do not assume a legacy marketplace selector.
+`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init`; after approval run `navi init --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`. Do not assume a legacy marketplace selector.
 
 To remove this source-alpha setup yourself:
 

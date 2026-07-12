@@ -43,7 +43,7 @@ navi setup --write
 
 ### Legacy migration 和 removal
 
-如果 `navi doctor` 报告 legacy-only installation 或 dual-install conflict，不要自动删除或迁移 plugin。先安装当前 Navi plugin；只有在预览精确显示目标项目 trigger 可升级时才使用 `navi init --write`，验证项目后，再显式删除 `navi doctor` 报告的 legacy selector。
+如果 `navi doctor` 报告 legacy-only installation 或 dual-install conflict，不要自动删除或迁移 plugin。两种诊断都使用同一顺序：安装并启用 `navi@navi-source`；用 `navi init` 预览精确的项目 trigger 升级；获得批准后运行 `navi init --write`；验证目标项目；显式删除 doctor 报告的精确 `legacy selector`；最后重新运行 `navi doctor` 和 `navi setup`。
 
 如需自行移除这个 source-alpha setup：
 

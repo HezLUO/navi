@@ -1406,6 +1406,33 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(packageReadme).not.toContain("Navi is the current V1 product surface of Along.");
   });
 
+  it("gives every active README the same ordered legacy migration sequence", async () => {
+    const readmes = await Promise.all([
+      readRepoText("README.md").then((text) => ({ text, marker: "Use this exact sequence", targetValidation: "validate the target project" })),
+      readRepoText("README.zh-CN.md").then((text) => ({ text, marker: "两种诊断都使用同一顺序", targetValidation: "验证目标项目" })),
+      readRepoText("plugins/navi/README.md").then((text) => ({ text, marker: "Use this exact sequence", targetValidation: "validate the target project" })),
+    ]);
+
+    for (const { text, marker, targetValidation } of readmes) {
+      const readme = text.slice(text.indexOf(marker));
+      const migrationActions = [
+        "navi@navi-source",
+        "navi init",
+        "navi init --write",
+        targetValidation,
+        "legacy selector",
+        "navi doctor",
+        "navi setup",
+      ];
+      let priorIndex = -1;
+      for (const action of migrationActions) {
+        const index = readme.indexOf(action);
+        expect(index).toBeGreaterThan(priorIndex);
+        priorIndex = index;
+      }
+    }
+  });
+
   it("documents shipped navi init scope in debt and roadmap docs", async () => {
     const debt = await readRepoText("docs/along/navi-product-debt.md");
     const roadmap = await readRepoText("docs/along/roadmaps/navi-post-alpha-roadmap.md");

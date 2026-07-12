@@ -38,9 +38,34 @@ describe("Navi doctor", () => {
     const f = await fixture(); const legacy = { selector: "along-working-thread@personal", pluginName: "along-working-thread", installed: true, enabled: true, raw: "legacy" };
     const legacyReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ kind: "legacy", legacy, raw: "legacy" }) });
     const conflictReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ ...current(f.source), kind: "conflict", legacy }) });
-    expect(renderNaviDoctorReport(legacyReport)).toContain("along-working-thread@personal");
-    expect(renderNaviDoctorReport(legacyReport)).toContain("Install and enable navi@navi-source");
+    for (const output of [legacyReport, conflictReport].map((report) => report.checks.find((check) => check.id === "plugin")?.repair ?? "")) {
+      const migrationActions = [
+        "navi@navi-source",
+        "navi init",
+        "navi init --write",
+        "validate the target project",
+        "along-working-thread@personal",
+        "navi doctor",
+        "navi setup",
+      ];
+      let priorIndex = -1;
+      for (const action of migrationActions) {
+        const index = output.indexOf(action);
+        expect(index).toBeGreaterThan(priorIndex);
+        priorIndex = index;
+      }
+    }
     expect(conflictReport.checks.find((check) => check.id === "plugin")?.status).toBe("fail");
+  });
+
+  it("warns when one inspectable plugin path has no separate cache evidence", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
+    const packageCache = report.checks.find((check) => check.id === "package-cache");
+    expect(packageCache?.status).toBe("warn");
+    expect(packageCache?.summary).toContain("no separate cache evidence");
+    expect(packageCache?.summary).not.toContain("pass");
+    expect(packageCache?.summary).not.toContain("drift");
   });
 
   it("reports canonical CODEX_HOME aliases and rejects a symlinked AGENTS.md", async () => {
