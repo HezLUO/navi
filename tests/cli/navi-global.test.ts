@@ -253,6 +253,8 @@ describe("Navi global setup", () => {
     ["dual installation", { kind: "conflict", current: enabledInstallation.current, legacy: { selector: "along-working-thread@personal", pluginName: "along-working-thread", installed: true, enabled: true, raw: "legacy" }, raw: "both" }, /both Navi and the legacy plugin/i],
     ["disabled current", { kind: "missing", current: { ...enabledInstallation.current, enabled: false }, raw: "disabled" }, /enable the current plugin/i],
     ["uninspectable list", { kind: "uninspectable", raw: "failure" }, /could not inspect codex plugins/i],
+    ["alternate Navi selector", { kind: "conflict", current: { selector: "navi@other", pluginName: "navi", marketplaceName: "other", installed: true, enabled: true, raw: "alternate" }, raw: "alternate", diagnostic: "Navi is installed from a non-authoritative selector: navi@other." }, /Remove the non-authoritative Navi selector navi@other/i],
+    ["duplicate current selectors", { kind: "conflict", current: enabledInstallation.current, raw: "duplicate", diagnostic: "Navi is installed more than once from navi@navi-source." }, /Remove duplicate navi@navi-source entries/i],
   ] as const)("refuses %s installation preflight with repair text", async (_name, installation, repair) => {
     const codexHome = await makeTempCodexHome();
     const output: string[] = [];

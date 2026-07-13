@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildNaviDoctorReport, renderNaviDoctorReport, runNaviDoctorCli } from "../../src/cli/navi-doctor";
 import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
+import { renderAgentsBlock } from "../../src/cli/navi-init";
 import { type NaviInstallationStatus } from "../../src/cli/navi-installation";
 
 const roots: string[] = [];
@@ -56,6 +57,60 @@ describe("Navi doctor", () => {
       }
     }
     expect(conflictReport.checks.find((check) => check.id === "plugin")?.status).toBe("fail");
+  });
+
+  it.each([
+    [
+      "an alternate Navi selector",
+      {
+        kind: "conflict" as const,
+        current: { selector: "navi@other", pluginName: "navi", marketplaceName: "other", installed: true, enabled: true, raw: "alternate" },
+        raw: "alternate",
+        diagnostic: "Navi is installed from a non-authoritative selector: navi@other.",
+      },
+      "non-authoritative selector: navi@other",
+      "Remove the non-authoritative Navi selector navi@other",
+    ],
+    [
+      "duplicate current selectors",
+      {
+        kind: "conflict" as const,
+        current: { selector: "navi@navi-source", pluginName: "navi", marketplaceName: "navi-source", installed: true, enabled: true, raw: "duplicate" },
+        raw: "duplicate",
+        diagnostic: "Navi is installed more than once from navi@navi-source.",
+      },
+      "installed more than once from navi@navi-source",
+      "Remove duplicate navi@navi-source entries",
+    ],
+  ])("reports %s without inventing a legacy plugin", async (_name, installation, summary, repair) => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => installation },
+    );
+    const check = report.checks.find((candidate) => candidate.id === "plugin");
+
+    expect(check?.summary).toContain(summary);
+    expect(check?.repair).toContain(repair);
+    expect(check?.summary).not.toContain("legacy plugin");
+    expect(check?.repair).not.toContain("along-working-thread");
+  });
+
+  it("uses init's managed-block recognition instead of accepting damaged project markers", async () => {
+    const f = await fixture();
+    await fs.writeFile(
+      path.join(f.projectDir, "AGENTS.md"),
+      `${renderAgentsBlock().replace("Navi Progress Map Rules", "Navi Progress Map Rulez")}\n`,
+    );
+
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source) },
+    );
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "warn", repair: expect.stringContaining("navi init") });
+    expect(check?.summary).toContain("damaged or unrecognized");
   });
 
   it("warns when one inspectable plugin path has no separate cache evidence", async () => {

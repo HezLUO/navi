@@ -133,6 +133,11 @@ class NaviManagedBlockError extends Error {
   }
 }
 
+export type NaviManagedBlockRecognition =
+  | { kind: "absent" }
+  | { kind: "recognized"; start: number; end: number; content: string }
+  | { kind: "unsafe" };
+
 export function resolveTargetPath(targetDir: string, relativePath: string): string {
   const resolvedTarget = path.resolve(targetDir);
 
@@ -329,9 +334,9 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
     };
   }
 
-  const managedBlock = findNaviManagedBlock(existing);
+  const managedBlock = recognizeNaviManagedBlock(existing);
 
-  if (managedBlock === undefined) {
+  if (managedBlock.kind === "absent") {
     const separator = existing.endsWith("\n") ? "\n" : "\n\n";
     return {
       kind: "modify",
@@ -343,6 +348,12 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
     };
   }
 
+  if (managedBlock.kind === "unsafe") {
+    throw new NaviManagedBlockError(
+      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
+    );
+  }
+
   if (managedBlock.content === block) {
     return {
       kind: "skip",
@@ -350,12 +361,6 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
       absolutePath: agentsPath,
       summary: "The current Navi-managed trigger block already exists.",
     };
-  }
-
-  if (managedBlock.content !== KNOWN_NAVI_AGENTS_BLOCKS[0]) {
-    throw new NaviManagedBlockError(
-      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
-    );
   }
 
   return {
@@ -368,30 +373,29 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
   };
 }
 
-function findNaviManagedBlock(existing: string): { start: number; end: number; content: string } | undefined {
+export function recognizeNaviManagedBlock(existing: string): NaviManagedBlockRecognition {
   const starts = countOccurrences(existing, NAVI_AGENTS_BLOCK_START);
   const ends = countOccurrences(existing, NAVI_AGENTS_BLOCK_END);
 
   if (starts === 0 && ends === 0) {
-    return undefined;
+    return { kind: "absent" };
   }
 
   if (starts !== 1 || ends !== 1) {
-    throw new NaviManagedBlockError(
-      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
-    );
+    return { kind: "unsafe" };
   }
 
   const start = existing.indexOf(NAVI_AGENTS_BLOCK_START);
   const markerEnd = existing.indexOf(NAVI_AGENTS_BLOCK_END, start);
   if (markerEnd === -1) {
-    throw new NaviManagedBlockError(
-      "Refusing to modify an unrecognized or incomplete managed Navi block in AGENTS.md.",
-    );
+    return { kind: "unsafe" };
   }
 
   const end = markerEnd + NAVI_AGENTS_BLOCK_END.length;
-  return { start, end, content: existing.slice(start, end) };
+  const content = existing.slice(start, end);
+  return KNOWN_NAVI_AGENTS_BLOCKS.includes(content as typeof KNOWN_NAVI_AGENTS_BLOCKS[number])
+    ? { kind: "recognized", start, end, content }
+    : { kind: "unsafe" };
 }
 
 function countOccurrences(text: string, needle: string): number {

@@ -118,7 +118,9 @@ function pluginAvailability(status: NaviInstallationStatus): string {
     case "legacy":
       return `legacy-only (${status.legacy?.selector ?? "along-working-thread"})`;
     case "conflict":
-      return "conflicted by both Navi and legacy installations";
+      return status.legacy
+        ? "conflicted by both Navi and legacy installations"
+        : `conflicted: ${status.diagnostic ?? "Navi plugin selectors conflict"}`;
     case "uninspectable":
       return "uninspectable";
     case "missing":
@@ -131,7 +133,16 @@ function pluginRepairText(status: NaviInstallationStatus): string {
     case "legacy":
       return `Navi setup requires navi@navi-source; migrate the legacy plugin ${status.legacy?.selector ?? "along-working-thread"} first.`;
     case "conflict":
-      return "Navi setup is blocked because both Navi and the legacy plugin are installed; remove the legacy plugin first.";
+      if (status.legacy) {
+        return "Navi setup is blocked because both Navi and the legacy plugin are installed; remove the legacy plugin first.";
+      }
+      if (status.diagnostic?.includes("non-authoritative selector")) {
+        return `Remove the non-authoritative Navi selector ${status.current?.selector ?? "reported by codex plugin list"}, then install and enable navi@navi-source before rerunning navi setup.`;
+      }
+      if (status.diagnostic?.includes("more than once")) {
+        return "Remove duplicate navi@navi-source entries so exactly one installed and enabled current selector remains, then rerun navi setup.";
+      }
+      return "Resolve the reported Navi plugin selector conflict, then rerun navi setup.";
     case "uninspectable":
       return "Navi setup could not inspect codex plugins; repair codex plugin list and retry.";
     case "missing":

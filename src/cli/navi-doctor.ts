@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertUnlinkedArtifact, resolveCanonicalCodexHome } from "./navi-codex-home";
 import { NAVI_GLOBAL_BLOCK_END, NAVI_GLOBAL_BLOCK_START, planGlobalAgentsContent } from "./navi-global";
-import { NAVI_AGENTS_BLOCK_END, NAVI_AGENTS_BLOCK_START } from "./navi-init";
+import { recognizeNaviManagedBlock } from "./navi-init";
 import { inspectNaviInstallation, type NaviInstallationStatus } from "./navi-installation";
 import { inspectTransaction } from "./navi-transaction";
 
@@ -39,6 +39,15 @@ const PROJECT_REPAIR = "Run navi init, review the preview, then run navi init --
 const SOURCE_REPAIR = "Install and enable navi@navi-source before running navi setup --write.";
 function migrationRepair(legacySelector: string): string {
   return `Install and enable navi@navi-source, preview an exact project trigger upgrade with navi init, run navi init --write only after approval, validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
+}
+function selectorConflictRepair(status: NaviInstallationStatus): string {
+  if (status.diagnostic?.includes("non-authoritative selector")) {
+    return `Remove the non-authoritative Navi selector ${status.current?.selector ?? "reported by codex plugin list"}, then install and enable navi@navi-source before rerunning navi doctor and navi setup.`;
+  }
+  if (status.diagnostic?.includes("more than once")) {
+    return "Remove duplicate navi@navi-source entries so exactly one installed and enabled current selector remains, then rerun navi doctor and navi setup.";
+  }
+  return "Resolve the reported Navi plugin selector conflict, then rerun navi doctor and navi setup.";
 }
 
 export async function buildNaviDoctorReport(options: NaviDoctorOptions = {}, dependencies: NaviDoctorDependencies = {}): Promise<NaviDoctorReport> {
@@ -94,7 +103,9 @@ function buildPluginCheck(status: NaviInstallationStatus): DoctorCheck {
   switch (status.kind) {
     case "current": return { id: "plugin", status: "pass", summary: `Navi plugin is installed and enabled${status.current?.version ? ` (${status.current.version}).` : "."}` };
     case "legacy": return { id: "plugin", status: "fail", summary: `Only legacy plugin ${status.legacy?.selector ?? "along-working-thread"} is installed.`, repair: migrationRepair(status.legacy?.selector ?? "along-working-thread") };
-    case "conflict": return { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy?.selector ?? "along-working-thread"} are both installed.`, repair: migrationRepair(status.legacy?.selector ?? "along-working-thread") };
+    case "conflict": return status.legacy
+      ? { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy.selector} are both installed.`, repair: migrationRepair(status.legacy.selector) }
+      : { id: "plugin", status: "fail", summary: `Navi plugin installation conflict${status.diagnostic ? `: ${status.diagnostic}` : "."}`, repair: selectorConflictRepair(status) };
     case "uninspectable": return { id: "plugin", status: "fail", summary: `Navi plugin installation could not be inspected${status.diagnostic ? `: ${status.diagnostic}` : "."}`, repair: "Repair codex plugin list, then rerun navi doctor." };
     case "missing": return { id: "plugin", status: "fail", summary: "Navi plugin is missing or disabled.", repair: SOURCE_REPAIR };
   }
@@ -122,8 +133,9 @@ async function buildPackageCacheCheck(sourcePath: string | undefined): Promise<D
 }
 async function buildProjectInitCheck(projectDir: string): Promise<DoctorCheck> {
   const content = await readOptional(path.join(projectDir, "AGENTS.md"));
-  if (content !== undefined && hasSingleCompleteMarkerPair(content, NAVI_AGENTS_BLOCK_START, NAVI_AGENTS_BLOCK_END)) return { id: "project-init", status: "pass", summary: "This project has project-local Navi guidance." };
-  return { id: "project-init", status: "warn", summary: "This project does not have project-local Navi guidance.", repair: PROJECT_REPAIR };
+  const recognition = content === undefined ? { kind: "absent" as const } : recognizeNaviManagedBlock(content);
+  if (recognition.kind === "recognized") return { id: "project-init", status: "pass", summary: "This project has project-local Navi guidance." };
+  return { id: "project-init", status: "warn", summary: recognition.kind === "unsafe" ? "This project has damaged or unrecognized project-local Navi guidance." : "This project does not have project-local Navi guidance.", repair: PROJECT_REPAIR };
 }
 async function buildTransactionCheck(codexHome: string): Promise<DoctorCheck> {
   const transaction = await inspectTransaction(codexHome);
@@ -136,4 +148,3 @@ async function buildTransactionCheck(codexHome: string): Promise<DoctorCheck> {
 }
 async function readOptional(filePath: string): Promise<string | undefined> { try { return await fs.readFile(filePath, "utf8"); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; } }
 async function isDirectory(directory: string): Promise<boolean> { try { return (await fs.lstat(directory)).isDirectory(); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return false; throw error; } }
-function hasSingleCompleteMarkerPair(content: string, startMarker: string, endMarker: string): boolean { const start = content.indexOf(startMarker); return start !== -1 && start === content.lastIndexOf(startMarker) && content.indexOf(endMarker, start) !== -1 && content.indexOf(endMarker) === content.lastIndexOf(endMarker); }
