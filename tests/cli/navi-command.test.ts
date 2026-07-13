@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -41,6 +41,33 @@ describe("Navi command dispatcher", () => {
         expect(result.stderr).not.toContain("ERR_MODULE_NOT_FOUND");
         expect(result.stderr).not.toContain("along start");
       }
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("runs the source-alpha npm command through its executable wrapper from a spaced path", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "navi-source-alpha-"));
+    const source = path.join(root, "Navi source alpha");
+    const project = path.join(root, "project");
+    const codexHome = path.join(root, "codex-home");
+    const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+
+    mkdirSync(project);
+    mkdirSync(codexHome);
+    symlinkSync(process.cwd(), source, "dir");
+
+    try {
+      const result = spawnSync(npm, ["--prefix", source, "run", "navi", "--", "init", "--target", project], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env, CODEX_HOME: codexHome },
+      });
+
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain("Navi init preview");
+      expect(result.stderr).not.toContain("ERR_MODULE_NOT_FOUND");
+      expect(result.stderr).not.toContain("along start");
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
