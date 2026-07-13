@@ -76,6 +76,14 @@ function setupBlockReason(plan: GlobalSetupPlan): string | undefined {
     return undefined;
   }
 
+  if (plan.transaction.kind === "live-lock") {
+    return "Another Navi setup transaction is active; wait for it to finish and retry.";
+  }
+
+  if (plan.transaction.kind === "conflict") {
+    return `Resolve the Navi setup transaction manually, then retry. ${plan.transaction.diagnostic}`;
+  }
+
   if (plan.action.kind === "conflict") {
     return `${plan.action.summary} Repair the Navi-managed AGENTS.md block manually, then rerun navi setup.`;
   }
@@ -88,16 +96,7 @@ function setupBlockReason(plan: GlobalSetupPlan): string | undefined {
     return pluginRepairText(plan.plugin);
   }
 
-  switch (plan.transaction.kind) {
-    case "none":
-    case "recoverable-restore":
-    case "recoverable-cleanup":
-      return undefined;
-    case "live-lock":
-      return "Another Navi setup transaction is active; wait for it to finish and retry.";
-    case "conflict":
-      return `Resolve the Navi setup transaction manually, then retry. ${plan.transaction.diagnostic}`;
-  }
+  return undefined;
 }
 
 /** @deprecated Compatibility adapter for doctor callers pending its Task 7 migration. */

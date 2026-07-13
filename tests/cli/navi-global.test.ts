@@ -242,6 +242,26 @@ describe("Navi global setup", () => {
     expect(renderGlobalSetupPlan(conflictedActionPlan)).not.toContain("Repair the Navi-managed");
   });
 
+  it.each([
+    ["live lock", { kind: "live-lock" as const, lockPath: "/tmp/navi-lock" }, "Another Navi setup transaction is active"],
+    ["transaction conflict", { kind: "conflict" as const, diagnostic: "retained transaction evidence" }, "Resolve the Navi setup transaction manually"],
+  ])("prioritizes a %s over action and plugin dry-run advice", async (_name, transaction, expected) => {
+    const codexHome = await makeTempCodexHome();
+    const plan = await buildGlobalSetupPlan({ codexHome, write: false }, { inspectInstallation: async () => missingInstallation });
+    const combinedPlan = {
+      ...plan,
+      transaction,
+      action: { kind: "conflict" as const, summary: "user-edited managed block" },
+    };
+
+    const rendered = renderGlobalSetupPlan(combinedPlan);
+
+    expect(rendered).toContain(expected);
+    expect(rendered).not.toContain("requires navi@navi-source");
+    expect(rendered).not.toContain("Repair the Navi-managed");
+    expect(rendered).not.toContain("Apply with:");
+  });
+
   it("recovers a pending transaction before plugin or planned-action preflight", async () => {
     const codexHome = await makeTempCodexHome();
     const transactionDir = path.join(codexHome, ".AGENTS.md.navi-transaction-recover");
