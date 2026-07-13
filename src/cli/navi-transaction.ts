@@ -7,7 +7,7 @@ export type TransactionOperation = "create" | "modify" | "remove";
 export type TransactionStage = "prepared" | "backed-up" | "published";
 export type TransactionCheckpoint = "after-plan-verification" | "after-backup-move" | "before-publish" | "after-publish" | "before-cleanup";
 export interface TransactionCheckpointPaths { targetPath: string; transactionDir: string; manifestPath: string; stagePath: string; backupPath: string; lockPath: string; }
-export interface TransactionDependencies { isProcessAlive?: (pid: number) => Promise<boolean | undefined>; checkpoint?: (name: TransactionCheckpoint, paths: TransactionCheckpointPaths) => Promise<void>; }
+export interface TransactionDependencies { isProcessAlive?: (pid: number) => Promise<boolean | undefined>; checkpoint?: (name: TransactionCheckpoint, paths: TransactionCheckpointPaths) => Promise<void>; syncDirectory?: (directory: string) => Promise<void>; }
 export interface NaviTransactionManifest { version: 1; id: string; operation: TransactionOperation; target: "AGENTS.md"; stage: TransactionStage; expectedHash?: string; desiredHash?: string; pid: number; createdAt: string; }
 export interface NaviTransactionLock { version: 1; id: string; pid: number; }
 /** @deprecated Compatibility name for callers that consumed the prior manifest type. */
@@ -25,8 +25,9 @@ const digest = (value: string) => createHash("sha256").update(value).digest("hex
 const isHash = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/i.test(value);
 const artifact = (root: string, name: string) => confinedCodexPath(root, name);
 async function syncDirectory(root: string) { const handle = await fs.open(root, "r"); try { await handle.sync(); } finally { await handle.close(); } }
-async function writeExclusive(file: string, text: string, mode = 0o600) { const handle = await fs.open(file, "wx", mode); try { await handle.writeFile(text); await handle.sync(); } finally { await handle.close(); } }
-async function replaceOwned(file: string, text: string) { const handle = await fs.open(file, "r+"); try { await handle.truncate(0); await handle.writeFile(text); await handle.sync(); } finally { await handle.close(); } }
+async function durabilityBarrier(directory: string, dependencies: TransactionDependencies) { await (dependencies.syncDirectory ?? syncDirectory)(directory); }
+async function writeExclusive(file: string, text: string, dependencies: TransactionDependencies, mode = 0o600) { const handle = await fs.open(file, "wx", mode); try { await handle.writeFile(text); await handle.sync(); } finally { await handle.close(); } await durabilityBarrier(path.dirname(file), dependencies); }
+async function replaceOwned(file: string, text: string, dependencies: TransactionDependencies) { const handle = await fs.open(file, "r+"); try { await handle.truncate(0); await handle.writeFile(text); await handle.sync(); } finally { await handle.close(); } await durabilityBarrier(path.dirname(file), dependencies); }
 async function content(file: string): Promise<string | undefined> { try { if (await assertUnlinkedArtifact(file) !== "file") return undefined; return await fs.readFile(file, "utf8"); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; } }
 function paths(root: string, id: string): TransactionCheckpointPaths { const transactionDir = artifact(root, `${PREFIX}${id}`); return { targetPath: artifact(root, "AGENTS.md"), transactionDir, manifestPath: path.join(transactionDir, "manifest.json"), stagePath: path.join(transactionDir, "stage"), backupPath: path.join(transactionDir, "backup"), lockPath: artifact(root, LOCK) }; }
 function assertManifest(value: unknown, expectedId: string): asserts value is NaviTransactionManifest {
@@ -44,31 +45,63 @@ async function findManifest(root: string): Promise<{ record: NaviTransactionMani
   const p = paths(root, id); const raw = await content(p.manifestPath); if (!raw) throw new Error("Transaction manifest is missing."); let record: unknown; try { record = JSON.parse(raw); } catch { throw new Error("Transaction manifest is not valid JSON."); } assertManifest(record, id); return { record, manifestPath: p.manifestPath, paths: p };
 }
 async function alive(pid: number, dependencies: TransactionDependencies) { if (dependencies.isProcessAlive) return dependencies.isProcessAlive(pid); try { process.kill(pid, 0); return true; } catch (error) { return (error as NodeJS.ErrnoException).code === "ESRCH" ? false : undefined; } }
-async function clean(root: string, p: TransactionCheckpointPaths) { await fs.rm(p.transactionDir, { recursive: true }); const lock = await content(p.lockPath); if (lock) { let parsed: NaviTransactionLock; try { parsed = JSON.parse(lock) as NaviTransactionLock; } catch { throw new Error("Transaction lock is malformed."); } if (parsed.version !== 1 || parsed.id !== path.basename(p.transactionDir).slice(PREFIX.length) || !Number.isInteger(parsed.pid) || parsed.pid <= 0) throw new Error("Transaction lock does not match cleanup evidence."); await fs.unlink(p.lockPath); } await syncDirectory(root); }
+function assertLock(value: unknown, record: NaviTransactionManifest): asserts value is NaviTransactionLock {
+  const lock = value as Partial<NaviTransactionLock>;
+  if (lock.version !== 1 || lock.id !== record.id || lock.pid !== record.pid || !Number.isInteger(lock.pid) || lock.pid <= 0) throw new Error("Transaction lock does not match its manifest.");
+}
+async function clean(root: string, p: TransactionCheckpointPaths, record: NaviTransactionManifest, dependencies: TransactionDependencies) {
+  const lock = await content(p.lockPath);
+  if (lock !== undefined) {
+    let parsed: unknown;
+    try { parsed = JSON.parse(lock); } catch { throw new Error("Transaction lock is malformed."); }
+    assertLock(parsed, record);
+  }
+  await fs.rm(p.transactionDir, { recursive: true });
+  await durabilityBarrier(root, dependencies);
+  if (lock !== undefined) { await fs.unlink(p.lockPath); await durabilityBarrier(root, dependencies); }
+}
 
 export async function inspectTransaction(root: string, dependencies: TransactionDependencies = {}): Promise<TransactionInspection> {
   let found: Awaited<ReturnType<typeof findManifest>>; try { found = await findManifest(root); } catch (error) { return { kind: "conflict", diagnostic: (error as Error).message }; }
   const lockPath = artifact(root, LOCK); let lockRaw: string | undefined; try { lockRaw = await content(lockPath); } catch (error) { return { kind: "conflict", diagnostic: (error as Error).message }; }
   if (lockRaw !== undefined) {
-    let lock: NaviTransactionLock; try { lock = JSON.parse(lockRaw) as NaviTransactionLock; } catch { return { kind: "conflict", diagnostic: "Transaction lock is malformed." }; }
-    if (lock.version !== 1 || !Number.isInteger(lock.pid) || lock.pid <= 0 || !found || lock.id !== found.record.id || lock.pid !== found.record.pid) return { kind: "conflict", diagnostic: "Transaction lock does not match its manifest.", ...(found ? { record: found.record, manifestPath: found.manifestPath } : {}) };
-    const running = await alive(lock.pid, dependencies); if (running === true) return { kind: "live-lock", lockPath }; if (running === undefined) return { kind: "conflict", diagnostic: "Transaction lock liveness cannot be determined.", record: found.record, manifestPath: found.manifestPath };
+    let lock: unknown; try { lock = JSON.parse(lockRaw); } catch { return { kind: "conflict", diagnostic: "Transaction lock is malformed." }; }
+    try { if (!found) throw new Error("Transaction lock does not match its manifest."); assertLock(lock, found.record); } catch { return { kind: "conflict", diagnostic: "Transaction lock does not match its manifest.", ...(found ? { record: found.record, manifestPath: found.manifestPath } : {}) }; }
+    const pairedLock = lock as NaviTransactionLock;
+    const running = await alive(pairedLock.pid, dependencies); if (running === true) return { kind: "live-lock", lockPath }; if (running === undefined) return { kind: "conflict", diagnostic: "Transaction lock liveness cannot be determined.", record: found.record, manifestPath: found.manifestPath };
   }
   if (!found) return { kind: "none" }; const { record, manifestPath, paths: p } = found; const target = await content(p.targetPath); const stage = await content(p.stagePath); const backup = await content(p.backupPath);
   const conflict = (diagnostic: string): TransactionInspection => ({ kind: "conflict", diagnostic, record, manifestPath });
-  if (record.operation === "create") { if (stage === undefined || digest(stage) !== record.desiredHash) return conflict("Create transaction stage is missing or has unexpected content."); if (record.stage === "prepared" && target === undefined) return { kind: "recoverable-cleanup", record, manifestPath }; if (record.stage === "published" && target !== undefined && digest(target) === record.desiredHash) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Create transaction requires manual resolution."); }
-  if (record.operation === "modify") { if (stage === undefined || digest(stage) !== record.desiredHash) return conflict("Modify transaction stage is missing or has unexpected content."); if (record.stage === "prepared" && target !== undefined && digest(target) === record.expectedHash) return { kind: "recoverable-cleanup", record, manifestPath }; if (backup === undefined || digest(backup) !== record.expectedHash) return conflict("Transaction backup is missing or has unexpected content."); if (record.stage === "backed-up" && target === undefined) return { kind: "recoverable-restore", record, manifestPath }; if (record.stage === "published" && target !== undefined && digest(target) === record.desiredHash) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Transaction target has unexpected content."); }
-  if (record.stage === "prepared" && target !== undefined && digest(target) === record.expectedHash) return { kind: "recoverable-cleanup", record, manifestPath }; if (backup === undefined || digest(backup) !== record.expectedHash) return conflict("Transaction backup is missing or has unexpected content."); if (record.stage === "published" && target === undefined) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Transaction target has unexpected content.");
+  if (record.operation === "create") { if (stage === undefined || digest(stage) !== record.desiredHash) return conflict("Create transaction stage is missing or has unexpected content."); if (target === undefined || digest(target) === record.desiredHash) return { kind: "recoverable-cleanup", record, manifestPath }; return conflict("Create transaction requires manual resolution."); }
+  if (record.operation === "modify") {
+    if (stage === undefined || digest(stage) !== record.desiredHash) return conflict("Modify transaction stage is missing or has unexpected content.");
+    if (record.stage === "prepared" && target !== undefined && digest(target) === record.expectedHash) return { kind: "recoverable-cleanup", record, manifestPath };
+    if (backup === undefined || digest(backup) !== record.expectedHash) return conflict("Transaction backup is missing or has unexpected content.");
+    if (target === undefined && record.stage !== "published") return { kind: "recoverable-restore", record, manifestPath };
+    if (target !== undefined && digest(target) === record.desiredHash) return { kind: "recoverable-cleanup", record, manifestPath };
+    return conflict("Transaction target has unexpected content.");
+  }
+  if (record.stage === "prepared" && target !== undefined && digest(target) === record.expectedHash) return { kind: "recoverable-cleanup", record, manifestPath };
+  if (backup === undefined || digest(backup) !== record.expectedHash) return conflict("Transaction backup is missing or has unexpected content.");
+  if (target === undefined) return record.stage === "prepared" ? { kind: "recoverable-restore", record, manifestPath } : { kind: "recoverable-cleanup", record, manifestPath };
+  return conflict("Transaction target has unexpected content.");
 }
-export async function recoverTransaction(root: string, inspection: RecoverableInspection): Promise<void> { const p = paths(root, inspection.record.id); if (inspection.kind === "recoverable-restore") { if (await content(p.targetPath) !== undefined) throw new Error("Cannot restore over an existing AGENTS.md."); await fs.link(p.backupPath, p.targetPath); await syncDirectory(root); } await clean(root, p); }
+export async function recoverTransaction(root: string, inspection: RecoverableInspection): Promise<void> {
+  const current = await inspectTransaction(root);
+  if (current.kind !== inspection.kind || current.record.id !== inspection.record.id || current.manifestPath !== inspection.manifestPath) throw new Error("Transaction recovery evidence changed; resolve manually.");
+  const p = paths(root, current.record.id);
+  if (current.kind === "recoverable-restore") { if (await content(p.targetPath) !== undefined) throw new Error("Transaction recovery evidence changed; resolve manually."); await fs.link(p.backupPath, p.targetPath); await syncDirectory(root); }
+  await clean(root, p, current.record, {});
+}
 export async function applyAgentsTransaction(input: ApplyTransactionInput): Promise<void> {
-  const root = path.resolve(input.root); const id = input.id ?? randomUUID(); if (path.basename(id) !== id) throw new Error("Transaction id must be a basename."); const p = paths(root, id); const deps = input.dependencies ?? {}; await fs.mkdir(p.transactionDir, { mode: 0o700 });
-  try { await writeExclusive(p.lockPath, JSON.stringify({ version: 1, id, pid: process.pid } satisfies NaviTransactionLock)); const initial = await content(p.targetPath); if ((input.operation === "create" && initial !== undefined) || (input.operation !== "create" && initial !== input.expectedContent)) throw new Error("Global AGENTS.md changed after setup was planned."); if (input.operation !== "remove" && input.desiredContent === undefined) throw new Error("Transaction desired content is required."); const record: NaviTransactionManifest = { version: 1, id, operation: input.operation, target: "AGENTS.md", pid: process.pid, ...(input.operation === "create" ? { desiredHash: digest(input.desiredContent!) } : { expectedHash: digest(input.expectedContent ?? ""), ...(input.operation === "modify" ? { desiredHash: digest(input.desiredContent!) } : {}) }), stage: "prepared", createdAt: new Date().toISOString() }; if (input.operation !== "remove") await writeExclusive(p.stagePath, input.desiredContent!); await writeExclusive(p.manifestPath, JSON.stringify(record)); await deps.checkpoint?.("after-plan-verification", p);
-    if (input.operation !== "create") { if (await content(p.targetPath) !== input.expectedContent) throw new Error("Global AGENTS.md changed after setup was planned."); await fs.rename(p.targetPath, p.backupPath); if (await content(p.backupPath) !== input.expectedContent) throw new Error("Global AGENTS.md backup has unexpected content."); record.stage = "backed-up"; await replaceOwned(p.manifestPath, JSON.stringify(record)); await deps.checkpoint?.("after-backup-move", p); }
-    if (input.operation !== "remove") { await deps.checkpoint?.("before-publish", p); if (await content(p.targetPath) !== undefined) throw new Error("Global AGENTS.md appeared before publication."); await fs.link(p.stagePath, p.targetPath); if (await content(p.targetPath) !== input.desiredContent) throw new Error("Global AGENTS.md publication has unexpected content."); }
-    record.stage = "published"; await replaceOwned(p.manifestPath, JSON.stringify(record)); await deps.checkpoint?.("after-publish", p); await deps.checkpoint?.("before-cleanup", p);
+  const root = path.resolve(input.root); const id = input.id ?? randomUUID(); if (path.basename(id) !== id) throw new Error("Transaction id must be a basename."); const p = paths(root, id); const deps = input.dependencies ?? {}; let lockOwned = false;
+  await fs.mkdir(p.transactionDir, { mode: 0o700 }); await durabilityBarrier(root, deps);
+  try { await writeExclusive(p.lockPath, JSON.stringify({ version: 1, id, pid: process.pid } satisfies NaviTransactionLock), deps); lockOwned = true; const initial = await content(p.targetPath); if ((input.operation === "create" && initial !== undefined) || (input.operation !== "create" && initial !== input.expectedContent)) throw new Error("Global AGENTS.md changed after setup was planned."); if (input.operation !== "remove" && input.desiredContent === undefined) throw new Error("Transaction desired content is required."); const record: NaviTransactionManifest = { version: 1, id, operation: input.operation, target: "AGENTS.md", pid: process.pid, ...(input.operation === "create" ? { desiredHash: digest(input.desiredContent!) } : { expectedHash: digest(input.expectedContent ?? ""), ...(input.operation === "modify" ? { desiredHash: digest(input.desiredContent!) } : {}) }), stage: "prepared", createdAt: new Date().toISOString() }; if (input.operation !== "remove") await writeExclusive(p.stagePath, input.desiredContent!, deps); await writeExclusive(p.manifestPath, JSON.stringify(record), deps); await deps.checkpoint?.("after-plan-verification", p);
+    if (input.operation !== "create") { if (await content(p.targetPath) !== input.expectedContent) throw new Error("Global AGENTS.md changed after setup was planned."); await fs.rename(p.targetPath, p.backupPath); await durabilityBarrier(root, deps); if (await content(p.backupPath) !== input.expectedContent) throw new Error("Global AGENTS.md backup has unexpected content."); record.stage = "backed-up"; await replaceOwned(p.manifestPath, JSON.stringify(record), deps); await deps.checkpoint?.("after-backup-move", p); }
+    if (input.operation !== "remove") { await deps.checkpoint?.("before-publish", p); if (await content(p.targetPath) !== undefined) throw new Error("Global AGENTS.md appeared before publication."); await fs.link(p.stagePath, p.targetPath); await durabilityBarrier(root, deps); if (await content(p.targetPath) !== input.desiredContent) throw new Error("Global AGENTS.md publication has unexpected content."); }
+    record.stage = "published"; await replaceOwned(p.manifestPath, JSON.stringify(record), deps); await deps.checkpoint?.("after-publish", p); await deps.checkpoint?.("before-cleanup", p);
     if (input.operation !== "remove" && await content(p.targetPath) !== input.desiredContent) throw new Error("Global AGENTS.md changed after publication.");
     if (input.operation === "remove" && await content(p.targetPath) !== undefined) throw new Error("Global AGENTS.md reappeared after removal.");
-    await clean(root, p);
-  } catch (error) { await syncDirectory(root); throw error; }
+    await clean(root, p, record, deps);
+  } catch (error) { if (!lockOwned) { try { await fs.rmdir(p.transactionDir); await durabilityBarrier(root, deps); } catch {} } else await durabilityBarrier(root, deps); throw error; }
 }

@@ -52,6 +52,64 @@ describe("Navi cooperative global transactions", () => {
     if (operation === "remove" && stage === "published" && result === "cleanup") await expect(fs.access(path.join(rootPath, "AGENTS.md"))).rejects.toThrow();
   });
 
+  it.each([
+    ["create", "desired", "prepared", "cleanup"],
+    ["modify", "missing", "prepared", "restore"],
+    ["modify", "desired", "backed-up", "cleanup"],
+    ["remove", "missing", "prepared", "restore"],
+    ["remove", "missing", "backed-up", "cleanup"],
+  ] as const)("recovers a forward stage-lag snapshot: %s %s %s", async (operation, targetState, stage, result) => {
+    const rootPath = await root();
+    const tx = await transaction(rootPath, { operation, stage, ...(operation === "create" ? { desiredHash: sha("desired") } : { expectedHash: sha("expected"), ...(operation === "modify" ? { desiredHash: sha("desired") } : {}) }) });
+    if (operation !== "create") await fs.writeFile(path.join(tx, "backup"), "expected");
+    if (operation !== "remove") await fs.writeFile(path.join(tx, "stage"), "desired");
+    if (targetState !== "missing") await fs.writeFile(path.join(rootPath, "AGENTS.md"), targetState);
+
+    const inspection = await inspectTransaction(rootPath, { isProcessAlive: async () => false });
+    expect(inspection.kind).toBe(result === "restore" ? "recoverable-restore" : "recoverable-cleanup");
+  });
+
+  it("revalidates recovery evidence before restoring and leaves a later cooperative edit intact", async () => {
+    const rootPath = await root();
+    const tx = await transaction(rootPath, { operation: "modify", expectedHash: sha("expected"), desiredHash: sha("desired"), stage: "backed-up" });
+    await fs.writeFile(path.join(tx, "backup"), "expected");
+    await fs.writeFile(path.join(tx, "stage"), "desired");
+    const inspection = await inspectTransaction(rootPath, { isProcessAlive: async () => false });
+    expect(inspection.kind).toBe("recoverable-restore");
+    if (inspection.kind !== "recoverable-restore") throw new Error("expected recovery");
+
+    await fs.writeFile(path.join(rootPath, "AGENTS.md"), "later cooperative edit");
+    await expect(recoverTransaction(rootPath, inspection)).rejects.toThrow(/recovery evidence changed|manual resolution/i);
+    await expect(fs.readFile(path.join(rootPath, "AGENTS.md"), "utf8")).resolves.toBe("later cooperative edit");
+    await expect(fs.access(tx)).resolves.toBeUndefined();
+  });
+
+  it("removes its empty transaction directory when it loses the cooperative lock", async () => {
+    const rootPath = await root();
+    await fs.writeFile(path.join(rootPath, ".AGENTS.md.navi-lock"), JSON.stringify({ version: 1, id: "winner", pid: process.pid }));
+
+    await expect(applyAgentsTransaction({ root: rootPath, operation: "create", desiredContent: "desired", id: "loser" })).rejects.toThrow();
+    await expect(fs.access(dir(rootPath, "loser"))).rejects.toThrow();
+    await expect(fs.readFile(path.join(rootPath, ".AGENTS.md.navi-lock"), "utf8")).resolves.toContain("winner");
+  });
+
+  it("uses directory durability barriers around owned transaction state transitions", async () => {
+    const rootPath = await root();
+    const barriers: string[] = [];
+    await applyAgentsTransaction({
+      root: rootPath,
+      operation: "create",
+      desiredContent: "desired",
+      id: "durable",
+      dependencies: { syncDirectory: async (directory) => { barriers.push(directory); } },
+    });
+
+    expect(barriers).toEqual([
+      rootPath, rootPath, dir(rootPath, "durable"), dir(rootPath, "durable"),
+      rootPath, dir(rootPath, "durable"), rootPath, rootPath,
+    ]);
+  });
+
   it("does not replace a target that appears during cooperative create publication", async () => {
     const rootPath = await root();
     await expect(applyAgentsTransaction({ root: rootPath, operation: "create", desiredContent: "desired", id: "create", dependencies: { checkpoint: async (name, paths) => { if (name === "before-publish") await fs.writeFile(paths.targetPath, "concurrent"); } } })).rejects.toThrow();
