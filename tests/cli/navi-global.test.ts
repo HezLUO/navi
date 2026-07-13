@@ -208,6 +208,40 @@ describe("Navi global setup", () => {
     await expect(fs.access(path.join(codexHome, "AGENTS.md"))).rejects.toThrow();
   });
 
+  it("prioritizes a recoverable transaction over missing-plugin and action-conflict dry-run advice", async () => {
+    const codexHome = await makeTempCodexHome();
+    const transactionDir = path.join(codexHome, ".AGENTS.md.navi-transaction-priority");
+    await fs.mkdir(transactionDir, { mode: 0o700 });
+    await fs.writeFile(path.join(transactionDir, "backup"), "old");
+    await fs.writeFile(path.join(transactionDir, "stage"), "desired");
+    await fs.writeFile(path.join(transactionDir, "manifest.json"), JSON.stringify({
+      version: 1, id: "priority", pid: 99, operation: "modify", target: "AGENTS.md",
+      expectedHash: "cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4",
+      desiredHash: "b60b935389f7cf68e7877a80a4ded0dfc93e248b8807932536e1de0f771d259b",
+      stage: "backed-up", createdAt: "2026-07-13T00:00:00.000Z",
+    }));
+    const output: string[] = [];
+
+    const code = await runNaviSetupCli([], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
+      codexHome,
+      inspectInstallation: async () => missingInstallation,
+    });
+
+    expect(code).toBe(0);
+    expect(output.join("")).toContain("recover the prior Navi setup transaction");
+    expect(output.join("")).toContain("navi setup --write");
+    expect(output.join("")).not.toContain("requires navi@navi-source");
+    await expect(fs.access(path.join(codexHome, "AGENTS.md"))).rejects.toThrow();
+
+    const plan = await buildGlobalSetupPlan({ codexHome, write: false }, { inspectInstallation: async () => missingInstallation });
+    const conflictedActionPlan = {
+      ...plan,
+      action: { kind: "conflict" as const, summary: "user-edited managed block" },
+    };
+    expect(renderGlobalSetupPlan(conflictedActionPlan)).toContain("recover the prior Navi setup transaction");
+    expect(renderGlobalSetupPlan(conflictedActionPlan)).not.toContain("Repair the Navi-managed");
+  });
+
   it("recovers a pending transaction before plugin or planned-action preflight", async () => {
     const codexHome = await makeTempCodexHome();
     const transactionDir = path.join(codexHome, ".AGENTS.md.navi-transaction-recover");
