@@ -9,7 +9,7 @@ describe("Working Thread MCP package wiring", () => {
     expect(packageJson.scripts["mcp:working-thread"]).toBe(
       "tsx src/mcp/working-thread-server.ts",
     );
-    expect(packageJson.scripts.navi).toBe("tsx src/cli/navi.ts");
+    expect(packageJson.scripts.navi).toBe("./src/cli/navi-bin.mjs");
 
     expect(packageJson.bin).toEqual({ navi: "src/cli/navi-bin.mjs" });
     expect(packageJson.bin).not.toHaveProperty("along");
