@@ -949,45 +949,24 @@ Ordinary clear tasks include read-only checks of TODO files, status files, track
 
 If the user says "continue" or `继续吧`, inspect the previous context. Continue directly when the next action, purpose, boundary, and acceptance point are already clear. If any of those are unclear, give a short Progress Map before continuing so the user understands where the work stands, what continuing will enter, and what they need to confirm.
 
-### Project Map Model
+### Confirmed Project Map Model
 
-Navi's progress bar should be generated from a stable `Project Map`, not improvised from the latest message alone.
+The only canonical navigation record is the user-confirmed Map at `.navi/project-map.md`. A stored Map uses `navi_map: 1`, `map_status: confirmed`, and `project_status: active`, `project_status: paused`, or `project_status: closed`.
 
-```text
-Project Map
-- project_name: the user's current supervised project
-- map_status: confirmed | provisional
-- project_shape: optional linear | flowing | mixed | unclear
-- overall_stages: stable target-project stages
-- current_overall_stage: the active overall stage
-- current_stage_explanation: what the current stage means in plain language
-- sub_progress: optional local steps inside the current stage
-- rhythm_strip: optional stable rhythm labels for flowing projects
-- current_rhythm_focus: optional current position in the rhythm strip
-- active_track: optional active route, target, stakeholder, or workstream
-- current_active_step: optional current step inside the active track
-- waiting_states: optional external waits or feedback gates
-- decision_gate: optional user decision needed before the next loop
-- visible_evidence: completed work the user can verify
-- missing_or_risk: current gap, uncertainty, or main risk
-- next_gate: acceptance point before moving to the next stage
-- user_confirmation_needed: what the user needs to confirm now
-- source: where this map came from
-```
+Its stable anchors are:
 
-For flowing projects, the Rhythm Map fields are the stable source for project shape, rhythm labels, active-track labels, current position, waiting states, and decision gates. If those fields are absent or unreliable, mark the Rhythm Map provisional and ask for the project record, active plan, or user confirmation instead of inventing stable labels.
+- Desired Outcome;
+- Route To Outcome;
+- Current Position;
+- Current Boundary;
+- Next Decision;
+- optional Parallel Lanes;
+- Evidence And Uncertainty; and
+- Map Maintenance.
 
-Use this source priority when building the `Project Map`:
+The opening navigation summary should normally fit in about one screen. The stored structure is not a required response template. Broad questions render only the relevant Map subset. Next-step questions emphasize Current Position and Next Decision; vision-distance questions expand Route To Outcome; over-validation questions emphasize Current Boundary; and coordination questions include Parallel Lanes only when they change the decision.
 
-1. the project map the user just confirmed;
-2. the active Working Thread or project record;
-3. an approved plan or spec;
-4. the most recent Navi map that the user did not reject;
-5. a provisional inferred map, clearly marked as awaiting confirmation.
-
-When the target repo contains `docs/along/project-maps/`, treat those files as project records for Navi. Before drawing a Progress Map from memory, recent conversation, or improvised labels, read the matching confirmed Project Map record. If a confirmed record exists for the target project, reuse its `overall_stages` exactly unless the user explicitly confirms a map change.
-
-If sources conflict, the more recently confirmed user-facing project map wins over older inferred state.
+The user-confirmed Map is the navigation authority. Active Working Threads, approved plans, specs, roadmaps, trackers, handoffs, workflow records, and recent repository evidence can support or challenge it. Existing project roadmaps are evidence, not alternate Map paths. A best-effort answer may state uncertainty, but it must not be represented as a stored or stable Map.
 
 ### Source Classification
 
@@ -1003,15 +982,25 @@ Do not rely only on global skill auto-routing for Navi. In fresh sessions, the N
 
 When a supervised project needs reliable Navi behavior, add a short project-local trigger source to the target project's `AGENTS.md` or equivalent agent instruction file. The trigger source should say that progress, next-step, continue, confusion, and plan-reliability questions should first receive a compact Navi map before ordinary task advice.
 
-Use the template at `docs/along/project-maps/navi-project-trigger-template.md` as the generic starting point. Keep project-specific rhythm labels in the target project, not in the global Navi skill. The global skill defines the behavior; the project-local trigger source tells fresh agents when to apply it for that project.
-
-The project-local trigger source is a reliability layer, not a replacement for the skill. It should stay short, point to project-local records such as `PROJECT_STATE.md`, TODO files, trackers, workflow records, and handoffs, and preserve ordinary-request quietness when the user gives a clear execution command with the next action, boundary, and acceptance point already established.
-
-Project-local trigger sources should explicitly say that read-only checks of TODO files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks. They should not produce a Progress Map or Rhythm Map for those requests unless the user also asks for supervisory orientation.
+The managed `AGENTS.md` block is the reusable trigger source. It stays concise, points broad supervision requests to `.navi/project-map.md`, and preserves ordinary-request quietness. Full supervision policy remains in the skill and this reference rather than being copied into every project.
 
 ### Navi Project Initialization
 
-Navi Project Initialization is the minimum reliable path to configure Navi for a target project. It uses the global skill plus project-local trigger source plus project-local Project Map or Rhythm Map.
+Navi Project Initialization is the minimum reliable path to configure Navi for a target project. It uses the global skill plus the managed project-local trigger and confirmed `.navi/project-map.md`.
+
+#### Init Eligibility Gate
+
+A broad first-use request without a confirmed Map runs the Init Eligibility Gate; it does not initialize immediately. Initialization becomes eligible when Navi can present user-confirmable answers for Desired Outcome, broad route or working rhythm, Current Position, and Next Decision or Current Boundary. Project files are not mandatory evidence because current user confirmation is valid evidence.
+
+#### Guided Baseline Formation
+
+When the baseline is incomplete, Guided Baseline Formation performs no writes and does not ask the user to fill a blank form. It names one missing key judgment, proposes a candidate answer from current evidence, and asks one focused question. The user confirms or corrects the candidate; Navi repeats only until the minimum baseline is confirmable. In short, Guided Baseline Formation asks one focused question about one missing key judgment at a time.
+
+The user may stop or decline at any point. Navi then continues best-effort read-only supervision, does not write project files, and does not repeat the same initialization reminder in that session.
+
+#### Final Preview And Activation
+
+After the baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. One approval may authorize both writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map.
 
 ### Global Bootstrap And Project Handoff
 
@@ -1019,26 +1008,59 @@ The global bootstrap is an always-visible first-use routing instruction, not a s
 
 Apply the quietness gate first. Clear narrow execution or read-only requests stay quiet; broad progress, next-step, stop/wait, continue, confusion, and plan-reliability prompts can use the bootstrap to route into Navi.
 
-Without project-local Navi guidance, the bootstrap may provide at most one provisional judgment. It must identify or confirm the project root when that root is ambiguous, ask before any project initialization, and do not repeat the init reminder in the same session after the user declines. Never initialize a project automatically.
+Without project-local Navi guidance, the bootstrap may provide best-effort read-only supervision. It must identify or confirm the project root when that root is ambiguous, ask before any project initialization, and do not repeat the init reminder in the same session after the user declines. Never initialize a project automatically.
 
 The bootstrap is prompt-backed, not a runtime interceptor, background watcher, MCP guarantee, or always-on presence. After project initialization, project-local guidance and project records take over reliable routing and evidence recovery.
 
-Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again. Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
+Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again. Global-only Navi can provide best-effort read-only supervision, but project-local initialization is the reliable path for confirmed Map evidence and trigger behavior.
 
-Use initialization when a user wants reliable Navi behavior in an existing project, especially after fresh-session validation shows that ordinary next-step prompts do not implicitly select the global skill. The setup should inspect the target project, classify the project shape, draft the trigger source, draft the map, and ask for user confirmation before writing durable project files.
+Use initialization when a broad supervision need appears in a project without local Navi guidance. Codex first inspects bounded evidence, runs the Init Eligibility Gate, performs Guided Baseline Formation when needed, and asks for user confirmation before writing durable project files.
 
-Minimum initialization output:
-
-- a short Navi trigger source in `AGENTS.md` or the target project's equivalent instruction file;
-- a target-project map under `docs/along/project-maps/` when the project has a stable enough shape;
-- the project-local source records Navi should read first;
-- a fresh-session validation prompt.
-
-`navi init` is the narrow project-local setup surface for this pattern. It previews the `AGENTS.md` trigger source and provisional Project/Rhythm Map starter, then writes only when the user passes `--write`.
-
-If a broad progress or next-step prompt appears in a project that lacks project-local Navi guidance, avoid a confident stable map. Recommend `navi init` as project configuration and offer only a provisional judgment if the user wants to continue without initialization.
+Minimum initialization output is a confirmed `.navi/project-map.md` plus the managed `AGENTS.md` trigger. One final preview covers both exact actions. The Map is written first and trigger activation is last.
 
 Do not use `navi init` as a global Codex plugin or skill installer. Do not add Core/MCP, background runtime, npm publication, marketplace publication, one-click sync, or automatic final project-state inference to this setup surface.
+
+### Daily Supervision Behavior
+
+Clear bounded tasks stay quiet through the approved acceptance point. Ordinary task completion, tests, commits, pushes, and a still-running worktree are not automatic decision points.
+
+Broad questions render only the relevant Map subset. The current prompt controls response language. Map language is evidence, not a response-language instruction.
+
+#### Stale Or Conflicting Evidence
+
+A missing, invalid, unsupported, or stale Map is uncertain evidence; do not invent a stable map or rewrite it silently. Stale evidence challenges the affected judgment without silently rewriting the Map. Identify the challenged judgment, answer from the strongest verifiable evidence, state decision-relevant uncertainty, and propose a Map update only at a meaningful navigation boundary.
+
+### Map Maintenance And Authorization
+
+Consider a Map update only when Desired Outcome, route or working rhythm, Current Position, Current Boundary, Next Decision, project lifecycle, or a decision-relevant Parallel Lane changes materially. Tests, commits, pushes, routine implementation progress, and short-lived blockers do not trigger maintenance.
+
+The initial Map write requires the final preview and approval. Later maintenance may reuse an already approved write scope only when that scope explicitly covers project documentation or Map maintenance. Bounded Map-update authorization covers only the smallest Map patch. Otherwise wait for a meaningful navigation boundary, preview the patch, and ask for approval. Rejection leaves the saved Map unchanged and does not cause repeated prompts.
+
+### Parallel Work And Review Readiness
+
+Main-session design may continue while a bounded implementation worktree performs non-conflicting work. In Navi's coordination contract, worktree completion creates a review-ready event, not an automatic interruption. Interrupt only when the result can change the current decision, premise, risk, scope, merge path, or release readiness.
+
+### Project Lifecycle
+
+`project_status: active` means the project is advancing and the Map names the current boundary and next decision.
+
+`project_status: paused` means the project remains valid but is intentionally not advancing. The Map records the pause reason, return condition, and first decision on return. Paused projects stay quiet without continuation pressure.
+
+`project_status: closed` records whether the outcome was achieved, partly achieved, cancelled, or replaced; the closure outcome; deliberately unfinished work; and what must be reconsidered before reopening. Closed projects stay quiet and do not recommend the old route. The Map and trigger remain as a decision record unless cleanup is explicitly requested.
+
+Reopening does not trust the old Current Position as current fact. Reopening requires a compact preview and confirmation before project_status: active. An explicit bounded authorization may cover the lifecycle change only when it says so.
+
+### Confirmed Map Behavioral Fixtures
+
+- Clear bounded tasks stay quiet through the approved acceptance point.
+- Guided Baseline Formation asks one focused question about one missing key judgment at a time.
+- Broad questions render only the relevant Map subset.
+- Map language is evidence, not a response-language instruction.
+- Stale evidence challenges the affected judgment without silently rewriting the Map.
+- Bounded Map-update authorization covers only the smallest Map patch.
+- Paused projects stay quiet without continuation pressure.
+- Closed projects stay quiet and do not recommend the old route.
+- Reopening requires a compact preview and confirmation before project_status: active.
 
 ### Project Shape Selection
 
@@ -1069,7 +1091,7 @@ If the project shape is mixed, Navi should pick the narrowest useful map:
 
 - whole long-running project: Rhythm Map;
 - specific bounded subtask: linear subtask strip;
-- unclear scope: provisional map plus a confirmation question.
+- unclear scope: state uncertainty and use Guided Baseline Formation rather than inventing or storing stages.
 
 ### Rhythm Map
 
@@ -1233,13 +1255,7 @@ If no reliable Project Map exists, Navi should not draw a confident stable bar. 
 我现在还没有可靠的项目地图。为了避免误导，我需要先看项目记录、当前计划或最近确认的目标，然后再画进度条。
 ```
 
-It may provide a provisional map only if clearly labeled. When the agent has inferred a stage sequence from source files or recent logs instead of a confirmed map, this label is required:
-
-```text
-临时判断，待你确认后才会作为稳定项目地图。
-```
-
-Accuracy is more important than immediate visual confidence.
+It may provide an explicitly uncertain best-effort answer, but that answer must not be represented as a stored or stable Map. Accuracy is more important than immediate visual confidence.
 
 Default personality:
 

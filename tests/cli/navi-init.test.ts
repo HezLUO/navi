@@ -337,7 +337,7 @@ describe("navi init arguments and candidate safety", () => {
 
     expect(code).toBe(0);
     await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(confirmedMap());
-    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Progress Map Rules");
+    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Project Supervision");
   });
 
   it("rejects an incorrect fingerprint before writing", async () => {
@@ -456,6 +456,20 @@ describe("navi init preview drift", () => {
 });
 
 describe("navi init guarded writes", () => {
+  it("renders the concise confirmed-Map activation contract exactly", () => {
+    expect(renderAgentsBlock()).toBe(`<!-- NAVI:START -->
+## Navi Project Supervision
+
+- For broad progress, next-step, stop, wait, confusion, plan-reliability, or vision-distance questions, read \`.navi/project-map.md\` before advising.
+- Keep clear, bounded execution requests quiet and continue to their approved acceptance point.
+- Match the response language to the user's current prompt; the saved Map language is evidence only.
+- Treat a missing, invalid, unsupported, or stale Map as uncertain evidence; do not invent a stable map or rewrite it silently.
+- Update the Map only when navigation judgment changes materially and only within an explicit bounded write scope or after a compact preview and approval.
+- Worktree completion creates a review-ready event, not an automatic interruption; interrupt only when the result can change the current decision.
+- Do not stage, commit, push, release, initialize, or change project lifecycle unless the current authorization covers that action.
+<!-- NAVI:END -->`);
+  });
+
   it.each([
     ["missing", undefined, "missing"],
     ["current", renderAgentsBlock(), "current"],
@@ -492,7 +506,7 @@ describe("navi init guarded writes", () => {
 
     const agents = await fs.readFile(agentsPath, "utf8");
     expect(agents).toMatch(/^# Project Instructions\n\nKeep this existing rule\./);
-    expect(agents.match(/Navi Progress Map Rules/g)).toHaveLength(1);
+    expect(agents.match(/Navi Project Supervision/g)).toHaveLength(1);
   });
 
   it("upgrades only a recognized deployed block and refuses edited managed blocks", async () => {
@@ -507,7 +521,7 @@ describe("navi init guarded writes", () => {
     expect(plan.actions[0]?.content).toMatch(/^before\n/);
     expect(plan.actions[0]?.content).toMatch(/after\n$/);
 
-    await fs.writeFile(agentsPath, `${renderAgentsBlock().replace("Navi Progress Map Rules", "Navi Progress Map Rulez")}\n`);
+    await fs.writeFile(agentsPath, `${renderAgentsBlock().replace("Navi Project Supervision", "Navi Project Supervison")}\n`);
     await expect(buildInitPlan({ targetDir: project })).rejects.toThrow(/managed Navi block/i);
   });
 
@@ -592,7 +606,7 @@ describe("navi init guarded writes", () => {
     })).rejects.toThrow(/partial activation/i);
 
     await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(candidateText);
-    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Progress Map Rules");
+    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Project Supervision");
   });
 
   it("rejects a stale guarded modification", async () => {
