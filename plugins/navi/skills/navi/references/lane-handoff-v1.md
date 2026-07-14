@@ -70,6 +70,8 @@ Do not emit for ordinary progress, routine waiting, an in-scope failure, test pa
 
 Choose the event_id once, render the complete event, and use the available Codex task-messaging capability to send it to source_task. On a reported delivery failure, retry once immediately with the same event_id and identical semantic payload. Do not use timed retries, polling, a resend loop, or durable storage.
 
+A later meaningful transition after a lane resumes uses a new event_id. A second `review-ready` after bounded remediation is a new review cycle.
+
 If source-task metadata or task messaging is unavailable, or both attempts fail, keep the ordinary local transition report and state that delivery failed. Never claim delivery without host tool evidence.
 
 Delivery is coordination evidence, not authorization. It does not authorize resume, recovery, scope expansion, acceptance-criteria reduction, risk acceptance, merge, push, tag, release, or publication.

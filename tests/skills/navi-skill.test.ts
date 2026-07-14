@@ -1839,6 +1839,10 @@ describe("Along Working Thread repo-contained plugin package", () => {
       expect(canonicalReference).toContain(boundary);
     }
 
+    expect(canonicalReference).toMatch(
+      /later meaningful transition[\s\S]*new event_id[\s\S]*second `?review-ready`? after bounded remediation[\s\S]*new review cycle/i,
+    );
+
     for (const nonEvent of [
       "ordinary progress",
       "routine waiting",
