@@ -1,20 +1,16 @@
 # Along Project Maps
 
-This directory stores confirmed Project Map records for current Navi-supervised target projects.
+> **Historical location:** Navi's active initialization guide and managed trigger template now live at [`docs/navi/project-init.md`](../../navi/project-init.md) and [`docs/navi/project-trigger-template.md`](../../navi/project-trigger-template.md). The older documents and project records in this directory are retained as Along-origin design and calibration evidence.
 
-A confirmed Project Map is the source of truth for stable overall progress bars. Do not rewrite `overall_stages` without user confirmation.
+New target projects use the canonical confirmed Project Map at `.navi/project-map.md`. Files in this directory are not alternate active Map paths and should not be copied into new projects as initialization output.
 
-Use current-stage sub-progress for local concerns, fixes, retests, pushes, fresh-session checks, or other temporary work inside the current overall stage.
-
-Use `navi-project-trigger-template.md` when a target project needs a lightweight project-local Navi trigger source. This is useful because global skill auto-routing can be inconsistent in fresh sessions; a short rule in the target project's `AGENTS.md` makes Progress Map and Rhythm Map behavior discoverable from the project itself.
-
-Use `navi-project-init.md` to configure Navi for a target project through the minimum reliable path: global skill + project-local trigger source + project-local Project Map or Rhythm Map.
+The records below preserve the earlier map format used by the current Navi test project. Do not rewrite `overall_stages` without user confirmation. Use current-stage sub-progress for local concerns, fixes, retests, pushes, fresh-session checks, or other temporary work inside the current overall stage.
 
 ## Record Shape
 
 ```text
 project_name:
-map_status: confirmed | provisional
+map_status: confirmed
 source:
 overall_stages:
 current_overall_stage:

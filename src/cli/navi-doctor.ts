@@ -4,8 +4,9 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertUnlinkedArtifact, resolveCanonicalCodexHome } from "./navi-codex-home";
 import { NAVI_GLOBAL_BLOCK_END, NAVI_GLOBAL_BLOCK_START, planGlobalAgentsContent } from "./navi-global";
-import { recognizeNaviManagedBlock } from "./navi-init";
+import { inspectProjectTrigger, type ProjectTriggerState } from "./navi-init";
 import { inspectNaviInstallation, type NaviInstallationStatus } from "./navi-installation";
+import { inspectProjectMapFile, type ProjectMapFileState } from "./navi-project-map";
 import { inspectTransaction } from "./navi-transaction";
 
 export type DoctorCheckStatus = "pass" | "warn" | "fail";
@@ -32,13 +33,27 @@ export interface NaviDoctorDependencies {
 }
 export interface NaviDoctorIo { stdout: (text: string) => void; stderr: (text: string) => void; }
 
+export type ProjectInitializationKind =
+  | "not-initialized"
+  | "map-ready"
+  | "trigger-orphaned"
+  | "map-invalid"
+  | "trigger-invalid"
+  | "healthy";
+
+export interface ProjectInitializationState {
+  kind: ProjectInitializationKind;
+  trigger: ProjectTriggerState;
+  map: ProjectMapFileState;
+  lifecycle?: "active" | "paused" | "closed";
+}
+
 const DEFAULT_IO: NaviDoctorIo = { stdout: (text) => process.stdout.write(text), stderr: (text) => process.stderr.write(text) };
 const DEFAULT_CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const GLOBAL_REPAIR = "Run navi setup, review the preview, then run navi setup --write.";
-const PROJECT_REPAIR = "Run navi init, review the preview, then run navi init --write.";
 const SOURCE_REPAIR = "Install and enable navi@navi-source before running navi setup --write.";
 function migrationRepair(legacySelector: string): string {
-  return `Install and enable navi@navi-source, preview an exact project trigger upgrade with navi init, run navi init --write only after approval, validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
+  return `Install and enable navi@navi-source. Existing confirmed Map branch: preview with navi init, capture the Plan fingerprint, then apply with navi init --expect-plan <fingerprint> --write. Missing confirmed Map branch: use Navi in the current project session to form and confirm a Project Map candidate, preview with navi init --map-file <candidate>, capture the Plan fingerprint, then apply with navi init --map-file <candidate> --expect-plan <fingerprint> --write. Validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
 }
 function selectorConflictRepair(status: NaviInstallationStatus): string {
   if (status.diagnostic?.includes("non-authoritative selector")) {
@@ -131,11 +146,92 @@ async function buildPackageCacheCheck(sourcePath: string | undefined): Promise<D
   if (!sourcePath) return { id: "package-cache", status: "warn", summary: "Navi source/cache evidence is unavailable; inspection is incomplete." };
   return { id: "package-cache", status: "warn", summary: "Navi installation reports one source path but no separate cache evidence; inspection is incomplete." };
 }
+export async function inspectProjectInitialization(projectDir: string): Promise<ProjectInitializationState> {
+  const [trigger, map] = await Promise.all([
+    inspectProjectTrigger(projectDir),
+    inspectProjectMapFile(projectDir),
+  ]);
+  const lifecycle = map.kind === "valid" ? map.document.projectStatus : undefined;
+
+  if (map.kind === "invalid" || map.kind === "unsupported" || map.kind === "unsafe") {
+    return { kind: "map-invalid", trigger, map };
+  }
+  if (trigger.kind === "invalid" || trigger.kind === "unsafe") {
+    return { kind: "trigger-invalid", trigger, map, ...(lifecycle ? { lifecycle } : {}) };
+  }
+  if (map.kind === "missing") {
+    return trigger.kind === "missing"
+      ? { kind: "not-initialized", trigger, map }
+      : { kind: "trigger-orphaned", trigger, map };
+  }
+  if (trigger.kind === "missing") return { kind: "map-ready", trigger, map, lifecycle };
+  if (trigger.kind === "legacy") return { kind: "trigger-invalid", trigger, map, lifecycle };
+  return { kind: "healthy", trigger, map, lifecycle };
+}
+
 async function buildProjectInitCheck(projectDir: string): Promise<DoctorCheck> {
-  const content = await readOptional(path.join(projectDir, "AGENTS.md"));
-  const recognition = content === undefined ? { kind: "absent" as const } : recognizeNaviManagedBlock(content);
-  if (recognition.kind === "recognized") return { id: "project-init", status: "pass", summary: "This project has project-local Navi guidance." };
-  return { id: "project-init", status: "warn", summary: recognition.kind === "unsafe" ? "This project has damaged or unrecognized project-local Navi guidance." : "This project does not have project-local Navi guidance.", repair: PROJECT_REPAIR };
+  const state = await inspectProjectInitialization(projectDir);
+  switch (state.kind) {
+    case "not-initialized":
+      return {
+        id: "project-init",
+        status: "warn",
+        summary: "This project has neither a confirmed Project Map nor a Navi project trigger.",
+        repair: "Use Navi in the current Codex project session to form and confirm a Project Map candidate, then review the exact navi init --map-file preview before approving its fingerprinted write.",
+      };
+    case "map-ready":
+      return {
+        id: "project-init",
+        status: "warn",
+        summary: "This project has a valid confirmed Project Map but its Navi project trigger is missing.",
+        repair: "Run navi init to preview the exact trigger activation, then use its fingerprint with navi init --expect-plan <fingerprint> --write after approval.",
+      };
+    case "trigger-orphaned":
+      return {
+        id: "project-init",
+        status: "fail",
+        summary: `This project has a recognized ${state.trigger.kind} Navi trigger but no confirmed Project Map.`,
+        repair: "Use Navi in the current Codex project session to form and confirm a Project Map candidate, then review the exact navi init --map-file preview before approving its fingerprinted write.",
+      };
+    case "map-invalid": {
+      const diagnostic = "diagnostic" in state.map
+        ? state.map.diagnostic
+        : "Project Map inspection returned an inconsistent state.";
+      const repair = state.map.kind === "invalid" && state.map.recognizedVersion === 1
+        ? "Use Navi to form a corrected confirmed Project Map candidate, then run navi init --map-file <candidate> to review the exact repair preview before approving its fingerprinted write."
+        : `Preserve the existing Project Map evidence and resolve the reported path or format manually; no automatic overwrite is safe. ${diagnostic}`;
+      return {
+        id: "project-init",
+        status: "fail",
+        summary: `This project's Project Map is not valid for initialization: ${diagnostic}`,
+        repair,
+      };
+    }
+    case "trigger-invalid":
+      if (state.trigger.kind === "legacy") {
+        return {
+          id: "project-init",
+          status: "fail",
+          summary: "This project has a valid confirmed Project Map but a recognized legacy Navi trigger.",
+          repair: "Run navi init to review the exact project trigger upgrade preview, then use its fingerprint with navi init --expect-plan <fingerprint> --write after approval.",
+        };
+      }
+      const diagnostic = "diagnostic" in state.trigger
+        ? state.trigger.diagnostic
+        : "Project trigger inspection returned an inconsistent state.";
+      return {
+        id: "project-init",
+        status: "fail",
+        summary: `This project's Navi trigger is invalid or unsafe: ${diagnostic}`,
+        repair: "Preserve project-owned AGENTS.md instructions and manually resolve only the damaged or unsafe Navi trigger before previewing activation again with navi init.",
+      };
+    case "healthy":
+      return {
+        id: "project-init",
+        status: "pass",
+        summary: `Navi project initialization is healthy (${state.lifecycle} lifecycle).`,
+      };
+  }
 }
 async function buildTransactionCheck(codexHome: string): Promise<DoctorCheck> {
   const transaction = await inspectTransaction(codexHome);

@@ -1,5 +1,7 @@
 # Navi Project Initialization
 
+> **Superseded:** Active project initialization is documented in [`docs/navi/project-init.md`](../../navi/project-init.md). This file is retained with its original body as historical Along-origin guidance.
+
 Navi Project Initialization is the minimum reliable way to connect Navi to a target project.
 
 Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.

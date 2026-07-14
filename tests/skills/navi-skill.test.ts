@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { renderAgentsBlock } from "../../src/cli/navi-init";
 
 async function readRepoText(relativePath: string): Promise<string> {
   return fs.readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
@@ -50,6 +51,20 @@ function extractFrontmatter(markdown: string): string {
   expect(end).toBeGreaterThan(4);
 
   return markdown.slice(4, end);
+}
+
+function extractMarkdownSection(markdown: string, heading: string): string {
+  const marker = `${heading}\n`;
+  const start = markdown.indexOf(marker);
+  expect(start, heading).toBeGreaterThanOrEqual(0);
+
+  const level = heading.match(/^#+/u)?.[0].length;
+  if (level === undefined) throw new Error(`Expected Markdown heading: ${heading}`);
+  const contentStart = start + marker.length;
+  const nextHeading = new RegExp(`\\n#{1,${level}} \\S`, "gu");
+  nextHeading.lastIndex = contentStart;
+  const match = nextHeading.exec(markdown);
+  return markdown.slice(contentStart, match?.index ?? markdown.length);
 }
 
 async function parseWithPyYaml(source: string): Promise<Record<string, unknown>> {
@@ -150,7 +165,7 @@ describe("Along Working Thread Codex skill", () => {
     for (const text of [skill, reference]) {
       expect(text).toContain("global bootstrap");
       expect(text).toContain("project-local Navi guidance");
-      expect(text).toContain("provisional judgment");
+      expect(text).toContain("best-effort read-only supervision");
       expect(text).toContain("do not repeat the init reminder in the same session");
       expect(text).toContain("prompt-backed, not a runtime interceptor");
     }
@@ -678,7 +693,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 13 global install versus project initialization boundary", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
+    const initDoc = await readRepoText("docs/navi/project-init.md");
 
     for (const expected of [
       "Navi is installed globally once",
@@ -694,43 +709,36 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).not.toContain("navi init --suggest-map --accept-suggested-map");
   });
 
-  it("documents the Navi Project Map model and source priority", async () => {
+  it("documents the confirmed Navi Project Map model and evidence rules", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
       "Project Map",
-      "map_status",
-      "overall_stages",
-      "current_overall_stage",
-      "current_stage_explanation",
-      "sub_progress",
-      "visible_evidence",
-      "missing_or_risk",
-      "next_gate",
-      "user_confirmation_needed",
-      "source",
+      ".navi/project-map.md",
+      "navi_map: 1",
+      "map_status: confirmed",
+      "Desired Outcome",
+      "Route To Outcome",
+      "Current Position",
+      "Current Boundary",
+      "Next Decision",
     ]) {
       expect(reference).toContain(expected);
     }
 
     for (const expected of [
-      "user just confirmed",
-      "active Working Thread or project record",
-      "approved plan or spec",
-      "most recent Navi map that the user did not reject",
-      "provisional inferred map",
-      "clearly marked as awaiting confirmation",
+      "user-confirmed Map",
+      "Existing project roadmaps are evidence",
+      "not alternate Map paths",
+      "must not be represented as a stored or stable Map",
     ]) {
       expect(reference).toContain(expected);
     }
 
-    expect(skill).toContain("stable Project Map");
-    expect(skill).toContain("source priority");
-    expect(reference).toContain("If sources conflict");
-    expect(reference).toContain("confirmed user-facing project map wins");
-    expect(reference).toContain("docs/along/project-maps/");
-    expect(reference).toContain("read the matching confirmed Project Map record");
+    expect(skill).toContain("confirmed `.navi/project-map.md`");
+    expect(reference).toContain("Stale Or Conflicting Evidence");
+    expect(reference).not.toContain("docs/along/project-maps/");
   });
 
   it("ships a confirmed Project Map record for the current Navi test project", async () => {
@@ -956,7 +964,7 @@ describe("Along Working Thread Codex skill", () => {
 
     for (const expected of [
       "Project-local Navi trigger source",
-      "docs/along/project-maps/navi-project-trigger-template.md",
+      "docs/navi/project-trigger-template.md",
       "global skill auto-routing can be inconsistent",
     ]) {
       expect(readme).toContain(expected);
@@ -981,34 +989,34 @@ describe("Along Working Thread Codex skill", () => {
   it("documents Navi project initialization as the reliable configuration path", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const readme = await readRepoText("plugins/navi/README.md");
-    const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
+    const initDoc = await readRepoText("docs/navi/project-init.md");
 
     for (const expected of [
       "Navi Project Initialization",
       "configure Navi for a target project",
-      "global skill plus project-local trigger source",
-      "ask for user confirmation before writing durable project files",
+      "global skill plus the managed project-local trigger",
+      "asks for user confirmation before writing durable project files",
     ]) {
       expect(reference).toContain(expected);
     }
 
     for (const expected of [
       "Navi project initialization",
-      "navi-project-init.md",
-      "global skill + project-local trigger source",
+      "docs/navi/project-init.md",
+      "guided confirmed baseline",
     ]) {
       expect(readme).toContain(expected);
     }
 
     for (const expected of [
       "# Navi Project Initialization",
-      "Minimum initialization output",
+      "One Preview And One Approval",
       "AGENTS.md",
-      "docs/along/project-maps/",
-      "Project Map or Rhythm Map",
-      "`navi init` is the narrow project-local setup surface",
-      "Do not use `navi init` as a global Codex plugin or skill installer",
-      "Fresh-session validation",
+      ".navi/project-map.md",
+      "Guided Baseline Formation",
+      "`navi init` configures a target project",
+      "does not install Navi again",
+      "Fresh-Session Validation",
     ]) {
       expect(initDoc).toContain(expected);
     }
@@ -1017,21 +1025,21 @@ describe("Along Working Thread Codex skill", () => {
     expect(initDoc).not.toContain("Minimum install output");
   });
 
-  it("documents degraded state rules for unreliable project maps", async () => {
+  it("documents uncertain evidence without creating a provisional Map", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
 
     for (const expected of [
-      "should not draw a confident stable bar",
-      "我现在还没有可靠的项目地图",
-      "临时判断，待你确认后才会作为稳定项目地图",
-      "Accuracy is more important than immediate visual confidence",
+      "missing, invalid, unsupported, or stale Map",
+      "best-effort read-only supervision",
+      "must not be represented as a stored or stable Map",
+      "do not invent a stable map",
     ]) {
       expect(reference).toContain(expected);
     }
 
-    expect(skill).toContain("must not draw a confident stable bar");
-    expect(skill).toContain("provisional map");
+    expect(skill).toContain("missing, invalid, unsupported, or stale Map");
+    expect(skill).not.toContain("provisional map");
   });
 
   it("documents graphical progress bar validation in the package README", async () => {
@@ -1042,8 +1050,8 @@ describe("Along Working Thread Codex skill", () => {
       "stable target-project stage sequence",
       "compact horizontal progress strip",
       "single-line stage strip",
-      "source priority",
-      "provisional map",
+      "Project Map source priority",
+      ".navi/project-map.md",
       "must not draw a confident stable bar",
     ]) {
       expect(readme).toContain(expected);
@@ -1242,7 +1250,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "`navi init`",
       "source package verification",
       "npm run verify:plugin-package",
-      "navi init --write",
+      "navi init --expect-plan <fingerprint> --write",
       "Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.",
       "Along is the parent/lab context and broader long-term product family.",
       "should be understandable without knowing Along",
@@ -1323,7 +1331,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
         "navi setup",
         "navi setup --write",
         "navi init",
-        "navi init --write",
+        "navi init --expect-plan <fingerprint> --write",
       ]) {
         expect(readme).toContain(expected);
       }
@@ -1357,6 +1365,95 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(initDoc).toContain("may run `navi init --write` only after explicit user approval");
     expect(debt).toContain("Source-alpha bootstrap is implemented");
     expect(debt).toContain("Public distribution remains open");
+  });
+
+  it("documents one guided confirmed-map initialization journey in every active setup document", async () => {
+    const activePaths = [
+      "README.md",
+      "README.zh-CN.md",
+      "plugins/navi/README.md",
+      "docs/navi/project-init.md",
+    ];
+
+    for (const activePath of activePaths) {
+      const exists = await repoPathExists(activePath);
+      expect(exists, activePath).toBe(true);
+      if (!exists) continue;
+      const document = await readRepoText(activePath);
+      for (const expected of [
+        "global setup once",
+        "guided confirmed baseline",
+        "one trigger + `.navi/project-map.md` preview",
+        "one approved project init write",
+        "fresh-session natural-language supervision",
+      ]) {
+        expect(document.toLowerCase()).toContain(expected.toLowerCase());
+      }
+
+      for (const forbidden of [
+        "starter map",
+        "provisional map",
+        ".navi/state.md",
+        "docs/along/project-maps/",
+      ]) {
+        expect(document.toLowerCase()).not.toContain(forbidden.toLowerCase());
+      }
+    }
+  });
+
+  it("documents only fingerprint-bound actionable init writes in active READMEs", async () => {
+    const activeReadmes = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const readme of activeReadmes) {
+      expect(readme).not.toMatch(/\bnavi init --write(?=[`.;,\s]|$)/u);
+
+      expect(readme).toContain("Existing confirmed Map trigger path");
+      expect(readme).toMatch(/^navi init$/mu);
+      expect(readme).toMatch(/^navi init --expect-plan <fingerprint> --write$/mu);
+
+      expect(readme).toContain("Fresh confirmed Map candidate path");
+      expect(readme).toContain("Codex-guided candidate flow");
+      expect(readme).toContain("advanced/internal integration detail");
+      expect(readme).toMatch(
+        /^navi init --map-file <confirmed-map-candidate>$/mu,
+      );
+      expect(readme).toMatch(
+        /^navi init --map-file <confirmed-map-candidate> --expect-plan <fingerprint> --write$/mu,
+      );
+    }
+  });
+
+  it("keeps the active trigger template exactly aligned with generated init output", async () => {
+    const exists = await repoPathExists("docs/navi/project-trigger-template.md");
+    expect(exists).toBe(true);
+    if (!exists) return;
+    const template = await readRepoText("docs/navi/project-trigger-template.md");
+
+    expect(template).toBe(`${renderAgentsBlock()}\n`);
+  });
+
+  it("marks the alpha 13 and alpha 14 directions as superseded historical evidence", async () => {
+    const historicalSpecs = await Promise.all([
+      readRepoText(
+        "docs/superpowers/specs/2026-07-09-navi-alpha13-project-initialization-suggested-map-preview-design.md",
+      ),
+      readRepoText(
+        "docs/superpowers/specs/2026-07-10-navi-alpha14-project-state-snapshot-design.md",
+      ),
+    ]);
+
+    for (const spec of historicalSpecs) {
+      expect(spec).toMatch(/^# .+\n\n> \*\*Superseded:\*\*/u);
+      expect(spec).toContain("confirmed Project Map initialization journey");
+      expect(spec).toContain(
+        "2026-07-13-navi-confirmed-project-map-init-journey-design.md",
+      );
+      expect(spec).toContain("retained as historical design evidence");
+    }
   });
 
   it("documents the Navi-only source installation and explicit legacy migration path", async () => {
@@ -1418,7 +1515,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       const migrationActions = [
         "navi@navi-source",
         "navi init",
-        "navi init --write",
+        "navi init --expect-plan <fingerprint> --write",
         targetValidation,
         "legacy selector",
         "navi doctor",
@@ -1438,14 +1535,14 @@ describe("Along Working Thread repo-contained plugin package", () => {
     const roadmap = await readRepoText("docs/along/roadmaps/navi-post-alpha-roadmap.md");
 
     for (const expected of [
-      "Status: source-alpha addressed; public distribution open",
+      "Status: confirmed-Map initialization addressed; calibration and public distribution open",
       "Source-alpha bootstrap is implemented",
     ]) {
       expect(debt).toContain(expected);
     }
 
     for (const expected of [
-      "Validate the narrow `navi init` project-local initializer",
+      "Calibrate the confirmed-Map init journey",
       "Global plugin installation, one-click sync, npm distribution, or marketplace installation",
     ]) {
       expect(roadmap).toContain(expected);
@@ -1504,7 +1601,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.interface.defaultPrompt).toEqual([
       "Show where this project stands, what comes next, and what I need to decide.",
       "Should we continue, stop, wait, or move to the next stage?",
-      "Check whether this project needs Navi initialization before giving a stable map.",
+      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
     ]);
     expect(manifest.interface.defaultPrompt).toHaveLength(3);
     expect(manifest.name).toBe("navi");
@@ -1622,7 +1719,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(manifest.interface.defaultPrompt).toEqual([
       "Show where this project stands, what comes next, and what I need to decide.",
       "Should we continue, stop, wait, or move to the next stage?",
-      "Check whether this project needs Navi initialization before giving a stable map.",
+      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
     ]);
     expect(manifest.interface.defaultPrompt).toHaveLength(3);
 
@@ -1665,6 +1762,196 @@ describe("Along Working Thread repo-contained plugin package", () => {
       const packagedText = await readRepoText(`${packagedDir}/${relativePath}`);
 
       expect(packagedText, relativePath).toBe(sourceText);
+    }
+  });
+
+  it("makes the confirmed Map contract authoritative in canonical and packaged skills", async () => {
+    const [canonicalSkill, packagedSkill, manifestSource] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/.codex-plugin/plugin.json"),
+    ]);
+    const pluginManifest = JSON.parse(manifestSource) as {
+      interface: { defaultPrompt: string[] };
+    };
+    const confirmedMapContract = [
+      ".navi/project-map.md",
+      "Init Eligibility Gate",
+      "Guided Baseline Formation",
+      "one missing key judgment at a time",
+      "Map language is evidence, not a response-language instruction",
+      "meaningful navigation boundary",
+      "project_status: active",
+      "project_status: paused",
+      "project_status: closed",
+      "worktree completion as review-ready state",
+    ];
+
+    for (const phrase of confirmedMapContract) {
+      expect(canonicalSkill).toContain(phrase);
+      expect(packagedSkill).toContain(phrase);
+    }
+
+    expect(pluginManifest.interface.defaultPrompt).toContain(
+      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
+    );
+
+    for (const stalePhrase of [
+      "Map status: provisional",
+      ".navi/state.md",
+      "navi init --suggest-map",
+      "write only a provisional trigger",
+    ]) {
+      expect(canonicalSkill).not.toContain(stalePhrase);
+      expect(packagedSkill).not.toContain(stalePhrase);
+    }
+  });
+
+  it("relates incomplete baseline formation to a combined approved initialization preview", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const skillInit = extractMarkdownSection(skill, "## Init Eligibility Gate");
+    const eligibility = extractMarkdownSection(reference, "#### Init Eligibility Gate");
+    const guided = extractMarkdownSection(reference, "#### Guided Baseline Formation");
+    const finalPreview = extractMarkdownSection(reference, "#### Final Preview And Activation");
+
+    expect(skillInit).toMatch(/evidence is insufficient[\s\S]*without writes/i);
+    expect(skillInit).toMatch(/one missing key judgment at a time[\s\S]*confirm or correct/i);
+    expect(guided).toMatch(/one missing key judgment[\s\S]*one focused question/i);
+    expect(guided).toMatch(/confirms or corrects[\s\S]*until the minimum baseline is confirmable/i);
+    expect(eligibility).toMatch(/Desired Outcome[\s\S]*route or working rhythm[\s\S]*Current Position[\s\S]*(Next Decision|Current Boundary)/i);
+    expect(finalPreview).toMatch(/One final preview[\s\S]*\.navi\/project-map\.md[\s\S]*AGENTS\.md/i);
+    expect(finalPreview).toMatch(/One approval[\s\S]*both writes[\s\S]*Map is written first[\s\S]*trigger last/i);
+  });
+
+  it("requires the ordered private-candidate, preview, approval, fingerprinted-apply, and cleanup adapter journey", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const sections = [
+      extractMarkdownSection(skill, "## Init Eligibility Gate"),
+      extractMarkdownSection(reference, "#### Final Preview And Activation"),
+    ];
+    const orderedContract = [
+      /create a private candidate file outside the target project/i,
+      /navi init --map-file <candidate>/i,
+      /one combined Map\+trigger preview/i,
+      /obtain approval/i,
+      /navi init --map-file <candidate> --expect-plan <fingerprint> --write/i,
+      /remove the private candidate after success or explicit abandonment/i,
+    ];
+
+    for (const section of sections) {
+      let previousIndex = -1;
+      for (const phrase of orderedContract) {
+        const index = section.search(phrase);
+        expect(index).toBeGreaterThan(previousIndex);
+        previousIndex = index;
+      }
+    }
+  });
+
+  it("scopes adaptive answers, language, and stale-evidence challenge to their policy sections", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const authority = extractMarkdownSection(skill, "## Confirmed Project Map Authority");
+    const model = extractMarkdownSection(reference, "### Confirmed Project Map Model");
+    const daily = extractMarkdownSection(reference, "### Daily Supervision Behavior");
+    const stale = extractMarkdownSection(reference, "#### Stale Or Conflicting Evidence");
+
+    for (const section of [authority, model, daily]) {
+      expect(section).toMatch(/relevant Map subset|not a (fixed|required) response template/i);
+      expect(section).toMatch(/current prompt|user's current prompt/i);
+    }
+    expect(authority).toMatch(/Next-step questions[\s\S]*Current Position[\s\S]*Next Decision/i);
+    expect(authority).toMatch(/vision-distance questions[\s\S]*Route To Outcome/i);
+    expect(stale).toMatch(/challenged judgment[\s\S]*strongest verifiable evidence/i);
+    expect(stale).toMatch(/do not invent a stable map or rewrite it silently/i);
+    expect(stale).toMatch(/meaningful navigation boundary/i);
+  });
+
+  it("binds maintenance, lifecycle, reopening, and worktree review to decision boundaries", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const daily = extractMarkdownSection(skill, "## Daily Supervision And Maintenance");
+    const maintenance = extractMarkdownSection(reference, "### Map Maintenance And Authorization");
+    const lifecycle = extractMarkdownSection(reference, "### Project Lifecycle");
+    const parallel = extractMarkdownSection(reference, "### Parallel Work And Review Readiness");
+
+    expect(daily).toMatch(/clear bounded tasks[\s\S]*approved acceptance point/i);
+    expect(daily).toMatch(/meaningful navigation boundary[\s\S]*smallest Map patch/i);
+    expect(maintenance).toMatch(/meaningful navigation boundary[\s\S]*preview the patch[\s\S]*approval/i);
+    expect(maintenance).toMatch(/explicitly covers[\s\S]*Map maintenance[\s\S]*smallest Map patch/i);
+    expect(lifecycle).toMatch(/project_status: paused[\s\S]*stay quiet without continuation pressure/i);
+    expect(lifecycle).toMatch(/project_status: closed[\s\S]*do not recommend the old route/i);
+    expect(lifecycle).toMatch(/Reopening does not trust the old Current Position[\s\S]*confirmation before project_status: active/i);
+    expect(parallel).toMatch(/treat worktree completion as review-ready state[\s\S]*not an automatic interruption/i);
+    expect(parallel).toMatch(/review when the result can change the current decision/i);
+    expect(parallel).not.toMatch(/review-ready event/i);
+  });
+
+  it("keeps review readiness semantic-only and leaves unified lane-handoff delivery to its owning design", async () => {
+    const [
+      canonicalSkill,
+      canonicalReference,
+      packagedSkill,
+      packagedReference,
+      triggerTemplate,
+      initSource,
+      contractSpec,
+    ] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/skills/navi/references/working-thread-v1.md"),
+      readRepoText("docs/navi/project-trigger-template.md"),
+      readRepoText("src/cli/navi-init.ts"),
+      readRepoText("docs/superpowers/specs/2026-07-13-navi-codex-first-supervision-contract-design.md"),
+    ]);
+
+    for (const currentSurface of [
+      canonicalSkill,
+      canonicalReference,
+      packagedSkill,
+      packagedReference,
+      triggerTemplate,
+      initSource,
+    ]) {
+      expect(currentSurface).toMatch(/treat worktree completion as review-ready state[\s\S]*not an automatic interruption/i);
+      expect(currentSurface).not.toMatch(/worktree completion creates a review-ready event/i);
+    }
+
+    expect(contractSpec).toMatch(/future adapter delivery[\s\S]*decision-required[\s\S]*blocked[\s\S]*review-ready transitions/i);
+    expect(contractSpec).toMatch(/Confirmed Map journey[\s\S]*implements only review-ready semantics[\s\S]*does not implement delivery/i);
+    expect(contractSpec).toMatch(/four primary envelopes[\s\S]*lane-handoff transition seam/i);
+    expect(contractSpec).toContain("docs/superpowers/specs/2026-07-12-navi-blocker-event-delivery-design.md");
+    expect(contractSpec).not.toMatch(/first lane event is the already approved formal blocker event/i);
+    expect(contractSpec).not.toMatch(/first contract excludes[\s\S]*review-ready/i);
+  });
+
+  it("rejects contradictory stored-Map and legacy-path guidance across canonical and packaged contracts", async () => {
+    const contracts = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/skills/navi/references/working-thread-v1.md"),
+    ]);
+
+    for (const contract of contracts) {
+      expect(contract).not.toMatch(/provisional (Project |Rhythm )?Map/i);
+      expect(contract).not.toContain("docs/along/project-maps/");
+      expect(contract).not.toContain(".navi/state.md");
+      expect(contract).not.toContain("navi init --suggest-map");
+      expect(contract).not.toContain("write only a provisional trigger");
+      expect(contract).not.toMatch(/stored structure is (a|required as a) response template/i);
+      expect(contract).not.toMatch(/rewrite (the )?Map silently/i);
     }
   });
 

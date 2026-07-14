@@ -10,7 +10,7 @@ Navi should define an internal supervision contract that makes its Codex behavio
 
 The product is **Codex-first**: the current implementation, installation path, calibration, and support promise target Codex only. The contract may use capabilities that Codex actually provides, including project instructions, skills/plugins, worktrees, task messaging, tool approvals, and Git-aware sessions.
 
-The internal boundaries should nevertheless preserve future portability. Evidence, supervision judgments, authorization, control decisions, rendering, blocker semantics, and Codex tool execution remain distinct concepts. If a real second-agent requirement appears later, Navi can map those concepts to another host without first undoing Codex-specific product logic.
+The internal boundaries should nevertheless preserve future portability. Evidence, supervision judgments, authorization, control decisions, rendering, lane-handoff transition semantics, and Codex tool execution remain distinct concepts. If a real second-agent requirement appears later, Navi can map those concepts to another host without first undoing Codex-specific product logic.
 
 This design does not authorize implementation, an implementation plan, another agent adapter, a public SDK, npm publication, a runtime service, a UI, a release, or changes to the active bootstrap worktree.
 
@@ -39,8 +39,7 @@ The existing `src/core/working-thread-contract.ts` describes Along Working Threa
 
 Working Thread may provide evidence to Navi through the same evidence boundary as:
 
-- a Project Map or Rhythm Map;
-- `.navi/state.md` Project State;
+- the unified confirmed `.navi/project-map.md`;
 - an approved design or implementation plan;
 - Git and filesystem observations;
 - a Codex task or worktree status; and
@@ -75,7 +74,7 @@ The architecture has five responsibilities:
 
 ## Core Envelopes
 
-The first version defines five primary envelopes plus one bounded authorization envelope. Names below describe semantic contracts; implementation may refine field spelling without changing their meaning.
+The first version defines four primary envelopes plus one bounded authorization envelope and preserves a lane-handoff transition seam for future adapter delivery. Names below describe semantic contracts; implementation may refine field spelling without changing their meaning.
 
 ### SupervisionRequest
 
@@ -87,7 +86,7 @@ A request contains only the context needed for the current supervision decision:
 - Codex capabilities relevant to the request;
 - `EvidenceItem[]`;
 - compact lane summaries; and
-- any pending formal blocker event.
+- any adapter-delivered lane-handoff evidence, when that future delivery capability is available.
 
 It must not require a complete transcript, hidden reasoning, or unrelated project content.
 
@@ -173,23 +172,13 @@ The decision also contains:
 
 It never contains hidden reasoning or tool authorization. A control decision constrains the Codex adapter; it does not execute an action itself.
 
-### LaneBlockerEvent
+### Lane Handoff Transition Semantics
 
-The first lane event is the already approved formal blocker event. Its semantic fields remain:
+The future adapter delivery contract recognizes decision-required, blocked, and review-ready transitions. Detailed payload, source-task metadata, transport, receipt, retry, and deduplication behavior is owned by `docs/superpowers/specs/2026-07-12-navi-blocker-event-delivery-design.md` on current main; this contract does not redefine that delivery model.
 
-- stable event identifier;
-- source lane;
-- bounded goal;
-- blocked status;
-- one concrete reason;
-- minimal verified evidence;
-- exact worktree state;
-- decision needed; and
-- declared lane-local or premise-changing impact.
+This Confirmed Map journey implements only review-ready semantics: completed worktree state creates a review option, and review becomes current when the result can change the present decision. It does not implement delivery, host task messaging, receipt, retry, deduplication, or an automatic main-session interruption.
 
-Codex task IDs and thread-messaging calls are transport metadata, not blocker semantics.
-
-The first contract excludes completion, progress, waiting, review-ready, and routine acknowledgement events. It does not become a notification system.
+Codex task IDs and thread-messaging calls are future adapter transport metadata, not lane-handoff transition semantics. The prompt/docs-backed semantics here do not become a notification system.
 
 ## Control Policy
 
@@ -226,15 +215,15 @@ Insufficient or conflicting evidence cannot produce a confident stable map. Code
 
 Implementation success, tests passing, package verification, and agent self-assessment are evidence, not product proof.
 
-### Stale State Must Be Challenged
+### Stale Map Must Be Challenged
 
-New repository or project facts may challenge a confirmed but stale Project State or Project Map. The contract exposes the conflict and preserves the user's authority to confirm an update; it does not silently let either source dominate.
+New repository or project facts may challenge a confirmed but stale Project Map. The contract exposes the conflict and preserves the user's authority to confirm an update; it does not silently rewrite the Map.
 
-### Blocked Means Formally Blocked
+### Distinguish Lane Handoff Transitions
 
-A formal blocker is distinct from ordinary waiting, an in-scope failure, task completion, or review readiness.
+Blocked, decision-required, and review-ready states are distinct from ordinary waiting, an in-scope failure, or routine progress. This journey recognizes review readiness as coordination state only; it does not claim that a transition was delivered or received.
 
-A premise-changing blocker is surfaced at the next available decision point. A lane-local blocker may be deferred while useful non-conflicting main-session design continues. Receiving a blocker event never authorizes automatic recovery, scope expansion, or a response loop between tasks.
+When future adapter delivery is available, a premise-changing blocked or decision-required transition is surfaced at the next available decision point. A lane-local transition may be deferred while useful non-conflicting main-session design continues. Receiving a delivered transition never authorizes automatic recovery, scope expansion, or a response loop between tasks.
 
 ### Honest Capability Fallback
 
@@ -264,7 +253,7 @@ The current adapter may rely on real Codex capabilities:
 
 - project and global `AGENTS.md` instructions;
 - Navi skill/plugin discovery;
-- project-local Project Maps and Project State;
+- the project-local confirmed Project Map;
 - Git and filesystem tools;
 - worktree tasks;
 - task messaging;
@@ -275,7 +264,7 @@ These mappings remain outside the core semantic envelopes. In particular:
 
 - a Codex task ID is not a Navi lane identity model;
 - a Codex tool approval dialog is not an Authorization Envelope definition;
-- a Codex message send call is not the blocker event contract;
+- a Codex message send call is not the lane-handoff delivery contract;
 - an `AGENTS.md` sentence is not the full supervision policy; and
 - a model response template is not the Control Decision schema.
 
@@ -288,7 +277,7 @@ Navi does not support another agent in this phase, but these seams must remain c
 - evidence facts are not represented as raw Codex transcript items;
 - control decisions are not represented as tool-call names;
 - authorization semantics are not represented as Codex UI text;
-- blocker semantics are not represented as thread transport payload alone;
+- lane-handoff transition semantics are not represented as thread transport payload alone;
 - rendering strength is not a fixed Codex response template; and
 - core contract modules do not import a Codex SDK or desktop-tool type.
 
@@ -304,9 +293,9 @@ The skill/plugin remains the current product delivery surface. It should eventua
 
 `navi init` remains project configuration, not a second Navi installation. Generated guidance should stay concise and should not embed the full contract schema.
 
-### Project State
+### Confirmed Project Map
 
-`.navi/state.md` remains an optional confirmed evidence snapshot. It is not the contract's database, and it cannot become authoritative merely because it exists.
+`.navi/project-map.md` is the unified confirmed navigation input. It carries the stable route or rhythm together with Current Position, Current Boundary, Next Decision, lifecycle, and evidence uncertainty. The contract treats other project records and live observations as evidence that may challenge the Map; it does not create a separate current-state record.
 
 ### Working Thread And MCP
 
@@ -327,7 +316,7 @@ Required fixture classes include:
 - an approved bounded loop continues without meaningless pauses;
 - scoped local commit authorization does not become a blanket commit rule;
 - unapproved push or release escalation requests a user decision;
-- fresh Git evidence challenges stale Project State;
+- fresh Git evidence challenges a stale confirmed Project Map;
 - lane-local blocker is deferred during non-conflicting design;
 - premise-changing blocker becomes a real decision;
 - unavailable task messaging uses an explicit fallback;
@@ -341,7 +330,7 @@ Real Codex behavior still requires small fresh-session calibration. Fixtures pro
 This design suggests the following future order:
 
 1. Add repository-internal contract types, policy validation, and focused fixtures.
-2. Align the Codex skill/plugin and project trigger after the active bootstrap and blocker-delivery implementation scopes no longer conflict.
+2. Align the Codex skill/plugin and project trigger after the active bootstrap and lane-handoff delivery implementation scopes no longer conflict.
 3. Run bounded real-project Codex calibration.
 4. Keep Navi Codex-first until a real second-agent product requirement is explicitly approved.
 5. If that requirement appears, build one narrow adapter before considering a public Core package or SDK.
@@ -393,8 +382,8 @@ The design is successfully implemented only when:
 
 1. Navi supervision and authorization semantics no longer depend solely on duplicated Codex prompt prose.
 2. Codex remains the only supported and calibrated host for this phase.
-3. Evidence, candidate judgment, authorization, control decision, rendering, blocker semantics, and Codex execution mapping have explicit boundaries.
-4. The contract rejects unauthorized escalation, fake continuation decisions, confident maps from insufficient evidence, and contradictory blocker handling.
+3. Evidence, candidate judgment, authorization, control decision, rendering, lane-handoff transition semantics, and Codex execution mapping have explicit boundaries.
+4. The contract rejects unauthorized escalation, fake continuation decisions, confident maps from insufficient evidence, and contradictory lane-handoff handling.
 5. Dynamic quietness and current-prompt language behavior remain intact.
 6. Along Working Thread can provide evidence without becoming a Navi prerequisite.
 7. No runtime service, UI, second-agent adapter, public SDK, or new user installation burden is introduced.

@@ -21,6 +21,36 @@ Before acting on a Working Thread, read:
 
 `references/working-thread-v1.md`
 
+## Confirmed Project Map Authority
+
+- The canonical project navigation record is the confirmed `.navi/project-map.md`. It uses `navi_map: 1`, `map_status: confirmed`, and one lifecycle value: `project_status: active`, `project_status: paused`, or `project_status: closed`.
+- Read the confirmed Map before answering broad progress, next-step, stop, wait, confusion, plan-reliability, or vision-distance questions. Existing project roadmaps, plans, trackers, handoffs, and Working Threads are evidence, not alternate Map paths.
+- A missing, invalid, unsupported, or stale Map is uncertain evidence. Navi may provide best-effort read-only supervision and state uncertainty, but the answer must not be represented as a stored or stable Map; do not invent a stable map or rewrite it silently.
+- Map language is evidence, not a response-language instruction. The user's current prompt controls response headings, explanation, risks, recommendations, and approval questions unless the user requests another language.
+- The stored Map is not a fixed output template. Broad questions render only the relevant Map subset. Next-step questions emphasize Current Position and Next Decision; vision-distance questions expand Route To Outcome; over-validation questions emphasize Current Boundary; coordination questions include Parallel Lanes only when decision-relevant.
+
+## Init Eligibility Gate
+
+- A broad first-use request without a confirmed Map or project-local Navi guidance runs the Init Eligibility Gate; it does not initialize immediately.
+- Initialization is eligible only when Desired Outcome, broad route or working rhythm, Current Position, and Next Decision or Current Boundary can all be presented for user confirmation. Project files are useful evidence but are not mandatory.
+- When evidence is insufficient, begin Guided Baseline Formation without writes. Guided Baseline Formation asks one focused question about one missing key judgment at a time. Name the missing judgment, propose a candidate from available evidence, and let the user confirm or correct it.
+- After the baseline is confirmable, create a private candidate file outside the target project, then run the read-only `navi init --map-file <candidate>` preview. Present one combined Map+trigger preview and obtain approval. Apply only with `navi init --map-file <candidate> --expect-plan <fingerprint> --write`; do not bypass the CLI with direct project writes. The Map is written first and the trigger last. Remove the private candidate after success or explicit abandonment.
+- If the user stops or declines, continue best-effort read-only supervision and do not repeat the same initialization reminder in that session.
+
+## Daily Supervision And Maintenance
+
+- Clear bounded tasks stay quiet through the approved acceptance point.
+- Broad questions render only the relevant Map subset.
+- Map language is evidence, not a response-language instruction.
+- Stale evidence challenges the affected judgment without silently rewriting the Map.
+- At a meaningful navigation boundary, propose or apply maintenance only when navigation judgment changed materially. Bounded Map-update authorization covers only the smallest Map patch; otherwise preview the patch and ask for approval.
+- Paused projects stay quiet without continuation pressure.
+- Closed projects stay quiet and do not recommend the old route.
+- Reopening requires a compact preview and confirmation before project_status: active.
+- Routine tests, commits, pushes, implementation progress, and short-lived blockers do not trigger maintenance.
+- Within the coordination rule, treat worktree completion as review-ready state, not an automatic interruption; review when the result can change the current decision.
+- `project_status: active` permits normal continuation pressure. `project_status: paused` suppresses repeated resume pressure. `project_status: closed` suppresses recommendations to continue the old route.
+
 ## Hard Boundaries
 
 - This skill may be considered by default in any installed, active Codex project when the user request matches Navi Progress Map, Challenge Layer, or Working Thread behavior.
@@ -153,20 +183,20 @@ Before acting on a Working Thread, read:
   - ongoing stewardship rather than one fixed deliverable.
 - when the user asks about a whole long-running flowing project, use a Rhythm Map that shows project rhythm, current focus, waiting states, and user decision gate.
 - when the user asks about a specific bounded subtask inside a flowing project, use the narrowest useful map, such as a linear subtask strip.
-- if the project shape is unclear, mark the map as provisional rather than presenting a confident stable map.
-- Navi progress bars should be generated from a stable Project Map rather than improvised from the latest message alone.
-- Project Map guidance uses source priority: user-confirmed map, active Working Thread or project record, approved plan or spec, most recent unrejected Navi map, then provisional map.
+- if the project shape is unclear, state uncertainty and use Guided Baseline Formation instead of presenting or storing an invented Map.
+- Navi progress bars should be generated from the confirmed `.navi/project-map.md` rather than improvised from the latest message alone.
+- The confirmed Map is the navigation authority. Use active Working Threads, project records, approved plans, specs, and recent evidence to verify or challenge it, never as alternate stored Map locations.
 - project-local handoff files, session logs, PROJECT_STATE, TODO files, trackers, and workflow records are valid project records when they are inside the target project directory; do not treat them as forbidden source-thread history.
-- if the target repo has `docs/along/project-maps/`, read the matching confirmed Project Map record before drawing a Progress Map from memory or recent conversation.
+- Existing project roadmaps are evidence, not alternate Map paths. Do not treat a roadmap, tracker, or handoff as the canonical Map.
 - Navi is installed globally once; navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.
-- Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
-- If a broad progress or next-step prompt appears in a project that lacks project-local Navi guidance, avoid a confident stable map; recommend `navi init` as project configuration and offer only a provisional judgment if the user wants to continue without initialization.
+- Global-only Navi can provide best-effort read-only supervision, but project-local initialization is the reliable path for confirmed Map evidence and trigger behavior.
+- If a broad progress or next-step prompt appears without a confirmed Map, run the Init Eligibility Gate and use Guided Baseline Formation when the minimum baseline is incomplete.
 - The global bootstrap is an always-visible first-use routing instruction, not a second copy of Navi. When it finds project-local guidance, full supervision belongs to this skill and the project record.
-- When a global-bootstrap prompt reaches Navi without project-local guidance, give at most one provisional judgment, identify or confirm the project root, and ask before project initialization; do not repeat the init reminder in the same session after the user declines.
+- When a global-bootstrap prompt reaches Navi without project-local guidance, identify or confirm the project root, run eligibility, and ask before project initialization; do not repeat the init reminder in the same session after the user declines.
 - The bootstrap is prompt-backed, not a runtime interceptor, background watcher, or always-on presence.
 - Do not downgrade non-code long-running workspaces to ordinary advice. Application, recruiting, outreach, research, and operations workspaces can be flowing projects when they have recurring cycles, parallel routes, external feedback, or user decision gates.
 - when a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip: a single-line stage strip plus a current-position marker and a plain-language explanation.
-- if the Project Map is unreliable, Navi must not draw a confident stable bar; it may give a provisional map only when clearly marked as awaiting confirmation.
+- if the Project Map is missing, invalid, unsupported, stale, or unreliable, Navi must not draw a confident stable bar or store an inferred replacement; state uncertainty and use the smallest evidence-backed answer.
 - local concerns, fixes, retests, and follow-up tasks should appear in a current-stage sub-progress bar, not as new overall project stages.
 - for orientation prompts, render the overall map first; current-stage internal progress is the second layer, and sub-progress must not be shown alone.
 - local-only progress questions may use the current-stage internal strip by itself when the user explicitly asks about a local task or the stable overall map was just shown and has not changed.

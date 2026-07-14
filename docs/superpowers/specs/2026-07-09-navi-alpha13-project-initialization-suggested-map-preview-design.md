@@ -1,5 +1,9 @@
 # Navi Alpha 13 Project Initialization And Suggested Map Preview Design
 
+> **Superseded:** The [confirmed Project Map initialization journey](2026-07-13-navi-confirmed-project-map-init-journey-design.md) replaces the
+> public suggested-map flow and separate Project State direction. This file is
+> retained as historical design evidence.
+
 ## Status
 
 This design was discussed and approved in conversation on 2026-07-09 after the alpha.12 Quietness / Rule Density Control design and implementation planning.

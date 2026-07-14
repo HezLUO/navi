@@ -30,8 +30,8 @@ describe("Navi command dispatcher", () => {
       const setup = execute(["setup"]);
       const doctor = execute(["doctor"]);
 
-      expect(init.status, init.stderr).toBe(0);
-      expect(init.stdout).toContain("Navi init preview");
+      expect(init.status, init.stderr).toBe(1);
+      expect(init.stdout).toContain("confirmed Project Map");
       expect(setup.status, setup.stderr).toBe(1);
       expect(setup.stdout).toContain("Navi setup configures global discovery");
       expect(doctor.status).toBe(1);
@@ -64,8 +64,8 @@ describe("Navi command dispatcher", () => {
         env: { ...process.env, CODEX_HOME: codexHome },
       });
 
-      expect(result.status, result.stderr).toBe(0);
-      expect(result.stdout).toContain("Navi init preview");
+      expect(result.status, result.stderr).toBe(1);
+      expect(result.stdout).toContain("confirmed Project Map");
       expect(result.stderr).not.toContain("ERR_MODULE_NOT_FOUND");
       expect(result.stderr).not.toContain("along start");
     } finally {

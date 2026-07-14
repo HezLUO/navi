@@ -7,6 +7,8 @@ import { buildNaviDoctorReport, renderNaviDoctorReport, runNaviDoctorCli } from 
 import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
 import { renderAgentsBlock } from "../../src/cli/navi-init";
 import { type NaviInstallationStatus } from "../../src/cli/navi-installation";
+import { NAVI_PROJECT_MAP_RELATIVE_PATH, REQUIRED_PROJECT_MAP_ANCHORS } from "../../src/cli/navi-project-map";
+import { LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION } from "../fixtures/navi-legacy-agents-blocks";
 
 const roots: string[] = [];
 async function fixture() {
@@ -17,10 +19,148 @@ async function fixture() {
   return { root, codexHome, projectDir, cliRoot, source };
 }
 function current(sourcePath?: string): NaviInstallationStatus { return { kind: "current", current: { selector: "navi@navi-source", pluginName: "navi", marketplaceName: "navi-source", installed: true, enabled: true, ...(sourcePath ? { sourcePath } : {}), raw: "current" }, raw: "current" }; }
+function confirmedMap(projectStatus: "active" | "paused" | "closed" = "active"): string {
+  return `---
+navi_map: 1
+map_status: confirmed
+project_status: ${projectStatus}
+last_confirmed: 2026-07-14
+---
+# Navi Project Map
+
+${REQUIRED_PROJECT_MAP_ANCHORS.map((anchor, index) => `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}.`).join("\n\n")}
+`;
+}
+type TriggerFixture = "missing" | "current" | "legacy" | "invalid";
+type MapFixture = "missing" | "valid" | "valid-paused" | "valid-closed" | "invalid" | "unsupported" | "unsafe";
+async function buildFixtureReport(triggerFixture: TriggerFixture, mapFixture: MapFixture) {
+  const f = await fixture();
+  if (triggerFixture !== "missing") {
+    const trigger = triggerFixture === "current"
+      ? renderAgentsBlock()
+      : triggerFixture === "legacy"
+        ? LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION
+        : "<!-- NAVI:START -->\ngarbage\n<!-- NAVI:END -->";
+    await fs.writeFile(path.join(f.projectDir, "AGENTS.md"), `${trigger}\n`);
+  }
+  if (mapFixture !== "missing") {
+    const mapPath = path.join(f.projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+    await fs.mkdir(path.dirname(mapPath), { recursive: true });
+    if (mapFixture === "unsafe") {
+      await fs.mkdir(mapPath);
+    } else {
+      const text = mapFixture === "valid"
+        ? confirmedMap()
+        : mapFixture === "valid-paused"
+          ? confirmedMap("paused")
+          : mapFixture === "valid-closed"
+            ? confirmedMap("closed")
+            : mapFixture === "unsupported"
+              ? confirmedMap().replace("navi_map: 1", "navi_map: 2")
+              : confirmedMap().replace("map_status: confirmed", "map_status: draft");
+      await fs.writeFile(mapPath, text);
+    }
+  }
+  return buildNaviDoctorReport(
+    { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+    { inspectInstallation: async () => current(f.source) },
+  );
+}
 async function snapshot(root: string): Promise<string[]> { const entries: string[] = []; async function visit(dir: string) { for (const item of await fs.readdir(dir, { withFileTypes: true })) { const target = path.join(dir, item.name); entries.push(`${path.relative(root, target)}:${item.isSymbolicLink() ? "link" : item.isDirectory() ? "dir" : await fs.readFile(target, "utf8")}`); if (item.isDirectory()) await visit(target); } } await visit(root); return entries.sort(); }
 afterEach(async () => { await Promise.all(roots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true }))); });
 
 describe("Navi doctor", () => {
+  it.each([
+    ["not-initialized", "missing", "missing", "warn"],
+    ["map-ready", "missing", "valid", "warn"],
+    ["trigger-orphaned", "current", "missing", "fail"],
+    ["map-invalid", "current", "invalid", "fail"],
+    ["map-unsupported", "current", "unsupported", "fail"],
+    ["trigger-invalid", "invalid", "valid", "fail"],
+    ["healthy-active", "current", "valid", "pass"],
+    ["healthy-paused", "current", "valid-paused", "pass"],
+    ["healthy-closed", "current", "valid-closed", "pass"],
+  ] as const)("classifies %s", async (_name, triggerFixture, mapFixture, expectedStatus) => {
+    const report = await buildFixtureReport(triggerFixture, mapFixture);
+    expect(report.checks.find((check) => check.id === "project-init")?.status).toBe(expectedStatus);
+  });
+
+  it("does not pass marker-wrapped garbage", async () => {
+    const report = await buildFixtureReport("invalid", "valid");
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check?.status).toBe("fail");
+    expect(check?.summary).toMatch(/trigger.*invalid|damaged.*trigger/i);
+  });
+
+  it("guides a Map-ready project to preview trigger activation without regenerating its Map", async () => {
+    const report = await buildFixtureReport("missing", "valid");
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "warn" });
+    expect(check?.summary).toMatch(/valid confirmed Project Map.*trigger/i);
+    expect(check?.repair).toMatch(/navi init.*preview.*trigger activation/i);
+    expect(check?.repair).not.toMatch(/form|regenerate|replace.*Map/i);
+  });
+
+  it("gives a recognized-version-1 invalid Map a corrected-candidate repair preview", async () => {
+    const report = await buildFixtureReport("current", "invalid");
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "fail" });
+    expect(check?.repair).toMatch(/corrected confirmed.*candidate/i);
+    expect(check?.repair).toMatch(/exact repair preview/i);
+    expect(check?.repair).toContain("navi init --map-file");
+  });
+
+  it.each([
+    ["unknown-format", confirmedMap().replace("navi_map: 1", "navi_map: one")],
+    ["unsupported", confirmedMap().replace("navi_map: 1", "navi_map: 2")],
+  ] as const)("gives a %s Map manual preservation guidance without an overwrite command", async (_name, mapText) => {
+    const f = await fixture();
+    await fs.writeFile(path.join(f.projectDir, "AGENTS.md"), `${renderAgentsBlock()}\n`);
+    const mapPath = path.join(f.projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+    await fs.mkdir(path.dirname(mapPath), { recursive: true });
+    await fs.writeFile(mapPath, mapText);
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source) },
+    );
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "fail" });
+    expect(check?.repair).toMatch(/preserve.*Project Map.*manual/i);
+    expect(check?.repair).not.toContain("navi init --write");
+  });
+
+  it("gives an unsafe Map manual preservation guidance without an overwrite command", async () => {
+    const report = await buildFixtureReport("current", "unsafe");
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "fail" });
+    expect(check?.repair).toMatch(/preserve.*Project Map.*manual/i);
+    expect(check?.repair).not.toContain("navi init --write");
+  });
+
+  it("reports a legacy trigger with a valid Map as non-healthy with exact upgrade guidance", async () => {
+    const report = await buildFixtureReport("legacy", "valid");
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "fail" });
+    expect(check?.summary).toMatch(/legacy.*trigger/i);
+    expect(check?.repair).toMatch(/navi init.*exact.*trigger upgrade preview/i);
+  });
+
+  it.each(["paused", "closed"] as const)("names a healthy %s lifecycle without urging continuation", async (lifecycle) => {
+    const report = await buildFixtureReport("current", lifecycle === "paused" ? "valid-paused" : "valid-closed");
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "pass" });
+    expect(check?.summary).toContain(lifecycle);
+    expect(check?.summary).not.toMatch(/continue|resume|next/i);
+    expect(check?.repair).toBeUndefined();
+  });
+
   it("uses explicit CLI and installed-source roots without reading the process cwd or writing", async () => {
     const f = await fixture(); const unrelated = path.join(f.root, "unrelated"); await fs.mkdir(unrelated); const before = await snapshot(f.root);
     const report = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: unrelated, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
@@ -40,21 +180,15 @@ describe("Navi doctor", () => {
     const legacyReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ kind: "legacy", legacy, raw: "legacy" }) });
     const conflictReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ ...current(f.source), kind: "conflict", legacy }) });
     for (const output of [legacyReport, conflictReport].map((report) => report.checks.find((check) => check.id === "plugin")?.repair ?? "")) {
-      const migrationActions = [
-        "navi@navi-source",
-        "navi init",
-        "navi init --write",
-        "validate the target project",
-        "along-working-thread@personal",
-        "navi doctor",
-        "navi setup",
-      ];
-      let priorIndex = -1;
-      for (const action of migrationActions) {
-        const index = output.indexOf(action);
-        expect(index).toBeGreaterThan(priorIndex);
-        priorIndex = index;
-      }
+      expect(output).toMatch(
+        /Existing confirmed Map branch:[\s\S]*preview with navi init,[\s\S]*capture the Plan fingerprint,[\s\S]*apply with navi init --expect-plan <fingerprint> --write/i,
+      );
+      expect(output).toMatch(
+        /Missing confirmed Map branch:[\s\S]*form and confirm a Project Map candidate,[\s\S]*preview with navi init --map-file <candidate>,[\s\S]*capture the Plan fingerprint,[\s\S]*apply with navi init --map-file <candidate> --expect-plan <fingerprint> --write/i,
+      );
+      expect(output).not.toMatch(/navi init --write(?:[\s.,]|$)/);
+      expect(output).not.toMatch(/navi init --map-file <candidate>[\s\S]*apply with navi init --expect-plan <fingerprint> --write/i);
+      expect(output).toMatch(/validate the target project[\s\S]*along-working-thread@personal[\s\S]*navi doctor[\s\S]*navi setup/i);
     }
     expect(conflictReport.checks.find((check) => check.id === "plugin")?.status).toBe("fail");
   });
@@ -100,7 +234,7 @@ describe("Navi doctor", () => {
     const f = await fixture();
     await fs.writeFile(
       path.join(f.projectDir, "AGENTS.md"),
-      `${renderAgentsBlock().replace("Navi Progress Map Rules", "Navi Progress Map Rulez")}\n`,
+      `${renderAgentsBlock().replace("Navi Project Supervision", "Navi Project Supervison")}\n`,
     );
 
     const report = await buildNaviDoctorReport(
@@ -109,8 +243,8 @@ describe("Navi doctor", () => {
     );
     const check = report.checks.find((candidate) => candidate.id === "project-init");
 
-    expect(check).toMatchObject({ status: "warn", repair: expect.stringContaining("navi init") });
-    expect(check?.summary).toContain("damaged or unrecognized");
+    expect(check).toMatchObject({ status: "fail", repair: expect.stringContaining("navi init") });
+    expect(check?.summary).toMatch(/trigger.*invalid or unsafe/i);
   });
 
   it("warns when one inspectable plugin path has no separate cache evidence", async () => {

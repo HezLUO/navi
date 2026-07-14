@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import packageJson from "../../package.json";
+import pluginManifest from "../../plugins/navi/.codex-plugin/plugin.json";
 
 describe("Working Thread MCP package wiring", () => {
   it("exposes only the stable Navi JavaScript bin", () => {
@@ -33,11 +34,18 @@ describe("Working Thread MCP package wiring", () => {
         },
       );
 
-      expect(result.status, result.stderr).toBe(0);
+      expect(result.status, result.stderr).toBe(1);
       expect(result.stdout).toContain("Navi init preview");
+      expect(result.stdout).toContain("A confirmed Project Map is required");
       expect(existsSync(path.join(project, "AGENTS.md"))).toBe(false);
     } finally {
       rmSync(project, { force: true, recursive: true });
     }
+  });
+
+  it("routes first-use supervision through confirmed Map baseline formation", () => {
+    expect(pluginManifest.interface.defaultPrompt).toContain(
+      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
+    );
   });
 });
