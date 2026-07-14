@@ -1,17 +1,17 @@
 ---
-name: along-working-thread
-description: 'Use when any active Codex project needs Working Thread continuity or Navi supervision for non-expert progress/next-step/stop/wait/approval/vision-distance confusion, including 现在做到哪了, 我看不懂, 接下来, 继续吧, should I stop, should I wait, is this enough, or 这个方案可以吗; also use for high-impact drift challenges, Challenge Briefs, or wrap-up with user confirmation. Do not use for one-off coding tasks, background automation, or implementation without project supervision.'
+name: navi
+description: Use when any active Codex project needs Navi supervision for non-expert progress, next-step, stop, wait, approval, coordination, or vision-distance confusion.
 ---
 
-# Along Working Thread
+# Navi
 
-Use this skill to make Codex behave in an Along-like way inside an installed, active Codex project.
+Use this skill for Navi supervision inside an installed, active Codex project.
 
-The current V1 product surface of Along is **Navi**: a non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents.
+Navi is an independent non-expert progress and decision guidance experience that helps users understand, supervise, and steer expert agents. Along is its origin and lab context.
 
 Navi is for non-expert users who need to understand, supervise, and steer expert agents.
 
-Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, alpha.7 **coordination layer**, alpha.8 **decision handoff quality**, alpha.11 **lane closure handoff**, and alpha.12 **quietness gate**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Alpha.12 prevents pseudo-supervision by applying the rule: No control gain, no Navi surface. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum. Along remains the broader long-term product vision.
+Navi's V1 alpha behavior centers on **Progress/Rhythm Maps**, **Challenge Layer**, alpha.4 **phase supervision**, alpha.5 **pause semantics**, alpha.6 **stage-and-vision supervision**, alpha.7 **coordination layer**, alpha.8 **decision handoff quality**, alpha.11 **lane closure handoff**, and alpha.12 **quietness gate**. Navi gives a Progress Map or Rhythm Map when the user asks about progress, next steps, whether to continue, whether to stop, whether to wait for a worktree, whether a plan is safe to approve, how far the current work is from the original goal, or whether the main session should continue while another lane runs. Alpha.12 prevents pseudo-supervision by applying the rule: No control gain, no Navi surface. Challenge Moment remains the risk-escalation mechanism when the map reveals drift, weak assumptions, premature execution, over-validation, coordination conflict, or self-certifying momentum.
 
 It remains a turn-bound self-initiation skill: when judgment is shaky, the default move is to orient the user, surface risk, and turn uncertainty into validation rather than automatic execution. In short, turn into validation before treating uncertainty as settled.
 
@@ -84,7 +84,7 @@ Before acting on a Working Thread, read:
 - The goal is to continue inside a bounded, already-approved loop and stop at decisions the user can actually judge.
 - If the next action, boundary, and acceptance point are already clear, continue to the already-defined acceptance point instead of stopping at each local sub-step.
 - Do not stop just because a local sub-step finished, such as a doc write, read-only status check, or `git diff --check` passing.
-- Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases, cross-project edits, mode changes, scope expansion, validation-budget escalation, or known-risk acceptance.
+- Stop for user approval before file writes outside the approved mode, unplanned commits, pushes, tags, releases, cross-project edits, mode changes, scope expansion, validation-budget escalation, or known-risk acceptance. An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits for its worktree parent and bounded subagents. Do not request separate approval for each such commit; report the commit when the task closes. This never authorizes a commit with unknown staged content, history rewriting, merge, push, tag, release, a user request not to commit, project-owned instructions outside the Navi managed block, cross-project changes, scope expansion, or known-risk acceptance.
 - When stopping, explain the pause reason in one sentence when possible and say what continuing would do.
 - Next Decision Visibility covers valid stops that still create continuation friction. A valid stop can still create continuation friction if it hides the next decision. When Navi or Codex proactively stops and the user would otherwise have no visible next decision except `continue` or `继续`, provide the smallest useful next-decision hint.
 - Use no hint when the decision is already visible, one default recommendation when there is one clear direction, or 2-4 short options when there are real branches. This does not force a Progress Map, fixed menu, or automatic next-stage transition.
@@ -161,6 +161,9 @@ Before acting on a Working Thread, read:
 - Navi is installed globally once; navi init initializes a target project for reliable fresh-session behavior and does not install Navi again.
 - Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
 - If a broad progress or next-step prompt appears in a project that lacks project-local Navi guidance, avoid a confident stable map; recommend `navi init` as project configuration and offer only a provisional judgment if the user wants to continue without initialization.
+- The global bootstrap is an always-visible first-use routing instruction, not a second copy of Navi. When it finds project-local guidance, full supervision belongs to this skill and the project record.
+- When a global-bootstrap prompt reaches Navi without project-local guidance, give at most one provisional judgment, identify or confirm the project root, and ask before project initialization; do not repeat the init reminder in the same session after the user declines.
+- The bootstrap is prompt-backed, not a runtime interceptor, background watcher, or always-on presence.
 - Do not downgrade non-code long-running workspaces to ordinary advice. Application, recruiting, outreach, research, and operations workspaces can be flowing projects when they have recurring cycles, parallel routes, external feedback, or user decision gates.
 - when a reliable Project Map exists, render progress and next-step orientation as a compact horizontal progress strip: a single-line stage strip plus a current-position marker and a plain-language explanation.
 - if the Project Map is unreliable, Navi must not draw a confident stable bar; it may give a provisional map only when clearly marked as awaiting confirmation.

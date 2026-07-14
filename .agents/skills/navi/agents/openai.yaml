@@ -1,0 +1,7 @@
+interface:
+  display_name: Navi
+  short_description: Use Navi for broad project progress, next-step, stop/wait, continue, confusion, or plan-reliability questions; keep narrow tasks quiet.
+  default_prompt: Show where this project stands, what comes next, and what I need to decide.
+
+policy:
+  allow_implicit_invocation: true

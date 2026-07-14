@@ -5,16 +5,8 @@ import open from "open";
 
 const command = process.argv[2] ?? "start";
 
-if (command === "init") {
-  const { runNaviInitCli } = await import(
-    new URL("./navi-init.ts", import.meta.url).href
-  ) as typeof import("./navi-init");
-  const exitCode = await runNaviInitCli(process.argv.slice(3));
-  process.exit(exitCode);
-}
-
 if (command !== "start") {
-  console.error(`Unknown command "${command}". Use: navi init [--target <path>] [--write] [--suggest-map] or along start`);
+  console.error(`Unknown Along command "${command}". Use: along start`);
   process.exit(1);
 }
 

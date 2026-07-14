@@ -2,9 +2,9 @@
 
 Navi helps non-expert users understand, supervise, and steer expert agents.
 
-Navi is the current V1 product surface of Along. This Codex plugin source package centers Navi's V1 alpha behavior on Progress/Rhythm Maps and Challenge Layer behavior while helping active Codex sessions carry project judgment with user confirmation. Along remains the broader long-term product vision.
+Navi is an independent source-alpha product for supervising expert agents. This Codex plugin source package provides Navi's current Progress/Rhythm Maps and Challenge Layer behavior while helping active Codex sessions carry project judgment with user confirmation. Along is its origin and broader product-family context, not a prerequisite for installing or using Navi.
 
-The internal legacy package id remains `along-working-thread`. That id is kept for compatibility with the existing skill path, package layout, local installs, and tests.
+`along-working-thread` is a legacy installation identifier. It is retained only for explicit doctor-guided migration; it is not a current package path, selector, skill id, or new-user installation path.
 
 ## What it is
 
@@ -15,8 +15,6 @@ The internal legacy package id remains `along-working-thread`. That id is kept f
 - A way to preserve Working Thread continuity, drift awareness, and wrap-up discipline.
 
 ## Navi
-
-Navi is Along's current V1 product surface for non-expert users supervising expert agents.
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
 
@@ -78,7 +76,7 @@ Navi uses Challenge Layer behavior when a project map reveals risk.
 
 A **Challenge Moment** happens when Codex may be treating momentum as evidence: direction drift, premature execution, weak assumptions, or implementation success being treated as product proof.
 
-A **Challenge Brief** is the short response Along should produce at that moment:
+A **Challenge Brief** is the short response Navi should produce at that moment:
 
 1. what it noticed;
 2. why it matters against the Working Thread;
@@ -104,20 +102,20 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 ## Current stage
 
-This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.1`.
+This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.3`.
 
 It packages the current validated skill-first behavior. It does not add new runtime, memory, presence, adapter, or delegation capabilities. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 
 ## Package layout
 
 ```text
-plugins/along-working-thread/
+plugins/navi/
   .codex-plugin/
     plugin.json
   README.md
   VERSION.md
   skills/
-    along-working-thread/
+    navi/
       SKILL.md
       agents/
         openai.yaml
@@ -128,30 +126,49 @@ plugins/along-working-thread/
 The canonical source skill remains:
 
 ```text
-.agents/skills/along-working-thread
+.agents/skills/navi
 ```
 
 The package skill is a distribution copy and must stay in exact sync with the canonical source skill.
 
 ## Use from repo
 
-This package is intended for developers who already understand Codex plugins or skills.
-
-For local experimentation, use the package directory as the plugin source:
-
-```text
-plugins/along-working-thread
-```
-
-This plugin source package still requires explicit local Codex plugin or skill setup. The repository also includes a narrow target-project initializer:
+This package is intended for developers who already understand Codex plugins or skills. Source alpha requires an explicit, user-run installation; `navi setup` does not install the plugin for you. Verify the source before adding its local marketplace. From the repository root:
 
 ```bash
-npm run navi -- init --target /path/to/target-project
+npm install
+npm run verify:plugin-package
+codex plugin marketplace add "$PWD"
+codex plugin add navi@navi-source
+npm link
+navi doctor
+navi setup
+navi setup --write
+navi init
+navi init --write
 ```
 
-`navi init` previews project-local Navi files for the target project; add `--write` to apply the preview. It does not install or sync the global Codex plugin or skill.
+These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. `navi setup` configures global discovery and does not initialize a target project. `navi init` previews project-local Navi files for one target project; an agent may run `navi init --write` only after explicit user approval. It does not reinstall the plugin.
 
-This package is ready for GitHub source alpha testing. Public Codex marketplace release remains deferred.
+### Setup transaction safety
+
+Global setup uses a recoverable transaction directory and a cooperative same-user lock. It verifies approved bytes, publishes without replacing an existing target, and preserves detected third-party content for manual resolution. This is a cooperative-concurrency boundary, not a claim of adversarial same-user atomicity; do not delete a lock or force a conflicted setup.
+
+The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `src/web` is not the Navi alpha UI.
+
+### Legacy migration and removal
+
+`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init`; after approval run `navi init --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`. Do not assume a legacy marketplace selector.
+
+To remove this source-alpha setup yourself:
+
+```bash
+navi setup --remove
+navi setup --remove --write
+codex plugin remove navi@navi-source
+codex plugin marketplace remove navi-source
+npm unlink -g navi
+```
 
 ## Verify package
 
@@ -163,31 +180,31 @@ npm run verify:plugin-package
 
 The verification checks:
 
-- existing Navi / Along Working Thread skill tests;
+- existing Navi skill tests;
 - plugin manifest validity;
-- exact drift between `.agents/skills/along-working-thread` and `plugins/along-working-thread/skills/along-working-thread`.
+- exact drift between `.agents/skills/navi` and `plugins/navi/skills/navi`.
 
 ## Fresh-session validation checklist
 
-Use fresh Codex sessions in both the Along project and at least one non-Along target project. These checks validate the current Challenge Layer stage; they do not prove background autonomy, runtime behavior, or long-term product feeling.
+Use fresh Codex sessions in the Navi source repository and at least one non-Navi target project. These checks validate the current Challenge Layer stage; they do not prove background autonomy, runtime behavior, or long-term product feeling.
 
 ### Recovery
 
 ```text
-Please restore the current Along Working Thread and tell me what we should do next.
+Please restore the current Navi Working Thread and tell me what we should do next.
 ```
 
 Expected: Codex reads the Working Thread record, names the current Challenge Layer judgment, and keeps the next move focused on real-use calibration rather than new implementation.
 
 ### Navi Progress Map
 
-In a non-Along target project where the package is installed:
+In a non-Navi target project where the package is installed:
 
 ```text
 现在做到哪了？我看不懂。
 ```
 
-Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. It may inspect the target project's source-of-truth before outputting the Progress Map. The map should describe the target project's own stable stage sequence when one can be inferred, not Along's or Navi's implementation stages.
+Expected: Codex naturally gives a Navi Progress Map without requiring the user to name Navi. It may inspect the target project's source-of-truth before outputting the Progress Map. The map should describe the target project's own stable stage sequence when one can be inferred, not the Navi source repository's implementation stages.
 
 ```text
 接下来我们应该做什么？

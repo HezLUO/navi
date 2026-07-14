@@ -1,12 +1,12 @@
 # Working Thread V1 Reference
 
-This reference defines the skill-first V1 behavior for Along-like Codex sessions.
+This reference defines the skill-first V1 behavior for Navi-guided Codex sessions.
 
 ## Purpose
 
-Use this workflow to validate whether Codex can feel more Along-like inside an active project session by carrying Working Thread continuity, restoring current judgment, giving Navi Progress Maps for non-expert progress questions, challenging high-impact drift, drafting wrap-up, and producing Challenge Briefs for Challenge Moments.
+Use this workflow to validate whether Codex can provide Navi guidance inside an active project session by carrying Working Thread continuity, restoring current judgment, giving Navi Progress Maps for non-expert progress questions, challenging high-impact drift, drafting wrap-up, and producing Challenge Briefs for Challenge Moments.
 
-The current V1 product surface of Along is **Navi**. Navi helps non-expert users understand, supervise, and steer expert agents. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer**: Navi orients the user on current progress first, then uses Challenge Moment as the risk-escalation mechanism when the current path may be misleading. Along remains the broader long-term product vision.
+Navi is an independent product that helps non-expert users understand, supervise, and steer expert agents; Along is its origin and lab context. Navi's V1 alpha behavior centers on **Progress/Rhythm Maps** and **Challenge Layer**: Navi orients the user on current progress first, then uses Challenge Moment as the risk-escalation mechanism when the current path may be misleading.
 
 Do not implement Core/MCP, plugin packaging, Hermes adapter, background runtime, local/desktop presence, delegation, write delegation, relationship modes, or emotional simulation.
 
@@ -22,7 +22,7 @@ Chat is where conversation happens. Working Thread is what important unfinished 
 
 ## Navi
 
-Navi is Along's current V1 product surface for non-expert users supervising expert agents.
+Navi supports non-expert users supervising expert agents.
 
 Its V1 promise is:
 
@@ -192,6 +192,8 @@ Required stop points include:
 - accepting a known risk;
 - choosing between materially different product directions;
 - resolving a failed check that requires code or behavior changes.
+
+An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits for its worktree parent and bounded subagents. Do not request separate approval for each such commit; report the commit when the task closes. This never authorizes an unplanned commit, a commit with unknown staged content, history rewriting, merge, push, tag, release, a user request not to commit, project-owned instructions outside the Navi managed block, cross-project changes, scope expansion, or known-risk acceptance.
 
 ### Pause Reason Rule
 
@@ -997,7 +999,7 @@ For fresh sessions, these project-local records are often the correct source for
 
 ### Project-Local Navi Trigger Source
 
-Do not rely only on global skill auto-routing for Navi. In fresh sessions, the Along Working Thread skill may be installed and readable but not implicitly selected for an ordinary next-step prompt. A project-local trigger source is a reliability layer that makes Navi discoverable from the target project itself.
+Do not rely only on global skill auto-routing for Navi. In fresh sessions, the Navi skill may be installed and readable but not implicitly selected for an ordinary next-step prompt. A project-local trigger source is a reliability layer that makes Navi discoverable from the target project itself.
 
 When a supervised project needs reliable Navi behavior, add a short project-local trigger source to the target project's `AGENTS.md` or equivalent agent instruction file. The trigger source should say that progress, next-step, continue, confusion, and plan-reliability questions should first receive a compact Navi map before ordinary task advice.
 
@@ -1010,6 +1012,16 @@ Project-local trigger sources should explicitly say that read-only checks of TOD
 ### Navi Project Initialization
 
 Navi Project Initialization is the minimum reliable path to configure Navi for a target project. It uses the global skill plus project-local trigger source plus project-local Project Map or Rhythm Map.
+
+### Global Bootstrap And Project Handoff
+
+The global bootstrap is an always-visible first-use routing instruction, not a second copy of Navi. It distinguishes global setup from project initialization: global setup makes the skill available, while `navi init` creates project-local Navi guidance and source records for reliable fresh-session supervision.
+
+Apply the quietness gate first. Clear narrow execution or read-only requests stay quiet; broad progress, next-step, stop/wait, continue, confusion, and plan-reliability prompts can use the bootstrap to route into Navi.
+
+Without project-local Navi guidance, the bootstrap may provide at most one provisional judgment. It must identify or confirm the project root when that root is ambiguous, ask before any project initialization, and do not repeat the init reminder in the same session after the user declines. Never initialize a project automatically.
+
+The bootstrap is prompt-backed, not a runtime interceptor, background watcher, MCP guarantee, or always-on presence. After project initialization, project-local guidance and project records take over reliable routing and evidence recovery.
 
 Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again. Global-only Navi can provide best-effort supervision, but project-local initialization is the reliable path for project evidence, trigger behavior, and starter maps.
 
@@ -1238,7 +1250,7 @@ Default personality:
 
 ## Challenge Layer
 
-Challenge Layer is the V1 product frame for Along inside existing agents.
+Challenge Layer is a V1 Navi product behavior inside existing agents.
 
 Its job is not to criticize every decision. Its job is to notice when the current project momentum may be proving itself too easily.
 

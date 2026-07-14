@@ -1,0 +1,35 @@
+{
+  "name": "navi",
+  "version": "0.1.0",
+  "description": "Carry Working Thread continuity, Navi Progress Map behavior, and Challenge Layer validation across active Codex sessions.",
+  "skills": "./skills/",
+  "author": {
+    "name": "Navi Contributors"
+  },
+  "keywords": [
+    "along",
+    "working-thread",
+    "continuity",
+    "codex",
+    "self-initiation",
+    "challenge-layer",
+    "validation",
+    "navi",
+    "progress-map"
+  ],
+  "interface": {
+    "displayName": "Navi",
+    "shortDescription": "Project progress, next-step, stop/wait, and plan-reliability guidance.",
+    "longDescription": "Navi helps Codex carry project judgment across sessions, give Progress Maps for non-expert users, notice Challenge Moment risks, and turn self-certifying momentum into lightweight validation. It provides turn-bound self-initiation, not background autonomy or always-on presence.",
+    "developerName": "Navi Contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Show where this project stands, what comes next, and what I need to decide.",
+      "Should we continue, stop, wait, or move to the next stage?",
+      "Check whether this project needs Navi initialization before giving a stable map."
+    ]
+  }
+}

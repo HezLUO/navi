@@ -3,14 +3,17 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  NAVI_AGENTS_BLOCK_END,
   NAVI_AGENTS_BLOCK_START,
   applyInitPlan,
   buildInitPlan,
   parseInitArgs,
+  renderAgentsBlock,
   renderInitPlan,
   resolveTargetPath,
   runNaviInitCli,
 } from "../../src/cli/navi-init";
+
 
 const tempRoots = new Set<string>();
 
@@ -29,6 +32,10 @@ async function exists(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function deployedAlpha13Block(): Promise<string> {
+  return fs.readFile(new URL("../fixtures/navi-alpha13-agents-block.md", import.meta.url), "utf8");
 }
 
 async function snapshotFiles(root: string): Promise<Record<string, string>> {
@@ -216,7 +223,7 @@ describe("navi init planning", () => {
       "Do not treat a waiting worktree, external review, or background track as a reason to stop the whole main session",
       "continue non-conflicting design, supervision, acceptance-criteria, roadmap, or risk work",
       "Only make the whole session wait when all useful next steps depend on the result",
-      "Stop for user approval before file writes outside the approved mode, commits, pushes, tags, releases",
+      "Stop for user approval before file writes outside the approved mode, unplanned commits, pushes, tags, releases",
       "When stopping, explain the pause reason in one sentence",
       "Use a light continuation contract when a multi-step loop is clear",
       "Next Decision Visibility",
@@ -421,10 +428,7 @@ describe("navi init planning", () => {
   it("is idempotent when an AGENTS.md Navi block already exists", async () => {
     const project = await makeProject();
     const agentsPath = path.join(project, "AGENTS.md");
-    await fs.writeFile(
-      agentsPath,
-      `# Project Instructions\n\n${NAVI_AGENTS_BLOCK_START}\n## Navi Progress Map Rules\nExisting block.\n<!-- NAVI:END -->\n`,
-    );
+    await applyInitPlan(await buildInitPlan({ targetDir: project, write: true }));
 
     const plan = await buildInitPlan({ targetDir: project, write: true });
     await applyInitPlan(plan);
@@ -432,8 +436,63 @@ describe("navi init planning", () => {
     const agents = await fs.readFile(agentsPath, "utf8");
     expect(plan.actions.find((action) => action.relativePath === "AGENTS.md")?.kind).toBe("skip");
     expect(agents.match(new RegExp(NAVI_AGENTS_BLOCK_START, "g"))).toHaveLength(1);
-    expect(agents).toContain("Existing block.");
+    expect(agents).toContain("## Navi Progress Map Rules");
   });
+
+  it("upgrades only the exact deployed alpha.13 managed block and preserves outside bytes", async () => {
+    const project = await makeProject();
+    const agentsPath = path.join(project, "AGENTS.md");
+    const before = "# Project-owned instruction\n\nKeep this rule.\n\n";
+    const after = "\n\n# More project-owned instructions\nNever rewrite this.\n";
+    await fs.writeFile(agentsPath, `${before}${await deployedAlpha13Block()}${after}`);
+
+    const preview = await buildInitPlan({ targetDir: project, write: false });
+    const action = preview.actions.find((candidate) => candidate.relativePath === "AGENTS.md");
+
+    expect(action?.kind).toBe("modify");
+    expect(action?.content).toMatch(/^# Project-owned instruction\n\nKeep this rule\.\n\n/);
+    expect(action?.content).toMatch(/# More project-owned instructions\nNever rewrite this\.\n$/);
+    expect(action?.content).toContain("approved bounded implementation or worktree plan");
+    expect(await fs.readFile(agentsPath, "utf8")).toBe(`${before}${await deployedAlpha13Block()}${after}`);
+
+    const writePlan = await buildInitPlan({ targetDir: project, write: true });
+    await applyInitPlan(writePlan);
+
+    const upgraded = await fs.readFile(agentsPath, "utf8");
+    expect(upgraded.startsWith(before)).toBe(true);
+    expect(upgraded.endsWith(after)).toBe(true);
+    expect(upgraded).toContain("Do not request separate approval for each such commit");
+  });
+
+  it.each(["one-character edit", "duplicate markers", "incomplete markers"])(
+    "refuses unsafe Navi managed blocks: %s",
+    async (scenario) => {
+      const project = await makeProject();
+      const agentsPath = path.join(project, "AGENTS.md");
+      const deployed = await deployedAlpha13Block();
+      const unsafe =
+        scenario === "one-character edit"
+          ? deployed.replace("Navi Progress Map Rules", "Navi Progress Map Rulez")
+          : scenario === "duplicate markers"
+            ? `${deployed}\n${deployed}`
+            : deployed.slice(0, deployed.lastIndexOf(NAVI_AGENTS_BLOCK_END));
+      await fs.writeFile(agentsPath, `# Project-owned instruction\n\n${unsafe}\n`);
+      const before = await fs.readFile(agentsPath, "utf8");
+      const stdout: string[] = [];
+      const stderr: string[] = [];
+
+      const code = await runNaviInitCli(["--target", project], {
+        cwd: project,
+        stdout: (text) => stdout.push(text),
+        stderr: (text) => stderr.push(text),
+      });
+
+      expect(code).toBe(1);
+      expect(stderr.join("")).toMatch(/managed Navi block/i);
+      expect(stdout.join("")).not.toContain("Apply with:");
+      await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe(before);
+    },
+  );
 
   it("does not overwrite an existing project map", async () => {
     const project = await makeProject();
@@ -550,7 +609,7 @@ describe("navi init planning", () => {
     const project = await makeProject();
     await fs.writeFile(
       path.join(project, "AGENTS.md"),
-      `${NAVI_AGENTS_BLOCK_START}\n## Navi Progress Map Rules\nExisting block.\n<!-- NAVI:END -->\n`,
+      `${renderAgentsBlock()}\n`,
     );
     const plan = await buildInitPlan({ targetDir: project, write: true });
     const outsideMapDir = path.join(path.dirname(project), "outside-maps");
@@ -577,7 +636,7 @@ describe("navi init planning", () => {
     const project = await makeProject();
     await fs.writeFile(
       path.join(project, "AGENTS.md"),
-      `${NAVI_AGENTS_BLOCK_START}\n## Navi Progress Map Rules\nExisting block.\n<!-- NAVI:END -->\n`,
+      `${renderAgentsBlock()}\n`,
     );
     const plan = await buildInitPlan({ targetDir: project, write: true });
     const mapDir = path.join(project, "docs/along/project-maps");
@@ -702,7 +761,7 @@ describe("navi init planning", () => {
     const project = await makeProject();
     await fs.writeFile(
       path.join(project, "AGENTS.md"),
-      `${NAVI_AGENTS_BLOCK_START}\n## Navi Progress Map Rules\nExisting block.\n<!-- NAVI:END -->\n`,
+      `${renderAgentsBlock()}\n`,
     );
     const mapPath = path.join(project, "docs/along/project-maps/navi-project-map.md");
     await fs.mkdir(path.dirname(mapPath), { recursive: true });
@@ -1110,17 +1169,16 @@ describe("navi init CLI helpers", () => {
     expect(output).toContain("Project shape hint: flowing");
   });
 
-  it("keeps user evidence after an incomplete Navi marker", async () => {
+  it("refuses an incomplete Navi marker instead of treating its contents as evidence", async () => {
     const project = await makeProject();
     await fs.writeFile(
       path.join(project, "AGENTS.md"),
       `${NAVI_AGENTS_BLOCK_START}\nPartial generated block without an end marker.\n\nUser evidence: design implementation validation release.\n`,
     );
 
-    const output = renderInitPlan(await buildInitPlan({ targetDir: project, write: false, suggestMap: true }));
-
-    expect(output).toContain("- AGENTS.md");
-    expect(output).toContain("Project shape hint: linear");
+    await expect(buildInitPlan({ targetDir: project, write: false, suggestMap: true })).rejects.toThrow(
+      /managed Navi block/i,
+    );
   });
 
   it("keeps user evidence added to an edited starter project map", async () => {
