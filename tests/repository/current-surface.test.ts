@@ -15,6 +15,19 @@ async function listFiles(dir: string): Promise<string[]> {
 }
 
 describe("Current Navi repository surface", () => {
+  it("keeps navi init responsibilities in focused modules", async () => {
+    const expected = {
+      "src/cli/navi-init.ts": ["runNaviInitCli", "parseInitArgs", "renderInitPlan"],
+      "src/cli/navi-init-plan.ts": ["buildInitPlan", "resolveTargetPath"],
+      "src/cli/navi-init-apply.ts": ["applyInitPlan"],
+      "src/cli/navi-project-trigger.ts": ["renderAgentsBlock", "recognizeNaviManagedBlock", "inspectProjectTrigger"],
+    };
+    for (const [relative, exports] of Object.entries(expected)) {
+      const text = await fs.readFile(path.join(root, relative), "utf8");
+      for (const name of exports) expect(text, relative).toMatch(new RegExp(`export (?:async )?(?:function|const|type|interface) ${name}|export \\{[^}]*${name}`));
+    }
+  });
+
   it("keeps active Navi docs outside the Historical Along namespace", async () => {
     for (const relative of [
       "docs/navi/README.md",

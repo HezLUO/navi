@@ -1,12 +1,12 @@
 import fs from "node:fs/promises";
-import { NAVI_AGENTS_BLOCK_END, NAVI_AGENTS_BLOCK_START } from "../../src/cli/navi-init";
+import { NAVI_AGENTS_BLOCK_END, NAVI_AGENTS_BLOCK_START } from "../../src/cli/navi-project-trigger";
 
 const LEGACY_SCOPED_COMMIT_AUTHORIZATION =
   "An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits for its worktree parent and bounded subagents. Do not request separate approval for each such commit; report the commit when the task closes. This does not authorize a commit with unknown staged content, history rewriting, merge, push, tag, release, a user request not to commit, project-owned instructions outside the Navi managed block, cross-project changes, scope expansion, or known-risk acceptance.";
 
 async function historicalAgentsBlockFixture(includeScopedCommitAuthorization: boolean): Promise<string> {
   const source = await fs.readFile(
-    new URL("../../docs/along/project-maps/navi-project-trigger-template.md", import.meta.url),
+    new URL("../../archive/along/docs/project-maps/navi-project-trigger-template.md", import.meta.url),
     "utf8",
   );
   const fenced = source.match(/````markdown\n([\s\S]*?)\n````/u)?.[1];

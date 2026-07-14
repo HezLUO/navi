@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertUnlinkedArtifact, resolveCanonicalCodexHome } from "./navi-codex-home";
 import { NAVI_GLOBAL_BLOCK_END, NAVI_GLOBAL_BLOCK_START, planGlobalAgentsContent } from "./navi-global";
-import { inspectProjectTrigger, type ProjectTriggerState } from "./navi-init";
+import { inspectProjectTrigger, type ProjectTriggerState } from "./navi-project-trigger";
 import { inspectNaviInstallation, type NaviInstallationStatus } from "./navi-installation";
 import { inspectProjectMapFile, type ProjectMapFileState } from "./navi-project-map";
 import { inspectTransaction } from "./navi-transaction";

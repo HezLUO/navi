@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildNaviDoctorReport, renderNaviDoctorReport, runNaviDoctorCli } from "../../src/cli/navi-doctor";
 import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
-import { renderAgentsBlock } from "../../src/cli/navi-init";
+import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
 import { type NaviInstallationStatus } from "../../src/cli/navi-installation";
 import { NAVI_PROJECT_MAP_RELATIVE_PATH, REQUIRED_PROJECT_MAP_ANCHORS } from "../../src/cli/navi-project-map";
 import { LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION } from "../fixtures/navi-legacy-agents-blocks";

@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { inspectProjectEvidence } from "../../src/cli/navi-evidence";
-import { renderAgentsBlock } from "../../src/cli/navi-init";
+import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
 
 const roots: string[] = [];
 

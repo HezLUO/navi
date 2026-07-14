@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { renderAgentsBlock } from "../../src/cli/navi-init";
+import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
 
 async function readRepoText(relativePath: string): Promise<string> {
   return fs.readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
