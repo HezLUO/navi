@@ -1784,7 +1784,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "project_status: active",
       "project_status: paused",
       "project_status: closed",
-      "worktree completion creates a review-ready event",
+      "worktree completion as review-ready state",
     ];
 
     for (const phrase of confirmedMapContract) {
@@ -1892,8 +1892,48 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(lifecycle).toMatch(/project_status: paused[\s\S]*stay quiet without continuation pressure/i);
     expect(lifecycle).toMatch(/project_status: closed[\s\S]*do not recommend the old route/i);
     expect(lifecycle).toMatch(/Reopening does not trust the old Current Position[\s\S]*confirmation before project_status: active/i);
-    expect(parallel).toMatch(/worktree completion creates a review-ready event[\s\S]*not an automatic interruption/i);
-    expect(parallel).toMatch(/Interrupt only when the result can change the current decision/i);
+    expect(parallel).toMatch(/treat worktree completion as review-ready state[\s\S]*not an automatic interruption/i);
+    expect(parallel).toMatch(/review when the result can change the current decision/i);
+    expect(parallel).not.toMatch(/review-ready event/i);
+  });
+
+  it("keeps review readiness semantic-only and leaves unified lane-handoff delivery to its owning design", async () => {
+    const [
+      canonicalSkill,
+      canonicalReference,
+      packagedSkill,
+      packagedReference,
+      triggerTemplate,
+      initSource,
+      contractSpec,
+    ] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/skills/navi/references/working-thread-v1.md"),
+      readRepoText("docs/navi/project-trigger-template.md"),
+      readRepoText("src/cli/navi-init.ts"),
+      readRepoText("docs/superpowers/specs/2026-07-13-navi-codex-first-supervision-contract-design.md"),
+    ]);
+
+    for (const currentSurface of [
+      canonicalSkill,
+      canonicalReference,
+      packagedSkill,
+      packagedReference,
+      triggerTemplate,
+      initSource,
+    ]) {
+      expect(currentSurface).toMatch(/treat worktree completion as review-ready state[\s\S]*not an automatic interruption/i);
+      expect(currentSurface).not.toMatch(/worktree completion creates a review-ready event/i);
+    }
+
+    expect(contractSpec).toMatch(/future adapter delivery[\s\S]*decision-required[\s\S]*blocked[\s\S]*review-ready transitions/i);
+    expect(contractSpec).toMatch(/Confirmed Map journey[\s\S]*implements only review-ready semantics[\s\S]*does not implement delivery/i);
+    expect(contractSpec).toMatch(/four primary envelopes[\s\S]*lane-handoff transition seam/i);
+    expect(contractSpec).toContain("docs/superpowers/specs/2026-07-12-navi-blocker-event-delivery-design.md");
+    expect(contractSpec).not.toMatch(/first lane event is the already approved formal blocker event/i);
+    expect(contractSpec).not.toMatch(/first contract excludes[\s\S]*review-ready/i);
   });
 
   it("rejects contradictory stored-Map and legacy-path guidance across canonical and packaged contracts", async () => {

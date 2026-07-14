@@ -1040,7 +1040,7 @@ The initial Map write requires the final preview and approval. Later maintenance
 
 ### Parallel Work And Review Readiness
 
-Main-session design may continue while a bounded implementation worktree performs non-conflicting work. In Navi's coordination contract, worktree completion creates a review-ready event, not an automatic interruption. Interrupt only when the result can change the current decision, premise, risk, scope, merge path, or release readiness.
+Main-session design may continue while a bounded implementation worktree performs non-conflicting work. In Navi's coordination contract, treat worktree completion as review-ready state, not an automatic interruption. Review when the result can change the current decision, premise, risk, scope, merge path, or release readiness.
 
 ### Project Lifecycle
 

@@ -554,7 +554,7 @@ describe("navi init guarded writes", () => {
 - Match the response language to the user's current prompt; the saved Map language is evidence only.
 - Treat a missing, invalid, unsupported, or stale Map as uncertain evidence; do not invent a stable map or rewrite it silently.
 - Update the Map only when navigation judgment changes materially and only within an explicit bounded write scope or after a compact preview and approval.
-- Worktree completion creates a review-ready event, not an automatic interruption; interrupt only when the result can change the current decision.
+- Treat worktree completion as review-ready state, not an automatic interruption; review when the result can change the current decision.
 - Do not stage, commit, push, release, initialize, or change project lifecycle unless the current authorization covers that action.
 <!-- NAVI:END -->`);
   });

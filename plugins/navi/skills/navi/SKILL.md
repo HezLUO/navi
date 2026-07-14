@@ -48,7 +48,7 @@ Before acting on a Working Thread, read:
 - Closed projects stay quiet and do not recommend the old route.
 - Reopening requires a compact preview and confirmation before project_status: active.
 - Routine tests, commits, pushes, implementation progress, and short-lived blockers do not trigger maintenance.
-- Within the coordination rule, worktree completion creates a review-ready event, not an automatic interruption; interrupt only when the result can change the current decision.
+- Within the coordination rule, treat worktree completion as review-ready state, not an automatic interruption; review when the result can change the current decision.
 - `project_status: active` permits normal continuation pressure. `project_status: paused` suppresses repeated resume pressure. `project_status: closed` suppresses recommendations to continue the old route.
 
 ## Hard Boundaries
