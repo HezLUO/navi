@@ -88,7 +88,7 @@ Navi map 默认应该跟随用户当前 prompt 的语言。如果目标项目保
 
 如果你想在活跃 Codex 会话中测试 Navi 当前的监督行为、审查 plugin source package，或反馈 Progress/Rhythm Maps 与 Challenge Layer 是否能帮助非专家用户引导 expert-agent 工作，可以使用这个 alpha。
 
-如果你需要 npm distribution、公开 marketplace 安装、全局 Codex plugin 安装、一键 sync、runtime UI、后台 watching、notifications，或 Codex 之外的 agent adapters，请等待后续 release。
+如果你需要 npm distribution、公开 marketplace 安装、全局 Codex plugin 安装、一键 sync、runtime UI、后台 watching、操作系统或后台 notifications，或 Codex 之外的 agent adapters，请等待后续 release。
 
 ## Alpha 状态
 
@@ -115,7 +115,7 @@ Navi map 默认应该跟随用户当前 prompt 的语言。如果目标项目保
 - npm package 发布。
 - 公开 Codex marketplace release。
 - 全局 Codex plugin 安装或一键 sync。
-- 后台 autonomy、notifications 或 always-on presence。
+- 不包含后台 watcher、操作系统通知服务或 always-on presence；bounded Lane Handoff 只在 Codex 活跃时使用可用的任务消息能力。
 - Runtime UI 或未来 local app surface。
 - Hermes、Claude Code 或其他 agent adapters。
 - Memory v2、relationship modes、delegation 或 write delegation。
@@ -138,7 +138,9 @@ plugins/navi
 
 当前 installation、discovery 和 project triggers 只使用 Navi identifiers。`along-working-thread` 是 legacy installation identifier：只用于明确的 doctor-guided migration，不用于新安装。
 
-Navi V1 是 docs-backed 且 turn-bound 的。它在活跃 agent session 中工作；它不会 watch files、发送 notifications，也不会在 Codex 关闭后继续行动。
+Navi V1 是 docs-backed 且 turn-bound 的。它在活跃 agent session 中工作；它不会 watch files、发送操作系统或后台 notifications，也不会在 Codex 关闭后继续行动。
+
+当一个有明确边界的 Codex worktree 带有 source-task metadata 且 host 提供任务消息能力时，Navi 可以把一次 `decision-required`、`blocked` 或 `review-ready` 转换直接交给来源主任务。这是活跃会话中 Codex 任务之间的协调，不是后台 watcher、用户通知服务、持久队列，也不会自动授权恢复执行、merge、push 或 release。
 
 ## Navi 做什么
 

@@ -88,7 +88,7 @@ Navi maps should follow the user's current prompt language by default. If a targ
 
 Use this alpha if you want to test Navi's current supervision behavior in active Codex sessions, review the plugin source package, or give feedback on whether Progress/Rhythm Maps and Challenge Layer behavior help non-expert users steer expert-agent work.
 
-Wait for a later release if you need npm distribution, public marketplace installation, global Codex plugin installation, one-click sync, runtime UI, background watching, notifications, or adapters for agents outside Codex.
+Wait for a later release if you need npm distribution, public marketplace installation, global Codex plugin installation, one-click sync, runtime UI, background watching, operating-system or background notifications, or adapters for agents outside Codex.
 
 ## Alpha Status
 
@@ -115,7 +115,7 @@ What is not included:
 - npm package publication.
 - Public Codex marketplace release.
 - Global Codex plugin installation or one-click sync.
-- Background autonomy, notifications, or always-on presence.
+- It has no background watcher, operating-system notification service, or always-on presence; bounded Lane Handoff uses available Codex task messaging only while Codex is active.
 - Runtime UI or future local app surface.
 - Hermes, Claude Code, or other agent adapters.
 - Memory v2, relationship modes, delegation, or write delegation.
@@ -138,7 +138,9 @@ plugins/navi
 
 Current installation, discovery, and project triggers use Navi identifiers only. `along-working-thread` is a legacy installation identifier: keep it only for explicit doctor-guided migration, not for a new installation.
 
-Navi V1 is docs-backed and turn-bound. It works while an active agent session is running; it does not watch files, send notifications, or act when Codex is closed.
+Navi V1 is docs-backed and turn-bound. It works while an active agent session is running; it does not watch files, send operating-system or background notifications, or act when Codex is closed.
+
+When a bounded Codex worktree has source-task metadata and host task messaging, Navi can deliver one `decision-required`, `blocked`, or `review-ready` transition back to the source main task. This is Codex task-to-task coordination during an active session, not a background watcher, user notification service, durable queue, or automatic permission to resume, merge, push, or release.
 
 ## What Navi Does
 

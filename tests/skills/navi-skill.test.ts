@@ -106,6 +106,24 @@ async function parseWithPyYaml(source: string): Promise<Record<string, unknown>>
 }
 
 describe("Along Working Thread Codex skill", () => {
+  it("documents Codex task handoff without claiming background notifications", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme]) {
+      expect(surface).toMatch(/decision-required[\s\S]*blocked[\s\S]*review-ready/i);
+      expect(surface).toMatch(/Codex task-to-task[\s\S]*active session/i);
+      expect(surface).toMatch(/no background watcher[\s\S]*notification service/i);
+    }
+
+    expect(chineseReadme).toMatch(/decision-required[\s\S]*blocked[\s\S]*review-ready/i);
+    expect(chineseReadme).toMatch(/活跃会话[\s\S]*Codex 任务之间/i);
+    expect(chineseReadme).toMatch(/不包含后台 watcher[\s\S]*通知服务/i);
+  });
+
   it("uses plugin-validator-compatible YAML frontmatter", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const frontmatter = extractFrontmatter(skill);

@@ -14,6 +14,8 @@ Navi is an independent source-alpha product for supervising expert agents. This 
 - A Navi Progress Map behavior for progress and next-step questions from non-expert users.
 - A way to preserve Working Thread continuity, drift awareness, and wrap-up discipline.
 
+When a bounded Codex worktree has source-task metadata and host task messaging, Navi can deliver one `decision-required`, `blocked`, or `review-ready` transition back to the source main task. This is Codex task-to-task coordination during an active session, not a background watcher, user notification service, durable queue, or automatic permission to resume, merge, push, or release.
+
 ## Navi
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
@@ -90,7 +92,7 @@ The core value is **anti-self-certification**. It does not make implementation s
 - It is not a background autonomous agent.
 - It is not an always-on companion.
 - It does not watch files or time when Codex is closed.
-- It does not send notifications.
+- It has no background watcher, operating-system notification service, or always-on presence; bounded Lane Handoff uses available Codex task messaging only while Codex is active.
 - It does not provide local desktop presence.
 - It does not provide emotional companionship.
 - It is not a cross-agent memory layer.
@@ -104,7 +106,7 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.3`.
 
-It packages the current validated skill-first behavior. It does not add new runtime, memory, presence, adapter, or delegation capabilities. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
+It packages the current skill-first behavior and a prompt/docs-backed Codex Lane Handoff adapter. It does not add runtime, memory, presence, background autonomy, another-agent support, or automatic worktree orchestration. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 
 ## Package layout
 
@@ -120,6 +122,7 @@ plugins/navi/
       agents/
         openai.yaml
       references/
+        lane-handoff-v1.md
         working-thread-v1.md
 ```
 
