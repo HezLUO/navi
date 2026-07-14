@@ -3,33 +3,21 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  parseInitArgs,
   renderInitPlan,
   runNaviInitCli,
 } from "../../src/cli/navi-init";
-import { applyInitPlan } from "../../src/cli/navi-init-apply";
 import {
   buildInitPlan,
   resolveTargetPath,
-  type InitPlan,
 } from "../../src/cli/navi-init-plan";
 import {
-  NAVI_AGENTS_BLOCK_END,
-  NAVI_AGENTS_BLOCK_START,
   inspectProjectTrigger,
-  recognizeNaviManagedBlock,
   renderAgentsBlock,
 } from "../../src/cli/navi-project-trigger";
 import {
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   REQUIRED_PROJECT_MAP_ANCHORS,
-  parseProjectMapDocument,
 } from "../../src/cli/navi-project-map";
-import {
-  LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION,
-  LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION,
-  LEGACY_CONFIRMED_MAP_AGENTS_BLOCK_WITHOUT_LANE_HANDOFF,
-} from "../fixtures/navi-legacy-agents-blocks";
 
 const tempRoots = new Set<string>();
 
@@ -95,22 +83,6 @@ function testIo(cwd = process.cwd()) {
     output: () => stdout.join(""),
     errors: () => stderr.join(""),
   };
-}
-
-function externalPlan(project: string, actions: InitPlan["actions"]): InitPlan {
-  return {
-    mode: "write",
-    state: "actionable",
-    targetDir: project,
-    actions,
-    validationPrompt: "",
-    evidencePaths: [],
-  };
-}
-
-function fingerprintFor(plan: InitPlan): string {
-  if (plan.fingerprint === undefined) throw new Error("Expected an actionable plan fingerprint");
-  return plan.fingerprint;
 }
 
 afterEach(async () => {

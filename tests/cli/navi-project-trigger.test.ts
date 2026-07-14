@@ -1,18 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  parseInitArgs,
-  renderInitPlan,
-  runNaviInitCli,
-} from "../../src/cli/navi-init";
-import { applyInitPlan } from "../../src/cli/navi-init-apply";
-import {
-  buildInitPlan,
-  resolveTargetPath,
-  type InitPlan,
-} from "../../src/cli/navi-init-plan";
+import { afterEach, describe, expect, it } from "vitest";
+import { buildInitPlan } from "../../src/cli/navi-init-plan";
 import {
   NAVI_AGENTS_BLOCK_END,
   NAVI_AGENTS_BLOCK_START,
@@ -23,7 +13,6 @@ import {
 import {
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   REQUIRED_PROJECT_MAP_ANCHORS,
-  parseProjectMapDocument,
 } from "../../src/cli/navi-project-map";
 import {
   LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION,
@@ -56,61 +45,11 @@ async function createProject(): Promise<string> {
   return project;
 }
 
-async function writeCandidate(project: string, text = confirmedMap()): Promise<string> {
-  const candidate = path.join(path.dirname(project), `candidate-${Math.random().toString(16).slice(2)}.md`);
-  await fs.writeFile(candidate, text);
-  return candidate;
-}
-
 async function writeCanonicalMap(project: string, text = confirmedMap()): Promise<string> {
   const mapPath = path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH);
   await fs.mkdir(path.dirname(mapPath), { recursive: true });
   await fs.writeFile(mapPath, text);
   return mapPath;
-}
-
-async function snapshot(root: string): Promise<Record<string, string>> {
-  const files: Record<string, string> = {};
-  async function walk(relativeDir: string): Promise<void> {
-    const absoluteDir = relativeDir ? path.join(root, relativeDir) : root;
-    for (const entry of (await fs.readdir(absoluteDir, { withFileTypes: true })).sort((a, b) =>
-      a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
-    )) {
-      const relativePath = path.join(relativeDir, entry.name);
-      if (entry.isDirectory()) await walk(relativePath);
-      else if (entry.isFile()) files[relativePath.split(path.sep).join("/")] = await fs.readFile(path.join(root, relativePath), "utf8");
-    }
-  }
-  await walk("");
-  return files;
-}
-
-function testIo(cwd = process.cwd()) {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  return {
-    cwd,
-    stdout: (text: string) => stdout.push(text),
-    stderr: (text: string) => stderr.push(text),
-    output: () => stdout.join(""),
-    errors: () => stderr.join(""),
-  };
-}
-
-function externalPlan(project: string, actions: InitPlan["actions"]): InitPlan {
-  return {
-    mode: "write",
-    state: "actionable",
-    targetDir: project,
-    actions,
-    validationPrompt: "",
-    evidencePaths: [],
-  };
-}
-
-function fingerprintFor(plan: InitPlan): string {
-  if (plan.fingerprint === undefined) throw new Error("Expected an actionable plan fingerprint");
-  return plan.fingerprint;
 }
 
 afterEach(async () => {

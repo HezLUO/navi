@@ -6,6 +6,19 @@ async function readRepoText(relativePath: string): Promise<string> {
 }
 
 describe("Navi capability truthfulness", () => {
+  it("uses the truthful Historical Along path for active Shared Desk references", async () => {
+    const activeReferences = [
+      "docs/navi/product-debt.md",
+      "docs/navi/roadmap.md",
+      ".agents/skills/navi/references/supervision-v1.md",
+    ];
+
+    for (const relativePath of activeReferences) {
+      const text = await readRepoText(relativePath);
+      expect(text, relativePath).not.toMatch(/(?<!archive\/along\/)src\/web/u);
+    }
+  });
+
   it("documents Codex task handoff without claiming background notifications", async () => {
     const [readme, chineseReadme, pluginReadme] = await Promise.all([
       readRepoText("README.md"),

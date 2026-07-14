@@ -95,7 +95,7 @@ Goal: keep larger product layers visible without letting them slip into the alph
 
 ### Web UI Exploration Gate
 
-Do not rebrand or ship the existing `src/web` surface as Navi until a focused exploration answers:
+Do not rebrand or ship the existing `archive/along/src/web` surface as Navi until a focused exploration answers:
 
 - What user problem the UI solves better than chat-only Navi maps.
 - Whether the first screen should show a map review surface, a project supervision console, or an Along-style companion desk.

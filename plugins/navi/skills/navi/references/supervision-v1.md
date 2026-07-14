@@ -266,7 +266,7 @@ Product Stage is a product-coordinate system, not a waterfall process. It explai
 - Distribution & Trust covers how external users obtain, understand, verify, and rely on Navi, including README clarity, GitHub Releases, tags, source packages, source verification wording, alpha exclusions, install paths, npm publication, marketplace distribution, and public trust signals.
 - Runtime Surface covers later product surfaces and long-term capabilities, including runtime UI, local app behavior, background watcher, always-on presence, agent adapters, Memory v2, relationship modes, delegation, write delegation, and future Along/Navi integration.
 
-Runtime Surface protects the current alpha boundary. `src/web` remains historical Along Shared Desk / future capability evidence and must not be rebranded as the current Navi alpha UI.
+Runtime Surface protects the current alpha boundary. `archive/along/src/web` remains historical Along Shared Desk / future capability evidence and must not be rebranded as the current Navi alpha UI.
 
 ### Work Mode
 
@@ -361,7 +361,7 @@ Do not print Product Stage, Work Mode, and Vision Distance in every response.
 
 Alpha.6 is not a complete roadmap management system, not an automatic project manager, not runtime UI, not a local app, not background watcher behavior, not Memory v2, not agent adapters, not delegation, and not write delegation.
 
-Alpha.6 must not automatically decide product direction, start implementation, create worktrees, escalate to Release mode, publish to npm, publish to a marketplace, or rebrand `src/web` as Navi alpha UI.
+Alpha.6 must not automatically decide product direction, start implementation, create worktrees, escalate to Release mode, publish to npm, publish to a marketplace, or rebrand `archive/along/src/web` as Navi alpha UI.
 
 ## Alpha 7 Coordination Layer
 
@@ -494,7 +494,7 @@ Use the smallest useful coordination signal.
 
 ### Alpha.7 Boundaries
 
-Alpha.7 is not automatic creation of worktrees, automatic creation of Codex threads, automatic polling of all threads, automatic merge, automatic cherry-pick, automatic push, a long-term task database, a full project-management system, runtime UI, local app behavior, background watcher behavior, scheduler, notifications, Memory v2, agent adapters, delegation, write delegation, release automation, npm publication, marketplace distribution, or rebranding `src/web` as Navi alpha UI.
+Alpha.7 is not automatic creation of worktrees, automatic creation of Codex threads, automatic polling of all threads, automatic merge, automatic cherry-pick, automatic push, a long-term task database, a full project-management system, runtime UI, local app behavior, background watcher behavior, scheduler, notifications, Memory v2, agent adapters, delegation, write delegation, release automation, npm publication, marketplace distribution, or rebranding `archive/along/src/web` as Navi alpha UI.
 
 Alpha.7 should improve coordination judgment in the current chat-based alpha surface. It should not become an orchestration engine.
 

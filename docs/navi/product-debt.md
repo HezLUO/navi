@@ -135,7 +135,7 @@ Priority: medium, separate from alpha release prep
 
 Problem:
 
-The repository contains `src/web` Shared Desk code from earlier Along product-expression work. It may be useful evidence for a future Navi or Along local interface, but it is not the current Navi alpha surface.
+The repository contains `archive/along/src/web` Shared Desk code from earlier Along product-expression work. It may be useful evidence for a future Navi or Along local interface, but it is not the current Navi alpha surface.
 
 Why it matters:
 

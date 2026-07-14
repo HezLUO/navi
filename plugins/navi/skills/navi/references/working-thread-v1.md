@@ -40,16 +40,6 @@ Common user phrasings include "what should we do next", "what is the current pro
 
 Navi should not jump straight to another task recommendation when the user is asking for orientation; do not jump straight to another task recommendation. It should first help the user understand where the work stands and what they need to confirm.
 
-### Response Language Selection
-
-For Navi Progress Maps and Rhythm Maps, the default response language should follow the user's current prompt.
-
-Project records written in another language do not by themselves decide the response language. They are source evidence, not the answer-language selector.
-
-English orientation prompts such as `what's next`, `where are we`, or `continue` should produce English map headings, plain-language explanations, recommended next step, confirmation gate, and risk wording. If a source Project Map or Rhythm Map uses Chinese stage labels such as `[方向校准]` or `当前焦点`, translate or bilingualize source stage labels so the English answer remains readable, for example `[Direction alignment / 方向校准]`.
-
-Chinese orientation prompts should still allow Chinese headings and explanations. When the user's prompt language is mixed or unclear, prefer the language that best matches the current user-facing request, not the language of older project records.
-
 ## Record Location
 
 Read and write Working Thread records under:

@@ -33,6 +33,27 @@ function extractMarkdownSection(markdown: string, heading: string): string {
 }
 
 describe("Navi Project Map contracts", () => {
+  it("owns the complete Response Language Selection section outside the Working Thread reference", async () => {
+    const [projectMap, workingThread] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/project-map-v1.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const responseLanguageSelection = extractMarkdownSection(
+      projectMap,
+      "## Response Language Selection",
+    ).trim();
+
+    expect(responseLanguageSelection).toBe(`For Navi Progress Maps and Rhythm Maps, the default response language should follow the user's current prompt.
+
+Project records written in another language do not by themselves decide the response language. They are source evidence, not the answer-language selector.
+
+English orientation prompts such as \`what's next\`, \`where are we\`, or \`continue\` should produce English map headings, plain-language explanations, recommended next step, confirmation gate, and risk wording. If a source Project Map or Rhythm Map uses Chinese stage labels such as \`[方向校准]\` or \`当前焦点\`, translate or bilingualize source stage labels so the English answer remains readable, for example \`[Direction alignment / 方向校准]\`.
+
+Chinese orientation prompts should still allow Chinese headings and explanations. When the user's prompt language is mixed or unclear, prefer the language that best matches the current user-facing request, not the language of older project records.`);
+    expect(workingThread).not.toContain("## Response Language Selection");
+    expect(workingThread).not.toContain("the answer-language selector");
+  });
+
   it("defines the global bootstrap handoff boundary", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/project-map-v1.md",
@@ -496,7 +517,7 @@ describe("Navi Project Map contracts", () => {
     expect(version).toContain("Progress Map");
   });
 
-  it("makes the confirmed Map contract authoritative in canonical and packaged references", async () => {
+  it("makes the confirmed Map contract authoritative in the canonical reference", async () => {
     const [canonicalReference, manifestSource] = await Promise.all([
       readRepoText(".agents/skills/navi/references/project-map-v1.md"),
       readRepoText("plugins/navi/.codex-plugin/plugin.json"),
@@ -604,7 +625,7 @@ describe("Navi Project Map contracts", () => {
     expect(parallel).toMatch(/continue[\s\S]*non-conflicting/i);
   });
 
-  it("rejects contradictory stored-Map and legacy-path guidance across canonical and packaged contracts", async () => {
+  it("rejects contradictory stored-Map and legacy-path guidance across canonical contracts", async () => {
     const contracts = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),
       readRepoText(".agents/skills/navi/references/project-map-v1.md"),
