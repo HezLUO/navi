@@ -101,6 +101,13 @@ export type NaviManagedBlockRecognition =
   | { kind: "recognized"; start: number; end: number; content: string }
   | { kind: "unsafe" };
 
+export type ProjectTriggerState =
+  | { kind: "missing" }
+  | { kind: "current" }
+  | { kind: "legacy" }
+  | { kind: "invalid"; diagnostic: string }
+  | { kind: "unsafe"; diagnostic: string };
+
 export function resolveTargetPath(targetDir: string, relativePath: string): string {
   const resolvedTarget = path.resolve(targetDir);
 
@@ -588,6 +595,49 @@ export function recognizeNaviManagedBlock(existing: string): NaviManagedBlockRec
   return KNOWN_NAVI_AGENTS_BLOCKS.includes(content as typeof KNOWN_NAVI_AGENTS_BLOCKS[number])
     ? { kind: "recognized", start, end, content }
     : { kind: "unsafe" };
+}
+
+export async function inspectProjectTrigger(projectDir: string): Promise<ProjectTriggerState> {
+  const agentsPath = path.join(projectDir, AGENTS_RELATIVE_PATH);
+  let checked;
+  try {
+    checked = await fs.lstat(agentsPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { kind: "missing" };
+    return { kind: "unsafe", diagnostic: "Project AGENTS.md path could not be inspected safely." };
+  }
+
+  if (checked.isSymbolicLink()) {
+    return { kind: "unsafe", diagnostic: "Project AGENTS.md must not be a symbolic link." };
+  }
+  if (!checked.isFile()) {
+    return { kind: "unsafe", diagnostic: "Project AGENTS.md must be a regular file." };
+  }
+
+  let handle;
+  try {
+    handle = await fs.open(agentsPath, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const opened = await handle.stat();
+    if (!opened.isFile() || opened.dev !== checked.dev || opened.ino !== checked.ino) {
+      return { kind: "unsafe", diagnostic: "Project AGENTS.md changed between inspection and opening." };
+    }
+    const text = await handle.readFile({ encoding: "utf8" });
+    const recognition = recognizeNaviManagedBlock(text);
+    if (recognition.kind === "absent") return { kind: "missing" };
+    if (recognition.kind === "unsafe") {
+      return {
+        kind: "invalid",
+        diagnostic: "Project AGENTS.md contains duplicate, incomplete, edited, or unknown Navi trigger content.",
+      };
+    }
+    return recognition.content === renderAgentsBlock()
+      ? { kind: "current" }
+      : { kind: "legacy" };
+  } catch {
+    return { kind: "unsafe", diagnostic: "Project AGENTS.md regular file could not be read safely." };
+  } finally {
+    await handle?.close().catch(() => undefined);
+  }
 }
 
 function countOccurrences(text: string, needle: string): number {

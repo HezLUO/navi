@@ -7,6 +7,7 @@ import {
   NAVI_AGENTS_BLOCK_START,
   applyInitPlan,
   buildInitPlan,
+  inspectProjectTrigger,
   parseInitArgs,
   recognizeNaviManagedBlock,
   renderAgentsBlock,
@@ -455,6 +456,31 @@ describe("navi init preview drift", () => {
 });
 
 describe("navi init guarded writes", () => {
+  it.each([
+    ["missing", undefined, "missing"],
+    ["current", renderAgentsBlock(), "current"],
+    ["legacy", renderAgentsBlock(false), "legacy"],
+    ["marker-wrapped garbage", `${NAVI_AGENTS_BLOCK_START}\ngarbage\n${NAVI_AGENTS_BLOCK_END}`, "invalid"],
+    ["duplicate blocks", `${renderAgentsBlock()}\n${renderAgentsBlock()}`, "invalid"],
+  ] as const)("classifies a %s project trigger truthfully", async (_name, content, expectedKind) => {
+    const project = await createProject();
+    if (content !== undefined) await fs.writeFile(path.join(project, "AGENTS.md"), content);
+
+    await expect(inspectProjectTrigger(project)).resolves.toMatchObject({ kind: expectedKind });
+  });
+
+  it("classifies symlinked and non-regular project trigger paths as unsafe", async () => {
+    const project = await createProject();
+    const elsewhere = path.join(path.dirname(project), "elsewhere-agents.md");
+    await fs.writeFile(elsewhere, renderAgentsBlock());
+    await fs.symlink(elsewhere, path.join(project, "AGENTS.md"));
+
+    await expect(inspectProjectTrigger(project)).resolves.toMatchObject({ kind: "unsafe" });
+    await fs.rm(path.join(project, "AGENTS.md"));
+    await fs.mkdir(path.join(project, "AGENTS.md"));
+    await expect(inspectProjectTrigger(project)).resolves.toMatchObject({ kind: "unsafe" });
+  });
+
   it("preserves existing AGENTS.md content when adding the trigger", async () => {
     const project = await createProject();
     const agentsPath = path.join(project, "AGENTS.md");
