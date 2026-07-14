@@ -7,6 +7,7 @@ import {
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   parseProjectMapDocument,
 } from "./navi-project-map";
+import { createInitPlanFingerprint } from "./navi-init-fingerprint";
 
 export const NAVI_AGENTS_BLOCK_START = "<!-- NAVI:START -->";
 export const NAVI_AGENTS_BLOCK_END = "<!-- NAVI:END -->";
@@ -66,6 +67,11 @@ export interface InitOptions {
   write?: boolean;
   mapFile?: string;
   expectPlan?: string;
+}
+
+export interface InitWriteDependencies {
+  beforeWrite?: (relativePath: string) => Promise<void>;
+  afterWrite?: (relativePath: string) => Promise<void>;
 }
 
 export type ParsedInitOptions = InitOptions & { targetDir: string; write: boolean };
@@ -164,7 +170,7 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
   const requestedTarget = path.resolve(options.targetDir ?? process.cwd());
   await assertDirectory(requestedTarget);
   const targetDir = await fs.realpath(requestedTarget);
-  const mode = options.write ? "write" : "dry-run";
+  const mode: InitPlan["mode"] = options.write ? "write" : "dry-run";
   const mapState = await inspectProjectMapFile(targetDir);
   const candidate = options.mapFile === undefined
     ? undefined
@@ -193,10 +199,14 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
   }
 
   const agentsPath = resolveTargetPath(targetDir, AGENTS_RELATIVE_PATH);
-  const agentsAction = await planAgentsAction(agentsPath);
+  const agentsBefore = await readTextIfExists(agentsPath);
+  const agentsAction = planAgentsAction(agentsPath, agentsBefore);
   if (mapState.kind === "valid" && candidate === undefined) {
     if (agentsAction.kind === "skip") return healthyPlan(base);
-    return { ...base, state: "actionable", actions: [agentsAction] };
+    return actionablePlan(base, [agentsAction], {
+      agentsBefore,
+      mapBefore: mapState.document.text,
+    });
   }
 
   if (mapState.kind === "valid" && candidate !== undefined) {
@@ -204,28 +214,27 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
       return blockedPlan(base, "The candidate differs from the existing confirmed Project Map. navi init is not a Map-update command.");
     }
     if (agentsAction.kind === "skip") return healthyPlan(base);
-    return {
-      ...base,
-      state: "actionable",
-      actions: [mapSkipAction(mapState.mapPath), agentsAction],
-    };
+    return actionablePlan(base, [mapSkipAction(mapState.mapPath), agentsAction], {
+      candidateMap: candidate.text,
+      agentsBefore,
+      mapBefore: mapState.document.text,
+    });
   }
 
   if (mapState.kind === "invalid" && candidate !== undefined) {
     const previousContent = await readRequiredText(mapState.mapPath);
-    return {
-      ...base,
-      state: "actionable",
-      actions: [mapModifyAction(mapState.mapPath, candidate.text, previousContent), agentsAction],
-    };
+    return actionablePlan(
+      base,
+      [mapModifyAction(mapState.mapPath, candidate.text, previousContent), agentsAction],
+      { candidateMap: candidate.text, agentsBefore, mapBefore: previousContent },
+    );
   }
 
   if (mapState.kind === "missing" && candidate !== undefined) {
-    return {
-      ...base,
-      state: "actionable",
-      actions: [mapCreateAction(mapState.mapPath, candidate.text), agentsAction],
-    };
+    return actionablePlan(base, [mapCreateAction(mapState.mapPath, candidate.text), agentsAction], {
+      candidateMap: candidate.text,
+      agentsBefore,
+    });
   }
 
   return blockedPlan(base, "Project Map state could not be planned safely.");
@@ -239,6 +248,32 @@ function blockedPlan(base: InitPlanBase, diagnostic: string): InitPlan {
 
 function healthyPlan(base: InitPlanBase): InitPlan {
   return { ...base, state: "healthy", actions: [] };
+}
+
+interface ActionableFingerprintState {
+  candidateMap?: string;
+  agentsBefore?: string;
+  mapBefore?: string;
+}
+
+function actionablePlan(
+  base: InitPlanBase,
+  actions: InitAction[],
+  state: ActionableFingerprintState,
+): InitPlan {
+  return {
+    ...base,
+    state: "actionable",
+    actions,
+    fingerprint: createInitPlanFingerprint({
+      contractVersion: 1,
+      targetDir: base.targetDir,
+      candidateMap: state.candidateMap,
+      agentsBefore: state.agentsBefore,
+      mapBefore: state.mapBefore,
+      actions,
+    }),
+  };
 }
 
 function mapCreateAction(mapPath: string, content: string): InitAction {
@@ -312,23 +347,41 @@ async function readRequiredText(filePath: string): Promise<string> {
   return fs.readFile(filePath, "utf8");
 }
 
-export async function applyInitPlan(plan: InitPlan): Promise<void> {
+export async function applyInitPlan(
+  plan: InitPlan,
+  dependencies: InitWriteDependencies = {},
+): Promise<void> {
   if (plan.mode !== "write") {
     return;
   }
 
   const targetDir = path.resolve(plan.targetDir);
-  const writes = await preflightInitPlan(plan);
+  const writes = (await preflightInitPlan(plan)).sort(compareActivationWriteOrder);
+  let mapWritten = false;
 
   for (const { action, writePath } of writes) {
-    await assertPhysicalWritePath(targetDir, writePath);
-
-    if (action.kind === "create") {
-      await fs.mkdir(path.dirname(writePath), { recursive: true });
+    try {
       await assertPhysicalWritePath(targetDir, writePath);
-      await writeNewFile(writePath, action);
-    } else {
-      await writeModifiedFile(writePath, action);
+      await dependencies.beforeWrite?.(action.relativePath);
+
+      if (action.kind === "create") {
+        await fs.mkdir(path.dirname(writePath), { recursive: true });
+        await assertPhysicalWritePath(targetDir, writePath);
+        await writeNewFile(writePath, action);
+      } else {
+        await writeModifiedFile(writePath, action);
+      }
+
+      if (action.relativePath === NAVI_PROJECT_MAP_RELATIVE_PATH) mapWritten = true;
+      await dependencies.afterWrite?.(action.relativePath);
+    } catch (error) {
+      if (mapWritten && action.relativePath === AGENTS_RELATIVE_PATH) {
+        throw new Error(
+          "Navi init partial activation: the Project Map was written, but trigger activation did not complete. The Map was preserved; inspect AGENTS.md before retrying.",
+          { cause: error },
+        );
+      }
+      throw error;
     }
   }
 }
@@ -420,6 +473,14 @@ export async function runNaviInitCli(
       io.stderr("Refusing actionable writes without --expect-plan. Preview the plan through the Codex integration first.\n");
       return 1;
     }
+    if (
+      options.write
+      && plan.actions.some((action) => action.kind === "create" || action.kind === "modify")
+      && options.expectPlan !== plan.fingerprint
+    ) {
+      io.stderr("Refusing actionable writes because --expect-plan does not match the current plan fingerprint. Preview the plan again.\n");
+      return 1;
+    }
     await applyInitPlan(plan);
     io.stdout(renderInitPlan(plan));
     return 0;
@@ -442,8 +503,7 @@ async function assertDirectory(targetDir: string): Promise<void> {
   }
 }
 
-async function planAgentsAction(agentsPath: string): Promise<InitAction> {
-  const existing = await readTextIfExists(agentsPath);
+function planAgentsAction(agentsPath: string, existing: string | undefined): InitAction {
   const block = renderAgentsBlock();
 
   if (existing === undefined) {
@@ -493,6 +553,16 @@ async function planAgentsAction(agentsPath: string): Promise<InitAction> {
     content: `${existing.slice(0, managedBlock.start)}${block}${existing.slice(managedBlock.end)}`,
     previousContent: existing,
   };
+}
+
+function compareActivationWriteOrder(left: PreflightedWrite, right: PreflightedWrite): number {
+  return activationWriteRank(left.action.relativePath) - activationWriteRank(right.action.relativePath);
+}
+
+function activationWriteRank(relativePath: string): number {
+  if (relativePath === NAVI_PROJECT_MAP_RELATIVE_PATH) return 0;
+  if (relativePath === AGENTS_RELATIVE_PATH) return 2;
+  return 1;
 }
 
 export function recognizeNaviManagedBlock(existing: string): NaviManagedBlockRecognition {

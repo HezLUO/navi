@@ -18,6 +18,7 @@ import {
 import {
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   REQUIRED_PROJECT_MAP_ANCHORS,
+  parseProjectMapDocument,
 } from "../../src/cli/navi-project-map";
 
 const tempRoots = new Set<string>();
@@ -95,6 +96,11 @@ function externalPlan(project: string, actions: InitPlan["actions"]): InitPlan {
     validationPrompt: "",
     evidencePaths: [],
   };
+}
+
+function fingerprintFor(plan: InitPlan): string {
+  if (plan.fingerprint === undefined) throw new Error("Expected an actionable plan fingerprint");
+  return plan.fingerprint;
 }
 
 afterEach(async () => {
@@ -306,18 +312,46 @@ describe("navi init arguments and candidate safety", () => {
     await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
   });
 
-  it("permits pre-Task-3 guarded write with expect-plan present", async () => {
+  it("prints an actionable dry-run fingerprint without a generic apply command", async () => {
     const project = await createProject();
     const candidate = await writeCandidate(project);
     const io = testIo();
 
+    const code = await runNaviInitCli(["--target", project, "--map-file", candidate], io);
+
+    expect(code).toBe(0);
+    expect(io.output()).toMatch(/^Plan fingerprint: [a-f0-9]{64}$/m);
+    expect(io.output()).not.toContain("Apply with:");
+  });
+
+  it("writes only with the exact preview fingerprint", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project);
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    const io = testIo();
+
     const code = await runNaviInitCli([
-      "--target", project, "--map-file", candidate, "--expect-plan", "pre-task-3", "--write",
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
     ], io);
 
     expect(code).toBe(0);
     await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(confirmedMap());
     await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Progress Map Rules");
+  });
+
+  it("rejects an incorrect fingerprint before writing", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project);
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", "0".repeat(64), "--write",
+    ], io);
+
+    expect(code).toBe(1);
+    expect(io.errors()).toMatch(/fingerprint|plan.*changed|does not match/i);
+    await expect(fs.access(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH))).rejects.toThrow();
+    await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
   });
 
   it("rejects a candidate inside the canonical target root", async () => {
@@ -343,6 +377,80 @@ describe("navi init arguments and candidate safety", () => {
     const project = await createProject();
     const candidate = await writeCandidate(project, "# Draft\n");
     await expect(buildInitPlan({ targetDir: project, mapFile: candidate })).rejects.toThrow(/confirmed Project Map|invalid/i);
+  });
+});
+
+describe("navi init preview drift", () => {
+  it("rejects changed candidate bytes before any target write", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project);
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    await fs.writeFile(candidate, confirmedMap(" changed after preview"));
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
+    ], io);
+
+    expect(code).toBe(1);
+    expect(io.errors()).toMatch(/fingerprint|plan.*changed|does not match/i);
+    await expect(fs.access(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH))).rejects.toThrow();
+    await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
+  });
+
+  it("rejects changed AGENTS.md bytes before writing the Map", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project);
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    await fs.writeFile(path.join(project, "AGENTS.md"), "# Appeared after preview\n");
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
+    ], io);
+
+    expect(code).toBe(1);
+    expect(io.errors()).toMatch(/fingerprint|plan.*changed|does not match/i);
+    await expect(fs.access(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH))).rejects.toThrow();
+    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toBe("# Appeared after preview\n");
+  });
+
+  it("rejects a Map that appears after preview", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project);
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    await writeCanonicalMap(project);
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
+    ], io);
+
+    expect(code).toBe(1);
+    expect(io.errors()).toMatch(/fingerprint|plan.*changed|does not match/i);
+    await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
+  });
+
+  it("rejects changed existing Map bytes after preview", async () => {
+    const project = await createProject();
+    const mapPath = await writeCanonicalMap(
+      project,
+      confirmedMap().replace("map_status: confirmed", "map_status: draft"),
+    );
+    const candidate = await writeCandidate(project);
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    const changed = confirmedMap().replace("map_status: confirmed", "map_status: proposed");
+    await fs.writeFile(mapPath, changed);
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
+    ], io);
+
+    expect(code).toBe(1);
+    expect(io.errors()).toMatch(/fingerprint|plan.*changed|does not match/i);
+    await expect(fs.readFile(mapPath, "utf8")).resolves.toBe(changed);
+    await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
   });
 });
 
@@ -391,6 +499,74 @@ describe("navi init guarded writes", () => {
 
     await expect(applyInitPlan(plan)).rejects.toThrow(/already exists/i);
     await expect(fs.access(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH))).rejects.toThrow();
+  });
+
+  it("writes the Map before the trigger", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project);
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate, write: true });
+    const writes: string[] = [];
+
+    await applyInitPlan(plan, {
+      beforeWrite: async (relativePath) => {
+        writes.push(relativePath);
+      },
+    });
+
+    expect(writes).toEqual([NAVI_PROJECT_MAP_RELATIVE_PATH, "AGENTS.md"]);
+  });
+
+  it("leaves the trigger absent or unchanged when the Map write fails", async () => {
+    const project = await createProject();
+    const agentsPath = path.join(project, "AGENTS.md");
+    await fs.writeFile(agentsPath, "# Existing instructions\n");
+    const candidate = await writeCandidate(project);
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate, write: true });
+
+    await expect(applyInitPlan(plan, {
+      beforeWrite: async (relativePath) => {
+        if (relativePath === NAVI_PROJECT_MAP_RELATIVE_PATH) throw new Error("injected Map failure");
+      },
+    })).rejects.toThrow(/injected Map failure/i);
+
+    await expect(fs.access(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH))).rejects.toThrow();
+    await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe("# Existing instructions\n");
+  });
+
+  it("keeps a valid inactive Map and reports partial activation when the trigger write fails", async () => {
+    const project = await createProject();
+    const agentsPath = path.join(project, "AGENTS.md");
+    await fs.writeFile(agentsPath, "# Existing instructions\n");
+    const candidateText = confirmedMap();
+    const candidate = await writeCandidate(project, candidateText);
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate, write: true });
+
+    await expect(applyInitPlan(plan, {
+      beforeWrite: async (relativePath) => {
+        if (relativePath === "AGENTS.md") throw new Error("injected trigger failure");
+      },
+    })).rejects.toThrow(/partial activation/i);
+
+    const writtenMap = await fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8");
+    expect(writtenMap).toBe(candidateText);
+    expect(parseProjectMapDocument(writtenMap).kind).toBe("valid");
+    await expect(fs.readFile(agentsPath, "utf8")).resolves.toBe("# Existing instructions\n");
+  });
+
+  it("does not clean up the Map when trigger ownership becomes uncertain", async () => {
+    const project = await createProject();
+    const candidateText = confirmedMap();
+    const candidate = await writeCandidate(project, candidateText);
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate, write: true });
+
+    await expect(applyInitPlan(plan, {
+      afterWrite: async (relativePath) => {
+        if (relativePath === "AGENTS.md") throw new Error("injected post-trigger failure");
+      },
+    })).rejects.toThrow(/partial activation/i);
+
+    await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(candidateText);
+    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Progress Map Rules");
   });
 
   it("rejects a stale guarded modification", async () => {
