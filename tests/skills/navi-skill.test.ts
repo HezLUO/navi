@@ -1383,7 +1383,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "does not reinstall the plugin",
       "not a normal daily step",
       "npm/marketplace/one-click installation remains out of scope",
-      "`src/web` is not the Navi alpha UI",
+      "`archive/along/src/web` is not the Navi alpha UI",
     ]) {
       expect(englishReadme).toContain(expected);
       expect(packageReadme).toContain(expected);
@@ -1395,7 +1395,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "不会重新安装 plugin",
       "不是日常步骤",
       "公开 npm/marketplace/一键安装仍不在范围内",
-      "`src/web` 不是 Navi alpha UI",
+      "`archive/along/src/web` 不是 Navi alpha UI",
     ]) {
       expect(chineseReadme).toContain(expected);
     }

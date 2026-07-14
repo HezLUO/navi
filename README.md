@@ -233,7 +233,7 @@ MCP, runtime, local app, background presence, companion memory, and adapter surf
 
 The repository still contains older Along companion ideas, including local memory, Shared Desk, soundscape, and `.along/` runtime concepts. Treat those as historical or future-facing context, not the current recommended Navi installation path.
 
-`src/web` is not the Navi alpha UI.
+`archive/along/src/web` is not the Navi alpha UI.
 
 ## Release Notes
 

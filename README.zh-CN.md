@@ -225,7 +225,7 @@ MCP、runtime、local app、background presence、companion memory 和 adapter s
 
 仓库里仍包含较早的 Along companion ideas，包括 local memory、Shared Desk、soundscape 和 `.along/` runtime concepts。请把这些当作 historical 或 future-facing context，而不是当前推荐的 Navi 安装路径。
 
-`src/web` 不是 Navi alpha UI。
+`archive/along/src/web` 不是 Navi alpha UI。
 
 ## Release Notes
 

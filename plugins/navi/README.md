@@ -175,7 +175,7 @@ This is a Codex-guided candidate flow: Codex first helps the user form and confi
 
 Global setup uses a recoverable transaction directory and a cooperative same-user lock. It verifies approved bytes, publishes without replacing an existing target, and preserves detected third-party content for manual resolution. This is a cooperative-concurrency boundary, not a claim of adversarial same-user atomicity; do not delete a lock or force a conflicted setup.
 
-The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `src/web` is not the Navi alpha UI.
+The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `archive/along/src/web` is not the Navi alpha UI.
 
 ### Legacy migration and removal
 
