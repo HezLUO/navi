@@ -24,6 +24,7 @@ import {
 import {
   LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION,
   LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION,
+  LEGACY_CONFIRMED_MAP_AGENTS_BLOCK_WITHOUT_LANE_HANDOFF,
 } from "../fixtures/navi-legacy-agents-blocks";
 
 const tempRoots = new Set<string>();
@@ -554,7 +555,7 @@ describe("navi init guarded writes", () => {
 - Match the response language to the user's current prompt; the saved Map language is evidence only.
 - Treat a missing, invalid, unsupported, or stale Map as uncertain evidence; do not invent a stable map or rewrite it silently.
 - Update the Map only when navigation judgment changes materially and only within an explicit bounded write scope or after a compact preview and approval.
-- Treat worktree completion as review-ready state, not an automatic interruption; review when the result can change the current decision.
+- For bounded Codex worktrees, include the source main task ID and Navi Lane Handoff reference in the delegation; when host task messaging is available, emit once on decision-required, blocked, or review-ready, and use the explicit local fallback otherwise. Delivery does not authorize resume, scope expansion, merge, push, tag, or release.
 - Do not stage, commit, push, release, initialize, or change project lifecycle unless the current authorization covers that action.
 <!-- NAVI:END -->`);
   });
@@ -562,6 +563,7 @@ describe("navi init guarded writes", () => {
   it.each([
     ["missing", undefined, "missing"],
     ["current", renderAgentsBlock(), "current"],
+    ["confirmed Map without Lane Handoff", LEGACY_CONFIRMED_MAP_AGENTS_BLOCK_WITHOUT_LANE_HANDOFF, "legacy"],
     ["legacy before scoped authorization", LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION, "legacy"],
     ["legacy with scoped authorization", LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION, "legacy"],
     ["marker-wrapped garbage", `${NAVI_AGENTS_BLOCK_START}\ngarbage\n${NAVI_AGENTS_BLOCK_END}`, "invalid"],
@@ -600,6 +602,7 @@ describe("navi init guarded writes", () => {
   });
 
   it.each([
+    ["confirmed Map without Lane Handoff", LEGACY_CONFIRMED_MAP_AGENTS_BLOCK_WITHOUT_LANE_HANDOFF],
     ["legacy before scoped authorization", LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION],
     ["legacy with scoped authorization", LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION],
   ])("upgrades only a recognized %s block and refuses edited managed blocks", async (_name, previous) => {
@@ -615,6 +618,24 @@ describe("navi init guarded writes", () => {
 
     await fs.writeFile(agentsPath, `${renderAgentsBlock().replace("Navi Project Supervision", "Navi Project Supervison")}\n`);
     await expect(buildInitPlan({ targetDir: project })).rejects.toThrow(/managed Navi block/i);
+  });
+
+  it("previews an upgrade from the pre-Lane-Handoff confirmed Map trigger", async () => {
+    const project = await createProject();
+    await writeCanonicalMap(project);
+    await fs.writeFile(
+      path.join(project, "AGENTS.md"),
+      LEGACY_CONFIRMED_MAP_AGENTS_BLOCK_WITHOUT_LANE_HANDOFF,
+    );
+
+    const plan = await buildInitPlan({ targetDir: project });
+
+    expect(plan.actions).toHaveLength(1);
+    expect(plan.actions[0]).toMatchObject({ kind: "modify", relativePath: "AGENTS.md" });
+    expect(plan.actions[0]?.content).toContain("Navi Lane Handoff reference");
+    expect(plan.actions[0]?.content).not.toContain(
+      "Treat worktree completion as review-ready state",
+    );
   });
 
   it("recognizes absent, exact, and unsafe managed blocks", () => {

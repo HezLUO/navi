@@ -60,6 +60,9 @@ describe("Navi global bootstrap planning", () => {
     expect(block).toContain("Do not draw a full Progress Map or Rhythm Map");
     expect(block).toContain("Do not write files or run navi init automatically");
     expect(block).not.toContain("Product Stage");
+    expect(block).not.toContain("NAVI_LANE_HANDOFF_EVENT");
+    expect(block).not.toContain("source main task ID");
+    expect(block).not.toContain("review-ready");
   });
 
   it("creates a block without changing existing bytes", () => {

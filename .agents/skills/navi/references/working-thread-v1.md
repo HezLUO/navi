@@ -1040,7 +1040,7 @@ The initial Map write requires the final preview and approval. Later maintenance
 
 ### Parallel Work And Review Readiness
 
-Main-session design may continue while a bounded implementation worktree performs non-conflicting work. In Navi's coordination contract, treat worktree completion as review-ready state, not an automatic interruption. Review when the result can change the current decision, premise, risk, scope, merge path, or release readiness.
+Main-session design may continue while a bounded implementation worktree performs non-conflicting work. When the delegation carries source-task metadata and host task messaging is available, a completed accepted lane emits a `review-ready` Navi Lane Handoff event; `decision-required` and formally `blocked` use the same focused contract. Delivery does not force an immediate interruption. The source main task reviews at the next natural checkpoint, or earlier when the result changes the current premise, risk, scope, acceptance criteria, merge path, release readiness, or user decision. Use `lane-handoff-v1.md` for emission, retry, fallback, routing, and authority boundaries.
 
 ### Project Lifecycle
 
