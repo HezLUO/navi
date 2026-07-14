@@ -181,6 +181,45 @@ describe("navi init confirmed Map planning", () => {
     expect(plan.actions.map((action) => [action.kind, action.relativePath])).toEqual([["create", "AGENTS.md"]]);
   });
 
+  it("blocks a symlinked AGENTS.md whose external bytes contain the current trigger", async () => {
+    const project = await createProject();
+    await writeCanonicalMap(project);
+    const externalAgents = path.join(path.dirname(project), "external-current-agents.md");
+    const externalText = `${renderAgentsBlock()}\n`;
+    await fs.writeFile(externalAgents, externalText);
+    await fs.symlink(externalAgents, path.join(project, "AGENTS.md"));
+
+    const plan = await buildInitPlan({ targetDir: project, write: true });
+    const io = testIo();
+    const code = await runNaviInitCli(["--target", project, "--write"], io);
+
+    expect(plan).toMatchObject({ state: "blocked", actions: [] });
+    expect(plan.diagnostic).toMatch(/AGENTS\.md.*symbolic link|unsafe/i);
+    await expect(inspectProjectTrigger(project)).resolves.toMatchObject({ kind: "unsafe" });
+    expect(code).toBe(1);
+    expect(io.output()).not.toMatch(/healthy|actionable|applied/i);
+    await expect(fs.readFile(externalAgents, "utf8")).resolves.toBe(externalText);
+  });
+
+  it("blocks a symlinked AGENTS.md whose external bytes are project-owned content", async () => {
+    const project = await createProject();
+    await writeCanonicalMap(project);
+    const externalAgents = path.join(path.dirname(project), "external-project-agents.md");
+    const externalText = "# External project instructions\nDo not touch.\n";
+    await fs.writeFile(externalAgents, externalText);
+    await fs.symlink(externalAgents, path.join(project, "AGENTS.md"));
+
+    const plan = await buildInitPlan({ targetDir: project });
+    const io = testIo();
+    const code = await runNaviInitCli(["--target", project], io);
+
+    expect(plan).toMatchObject({ state: "blocked", actions: [] });
+    expect(plan.diagnostic).toMatch(/AGENTS\.md.*symbolic link|unsafe/i);
+    expect(code).toBe(1);
+    expect(io.output()).not.toMatch(/healthy|actionable|Apply with/i);
+    await expect(fs.readFile(externalAgents, "utf8")).resolves.toBe(externalText);
+  });
+
   it("skips an identical confirmed Map candidate and plans the trigger", async () => {
     const project = await createProject();
     const text = confirmedMap();

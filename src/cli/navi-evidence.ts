@@ -68,6 +68,7 @@ export async function inspectProjectEvidence(targetDir: string): Promise<Project
       break;
     }
     const relativePath = candidates[index];
+    if (!await hasSafeEvidenceDirectoryComponents(targetDir, path.posix.dirname(relativePath))) continue;
     const raw = await readEvidenceSnippet(
       resolveTargetPath(targetDir, relativePath),
       Math.min(EVIDENCE_SNIPPET_BYTES, remainingBytes),
@@ -94,6 +95,7 @@ async function collectEvidenceCandidateFiles(
   }
 
   state.directoriesVisited += 1;
+  if (!await hasSafeEvidenceDirectoryComponents(targetDir, relativeDir)) return;
   const entries = await readBoundedEvidenceDirectoryEntries(targetDir, relativeDir, state);
   for (const entry of entries.sort((left, right) => compareCodePoint(left.name, right.name))) {
     const relativePath = relativeDir === "." ? entry.name : path.posix.join(relativeDir, entry.name);
@@ -105,6 +107,27 @@ async function collectEvidenceCandidateFiles(
       addEvidenceCandidate(state, relativePath);
     }
   }
+}
+
+async function hasSafeEvidenceDirectoryComponents(targetDir: string, relativeDir: string): Promise<boolean> {
+  if (relativeDir === ".") return true;
+  const resolvedTarget = path.resolve(targetDir);
+  const resolvedDirectory = resolveTargetPath(resolvedTarget, relativeDir);
+  const relative = path.relative(resolvedTarget, resolvedDirectory);
+  const components = relative.split(path.sep).filter(Boolean);
+  let current = resolvedTarget;
+
+  for (const component of components) {
+    current = path.join(current, component);
+    try {
+      const stat = await fs.lstat(current);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+    } catch (error) {
+      if (isSkippableEvidenceError(error)) return false;
+      throw error;
+    }
+  }
+  return true;
 }
 
 async function readBoundedEvidenceDirectoryEntries(
@@ -125,7 +148,7 @@ async function readBoundedEvidenceDirectoryEntries(
       entries.push(entry);
     }
   } catch (error) {
-    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM"].includes(error.code ?? "")) return [];
+    if (isSkippableEvidenceError(error)) return [];
     throw error;
   }
   return entries;
@@ -141,7 +164,7 @@ async function addKnownEvidenceCandidateIfFile(
     const stat = await fs.lstat(resolveTargetPath(targetDir, relativePath));
     if (stat.isFile()) addEvidenceCandidate(state, relativePath);
   } catch (error) {
-    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM"].includes(error.code ?? "")) return;
+    if (isSkippableEvidenceError(error)) return;
     throw error;
   }
 }
@@ -185,7 +208,7 @@ async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Prom
       truncated: true,
     };
   } catch (error) {
-    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM", "EISDIR", "ELOOP"].includes(error.code ?? "")) return undefined;
+    if (isSkippableEvidenceError(error) || (isNodeError(error) && error.code === "EISDIR")) return undefined;
     throw error;
   } finally {
     await handle?.close().catch(() => undefined);
@@ -252,4 +275,8 @@ function compareCodePoint(left: string, right: string): number {
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error;
+}
+
+function isSkippableEvidenceError(error: unknown): boolean {
+  return isNodeError(error) && ["ENOENT", "EACCES", "EPERM", "ENOTDIR", "ELOOP"].includes(error.code ?? "");
 }

@@ -143,6 +143,22 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
 
 export async function inspectProjectMapFile(projectDir: string): Promise<ProjectMapFileState> {
   const mapPath = path.join(projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+  const mapDirectory = path.dirname(mapPath);
+  let directoryStats;
+  try {
+    directoryStats = await fs.lstat(mapDirectory);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { kind: "missing", mapPath };
+    return { kind: "unsafe", mapPath, diagnostic: "Project Map directory could not be inspected safely." };
+  }
+
+  if (directoryStats.isSymbolicLink()) {
+    return { kind: "unsafe", mapPath, diagnostic: "Project Map directory must not be a symbolic link." };
+  }
+  if (!directoryStats.isDirectory()) {
+    return { kind: "unsafe", mapPath, diagnostic: "Project Map directory must be a regular directory." };
+  }
+
   let stats;
   try {
     stats = await fs.lstat(mapPath);
@@ -167,6 +183,15 @@ export async function inspectProjectMapFile(projectDir: string): Promise<Project
 
   let text: string;
   try {
+    const reopenedDirectoryStats = await fs.lstat(mapDirectory);
+    if (
+      reopenedDirectoryStats.isSymbolicLink()
+      || !reopenedDirectoryStats.isDirectory()
+      || reopenedDirectoryStats.dev !== directoryStats.dev
+      || reopenedDirectoryStats.ino !== directoryStats.ino
+    ) {
+      return { kind: "unsafe", mapPath, diagnostic: "Project Map directory changed between inspection and opening." };
+    }
     const openedStats = await handle.stat();
     if (!openedStats.isFile()) {
       return { kind: "unsafe", mapPath, diagnostic: "Opened Project Map must be a regular file." };

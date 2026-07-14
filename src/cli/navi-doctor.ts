@@ -53,7 +53,7 @@ const DEFAULT_CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
 const GLOBAL_REPAIR = "Run navi setup, review the preview, then run navi setup --write.";
 const SOURCE_REPAIR = "Install and enable navi@navi-source before running navi setup --write.";
 function migrationRepair(legacySelector: string): string {
-  return `Install and enable navi@navi-source, preview an exact project trigger upgrade with navi init, run navi init --write only after approval, validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
+  return `Install and enable navi@navi-source, use Navi in the current project session to form and confirm a Project Map candidate when a confirmed Map is absent, preview with navi init --map-file <candidate> and capture the Plan fingerprint, apply an existing confirmed Map upgrade only with navi init --expect-plan <fingerprint> --write (or apply a new candidate with navi init --map-file <candidate> --expect-plan <fingerprint> --write), validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
 }
 function selectorConflictRepair(status: NaviInstallationStatus): string {
   if (status.diagnostic?.includes("non-authoritative selector")) {

@@ -182,8 +182,10 @@ describe("Navi doctor", () => {
     for (const output of [legacyReport, conflictReport].map((report) => report.checks.find((check) => check.id === "plugin")?.repair ?? "")) {
       const migrationActions = [
         "navi@navi-source",
-        "navi init",
-        "navi init --write",
+        "form and confirm a Project Map candidate",
+        "navi init --map-file <candidate>",
+        "capture the Plan fingerprint",
+        "navi init --expect-plan <fingerprint> --write",
         "validate the target project",
         "along-working-thread@personal",
         "navi doctor",
@@ -195,6 +197,7 @@ describe("Navi doctor", () => {
         expect(index).toBeGreaterThan(priorIndex);
         priorIndex = index;
       }
+      expect(output).not.toMatch(/navi init --write(?:[\s.,]|$)/);
     }
     expect(conflictReport.checks.find((check) => check.id === "plugin")?.status).toBe("fail");
   });

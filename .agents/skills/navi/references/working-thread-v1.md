@@ -1002,7 +1002,7 @@ The user may stop or decline at any point. Navi then continues best-effort read-
 
 #### Final Preview And Activation
 
-After the baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. One approval may authorize both writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map.
+After the baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. Codex must create a private candidate file outside the target project, then run the read-only `navi init --map-file <candidate>` preview. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. It must present one combined Map+trigger preview and obtain approval. One approval may authorize both writes. Apply only with `navi init --map-file <candidate> --expect-plan <fingerprint> --write`; never bypass the CLI with direct project writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map. Codex must remove the private candidate after success or explicit abandonment.
 
 ### Global Bootstrap And Project Handoff
 

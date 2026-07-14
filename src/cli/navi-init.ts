@@ -206,7 +206,11 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
   }
 
   const agentsPath = resolveTargetPath(targetDir, AGENTS_RELATIVE_PATH);
-  const agentsBefore = await readTextIfExists(agentsPath);
+  const triggerDocument = await readProjectTriggerDocument(targetDir);
+  if (triggerDocument.state.kind === "unsafe") {
+    return blockedPlan(base, triggerDocument.state.diagnostic);
+  }
+  const agentsBefore = triggerDocument.text;
   const agentsAction = planAgentsAction(agentsPath, agentsBefore);
   if (mapState.kind === "valid" && candidate === undefined) {
     if (agentsAction.kind === "skip") return healthyPlan(base);
@@ -598,20 +602,29 @@ export function recognizeNaviManagedBlock(existing: string): NaviManagedBlockRec
 }
 
 export async function inspectProjectTrigger(projectDir: string): Promise<ProjectTriggerState> {
+  return (await readProjectTriggerDocument(projectDir)).state;
+}
+
+interface ProjectTriggerDocumentInspection {
+  state: ProjectTriggerState;
+  text?: string;
+}
+
+async function readProjectTriggerDocument(projectDir: string): Promise<ProjectTriggerDocumentInspection> {
   const agentsPath = path.join(projectDir, AGENTS_RELATIVE_PATH);
   let checked;
   try {
     checked = await fs.lstat(agentsPath);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { kind: "missing" };
-    return { kind: "unsafe", diagnostic: "Project AGENTS.md path could not be inspected safely." };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { state: { kind: "missing" } };
+    return { state: { kind: "unsafe", diagnostic: "Project AGENTS.md path could not be inspected safely." } };
   }
 
   if (checked.isSymbolicLink()) {
-    return { kind: "unsafe", diagnostic: "Project AGENTS.md must not be a symbolic link." };
+    return { state: { kind: "unsafe", diagnostic: "Project AGENTS.md must not be a symbolic link." } };
   }
   if (!checked.isFile()) {
-    return { kind: "unsafe", diagnostic: "Project AGENTS.md must be a regular file." };
+    return { state: { kind: "unsafe", diagnostic: "Project AGENTS.md must be a regular file." } };
   }
 
   let handle;
@@ -619,22 +632,28 @@ export async function inspectProjectTrigger(projectDir: string): Promise<Project
     handle = await fs.open(agentsPath, constants.O_RDONLY | constants.O_NOFOLLOW);
     const opened = await handle.stat();
     if (!opened.isFile() || opened.dev !== checked.dev || opened.ino !== checked.ino) {
-      return { kind: "unsafe", diagnostic: "Project AGENTS.md changed between inspection and opening." };
+      return { state: { kind: "unsafe", diagnostic: "Project AGENTS.md changed between inspection and opening." } };
     }
     const text = await handle.readFile({ encoding: "utf8" });
     const recognition = recognizeNaviManagedBlock(text);
-    if (recognition.kind === "absent") return { kind: "missing" };
+    if (recognition.kind === "absent") return { state: { kind: "missing" }, text };
     if (recognition.kind === "unsafe") {
       return {
-        kind: "invalid",
-        diagnostic: "Project AGENTS.md contains duplicate, incomplete, edited, or unknown Navi trigger content.",
+        state: {
+          kind: "invalid",
+          diagnostic: "Project AGENTS.md contains duplicate, incomplete, edited, or unknown Navi trigger content.",
+        },
+        text,
       };
     }
-    return recognition.content === renderAgentsBlock()
-      ? { kind: "current" }
-      : { kind: "legacy" };
+    return {
+      state: recognition.content === renderAgentsBlock()
+        ? { kind: "current" }
+        : { kind: "legacy" },
+      text,
+    };
   } catch {
-    return { kind: "unsafe", diagnostic: "Project AGENTS.md regular file could not be read safely." };
+    return { state: { kind: "unsafe", diagnostic: "Project AGENTS.md regular file could not be read safely." } };
   } finally {
     await handle?.close().catch(() => undefined);
   }

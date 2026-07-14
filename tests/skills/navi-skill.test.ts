@@ -1826,6 +1826,34 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(finalPreview).toMatch(/One approval[\s\S]*both writes[\s\S]*Map is written first[\s\S]*trigger last/i);
   });
 
+  it("requires the ordered private-candidate, preview, approval, fingerprinted-apply, and cleanup adapter journey", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const sections = [
+      extractMarkdownSection(skill, "## Init Eligibility Gate"),
+      extractMarkdownSection(reference, "#### Final Preview And Activation"),
+    ];
+    const orderedContract = [
+      /create a private candidate file outside the target project/i,
+      /navi init --map-file <candidate>/i,
+      /one combined Map\+trigger preview/i,
+      /obtain approval/i,
+      /navi init --map-file <candidate> --expect-plan <fingerprint> --write/i,
+      /remove the private candidate after success or explicit abandonment/i,
+    ];
+
+    for (const section of sections) {
+      let previousIndex = -1;
+      for (const phrase of orderedContract) {
+        const index = section.search(phrase);
+        expect(index).toBeGreaterThan(previousIndex);
+        previousIndex = index;
+      }
+    }
+  });
+
   it("scopes adaptive answers, language, and stale-evidence challenge to their policy sections", async () => {
     const [skill, reference] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),

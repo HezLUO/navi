@@ -153,6 +153,53 @@ describe("bounded Navi project evidence inspection", () => {
     await expect(inspectProjectEvidence(root)).resolves.toEqual({ items: [], truncated: false });
   });
 
+  it.each(["docs", "along", "project-maps"] as const)(
+    "does not read external evidence through a symlinked %s directory component",
+    async (symlinkedComponent) => {
+      const root = await projectRoot();
+      const external = `${root}-external-${symlinkedComponent}`;
+      roots.push(external);
+      const localDocs = path.join(root, "docs");
+      const localAlong = path.join(localDocs, "along");
+      let linkPath: string;
+      let externalMapDirectory: string;
+
+      if (symlinkedComponent === "docs") {
+        linkPath = localDocs;
+        externalMapDirectory = path.join(external, "along", "project-maps");
+      } else if (symlinkedComponent === "along") {
+        await fs.mkdir(localDocs);
+        linkPath = localAlong;
+        externalMapDirectory = path.join(external, "project-maps");
+      } else {
+        await fs.mkdir(localAlong, { recursive: true });
+        linkPath = path.join(localAlong, "project-maps");
+        externalMapDirectory = external;
+      }
+
+      await fs.mkdir(externalMapDirectory, { recursive: true });
+      const externalReadme = path.join(externalMapDirectory, "README.md");
+      const externalMap = path.join(externalMapDirectory, "escaped-map.md");
+      await fs.writeFile(externalReadme, "# External README\n");
+      await fs.writeFile(externalMap, "# External Map-like record\n");
+      await fs.symlink(external, linkPath);
+      const openedPaths: string[] = [];
+      const originalOpen = fs.open.bind(fs);
+      vi.spyOn(fs, "open").mockImplementation(async (...args: Parameters<typeof fs.open>) => {
+        openedPaths.push(await fs.realpath(String(args[0])));
+        return originalOpen(...args);
+      });
+
+      const result = await inspectProjectEvidence(root);
+
+      expect(result.items).toEqual([]);
+      expect(openedPaths).not.toContain(externalReadme);
+      expect(openedPaths).not.toContain(externalMap);
+      await expect(fs.readFile(externalReadme, "utf8")).resolves.toBe("# External README\n");
+      await expect(fs.readFile(externalMap, "utf8")).resolves.toBe("# External Map-like record\n");
+    },
+  );
+
   it("strips the generated Navi block but keeps project-owned AGENTS evidence", async () => {
     const root = await projectRoot();
     await fs.writeFile(path.join(root, "AGENTS.md"), `${renderAgentsBlock()}\n\n# User evidence\nKeep this project fact.\n`);

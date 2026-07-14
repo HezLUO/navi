@@ -171,6 +171,54 @@ No body anchors.
     await expect(fs.readFile(targetPath, "utf8")).resolves.toBe(text);
   });
 
+  it("rejects a valid Map behind a symlinked .navi directory without reading or changing external bytes", async () => {
+    const root = await temporaryRoot();
+    const externalDirectory = `${root}-external-navi`;
+    roots.push(externalDirectory);
+    const text = map(["A", "B", "C", "D", "E", "F"]);
+    const externalMap = path.join(externalDirectory, "project-map.md");
+    await fs.mkdir(externalDirectory);
+    await fs.writeFile(externalMap, text, "utf8");
+    await fs.symlink(externalDirectory, path.join(root, ".navi"));
+
+    await expect(inspectProjectMapFile(root)).resolves.toMatchObject({
+      kind: "unsafe",
+      mapPath: path.join(root, NAVI_PROJECT_MAP_RELATIVE_PATH),
+    });
+    expect((await fs.lstat(path.join(root, ".navi"))).isSymbolicLink()).toBe(true);
+    await expect(fs.readFile(externalMap, "utf8")).resolves.toBe(text);
+  });
+
+  it("does not read an external Map when the .navi directory is replaced after inspection", async () => {
+    const root = await temporaryRoot();
+    const originalText = map(["A", "B", "C", "D", "E", "F"]);
+    const externalText = originalText.replace("2026-07-13", "2026-07-14");
+    const mapPath = await writeProjectMap(root, originalText);
+    const mapDirectory = path.dirname(mapPath);
+    const movedDirectory = path.join(root, "checked-navi");
+    const externalDirectory = `${root}-external-replacement`;
+    roots.push(externalDirectory);
+    const externalMap = path.join(externalDirectory, "project-map.md");
+    await fs.mkdir(externalDirectory);
+    await fs.writeFile(externalMap, externalText, "utf8");
+
+    const originalLstat = fs.lstat;
+    const lstat = vi.spyOn(fs, "lstat").mockImplementationOnce(async (candidate) => {
+      const stats = await originalLstat(candidate);
+      await fs.rename(mapDirectory, movedDirectory);
+      await fs.symlink(externalDirectory, mapDirectory);
+      return stats;
+    });
+
+    try {
+      await expect(inspectProjectMapFile(root)).resolves.toMatchObject({ kind: "unsafe", mapPath });
+    } finally {
+      lstat.mockRestore();
+    }
+    await expect(fs.readFile(path.join(movedDirectory, "project-map.md"), "utf8")).resolves.toBe(originalText);
+    await expect(fs.readFile(externalMap, "utf8")).resolves.toBe(externalText);
+  });
+
   it("does not follow a symlink substituted after lstat", async () => {
     const root = await temporaryRoot();
     const originalText = map(["A", "B", "C", "D", "E", "F"]);

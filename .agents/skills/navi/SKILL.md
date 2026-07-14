@@ -34,7 +34,7 @@ Before acting on a Working Thread, read:
 - A broad first-use request without a confirmed Map or project-local Navi guidance runs the Init Eligibility Gate; it does not initialize immediately.
 - Initialization is eligible only when Desired Outcome, broad route or working rhythm, Current Position, and Next Decision or Current Boundary can all be presented for user confirmation. Project files are useful evidence but are not mandatory.
 - When evidence is insufficient, begin Guided Baseline Formation without writes. Guided Baseline Formation asks one focused question about one missing key judgment at a time. Name the missing judgment, propose a candidate from available evidence, and let the user confirm or correct it.
-- After the baseline is confirmable, one final preview covers the exact `.navi/project-map.md` action and managed `AGENTS.md` trigger action. One approval may authorize both writes; the Map is written first and the trigger last.
+- After the baseline is confirmable, create a private candidate file outside the target project, then run the read-only `navi init --map-file <candidate>` preview. Present one combined Map+trigger preview and obtain approval. Apply only with `navi init --map-file <candidate> --expect-plan <fingerprint> --write`; do not bypass the CLI with direct project writes. The Map is written first and the trigger last. Remove the private candidate after success or explicit abandonment.
 - If the user stops or declines, continue best-effort read-only supervision and do not repeat the same initialization reminder in that session.
 
 ## Daily Supervision And Maintenance
