@@ -1883,6 +1883,33 @@ describe("Along Working Thread repo-contained plugin package", () => {
     );
   });
 
+  it("requires a V1 wire-format conformance check before Lane Handoff delivery", async () => {
+    const references = await Promise.all([
+      readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+      readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
+    ]);
+
+    for (const reference of references) {
+      const wireCheck = extractMarkdownSection(
+        reference,
+        "## Pre-Send Wire-Format Check",
+      );
+
+      expect(wireCheck).toMatch(
+        /payload must begin exactly with `NAVI_LANE_HANDOFF_EVENT`/i,
+      );
+      expect(wireCheck).toMatch(/bare plain text[\s\S]*no XML\/Markdown wrapper/i);
+      expect(wireCheck).toMatch(/exact field names only[\s\S]*no aliases/i);
+      expect(wireCheck).toMatch(/source_task_id[\s\S]*source_lane_id[\s\S]*commit/i);
+      expect(wireCheck).toMatch(
+        /all common fields[\s\S]*all fields required for the selected kind[\s\S]*before sending/i,
+      );
+      expect(wireCheck).toMatch(
+        /malformed payload[\s\S]*not a valid delivery[\s\S]*same transition[\s\S]*same event_id/i,
+      );
+    }
+  });
+
   it("makes the confirmed Map contract authoritative in canonical and packaged skills", async () => {
     const [canonicalSkill, packagedSkill, manifestSource] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),

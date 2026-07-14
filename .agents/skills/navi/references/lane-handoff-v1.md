@@ -25,6 +25,17 @@ declared_impact: lane-local | premise-changing
 
 The event contains facts and source references, not hidden reasoning, exhaustive logs, or implied authorization. The worktree's declared impact is evidence; the source main task makes the final routing judgment.
 
+## Pre-Send Wire-Format Check
+
+Before each send, inspect the rendered wire payload:
+
+- The payload must begin exactly with `NAVI_LANE_HANDOFF_EVENT`.
+- Send bare plain text with no XML/Markdown wrapper, code fence, or other wrapper.
+- Use exact field names only and no aliases. `source_task_id`, `source_lane_id`, and singular `commit` are invalid.
+- Confirm all common fields and all fields required for the selected kind are present before sending.
+
+A malformed payload is not a valid delivery. Correct the same transition and resend it with the same event_id; this correction is not a new meaningful transition or review cycle.
+
 ## Decision Required
 
 Use `kind: decision-required` only when the lane cannot continue without a real user decision about permission, external or cross-project writes, unplanned scope, acceptance-criteria reduction, material risk, product direction, merge, push, tag, release, or publication.
