@@ -104,7 +104,9 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 ## Current stage
 
-This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.3`.
+Latest tagged GitHub source release: `0.1.0-alpha.3`.
+
+Current main includes unreleased post-`0.1.0-alpha.3` source work. The prompt/docs-backed Codex Lane Handoff behavior described in this README is current source behavior and remains unreleased until a later tag explicitly includes it.
 
 It packages the current skill-first behavior and a prompt/docs-backed Codex Lane Handoff adapter. It does not add runtime, memory, presence, background autonomy, another-agent support, or automatic worktree orchestration. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 

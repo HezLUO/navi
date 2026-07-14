@@ -94,7 +94,7 @@ Wait for a later release if you need npm distribution, public marketplace instal
 
 Latest tagged GitHub source release: `0.1.0-alpha.3`.
 
-Current main branch: includes post-release docs-backed supervision updates through alpha.7 Coordination Layer guidance. These main-branch changes are not a new tagged release unless a later release is explicitly prepared.
+Current main branch: includes unreleased post-`0.1.0-alpha.3` work, including the Lane Handoff behavior described below. It remains unreleased until a later tag explicitly includes it.
 
 What is stable in this alpha:
 

@@ -124,6 +124,27 @@ describe("Along Working Thread Codex skill", () => {
     expect(chineseReadme).toMatch(/不包含后台 watcher[\s\S]*通知服务/i);
   });
 
+  it("distinguishes the latest tagged alpha from unreleased Lane Handoff behavior", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    expect(readme).toMatch(
+      /Latest tagged GitHub source release: `0\.1\.0-alpha\.3`[\s\S]*Current main branch:[\s\S]*unreleased[\s\S]*Lane Handoff[\s\S]*remains unreleased/i,
+    );
+    expect(chineseReadme).toMatch(
+      /最新 tagged GitHub source release：`0\.1\.0-alpha\.3`[\s\S]*当前 main branch：[\s\S]*尚未发布[\s\S]*Lane Handoff[\s\S]*仍是未发布/i,
+    );
+    expect(pluginReadme).toMatch(
+      /Latest tagged GitHub source release: `0\.1\.0-alpha\.3`[\s\S]*Current main[\s\S]*unreleased[\s\S]*Lane Handoff[\s\S]*remains unreleased/i,
+    );
+    expect(pluginReadme).not.toContain(
+      "This repo-contained package is the GitHub alpha source-package form of Navi `0.1.0-alpha.3`.",
+    );
+  });
+
   it("uses plugin-validator-compatible YAML frontmatter", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const frontmatter = extractFrontmatter(skill);

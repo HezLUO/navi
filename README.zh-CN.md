@@ -94,7 +94,7 @@ Navi map 默认应该跟随用户当前 prompt 的语言。如果目标项目保
 
 最新 tagged GitHub source release：`0.1.0-alpha.3`。
 
-当前 main branch：包含到 alpha.7 Coordination Layer guidance 为止的 post-release docs-backed supervision updates。除非后续明确准备新的 release，否则这些 main branch 变化还不是新的 tagged release。
+当前 main branch：包含 `0.1.0-alpha.3` 之后尚未发布的工作，包括下文描述的 Lane Handoff 行为；除非后续 tag 明确包含它，否则该能力仍是未发布的 current source behavior。
 
 这个 alpha 中稳定的内容：
 
