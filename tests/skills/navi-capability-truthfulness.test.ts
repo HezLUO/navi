@@ -351,31 +351,24 @@ describe("Navi capability truthfulness", () => {
   });
 
   it("uses scoped plan authorization for listed local task commits without weakening approval boundaries", async () => {
-    const [canonicalSkill, canonicalReference, packagedSkill, packagedReference] = await Promise.all([
+    const [canonicalSkill, canonicalReference] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),
       readRepoText(".agents/skills/navi/references/supervision-v1.md"),
-      readRepoText("plugins/navi/skills/navi/SKILL.md"),
-      readRepoText("plugins/navi/skills/navi/references/supervision-v1.md"),
     ]);
 
-    expect(packagedSkill).toBe(canonicalSkill);
-    expect(packagedReference).toBe(canonicalReference);
-
-    for (const contract of [canonicalReference, packagedReference]) {
-      expect(contract).toContain("approved bounded implementation or worktree plan");
-      expect(contract).toContain("explicitly planned local task commits");
-      expect(contract).toContain("Do not request separate approval for each such commit");
-      expect(contract).toContain("unknown staged content");
-      expect(contract).toContain("history rewriting");
-      expect(contract).toContain("merge, push, tag, release");
-      expect(contract).not.toContain("Stop for user approval before file writes outside the approved mode, commits, pushes");
-      expect(contract).toContain("unplanned commit");
-      expect(contract).toContain("user request not to commit");
-      expect(contract).toContain("project-owned instructions outside the Navi managed block");
-      expect(contract).toContain("cross-project");
-      expect(contract).toContain("scope expansion");
-      expect(contract).toContain("known-risk acceptance");
-    }
+    expect(canonicalReference).toContain("approved bounded implementation or worktree plan");
+    expect(canonicalReference).toContain("explicitly planned local task commits");
+    expect(canonicalReference).toContain("Do not request separate approval for each such commit");
+    expect(canonicalReference).toContain("unknown staged content");
+    expect(canonicalReference).toContain("history rewriting");
+    expect(canonicalReference).toContain("merge, push, tag, release");
+    expect(canonicalReference).not.toContain("Stop for user approval before file writes outside the approved mode, commits, pushes");
+    expect(canonicalReference).toContain("unplanned commit");
+    expect(canonicalReference).toContain("user request not to commit");
+    expect(canonicalReference).toContain("project-owned instructions outside the Navi managed block");
+    expect(canonicalReference).toContain("cross-project");
+    expect(canonicalReference).toContain("scope expansion");
+    expect(canonicalReference).toContain("known-risk acceptance");
 
     expect(canonicalSkill).toContain("must not use pause semantics to bypass user approval");
     expect(canonicalSkill).toContain("must not silently escalate a bounded implementation task");

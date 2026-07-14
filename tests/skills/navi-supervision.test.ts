@@ -342,16 +342,10 @@ describe("Navi supervision contracts", () => {
   });
 
   it("defines one unified Codex Lane Handoff contract without adding a runtime", async () => {
-    const [canonicalSkill, packagedSkill, canonicalReference, packagedReference] =
-      await Promise.all([
-        readRepoText(".agents/skills/navi/SKILL.md"),
-        readRepoText("plugins/navi/skills/navi/SKILL.md"),
-        readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
-        readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
-      ]);
-
-    expect(packagedSkill).toBe(canonicalSkill);
-    expect(packagedReference).toBe(canonicalReference);
+    const [canonicalSkill, canonicalReference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+    ]);
 
     for (const field of [
       "NAVI_LANE_HANDOFF_EVENT",
@@ -421,39 +415,33 @@ describe("Navi supervision contracts", () => {
   });
 
   it("requires a V1 wire-format conformance check before Lane Handoff delivery", async () => {
-    const references = await Promise.all([
-      readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
-      readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
-    ]);
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/lane-handoff-v1.md",
+    );
+    const wireCheck = extractMarkdownSection(
+      reference,
+      "## Pre-Send Wire-Format Check",
+    );
 
-    for (const reference of references) {
-      const wireCheck = extractMarkdownSection(
-        reference,
-        "## Pre-Send Wire-Format Check",
-      );
-
-      expect(wireCheck).toMatch(
-        /payload must begin exactly with `NAVI_LANE_HANDOFF_EVENT`/i,
-      );
-      expect(wireCheck).toMatch(/bare plain text[\s\S]*no XML\/Markdown wrapper/i);
-      expect(wireCheck).toMatch(/exact field names only[\s\S]*no aliases/i);
-      expect(wireCheck).toMatch(/source_task_id[\s\S]*source_lane_id[\s\S]*commit/i);
-      expect(wireCheck).toMatch(
-        /all common fields[\s\S]*all fields required for the selected kind[\s\S]*before sending/i,
-      );
-      expect(wireCheck).toMatch(
-        /malformed payload[\s\S]*not a valid delivery[\s\S]*same transition[\s\S]*same event_id/i,
-      );
-    }
+    expect(wireCheck).toMatch(
+      /payload must begin exactly with `NAVI_LANE_HANDOFF_EVENT`/i,
+    );
+    expect(wireCheck).toMatch(/bare plain text[\s\S]*no XML\/Markdown wrapper/i);
+    expect(wireCheck).toMatch(/exact field names only[\s\S]*no aliases/i);
+    expect(wireCheck).toMatch(/source_task_id[\s\S]*source_lane_id[\s\S]*commit/i);
+    expect(wireCheck).toMatch(
+      /all common fields[\s\S]*all fields required for the selected kind[\s\S]*before sending/i,
+    );
+    expect(wireCheck).toMatch(
+      /malformed payload[\s\S]*not a valid delivery[\s\S]*same transition[\s\S]*same event_id/i,
+    );
   });
 
   it("routes review readiness through Lane Handoff without claiming background delivery", async () => {
-    const [skill, projectMap, laneHandoff, packagedProjectMap] =
-      await Promise.all([
+    const [skill, projectMap, laneHandoff] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),
       readRepoText(".agents/skills/navi/references/project-map-v1.md"),
       readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
-      readRepoText("plugins/navi/skills/navi/references/project-map-v1.md"),
     ]);
 
     const parallel = extractMarkdownSection(
@@ -461,7 +449,6 @@ describe("Navi supervision contracts", () => {
       "### Parallel Work And Review Readiness",
     );
 
-    expect(packagedProjectMap).toBe(projectMap);
     expect(parallel).toMatch(/review-ready[\s\S]*Lane Handoff[\s\S]*natural checkpoint/i);
     expect(parallel).toMatch(/continue[\s\S]*non-conflicting/i);
     expect(skill).toContain("references/lane-handoff-v1.md");

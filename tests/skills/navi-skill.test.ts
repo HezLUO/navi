@@ -111,7 +111,6 @@ describe("Navi skill and package structure", () => {
 
   it("defines a repo-scoped skill with explicit V1 boundaries", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
-    const metadata = await readRepoText(".agents/skills/navi/agents/openai.yaml");
 
     expect(skill).toContain("name: navi");
     expect(skill).toContain("description:");

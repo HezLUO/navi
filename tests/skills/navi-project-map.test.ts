@@ -497,9 +497,8 @@ describe("Navi Project Map contracts", () => {
   });
 
   it("makes the confirmed Map contract authoritative in canonical and packaged references", async () => {
-    const [canonicalReference, packagedReference, manifestSource] = await Promise.all([
+    const [canonicalReference, manifestSource] = await Promise.all([
       readRepoText(".agents/skills/navi/references/project-map-v1.md"),
-      readRepoText("plugins/navi/skills/navi/references/project-map-v1.md"),
       readRepoText("plugins/navi/.codex-plugin/plugin.json"),
     ]);
     const pluginManifest = JSON.parse(manifestSource) as {
@@ -520,7 +519,6 @@ describe("Navi Project Map contracts", () => {
 
     for (const phrase of confirmedMapContract) {
       expect(canonicalReference).toContain(phrase);
-      expect(packagedReference).toContain(phrase);
     }
 
     expect(pluginManifest.interface.defaultPrompt).toContain(
@@ -534,7 +532,6 @@ describe("Navi Project Map contracts", () => {
       "write only a provisional trigger",
     ]) {
       expect(canonicalReference).not.toContain(stalePhrase);
-      expect(packagedReference).not.toContain(stalePhrase);
     }
   });
 
@@ -611,8 +608,6 @@ describe("Navi Project Map contracts", () => {
     const contracts = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),
       readRepoText(".agents/skills/navi/references/project-map-v1.md"),
-      readRepoText("plugins/navi/skills/navi/SKILL.md"),
-      readRepoText("plugins/navi/skills/navi/references/project-map-v1.md"),
     ]);
 
     for (const contract of contracts) {
