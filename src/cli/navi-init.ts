@@ -758,11 +758,7 @@ async function writeModifiedFile(writePath: string, action: ModifyInitAction): P
   await fs.writeFile(writePath, action.content);
 }
 
-export function renderAgentsBlock(includeScopedCommitAuthorization?: boolean): string {
-  if (includeScopedCommitAuthorization === false) {
-    return renderLegacyAgentsBlock(false);
-  }
-
+export function renderAgentsBlock(): string {
   return `${NAVI_AGENTS_BLOCK_START}
 ## Navi Project Supervision
 

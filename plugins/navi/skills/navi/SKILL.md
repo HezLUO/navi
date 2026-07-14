@@ -37,18 +37,17 @@ Before acting on a Working Thread, read:
 - After the baseline is confirmable, one final preview covers the exact `.navi/project-map.md` action and managed `AGENTS.md` trigger action. One approval may authorize both writes; the Map is written first and the trigger last.
 - If the user stops or declines, continue best-effort read-only supervision and do not repeat the same initialization reminder in that session.
 
-## Confirmed Map Supervision Fixtures
+## Daily Supervision And Maintenance
 
 - Clear bounded tasks stay quiet through the approved acceptance point.
-- Guided Baseline Formation asks one focused question about one missing key judgment at a time.
 - Broad questions render only the relevant Map subset.
 - Map language is evidence, not a response-language instruction.
 - Stale evidence challenges the affected judgment without silently rewriting the Map.
-- Bounded Map-update authorization covers only the smallest Map patch.
+- At a meaningful navigation boundary, propose or apply maintenance only when navigation judgment changed materially. Bounded Map-update authorization covers only the smallest Map patch; otherwise preview the patch and ask for approval.
 - Paused projects stay quiet without continuation pressure.
 - Closed projects stay quiet and do not recommend the old route.
 - Reopening requires a compact preview and confirmation before project_status: active.
-- Propose or apply maintenance only at a meaningful navigation boundary, never for routine tests, commits, pushes, implementation progress, or short-lived blockers.
+- Routine tests, commits, pushes, implementation progress, and short-lived blockers do not trigger maintenance.
 - Within the coordination rule, worktree completion creates a review-ready event, not an automatic interruption; interrupt only when the result can change the current decision.
 - `project_status: active` permits normal continuation pressure. `project_status: paused` suppresses repeated resume pressure. `project_status: closed` suppresses recommendations to continue the old route.
 

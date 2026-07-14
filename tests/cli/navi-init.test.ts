@@ -21,6 +21,10 @@ import {
   REQUIRED_PROJECT_MAP_ANCHORS,
   parseProjectMapDocument,
 } from "../../src/cli/navi-project-map";
+import {
+  LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION,
+  LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION,
+} from "../fixtures/navi-legacy-agents-blocks";
 
 const tempRoots = new Set<string>();
 
@@ -457,6 +461,8 @@ describe("navi init preview drift", () => {
 
 describe("navi init guarded writes", () => {
   it("renders the concise confirmed-Map activation contract exactly", () => {
+    expect(renderAgentsBlock).toHaveLength(0);
+    expect((renderAgentsBlock as (...args: unknown[]) => string)(false)).toBe(renderAgentsBlock());
     expect(renderAgentsBlock()).toBe(`<!-- NAVI:START -->
 ## Navi Project Supervision
 
@@ -473,7 +479,8 @@ describe("navi init guarded writes", () => {
   it.each([
     ["missing", undefined, "missing"],
     ["current", renderAgentsBlock(), "current"],
-    ["legacy", renderAgentsBlock(false), "legacy"],
+    ["legacy before scoped authorization", LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION, "legacy"],
+    ["legacy with scoped authorization", LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION, "legacy"],
     ["marker-wrapped garbage", `${NAVI_AGENTS_BLOCK_START}\ngarbage\n${NAVI_AGENTS_BLOCK_END}`, "invalid"],
     ["duplicate blocks", `${renderAgentsBlock()}\n${renderAgentsBlock()}`, "invalid"],
   ] as const)("classifies a %s project trigger truthfully", async (_name, content, expectedKind) => {
@@ -509,11 +516,13 @@ describe("navi init guarded writes", () => {
     expect(agents.match(/Navi Project Supervision/g)).toHaveLength(1);
   });
 
-  it("upgrades only a recognized deployed block and refuses edited managed blocks", async () => {
+  it.each([
+    ["legacy before scoped authorization", LEGACY_AGENTS_BLOCK_WITHOUT_SCOPED_AUTHORIZATION],
+    ["legacy with scoped authorization", LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION],
+  ])("upgrades only a recognized %s block and refuses edited managed blocks", async (_name, previous) => {
     const project = await createProject();
     await writeCanonicalMap(project);
     const agentsPath = path.join(project, "AGENTS.md");
-    const previous = renderAgentsBlock(false);
     await fs.writeFile(agentsPath, `before\n${previous}\nafter\n`);
 
     const plan = await buildInitPlan({ targetDir: project });

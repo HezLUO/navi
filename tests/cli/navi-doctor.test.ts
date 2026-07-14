@@ -8,6 +8,7 @@ import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
 import { renderAgentsBlock } from "../../src/cli/navi-init";
 import { type NaviInstallationStatus } from "../../src/cli/navi-installation";
 import { NAVI_PROJECT_MAP_RELATIVE_PATH, REQUIRED_PROJECT_MAP_ANCHORS } from "../../src/cli/navi-project-map";
+import { LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION } from "../fixtures/navi-legacy-agents-blocks";
 
 const roots: string[] = [];
 async function fixture() {
@@ -38,7 +39,7 @@ async function buildFixtureReport(triggerFixture: TriggerFixture, mapFixture: Ma
     const trigger = triggerFixture === "current"
       ? renderAgentsBlock()
       : triggerFixture === "legacy"
-        ? renderAgentsBlock(false)
+        ? LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION
         : "<!-- NAVI:START -->\ngarbage\n<!-- NAVI:END -->";
     await fs.writeFile(path.join(f.projectDir, "AGENTS.md"), `${trigger}\n`);
   }
@@ -239,7 +240,7 @@ describe("Navi doctor", () => {
     const f = await fixture();
     await fs.writeFile(
       path.join(f.projectDir, "AGENTS.md"),
-      `${renderAgentsBlock().replace("Navi Progress Map Rules", "Navi Progress Map Rulez")}\n`,
+      `${renderAgentsBlock().replace("Navi Project Supervision", "Navi Project Supervison")}\n`,
     );
 
     const report = await buildNaviDoctorReport(

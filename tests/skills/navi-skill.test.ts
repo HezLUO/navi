@@ -52,6 +52,20 @@ function extractFrontmatter(markdown: string): string {
   return markdown.slice(4, end);
 }
 
+function extractMarkdownSection(markdown: string, heading: string): string {
+  const marker = `${heading}\n`;
+  const start = markdown.indexOf(marker);
+  expect(start, heading).toBeGreaterThanOrEqual(0);
+
+  const level = heading.match(/^#+/u)?.[0].length;
+  if (level === undefined) throw new Error(`Expected Markdown heading: ${heading}`);
+  const contentStart = start + marker.length;
+  const nextHeading = new RegExp(`\\n#{1,${level}} \\S`, "gu");
+  nextHeading.lastIndex = contentStart;
+  const match = nextHeading.exec(markdown);
+  return markdown.slice(contentStart, match?.index ?? markdown.length);
+}
+
 async function parseWithPyYaml(source: string): Promise<Record<string, unknown>> {
   const script = [
     "import json",
@@ -1703,26 +1717,83 @@ describe("Along Working Thread repo-contained plugin package", () => {
     }
   });
 
-  it("defines deterministic confirmed-Map supervision fixtures", async () => {
+  it("relates incomplete baseline formation to a combined approved initialization preview", async () => {
     const [skill, reference] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),
       readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
     ]);
-    const behaviorFixtures = [
-      "Clear bounded tasks stay quiet through the approved acceptance point.",
-      "Guided Baseline Formation asks one focused question about one missing key judgment at a time.",
-      "Broad questions render only the relevant Map subset.",
-      "Map language is evidence, not a response-language instruction.",
-      "Stale evidence challenges the affected judgment without silently rewriting the Map.",
-      "Bounded Map-update authorization covers only the smallest Map patch.",
-      "Paused projects stay quiet without continuation pressure.",
-      "Closed projects stay quiet and do not recommend the old route.",
-      "Reopening requires a compact preview and confirmation before project_status: active.",
-    ];
+    const skillInit = extractMarkdownSection(skill, "## Init Eligibility Gate");
+    const eligibility = extractMarkdownSection(reference, "#### Init Eligibility Gate");
+    const guided = extractMarkdownSection(reference, "#### Guided Baseline Formation");
+    const finalPreview = extractMarkdownSection(reference, "#### Final Preview And Activation");
 
-    for (const fixtureContract of behaviorFixtures) {
-      expect(skill).toContain(fixtureContract);
-      expect(reference).toContain(fixtureContract);
+    expect(skillInit).toMatch(/evidence is insufficient[\s\S]*without writes/i);
+    expect(skillInit).toMatch(/one missing key judgment at a time[\s\S]*confirm or correct/i);
+    expect(guided).toMatch(/one missing key judgment[\s\S]*one focused question/i);
+    expect(guided).toMatch(/confirms or corrects[\s\S]*until the minimum baseline is confirmable/i);
+    expect(eligibility).toMatch(/Desired Outcome[\s\S]*route or working rhythm[\s\S]*Current Position[\s\S]*(Next Decision|Current Boundary)/i);
+    expect(finalPreview).toMatch(/One final preview[\s\S]*\.navi\/project-map\.md[\s\S]*AGENTS\.md/i);
+    expect(finalPreview).toMatch(/One approval[\s\S]*both writes[\s\S]*Map is written first[\s\S]*trigger last/i);
+  });
+
+  it("scopes adaptive answers, language, and stale-evidence challenge to their policy sections", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const authority = extractMarkdownSection(skill, "## Confirmed Project Map Authority");
+    const model = extractMarkdownSection(reference, "### Confirmed Project Map Model");
+    const daily = extractMarkdownSection(reference, "### Daily Supervision Behavior");
+    const stale = extractMarkdownSection(reference, "#### Stale Or Conflicting Evidence");
+
+    for (const section of [authority, model, daily]) {
+      expect(section).toMatch(/relevant Map subset|not a (fixed|required) response template/i);
+      expect(section).toMatch(/current prompt|user's current prompt/i);
+    }
+    expect(authority).toMatch(/Next-step questions[\s\S]*Current Position[\s\S]*Next Decision/i);
+    expect(authority).toMatch(/vision-distance questions[\s\S]*Route To Outcome/i);
+    expect(stale).toMatch(/challenged judgment[\s\S]*strongest verifiable evidence/i);
+    expect(stale).toMatch(/do not invent a stable map or rewrite it silently/i);
+    expect(stale).toMatch(/meaningful navigation boundary/i);
+  });
+
+  it("binds maintenance, lifecycle, reopening, and worktree review to decision boundaries", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+    ]);
+    const daily = extractMarkdownSection(skill, "## Daily Supervision And Maintenance");
+    const maintenance = extractMarkdownSection(reference, "### Map Maintenance And Authorization");
+    const lifecycle = extractMarkdownSection(reference, "### Project Lifecycle");
+    const parallel = extractMarkdownSection(reference, "### Parallel Work And Review Readiness");
+
+    expect(daily).toMatch(/clear bounded tasks[\s\S]*approved acceptance point/i);
+    expect(daily).toMatch(/meaningful navigation boundary[\s\S]*smallest Map patch/i);
+    expect(maintenance).toMatch(/meaningful navigation boundary[\s\S]*preview the patch[\s\S]*approval/i);
+    expect(maintenance).toMatch(/explicitly covers[\s\S]*Map maintenance[\s\S]*smallest Map patch/i);
+    expect(lifecycle).toMatch(/project_status: paused[\s\S]*stay quiet without continuation pressure/i);
+    expect(lifecycle).toMatch(/project_status: closed[\s\S]*do not recommend the old route/i);
+    expect(lifecycle).toMatch(/Reopening does not trust the old Current Position[\s\S]*confirmation before project_status: active/i);
+    expect(parallel).toMatch(/worktree completion creates a review-ready event[\s\S]*not an automatic interruption/i);
+    expect(parallel).toMatch(/Interrupt only when the result can change the current decision/i);
+  });
+
+  it("rejects contradictory stored-Map and legacy-path guidance across canonical and packaged contracts", async () => {
+    const contracts = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/working-thread-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText("plugins/navi/skills/navi/references/working-thread-v1.md"),
+    ]);
+
+    for (const contract of contracts) {
+      expect(contract).not.toMatch(/provisional (Project |Rhythm )?Map/i);
+      expect(contract).not.toContain("docs/along/project-maps/");
+      expect(contract).not.toContain(".navi/state.md");
+      expect(contract).not.toContain("navi init --suggest-map");
+      expect(contract).not.toContain("write only a provisional trigger");
+      expect(contract).not.toMatch(/stored structure is (a|required as a) response template/i);
+      expect(contract).not.toMatch(/rewrite (the )?Map silently/i);
     }
   });
 

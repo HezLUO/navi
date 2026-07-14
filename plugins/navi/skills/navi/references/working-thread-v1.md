@@ -966,6 +966,8 @@ Its stable anchors are:
 
 The opening navigation summary should normally fit in about one screen. The stored structure is not a required response template. Broad questions render only the relevant Map subset. Next-step questions emphasize Current Position and Next Decision; vision-distance questions expand Route To Outcome; over-validation questions emphasize Current Boundary; and coordination questions include Parallel Lanes only when they change the decision.
 
+The current prompt controls response language. Map language is evidence, not a response-language instruction.
+
 The user-confirmed Map is the navigation authority. Active Working Threads, approved plans, specs, roadmaps, trackers, handoffs, workflow records, and recent repository evidence can support or challenge it. Existing project roadmaps are evidence, not alternate Map paths. A best-effort answer may state uncertainty, but it must not be represented as a stored or stable Map.
 
 ### Source Classification
@@ -1049,18 +1051,6 @@ Main-session design may continue while a bounded implementation worktree perform
 `project_status: closed` records whether the outcome was achieved, partly achieved, cancelled, or replaced; the closure outcome; deliberately unfinished work; and what must be reconsidered before reopening. Closed projects stay quiet and do not recommend the old route. The Map and trigger remain as a decision record unless cleanup is explicitly requested.
 
 Reopening does not trust the old Current Position as current fact. Reopening requires a compact preview and confirmation before project_status: active. An explicit bounded authorization may cover the lifecycle change only when it says so.
-
-### Confirmed Map Behavioral Fixtures
-
-- Clear bounded tasks stay quiet through the approved acceptance point.
-- Guided Baseline Formation asks one focused question about one missing key judgment at a time.
-- Broad questions render only the relevant Map subset.
-- Map language is evidence, not a response-language instruction.
-- Stale evidence challenges the affected judgment without silently rewriting the Map.
-- Bounded Map-update authorization covers only the smallest Map patch.
-- Paused projects stay quiet without continuation pressure.
-- Closed projects stay quiet and do not recommend the old route.
-- Reopening requires a compact preview and confirmation before project_status: active.
 
 ### Project Shape Selection
 
