@@ -28,6 +28,15 @@ describe("Current Navi repository surface", () => {
     await expect(fs.stat(path.join(root, "docs/along"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
+  it("keeps active Navi tests independent from Historical Along docs", async () => {
+    const activeNaviTests = await fs.readFile(
+      path.join(root, "tests/skills/navi-skill.test.ts"),
+      "utf8",
+    );
+
+    expect(activeNaviTests).not.toContain("archive/along/docs/");
+  });
+
   it("keeps Historical Along outside Current Navi defaults", async () => {
     expect(packageJson.scripts).toEqual({
       navi: "./src/cli/navi-bin.mjs",

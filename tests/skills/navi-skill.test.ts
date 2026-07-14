@@ -334,7 +334,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 4 phase, validation, and parallel-work supervision", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
     const readme = await readRepoText("plugins/navi/README.md");
 
     for (const expected of [
@@ -409,7 +408,6 @@ describe("Along Working Thread Codex skill", () => {
       "stop, wait, approve, continue, or ask how far the current work is from the original goal",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -424,7 +422,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 5 pause semantics and decision-point stopping", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.5 pause semantics",
@@ -444,7 +441,6 @@ describe("Along Working Thread Codex skill", () => {
       "valid stop can still create continuation friction",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -482,7 +478,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 6 stage and vision supervision", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.6 stage-and-vision supervision",
@@ -503,7 +498,6 @@ describe("Along Working Thread Codex skill", () => {
       "Do not print Product Stage, Work Mode, and Vision Distance in every response",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -540,7 +534,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 7 coordination layer supervision", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.7 coordination layer",
@@ -555,7 +548,6 @@ describe("Along Working Thread Codex skill", () => {
       "Do not force lane tables into ordinary answers",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -591,7 +583,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 8 decision handoff quality", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.8 decision handoff quality",
@@ -606,7 +597,6 @@ describe("Along Working Thread Codex skill", () => {
       "No Menu Inside Approved Boundary",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -641,7 +631,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 11 lane closure next-decision handoff", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.11 lane closure handoff",
@@ -657,7 +646,6 @@ describe("Along Working Thread Codex skill", () => {
       "Documentation closeout is not design confirmation",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -686,7 +674,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 12 quietness and rule density control", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.12 quietness gate",
@@ -706,7 +693,6 @@ describe("Along Working Thread Codex skill", () => {
       "pseudo-supervision",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
 
     for (const expected of [
@@ -905,7 +891,6 @@ describe("Along Working Thread Codex skill", () => {
   it("documents prompt-language following for Progress and Rhythm Maps", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "default response language should follow the user's current prompt",
@@ -923,7 +908,6 @@ describe("Along Working Thread Codex skill", () => {
       "Chinese prompts should still allow Chinese headings and explanations.",
     ]) {
       expect(skill).toContain(expected);
-      expect(template).toContain(expected);
     }
   });
 
@@ -957,10 +941,9 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("Do not downgrade non-code long-running workspaces to ordinary advice");
   });
 
-  it("documents project-local Navi trigger sources and reusable template", async () => {
+  it("documents project-local Navi trigger sources", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const readme = await readRepoText("plugins/navi/README.md");
-    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Project-Local Navi Trigger Source",
@@ -980,20 +963,6 @@ describe("Along Working Thread Codex skill", () => {
       expect(readme).toContain(expected);
     }
 
-    for (const expected of [
-      "# Navi Project Trigger Template",
-      "Paste this into the target project's `AGENTS.md`",
-      "When the user asks about project progress, next steps, whether to continue, or says they do not understand the current state",
-      "first give a compact Navi map before ordinary task advice",
-      "项目节奏",
-      "当前主线",
-      "If the user gives a clear execution command with the next action, boundary, and acceptance point already established",
-      "Read-only checks of task files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks",
-      "do not output a Progress Map or Rhythm Map",
-      "keep Navi quiet",
-    ]) {
-      expect(template).toContain(expected);
-    }
   });
 
   it("documents Navi project initialization as the reliable configuration path", async () => {
@@ -1223,7 +1192,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       readRepoText("README.md"),
       readRepoText("README.zh-CN.md"),
       readRepoText("plugins/navi/README.md"),
-      readRepoText("archive/along/docs/project-maps/navi-project-init.md"),
+      readRepoText("docs/navi/project-init.md"),
       readRepoText("docs/navi/product-debt.md"),
     ]);
 
@@ -1263,9 +1232,11 @@ describe("Along Working Thread repo-contained plugin package", () => {
     ]) {
       expect(chineseReadme).toContain(expected);
     }
-    expect(initDoc).toContain("navi setup = global first-use discovery");
-    expect(initDoc).toContain("navi init = one target project's reliable guidance");
-    expect(initDoc).toContain("may run `navi init --write` only after explicit user approval");
+    expect(initDoc).toContain("Global capability: install the Navi source package and run `navi setup` once");
+    expect(initDoc).toContain("`navi init` configures a target project. It does not install Navi again.");
+    expect(initDoc).toContain("One explicit approval can authorize both actions as one bounded project initialization write.");
+    expect(initDoc).toContain("navi init --map-file <candidate> --expect-plan <fingerprint> --write");
+    expect(initDoc).not.toMatch(/\bnavi init --write(?=[`.;,\s]|$)/u);
     expect(debt).toContain("Source-alpha bootstrap is implemented");
     expect(debt).toContain("Public distribution remains open");
   });
@@ -1364,7 +1335,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       readRepoText("README.md"),
       readRepoText("README.zh-CN.md"),
       readRepoText("plugins/navi/README.md"),
-      readRepoText("archive/along/docs/project-maps/navi-project-init.md"),
+      readRepoText("docs/navi/project-init.md"),
       readRepoText("docs/navi/product-debt.md"),
     ]);
 
@@ -1394,9 +1365,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
     }
 
     expect(chineseReadme).toContain("全局 Codex/plugin/npm 状态");
-    expect(initDoc).toContain("legacy-only");
-    expect(initDoc).toContain("dual-install");
-    expect(initDoc).toContain("navi doctor");
+    expect(initDoc).toContain("`navi doctor` reports the project configuration separately from global discovery");
+    expect(initDoc).toContain("It does not silently initialize or repair the project.");
     expect(debt).toContain("navi@navi-source");
     expect(debt).toContain("legacy migration");
 
