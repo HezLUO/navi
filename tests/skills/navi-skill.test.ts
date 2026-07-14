@@ -1765,6 +1765,81 @@ describe("Along Working Thread repo-contained plugin package", () => {
     }
   });
 
+  it("defines one unified Codex Lane Handoff contract without adding a runtime", async () => {
+    const [canonicalSkill, packagedSkill, canonicalReference, packagedReference] =
+      await Promise.all([
+        readRepoText(".agents/skills/navi/SKILL.md"),
+        readRepoText("plugins/navi/skills/navi/SKILL.md"),
+        readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+        readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
+      ]);
+
+    expect(packagedSkill).toBe(canonicalSkill);
+    expect(packagedReference).toBe(canonicalReference);
+
+    for (const field of [
+      "NAVI_LANE_HANDOFF_EVENT",
+      "version: 1",
+      "event_id",
+      "kind: decision-required | blocked | review-ready",
+      "source_task",
+      "source_lane",
+      "goal",
+      "summary",
+      "evidence",
+      "worktree_state",
+      "declared_impact: lane-local | premise-changing",
+    ]) {
+      expect(canonicalReference).toContain(field);
+    }
+
+    for (const kindField of [
+      "decision_needed",
+      "recommendation",
+      "continuation",
+      "reason",
+      "attempts",
+      "commits",
+      "changed_scope",
+      "verification",
+      "residual_risks",
+    ]) {
+      expect(canonicalReference).toContain(kindField);
+    }
+
+    for (const boundary of [
+      "retry once immediately",
+      "same event_id",
+      "silently ignore duplicate",
+      "delivery failed",
+      "not authorization",
+      "next natural checkpoint",
+      "read-only parent review",
+      "strictly bounded remediation",
+      "Do not send a routine acknowledgement",
+    ]) {
+      expect(canonicalReference).toContain(boundary);
+    }
+
+    for (const nonEvent of [
+      "ordinary progress",
+      "routine waiting",
+      "test passing",
+      "local task commit",
+      "running child",
+    ]) {
+      expect(canonicalReference).toContain(nonEvent);
+    }
+
+    expect(canonicalSkill).toContain("references/lane-handoff-v1.md");
+    expect(canonicalReference).toMatch(
+      /not a background process[\s\S]*durable queue[\s\S]*Supervisor Inbox/i,
+    );
+    expect(canonicalReference).not.toMatch(
+      /start a background process|create a durable queue|open a Supervisor Inbox/i,
+    );
+  });
+
   it("makes the confirmed Map contract authoritative in canonical and packaged skills", async () => {
     const [canonicalSkill, packagedSkill, manifestSource] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),

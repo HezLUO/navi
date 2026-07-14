@@ -21,6 +21,10 @@ Before acting on a Working Thread, read:
 
 `references/working-thread-v1.md`
 
+For bounded Codex worktree delegation, a delivered lane transition, or source-side lane review, also read:
+
+`references/lane-handoff-v1.md`
+
 ## Confirmed Project Map Authority
 
 - The canonical project navigation record is the confirmed `.navi/project-map.md`. It uses `navi_map: 1`, `map_status: confirmed`, and one lifecycle value: `project_status: active`, `project_status: paused`, or `project_status: closed`.
@@ -50,6 +54,13 @@ Before acting on a Working Thread, read:
 - Routine tests, commits, pushes, implementation progress, and short-lived blockers do not trigger maintenance.
 - Within the coordination rule, treat worktree completion as review-ready state, not an automatic interruption; review when the result can change the current decision.
 - `project_status: active` permits normal continuation pressure. `project_status: paused` suppresses repeated resume pressure. `project_status: closed` suppresses recommendations to continue the old route.
+
+## Codex Lane Handoff Adapter
+
+- A bounded worktree delegation includes the source main task ID, the bounded goal and authority envelope, and a pointer to `references/lane-handoff-v1.md`.
+- When host task messaging is available, the worktree emits once on `decision-required`, `blocked`, or `review-ready`. Ordinary progress and waiting do not emit.
+- Delivery is evidence, not authorization. Missing metadata or messaging uses the explicit local fallback.
+- The source main task routes by current impact, silently ignores duplicate event IDs, reviews `review-ready` at the next natural checkpoint, and returns only real decisions or strictly bounded remediation to the lane.
 
 ## Hard Boundaries
 
