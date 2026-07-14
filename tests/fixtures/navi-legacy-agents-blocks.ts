@@ -6,7 +6,7 @@ const LEGACY_SCOPED_COMMIT_AUTHORIZATION =
 
 async function historicalAgentsBlockFixture(includeScopedCommitAuthorization: boolean): Promise<string> {
   const source = await fs.readFile(
-    new URL("../../archive/along/docs/project-maps/navi-project-trigger-template.md", import.meta.url),
+    new URL("./navi-legacy-project-trigger-template.md", import.meta.url),
     "utf8",
   );
   const fenced = source.match(/````markdown\n([\s\S]*?)\n````/u)?.[1];

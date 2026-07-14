@@ -59,13 +59,13 @@ describe("Current Navi repository surface", () => {
     }
   });
 
-  it("keeps active Navi tests independent from Historical Along docs", async () => {
-    const activeNaviTests = (await listFiles(path.join(root, "tests/skills")))
-      .filter((file) => file.endsWith(".test.ts"));
-
-    for (const file of activeNaviTests) {
-      const testSource = await fs.readFile(file, "utf8");
-      expect(testSource, path.relative(root, file)).not.toContain("archive/along/docs/");
+  it("keeps active tests and fixtures independent from Historical Along docs", async () => {
+    for (const relativeDir of ["tests/cli", "tests/fixtures", "tests/package", "tests/skills"]) {
+      const activeTestFiles = await listFiles(path.join(root, relativeDir));
+      for (const file of activeTestFiles) {
+        const testSource = await fs.readFile(file, "utf8");
+        expect(testSource, path.relative(root, file)).not.toContain("archive/along/docs/");
+      }
     }
   });
 
