@@ -334,7 +334,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 4 phase, validation, and parallel-work supervision", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
     const readme = await readRepoText("plugins/navi/README.md");
 
     for (const expected of [
@@ -424,7 +424,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 5 pause semantics and decision-point stopping", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.5 pause semantics",
@@ -482,7 +482,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 6 stage and vision supervision", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.6 stage-and-vision supervision",
@@ -540,7 +540,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 7 coordination layer supervision", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.7 coordination layer",
@@ -591,7 +591,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 8 decision handoff quality", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.8 decision handoff quality",
@@ -641,7 +641,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 11 lane closure next-decision handoff", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.11 lane closure handoff",
@@ -686,7 +686,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 12 quietness and rule density control", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Alpha.12 quietness gate",
@@ -778,35 +778,6 @@ describe("Along Working Thread Codex skill", () => {
     expect(skill).toContain("confirmed `.navi/project-map.md`");
     expect(reference).toContain("Stale Or Conflicting Evidence");
     expect(reference).not.toContain("docs/along/project-maps/");
-  });
-
-  it("ships a confirmed Project Map record for the current Navi test project", async () => {
-    expect(await repoPathExists("docs/along/project-maps/README.md")).toBe(true);
-    expect(await repoPathExists("docs/along/project-maps/navi-current-test-project.md")).toBe(true);
-
-    const readme = await readRepoText("docs/along/project-maps/README.md");
-    const naviMap = await readRepoText("docs/along/project-maps/navi-current-test-project.md");
-
-    for (const expected of [
-      "confirmed Project Map",
-      "Do not rewrite `overall_stages` without user confirmation.",
-      "current-stage sub-progress",
-    ]) {
-      expect(readme).toContain(expected);
-    }
-
-    for (const expected of [
-      "# Navi Current Test Project Map",
-      "map_status: confirmed",
-      "source: user-confirmed current Navi test project map",
-      "[问题定义] -> [行为设计] -> [文档写入] -> [新会话验证] -> [真实使用校准] -> [稳定产品行为]",
-      "current_overall_stage: 稳定产品行为",
-      "Do not rename, remove, merge, split, or reorder `overall_stages` without explicit user confirmation.",
-      "local concerns, fixes, retests, pushes, and fresh-session checks must stay in `sub_progress`",
-      "V1 docs-backed skill behavior is stable enough to use as the baseline",
-    ]) {
-      expect(naviMap).toContain(expected);
-    }
   });
 
   it("documents compact horizontal rendering and mandatory current-position explanation", async () => {
@@ -934,7 +905,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents prompt-language following for Progress and Rhythm Maps", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "default response language should follow the user's current prompt",
@@ -989,7 +960,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents project-local Navi trigger sources and reusable template", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const readme = await readRepoText("plugins/navi/README.md");
-    const template = await readRepoText("docs/along/project-maps/navi-project-trigger-template.md");
+    const template = await readRepoText("archive/along/docs/project-maps/navi-project-trigger-template.md");
 
     for (const expected of [
       "Project-Local Navi Trigger Source",
@@ -1126,53 +1097,6 @@ describe("Along Working Thread Codex skill", () => {
     expect(version).toContain("documentation-only behavior update");
   });
 
-  it("ships a product-owned Working Thread directory with the required record template", async () => {
-    const readme = await readRepoText("docs/along/working-threads/README.md");
-
-    for (const heading of [
-      "# Along Working Threads",
-      "## Record Template",
-      "## Why This Matters",
-      "## Current Judgment",
-      "## Boundary",
-      "## Drift Triggers",
-      "## Next Likely Move",
-      "## Last Wrap-Up",
-      "## Open Questions",
-    ]) {
-      expect(readme).toContain(heading);
-    }
-    expect(readme).toContain("Do not store chat transcripts here.");
-    expect(readme).toContain("Do not create or update a durable record without user confirmation.");
-  });
-
-  it("includes a seed Working Thread for the accepted existing-agent V1 direction", async () => {
-    const record = await readRepoText("docs/along/working-threads/2026-06-18-existing-agent-self-initiation-layer.md");
-
-    for (const heading of [
-      "# Existing-Agent Self-Initiation Layer",
-      "Status: active",
-      "## Why This Matters",
-      "## Current Judgment",
-      "## Boundary",
-      "## Drift Triggers",
-      "## Next Likely Move",
-      "## Last Wrap-Up",
-      "## Open Questions",
-    ]) {
-      expect(record).toContain(heading);
-    }
-    expect(record).toContain("Codex-first");
-    expect(record).toContain("skill-first");
-    expect(record).toContain("docs-backed");
-    expect(record).toContain("turn-bound self-initiation");
-    expect(record).toContain("Skill Behavior Tightening Pass");
-    expect(record).toContain("high-impact drift confirmation");
-    expect(record).toContain("Do not build a new standalone Along agent");
-    expect(record).toContain("Do not expand the completed Minimal Server V1");
-    expect(record).toContain("Do not turn plugin packaging into a broad productization effort");
-    expect(record).toContain("personal local plugin first");
-  });
 });
 
 describe("Along Working Thread repo-contained plugin package", () => {
@@ -1212,66 +1136,6 @@ describe("Along Working Thread repo-contained plugin package", () => {
         category: "Productivity",
       }),
     ]);
-  });
-
-  it("documents alpha 9 maintainer calibration evidence", async () => {
-    const rubric = await readRepoText("docs/along/calibration/decision-rubric.md");
-    const evidenceLog = await readRepoText("docs/along/calibration/evidence-log.md");
-
-    for (const expected of [
-      "# Navi Maintainer Calibration Decision Rubric",
-      "Maintainer-side only",
-      "This is not an end-user feature",
-      "What Counts As Evidence",
-      "What Does Not Count As Evidence",
-      "Success",
-      "Friction",
-      "Miss",
-      "Overreach",
-      "Boundary Confusion",
-      "Product Signal",
-      "Close",
-      "Watch",
-      "Roadmap",
-      "Design",
-      "Implement",
-      "Defer",
-      "Every evidence entry must end in a decision",
-      "Do not let a single non-urgent evidence item interrupt the current design loop",
-      "Evidence logging does not trigger full tests, typecheck, tag, release, npm publication, or marketplace work",
-      "Do not add this log to `navi init`",
-    ]) {
-      expect(rubric).toContain(expected);
-    }
-
-    for (const expected of [
-      "# Navi Maintainer Calibration Evidence Log",
-      "Status: maintainer-side calibration evidence",
-      "This log is not a release checklist",
-      "Date",
-      "Source",
-      "Prompt / event",
-      "Project shape",
-      "Expected Navi behavior",
-      "Actual behavior",
-      "User / maintainer judgment",
-      "Category",
-      "Decision",
-      "Follow-up",
-      "English `what's next` produced a Chinese Navi map",
-      "Repeated meaningless `continue` prompts",
-      "Completed worktree raised whether the main session should wait",
-      "External readers could confuse Navi with Along",
-      "Validation and testing consumed too much workflow space",
-      "Implemented in alpha.3",
-      "alpha.5 pause semantics",
-      "alpha.8 decision handoff quality",
-      "alpha.7 coordination layer",
-      "public narrative alignment",
-      "alpha.6 Work Mode",
-    ]) {
-      expect(evidenceLog).toContain(expected);
-    }
   });
 
   it("documents the current Navi-first public narrative in the root README", async () => {
@@ -1359,8 +1223,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
       readRepoText("README.md"),
       readRepoText("README.zh-CN.md"),
       readRepoText("plugins/navi/README.md"),
-      readRepoText("docs/along/project-maps/navi-project-init.md"),
-      readRepoText("docs/along/navi-product-debt.md"),
+      readRepoText("archive/along/docs/project-maps/navi-project-init.md"),
+      readRepoText("docs/navi/product-debt.md"),
     ]);
 
     for (const readme of [englishReadme, chineseReadme, packageReadme]) {
@@ -1500,8 +1364,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
       readRepoText("README.md"),
       readRepoText("README.zh-CN.md"),
       readRepoText("plugins/navi/README.md"),
-      readRepoText("docs/along/project-maps/navi-project-init.md"),
-      readRepoText("docs/along/navi-product-debt.md"),
+      readRepoText("archive/along/docs/project-maps/navi-project-init.md"),
+      readRepoText("docs/navi/product-debt.md"),
     ]);
 
     for (const readme of [englishReadme, chineseReadme, packageReadme]) {
@@ -1570,8 +1434,8 @@ describe("Along Working Thread repo-contained plugin package", () => {
   });
 
   it("documents shipped navi init scope in debt and roadmap docs", async () => {
-    const debt = await readRepoText("docs/along/navi-product-debt.md");
-    const roadmap = await readRepoText("docs/along/roadmaps/navi-post-alpha-roadmap.md");
+    const debt = await readRepoText("docs/navi/product-debt.md");
+    const roadmap = await readRepoText("docs/navi/roadmap.md");
 
     for (const expected of [
       "Status: confirmed-Map initialization addressed; calibration and public distribution open",

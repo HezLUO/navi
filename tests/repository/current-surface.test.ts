@@ -15,6 +15,19 @@ async function listFiles(dir: string): Promise<string[]> {
 }
 
 describe("Current Navi repository surface", () => {
+  it("keeps active Navi docs outside the Historical Along namespace", async () => {
+    for (const relative of [
+      "docs/navi/README.md",
+      "docs/navi/calibration-log.md",
+      "docs/navi/product-debt.md",
+      "docs/navi/roadmap.md",
+      "docs/navi/design-history.md",
+    ]) {
+      await expect(fs.stat(path.join(root, relative))).resolves.toBeDefined();
+    }
+    await expect(fs.stat(path.join(root, "docs/along"))).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
   it("keeps Historical Along outside Current Navi defaults", async () => {
     expect(packageJson.scripts).toEqual({
       navi: "./src/cli/navi-bin.mjs",
