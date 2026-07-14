@@ -336,7 +336,16 @@ export async function applyInitPlan(plan: InitPlan): Promise<void> {
 export function renderInitPlan(plan: InitPlan): string {
   const lines: string[] = [];
   const isDryRun = plan.mode === "dry-run";
-  lines.push(isDryRun ? "Navi init preview" : "Navi init applied");
+  const heading = isDryRun
+    ? "Navi init preview"
+    : plan.state === "actionable"
+      ? "Navi init applied"
+      : plan.state === "blocked"
+        ? "Navi init blocked"
+        : plan.state === "needs-confirmed-map"
+          ? "Navi init needs a confirmed Project Map"
+          : "Navi init status";
+  lines.push(heading);
   lines.push(`Target: ${plan.targetDir}`);
   lines.push("This does not install Navi again.");
   lines.push("");

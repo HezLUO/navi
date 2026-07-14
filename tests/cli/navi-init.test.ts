@@ -141,6 +141,8 @@ describe("navi init confirmed Map planning", () => {
 
     expect(code).toBe(1);
     expect(io.output()).toContain("confirmed Project Map");
+    expect(io.output()).not.toMatch(/applied|successfully|files were changed/i);
+    expect(io.output()).toMatch(/needs|requires|required/i);
     await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
     await expect(fs.access(path.join(project, ".navi/project-map.md"))).rejects.toThrow();
   });
@@ -443,6 +445,48 @@ describe("navi init guarded writes", () => {
       kind: "modify", relativePath: "AGENTS.md", absolutePath: path.join(project, "AGENTS.md"), summary: "guard", content: "x",
     }]))).rejects.toThrow(/previous content/i);
     await expect(fs.access(outside)).rejects.toThrow();
+  });
+
+  it("rejects an absolute relativePath without writing anything", async () => {
+    const project = await createProject();
+    const absolutePath = path.join(project, "absolute.md");
+
+    await expect(applyInitPlan(externalPlan(project, [{
+      kind: "create",
+      relativePath: absolutePath,
+      absolutePath,
+      summary: "absolute relative path",
+      content: "# Must not write\n",
+    }]))).rejects.toThrow(/absolute/i);
+
+    await expect(fs.access(absolutePath)).rejects.toThrow();
+  });
+
+  it("preflights a malformed later action before writing an earlier valid action", async () => {
+    const project = await createProject();
+    const firstPath = path.join(project, "first.md");
+    const existingPath = path.join(project, "existing.md");
+    await fs.writeFile(existingPath, "# Existing\n");
+
+    await expect(applyInitPlan(externalPlan(project, [
+      {
+        kind: "create",
+        relativePath: "first.md",
+        absolutePath: firstPath,
+        summary: "valid earlier action",
+        content: "# First\n",
+      },
+      {
+        kind: "modify",
+        relativePath: "existing.md",
+        absolutePath: existingPath,
+        summary: "malformed later action",
+        content: "# Changed\n",
+      },
+    ]))).rejects.toThrow(/previous content/i);
+
+    await expect(fs.access(firstPath)).rejects.toThrow();
+    await expect(fs.readFile(existingPath, "utf8")).resolves.toBe("# Existing\n");
   });
 
   it("rejects unsafe target-relative paths and non-directory targets", async () => {
