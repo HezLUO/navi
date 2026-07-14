@@ -1,3 +1,4 @@
+import { constants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -113,12 +114,13 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
     return invalid("Project Map last_confirmed must be a valid YYYY-MM-DD calendar date.", 1);
   }
 
+  const body = lines.slice(delimiters[1] + 1).join("\n");
   let previousAnchorIndex = -1;
   for (const anchor of REQUIRED_PROJECT_MAP_ANCHORS) {
     const marker = `<!-- ${anchor} -->`;
-    const firstIndex = text.indexOf(marker);
+    const firstIndex = body.indexOf(marker);
     if (firstIndex < 0) return invalid(`Project Map is missing required anchor: ${anchor}`, 1);
-    if (text.indexOf(marker, firstIndex + marker.length) >= 0) {
+    if (body.indexOf(marker, firstIndex + marker.length) >= 0) {
       return invalid(`Project Map contains duplicate required anchor: ${anchor}`, 1);
     }
     if (firstIndex < previousAnchorIndex) {
@@ -156,11 +158,27 @@ export async function inspectProjectMapFile(projectDir: string): Promise<Project
     return { kind: "unsafe", mapPath, diagnostic: "Project Map path must be a regular file." };
   }
 
+  let handle;
+  try {
+    handle = await fs.open(mapPath, constants.O_RDONLY | constants.O_NOFOLLOW);
+  } catch {
+    return { kind: "unsafe", mapPath, diagnostic: "Project Map regular file could not be opened without following links." };
+  }
+
   let text: string;
   try {
-    text = await fs.readFile(mapPath, "utf8");
+    const openedStats = await handle.stat();
+    if (!openedStats.isFile()) {
+      return { kind: "unsafe", mapPath, diagnostic: "Opened Project Map must be a regular file." };
+    }
+    if (openedStats.dev !== stats.dev || openedStats.ino !== stats.ino) {
+      return { kind: "unsafe", mapPath, diagnostic: "Project Map changed between inspection and opening." };
+    }
+    text = await handle.readFile({ encoding: "utf8" });
   } catch {
     return { kind: "unsafe", mapPath, diagnostic: "Project Map regular file could not be read safely." };
+  } finally {
+    await handle.close().catch(() => undefined);
   }
 
   const result = parseProjectMapDocument(text);

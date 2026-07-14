@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   inspectProjectMapFile,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
@@ -63,6 +63,25 @@ describe("confirmed Navi Project Map contract", () => {
     ["invalid date", (text: string) => text.replace("2026-07-13", "13/07/2026")],
   ])("rejects %s", (_name, mutate) => {
     expect(parseProjectMapDocument(mutate(map(["A", "B", "C", "D", "E", "F"]))).kind).toBe("invalid");
+  });
+
+  it("does not count required anchors embedded only in optional frontmatter metadata", () => {
+    const metadataAnchors = REQUIRED_PROJECT_MAP_ANCHORS.map(
+      (anchor, index) => `metadata_${index}: <!-- ${anchor} -->`,
+    ).join("\n");
+    const text = `---
+navi_map: 1
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-13
+${metadataAnchors}
+---
+# Navi Project Map
+
+No body anchors.
+`;
+
+    expect(parseProjectMapDocument(text)).toMatchObject({ kind: "invalid", recognizedVersion: 1 });
   });
 
   it("preserves an unsupported future contract version", () => {
@@ -150,6 +169,33 @@ describe("confirmed Navi Project Map contract", () => {
     await expect(inspectProjectMapFile(root)).resolves.toMatchObject({ kind: "unsafe", mapPath });
     expect((await fs.lstat(mapPath)).isSymbolicLink()).toBe(true);
     await expect(fs.readFile(targetPath, "utf8")).resolves.toBe(text);
+  });
+
+  it("does not follow a symlink substituted after lstat", async () => {
+    const root = await temporaryRoot();
+    const originalText = map(["A", "B", "C", "D", "E", "F"]);
+    const targetText = originalText.replace("2026-07-13", "2026-07-14");
+    const mapPath = await writeProjectMap(root, originalText);
+    const movedPath = path.join(root, "checked-map.md");
+    const targetPath = path.join(root, "replacement-map.md");
+    await fs.writeFile(targetPath, targetText, "utf8");
+
+    const originalLstat = fs.lstat;
+    const lstat = vi.spyOn(fs, "lstat").mockImplementationOnce(async (candidate) => {
+      const stats = await originalLstat(candidate);
+      await fs.rename(mapPath, movedPath);
+      await fs.symlink(targetPath, mapPath);
+      return stats;
+    });
+
+    try {
+      await expect(inspectProjectMapFile(root)).resolves.toMatchObject({ kind: "unsafe", mapPath });
+    } finally {
+      lstat.mockRestore();
+    }
+    expect((await fs.lstat(mapPath)).isSymbolicLink()).toBe(true);
+    await expect(fs.readFile(movedPath, "utf8")).resolves.toBe(originalText);
+    await expect(fs.readFile(targetPath, "utf8")).resolves.toBe(targetText);
   });
 
   it("returns unsafe for a directory at the file path without modifying it", async () => {
