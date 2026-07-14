@@ -43,6 +43,12 @@ interface EvidenceReadResult {
   truncated: boolean;
 }
 
+interface EvidenceDirectoryIdentity {
+  absolutePath: string;
+  dev: number;
+  ino: number;
+}
+
 export async function inspectProjectEvidence(targetDir: string): Promise<ProjectEvidenceInspection> {
   const state: EvidenceCollectionState = {
     candidates: [],
@@ -68,9 +74,9 @@ export async function inspectProjectEvidence(targetDir: string): Promise<Project
       break;
     }
     const relativePath = candidates[index];
-    if (!await hasSafeEvidenceDirectoryComponents(targetDir, path.posix.dirname(relativePath))) continue;
     const raw = await readEvidenceSnippet(
-      resolveTargetPath(targetDir, relativePath),
+      targetDir,
+      relativePath,
       Math.min(EVIDENCE_SNIPPET_BYTES, remainingBytes),
     );
     if (raw === undefined) continue;
@@ -95,7 +101,6 @@ async function collectEvidenceCandidateFiles(
   }
 
   state.directoriesVisited += 1;
-  if (!await hasSafeEvidenceDirectoryComponents(targetDir, relativeDir)) return;
   const entries = await readBoundedEvidenceDirectoryEntries(targetDir, relativeDir, state);
   for (const entry of entries.sort((left, right) => compareCodePoint(left.name, right.name))) {
     const relativePath = relativeDir === "." ? entry.name : path.posix.join(relativeDir, entry.name);
@@ -109,19 +114,42 @@ async function collectEvidenceCandidateFiles(
   }
 }
 
-async function hasSafeEvidenceDirectoryComponents(targetDir: string, relativeDir: string): Promise<boolean> {
-  if (relativeDir === ".") return true;
+async function snapshotEvidenceDirectoryIdentities(
+  targetDir: string,
+  relativeDir: string,
+): Promise<EvidenceDirectoryIdentity[] | undefined> {
+  if (relativeDir === ".") return [];
   const resolvedTarget = path.resolve(targetDir);
   const resolvedDirectory = resolveTargetPath(resolvedTarget, relativeDir);
   const relative = path.relative(resolvedTarget, resolvedDirectory);
   const components = relative.split(path.sep).filter(Boolean);
+  const identities: EvidenceDirectoryIdentity[] = [];
   let current = resolvedTarget;
 
   for (const component of components) {
     current = path.join(current, component);
     try {
       const stat = await fs.lstat(current);
-      if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+      if (stat.isSymbolicLink() || !stat.isDirectory()) return undefined;
+      identities.push({ absolutePath: current, dev: stat.dev, ino: stat.ino });
+    } catch (error) {
+      if (isSkippableEvidenceError(error)) return undefined;
+      throw error;
+    }
+  }
+  return identities;
+}
+
+async function evidenceDirectoryIdentitiesMatch(identities: EvidenceDirectoryIdentity[]): Promise<boolean> {
+  for (const identity of identities) {
+    try {
+      const stat = await fs.lstat(identity.absolutePath);
+      if (
+        stat.isSymbolicLink()
+        || !stat.isDirectory()
+        || stat.dev !== identity.dev
+        || stat.ino !== identity.ino
+      ) return false;
     } catch (error) {
       if (isSkippableEvidenceError(error)) return false;
       throw error;
@@ -136,16 +164,23 @@ async function readBoundedEvidenceDirectoryEntries(
   state: EvidenceCollectionState,
 ): Promise<Dirent[]> {
   const absoluteDir = relativeDir === "." ? targetDir : resolveTargetPath(targetDir, relativeDir);
+  const identities = await snapshotEvidenceDirectoryIdentities(targetDir, relativeDir);
+  if (identities === undefined) return [];
   const entries: Dirent[] = [];
   try {
     const directory = await fs.opendir(absoluteDir);
-    for await (const entry of directory) {
-      if (entries.length >= MAX_EVIDENCE_ENTRIES_PER_DIR || state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED) {
-        state.truncated = true;
-        break;
+    try {
+      if (!await evidenceDirectoryIdentitiesMatch(identities)) return [];
+      for await (const entry of directory) {
+        if (entries.length >= MAX_EVIDENCE_ENTRIES_PER_DIR || state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED) {
+          state.truncated = true;
+          break;
+        }
+        state.entriesVisited += 1;
+        entries.push(entry);
       }
-      state.entriesVisited += 1;
-      entries.push(entry);
+    } finally {
+      await directory.close().catch(() => undefined);
     }
   } catch (error) {
     if (isSkippableEvidenceError(error)) return [];
@@ -181,13 +216,23 @@ function addEvidenceCandidate(state: EvidenceCollectionState, relativePath: stri
   }
 }
 
-async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Promise<EvidenceReadResult | undefined> {
+async function readEvidenceSnippet(
+  targetDir: string,
+  relativePath: string,
+  maxBytes: number,
+): Promise<EvidenceReadResult | undefined> {
   if (maxBytes <= 0) return { text: "", bytesRead: 0, truncated: true };
+  const identities = await snapshotEvidenceDirectoryIdentities(targetDir, path.posix.dirname(relativePath));
+  if (identities === undefined) return undefined;
+  const absolutePath = resolveTargetPath(targetDir, relativePath);
   let handle;
   try {
+    const checked = await fs.lstat(absolutePath);
+    if (checked.isSymbolicLink() || !checked.isFile()) return undefined;
     handle = await fs.open(absolutePath, constants.O_RDONLY | constants.O_NOFOLLOW);
     const stat = await handle.stat();
-    if (!stat.isFile()) return undefined;
+    if (!stat.isFile() || stat.dev !== checked.dev || stat.ino !== checked.ino) return undefined;
+    if (!await evidenceDirectoryIdentitiesMatch(identities)) return undefined;
     if (stat.size <= maxBytes) {
       const buffer = Buffer.alloc(maxBytes);
       const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);

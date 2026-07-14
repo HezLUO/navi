@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   NAVI_AGENTS_BLOCK_END,
   NAVI_AGENTS_BLOCK_START,
@@ -266,6 +266,50 @@ describe("navi init confirmed Map planning", () => {
       previousContent: invalid,
       content: candidateText,
     });
+  });
+
+  it("refuses repair when .navi changes after safe invalid-Map inspection without reading external bytes", async () => {
+    const project = await createProject();
+    const invalid = confirmedMap().replace("map_status: confirmed", "map_status: draft");
+    const mapPath = await writeCanonicalMap(project, invalid);
+    const candidate = await writeCandidate(project);
+    const mapDirectory = path.dirname(mapPath);
+    const movedDirectory = path.join(project, "checked-navi");
+    const externalDirectory = path.join(path.dirname(project), "external-repair-navi");
+    const externalMap = path.join(externalDirectory, "project-map.md");
+    const externalText = confirmedMap(" external");
+    await fs.mkdir(externalDirectory);
+    await fs.writeFile(externalMap, externalText);
+    const canonicalProject = await fs.realpath(project);
+
+    const originalLstat = fs.lstat.bind(fs);
+    let substituted = false;
+    const lstat = vi.spyOn(fs, "lstat").mockImplementation(async (...args: Parameters<typeof fs.lstat>) => {
+      if (!substituted && path.resolve(String(args[0])) === path.join(canonicalProject, "AGENTS.md")) {
+        substituted = true;
+        await fs.rename(mapDirectory, movedDirectory);
+        await fs.symlink(externalDirectory, mapDirectory);
+      }
+      return originalLstat(...args);
+    });
+    const externalReads: string[] = [];
+    const originalReadFile = fs.readFile.bind(fs);
+    const readFile = vi.spyOn(fs, "readFile").mockImplementation(async (...args: Parameters<typeof fs.readFile>) => {
+      externalReads.push(await fs.realpath(String(args[0])));
+      return originalReadFile(...args);
+    });
+
+    try {
+      const plan = await buildInitPlan({ targetDir: project, mapFile: candidate });
+      expect(plan).toMatchObject({ state: "blocked", actions: [] });
+      expect(plan.diagnostic).toMatch(/Map.*changed|unsafe/i);
+      expect(externalReads).not.toContain(externalMap);
+    } finally {
+      lstat.mockRestore();
+      readFile.mockRestore();
+    }
+    await expect(fs.readFile(path.join(movedDirectory, "project-map.md"), "utf8")).resolves.toBe(invalid);
+    await expect(fs.readFile(externalMap, "utf8")).resolves.toBe(externalText);
   });
 
   it.each([

@@ -1,4 +1,4 @@
-import { constants } from "node:fs";
+import { constants, type Stats } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -31,7 +31,8 @@ export type ProjectMapFileState =
   | { kind: "missing"; mapPath: string }
   | { kind: "valid"; mapPath: string; document: ProjectMapDocument }
   | { kind: "unsupported"; mapPath: string; version: number; diagnostic: string }
-  | { kind: "invalid"; mapPath: string; diagnostic: string; recognizedVersion?: 1 }
+  | { kind: "invalid"; mapPath: string; diagnostic: string; recognizedVersion: 1; safelyReadText: string }
+  | { kind: "invalid"; mapPath: string; diagnostic: string; recognizedVersion?: undefined }
   | { kind: "unsafe"; mapPath: string; diagnostic: string };
 
 const REQUIRED_FRONTMATTER_KEYS = [
@@ -163,7 +164,11 @@ export async function inspectProjectMapFile(projectDir: string): Promise<Project
   try {
     stats = await fs.lstat(mapPath);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { kind: "missing", mapPath };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return await hasSameDirectoryIdentity(mapDirectory, directoryStats)
+        ? { kind: "missing", mapPath }
+        : { kind: "unsafe", mapPath, diagnostic: "Project Map directory changed during missing-file inspection." };
+    }
     return { kind: "unsafe", mapPath, diagnostic: "Project Map path could not be inspected safely." };
   }
 
@@ -183,13 +188,7 @@ export async function inspectProjectMapFile(projectDir: string): Promise<Project
 
   let text: string;
   try {
-    const reopenedDirectoryStats = await fs.lstat(mapDirectory);
-    if (
-      reopenedDirectoryStats.isSymbolicLink()
-      || !reopenedDirectoryStats.isDirectory()
-      || reopenedDirectoryStats.dev !== directoryStats.dev
-      || reopenedDirectoryStats.ino !== directoryStats.ino
-    ) {
+    if (!await hasSameDirectoryIdentity(mapDirectory, directoryStats)) {
       return { kind: "unsafe", mapPath, diagnostic: "Project Map directory changed between inspection and opening." };
     }
     const openedStats = await handle.stat();
@@ -216,10 +215,19 @@ export async function inspectProjectMapFile(projectDir: string): Promise<Project
       diagnostic: result.diagnostic,
     };
   }
-  return {
-    kind: "invalid",
-    mapPath,
-    diagnostic: result.diagnostic,
-    ...(result.recognizedVersion === 1 ? { recognizedVersion: 1 as const } : {}),
-  };
+  return result.recognizedVersion === 1
+    ? { kind: "invalid", mapPath, diagnostic: result.diagnostic, recognizedVersion: 1, safelyReadText: text }
+    : { kind: "invalid", mapPath, diagnostic: result.diagnostic };
+}
+
+async function hasSameDirectoryIdentity(directoryPath: string, expected: Stats): Promise<boolean> {
+  try {
+    const current = await fs.lstat(directoryPath);
+    return current.isDirectory()
+      && !current.isSymbolicLink()
+      && current.dev === expected.dev
+      && current.ino === expected.ino;
+  } catch {
+    return false;
+  }
 }

@@ -200,6 +200,70 @@ describe("bounded Navi project evidence inspection", () => {
     },
   );
 
+  it("revalidates directory identities after opendir before traversing evidence", async () => {
+    const root = await projectRoot();
+    const mapDirectory = path.join(root, "docs", "along", "project-maps");
+    const movedDirectory = path.join(root, "docs", "along", "checked-project-maps");
+    const externalDirectory = `${root}-external-opendir`;
+    roots.push(externalDirectory);
+    await fs.mkdir(mapDirectory, { recursive: true });
+    await fs.mkdir(externalDirectory);
+    for (let index = 0; index < 170; index += 1) {
+      await fs.writeFile(
+        path.join(externalDirectory, `README-${String(index).padStart(3, "0")}.md`),
+        `# Escaped through opendir ${index}\n`,
+      );
+    }
+
+    const originalOpendir = fs.opendir.bind(fs);
+    let substituted = false;
+    vi.spyOn(fs, "opendir").mockImplementation(async (...args: Parameters<typeof fs.opendir>) => {
+      if (!substituted && path.resolve(String(args[0])) === mapDirectory) {
+        substituted = true;
+        await fs.rename(mapDirectory, movedDirectory);
+        await fs.symlink(externalDirectory, mapDirectory);
+      }
+      return originalOpendir(...args);
+    });
+
+    const result = await inspectProjectEvidence(root);
+
+    expect(result).toEqual({ items: [], truncated: false });
+    expect(result.items.some((item) => item.text.includes("Escaped through opendir"))).toBe(false);
+  });
+
+  it("binds candidate parent and file identities before reading evidence", async () => {
+    const root = await projectRoot();
+    const workflowDirectory = path.join(root, "workflow");
+    const movedDirectory = path.join(root, "checked-workflow");
+    const candidatePath = path.join(workflowDirectory, "plan.md");
+    const externalDirectory = `${root}-external-open`;
+    const externalCandidate = path.join(externalDirectory, "plan.md");
+    roots.push(externalDirectory);
+    await fs.mkdir(workflowDirectory);
+    await fs.mkdir(externalDirectory);
+    await fs.writeFile(candidatePath, "# Local plan\n");
+    await fs.writeFile(externalCandidate, "# Escaped through open\n");
+
+    const originalOpen = fs.open.bind(fs);
+    let substituted = false;
+    vi.spyOn(fs, "open").mockImplementation(async (...args: Parameters<typeof fs.open>) => {
+      if (!substituted && path.resolve(String(args[0])) === candidatePath) {
+        substituted = true;
+        await fs.rename(workflowDirectory, movedDirectory);
+        await fs.symlink(externalDirectory, workflowDirectory);
+      }
+      return originalOpen(...args);
+    });
+
+    const result = await inspectProjectEvidence(root);
+
+    expect(result.items.map((item) => item.text)).not.toContain("# Escaped through open\n");
+    expect(result.items.map((item) => item.relativePath)).not.toContain("workflow/plan.md");
+    await expect(fs.readFile(path.join(movedDirectory, "plan.md"), "utf8")).resolves.toBe("# Local plan\n");
+    await expect(fs.readFile(externalCandidate, "utf8")).resolves.toBe("# Escaped through open\n");
+  });
+
   it("strips the generated Navi block but keeps project-owned AGENTS evidence", async () => {
     const root = await projectRoot();
     await fs.writeFile(path.join(root, "AGENTS.md"), `${renderAgentsBlock()}\n\n# User evidence\nKeep this project fact.\n`);

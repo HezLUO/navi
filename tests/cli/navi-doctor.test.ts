@@ -180,24 +180,15 @@ describe("Navi doctor", () => {
     const legacyReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ kind: "legacy", legacy, raw: "legacy" }) });
     const conflictReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ ...current(f.source), kind: "conflict", legacy }) });
     for (const output of [legacyReport, conflictReport].map((report) => report.checks.find((check) => check.id === "plugin")?.repair ?? "")) {
-      const migrationActions = [
-        "navi@navi-source",
-        "form and confirm a Project Map candidate",
-        "navi init --map-file <candidate>",
-        "capture the Plan fingerprint",
-        "navi init --expect-plan <fingerprint> --write",
-        "validate the target project",
-        "along-working-thread@personal",
-        "navi doctor",
-        "navi setup",
-      ];
-      let priorIndex = -1;
-      for (const action of migrationActions) {
-        const index = output.indexOf(action);
-        expect(index).toBeGreaterThan(priorIndex);
-        priorIndex = index;
-      }
+      expect(output).toMatch(
+        /Existing confirmed Map branch:[\s\S]*preview with navi init,[\s\S]*capture the Plan fingerprint,[\s\S]*apply with navi init --expect-plan <fingerprint> --write/i,
+      );
+      expect(output).toMatch(
+        /Missing confirmed Map branch:[\s\S]*form and confirm a Project Map candidate,[\s\S]*preview with navi init --map-file <candidate>,[\s\S]*capture the Plan fingerprint,[\s\S]*apply with navi init --map-file <candidate> --expect-plan <fingerprint> --write/i,
+      );
       expect(output).not.toMatch(/navi init --write(?:[\s.,]|$)/);
+      expect(output).not.toMatch(/navi init --map-file <candidate>[\s\S]*apply with navi init --expect-plan <fingerprint> --write/i);
+      expect(output).toMatch(/validate the target project[\s\S]*along-working-thread@personal[\s\S]*navi doctor[\s\S]*navi setup/i);
     }
     expect(conflictReport.checks.find((check) => check.id === "plugin")?.status).toBe("fail");
   });

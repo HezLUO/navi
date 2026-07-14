@@ -233,7 +233,15 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
   }
 
   if (mapState.kind === "invalid" && candidate !== undefined) {
-    const previousContent = await readRequiredText(mapState.mapPath);
+    const recheckedMapState = await inspectProjectMapFile(targetDir);
+    if (
+      recheckedMapState.kind !== "invalid"
+      || recheckedMapState.recognizedVersion !== 1
+      || recheckedMapState.safelyReadText !== mapState.safelyReadText
+    ) {
+      return blockedPlan(base, "Existing Project Map changed or became unsafe during repair planning.");
+    }
+    const previousContent = mapState.safelyReadText;
     return actionablePlan(
       base,
       [mapModifyAction(mapState.mapPath, candidate.text, previousContent), agentsAction],
@@ -352,10 +360,6 @@ async function inspectConfirmedMapCandidate(targetDir: string, mapFile: string):
   } finally {
     await handle?.close().catch(() => undefined);
   }
-}
-
-async function readRequiredText(filePath: string): Promise<string> {
-  return fs.readFile(filePath, "utf8");
 }
 
 export async function applyInitPlan(

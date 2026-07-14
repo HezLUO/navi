@@ -219,6 +219,35 @@ No body anchors.
     await expect(fs.readFile(externalMap, "utf8")).resolves.toBe(externalText);
   });
 
+  it("returns unsafe when .navi is replaced by an external symlink with no Map before final inspection", async () => {
+    const root = await temporaryRoot();
+    const mapDirectory = path.join(root, ".navi");
+    const movedDirectory = path.join(root, "checked-empty-navi");
+    const externalDirectory = `${root}-external-empty`;
+    roots.push(externalDirectory);
+    await fs.mkdir(mapDirectory);
+    await fs.mkdir(externalDirectory);
+
+    const originalLstat = fs.lstat;
+    const lstat = vi.spyOn(fs, "lstat").mockImplementationOnce(async (candidate) => {
+      const stats = await originalLstat(candidate);
+      await fs.rename(mapDirectory, movedDirectory);
+      await fs.symlink(externalDirectory, mapDirectory);
+      return stats;
+    });
+
+    try {
+      await expect(inspectProjectMapFile(root)).resolves.toMatchObject({
+        kind: "unsafe",
+        mapPath: path.join(root, NAVI_PROJECT_MAP_RELATIVE_PATH),
+      });
+    } finally {
+      lstat.mockRestore();
+    }
+    expect((await fs.lstat(mapDirectory)).isSymbolicLink()).toBe(true);
+    await expect(fs.readdir(externalDirectory)).resolves.toEqual([]);
+  });
+
   it("does not follow a symlink substituted after lstat", async () => {
     const root = await temporaryRoot();
     const originalText = map(["A", "B", "C", "D", "E", "F"]);
@@ -261,7 +290,12 @@ No body anchors.
     const text = map(["A", "B", "C", "D", "E", "F"]).replace("map_status: confirmed", "map_status: draft");
     const mapPath = await writeProjectMap(root, text);
 
-    await expect(inspectProjectMapFile(root)).resolves.toMatchObject({ kind: "invalid", mapPath, recognizedVersion: 1 });
+    await expect(inspectProjectMapFile(root)).resolves.toMatchObject({
+      kind: "invalid",
+      mapPath,
+      recognizedVersion: 1,
+      safelyReadText: text,
+    });
     await expect(fs.readFile(mapPath, "utf8")).resolves.toBe(text);
   });
 
