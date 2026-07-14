@@ -1250,7 +1250,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       "`navi init`",
       "source package verification",
       "npm run verify:plugin-package",
-      "navi init --write",
+      "navi init --expect-plan <fingerprint> --write",
       "Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.",
       "Along is the parent/lab context and broader long-term product family.",
       "should be understandable without knowing Along",
@@ -1331,7 +1331,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
         "navi setup",
         "navi setup --write",
         "navi init",
-        "navi init --write",
+        "navi init --expect-plan <fingerprint> --write",
       ]) {
         expect(readme).toContain(expected);
       }
@@ -1398,6 +1398,32 @@ describe("Along Working Thread repo-contained plugin package", () => {
       ]) {
         expect(document.toLowerCase()).not.toContain(forbidden.toLowerCase());
       }
+    }
+  });
+
+  it("documents only fingerprint-bound actionable init writes in active READMEs", async () => {
+    const activeReadmes = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const readme of activeReadmes) {
+      expect(readme).not.toMatch(/\bnavi init --write(?=[`.;,\s]|$)/u);
+
+      expect(readme).toContain("Existing confirmed Map trigger path");
+      expect(readme).toMatch(/^navi init$/mu);
+      expect(readme).toMatch(/^navi init --expect-plan <fingerprint> --write$/mu);
+
+      expect(readme).toContain("Fresh confirmed Map candidate path");
+      expect(readme).toContain("Codex-guided candidate flow");
+      expect(readme).toContain("advanced/internal integration detail");
+      expect(readme).toMatch(
+        /^navi init --map-file <confirmed-map-candidate>$/mu,
+      );
+      expect(readme).toMatch(
+        /^navi init --map-file <confirmed-map-candidate> --expect-plan <fingerprint> --write$/mu,
+      );
     }
   });
 
@@ -1489,7 +1515,7 @@ describe("Along Working Thread repo-contained plugin package", () => {
       const migrationActions = [
         "navi@navi-source",
         "navi init",
-        "navi init --write",
+        "navi init --expect-plan <fingerprint> --write",
         targetValidation,
         "legacy selector",
         "navi doctor",

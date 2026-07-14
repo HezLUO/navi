@@ -43,9 +43,27 @@ Journey contract：global setup once -> guided confirmed baseline -> one trigger
 
 `navi setup` 只配置全局 discovery，不会初始化目标项目。在未配置项目中的第一次 broad supervision request，Navi 会先判断 Desired Outcome、Route To Outcome、Current Position，以及 Next Decision 或 Current Boundary 是否可确认。如果还不够，就一次只问一个 focused question，并且不写文件。形成 guided confirmed baseline 后，Navi 会一次预览 confirmed Map 和 managed `AGENTS.md` trigger。一次批准只覆盖这次 bounded project write：先写 Map，最后写 trigger。`navi init` 不会重新安装 plugin。
 
+Existing confirmed Map trigger path（已有 valid confirmed Map，但缺少 trigger 或使用 recognized legacy trigger）：
+
+```text
+navi init
+navi init --expect-plan <fingerprint> --write
+```
+
+第一条命令会预览精确的 trigger action 并输出 plan fingerprint。只有该预览获批后，才运行第二条命令。
+
+Fresh confirmed Map candidate path（advanced/internal integration detail）：
+
+```text
+navi init --map-file <confirmed-map-candidate>
+navi init --map-file <confirmed-map-candidate> --expect-plan <fingerprint> --write
+```
+
+这是 Codex-guided candidate flow：Codex 先帮助用户形成并确认 baseline，再由 adapter 把 confirmed candidate 传给 preview 和获批的 write。它不是让用户手工形成 baseline 的命令行流程。
+
 ### Legacy migration 和 removal
 
-如果 `navi doctor` 报告 legacy-only installation 或 dual-install conflict，不要自动删除或迁移 plugin。两种诊断都使用同一顺序：安装并启用 `navi@navi-source`；用 `navi init` 预览精确的项目 trigger 升级；获得批准后运行 `navi init --write`；验证目标项目；显式删除 doctor 报告的精确 `legacy selector`；最后重新运行 `navi doctor` 和 `navi setup`。
+如果 `navi doctor` 报告 legacy-only installation 或 dual-install conflict，不要自动删除或迁移 plugin。两种诊断都使用同一顺序：安装并启用 `navi@navi-source`；用 `navi init` 预览精确的项目 trigger 升级并记录 fingerprint；获得批准后运行 `navi init --expect-plan <fingerprint> --write`；验证目标项目；显式删除 doctor 报告的精确 `legacy selector`；最后重新运行 `navi doctor` 和 `navi setup`。
 
 如需自行移除这个 source-alpha setup：
 
@@ -174,14 +192,7 @@ npm run typecheck
 
 如果要做本地 Codex plugin experimentation，请使用上面的 source marketplace commands 中的 `plugins/navi`。
 
-这个 alpha 包含一个 narrow project-local initializer：
-
-```bash
-navi init
-navi init --write
-```
-
-如果还没有 confirmed Map，直接运行 `navi init` 会说明需要先在 Codex 中形成 baseline，并且不会修改文件。Guided confirmation flow 提供已批准的 Map 后，init 会预览精确的 Map-and-trigger action，并把批准的 write 绑定到该 plan。它只为一个目标项目准备 Navi 行为；不会安装或同步全局 Codex plugin 或 skill。
+这个 alpha 包含一个 narrow project-local initializer。如果还没有 confirmed Map，直接运行 `navi init` 会说明需要先在 Codex 中形成 baseline，并且不会修改文件。Guided confirmation flow 提供已批准的 Map 后，init 会预览精确的 Map-and-trigger action，并把批准的 write 绑定到该 plan fingerprint。它只为一个目标项目准备 Navi 行为；不会安装或同步全局 Codex plugin 或 skill。请使用上面两个带上下文的 command path，不要把 write flag 当成独立初始化命令。
 
 ## 我们希望收到的 Alpha 反馈
 

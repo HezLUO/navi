@@ -43,9 +43,27 @@ Journey contract: global setup once -> guided confirmed baseline -> one trigger 
 
 `navi setup` configures global discovery only: it does not initialize a target project. On the first broad supervision request in an unconfigured project, Navi checks whether Desired Outcome, Route To Outcome, Current Position, and Next Decision or Current Boundary are confirmable. If not, it asks one focused question at a time without writing. Once the guided confirmed baseline is ready, Navi shows one exact preview for the confirmed Map and managed `AGENTS.md` trigger. One approval covers that bounded project write: the Map is written first and the trigger last. `navi init` does not reinstall the plugin.
 
+Existing confirmed Map trigger path (valid confirmed Map with a missing or recognized legacy trigger):
+
+```text
+navi init
+navi init --expect-plan <fingerprint> --write
+```
+
+The first command previews the exact trigger action and prints its plan fingerprint. Run the second command only after that preview is approved.
+
+Fresh confirmed Map candidate path (advanced/internal integration detail):
+
+```text
+navi init --map-file <confirmed-map-candidate>
+navi init --map-file <confirmed-map-candidate> --expect-plan <fingerprint> --write
+```
+
+This is a Codex-guided candidate flow: Codex first helps the user form and confirm the baseline, then the adapter passes the confirmed candidate into the preview and approved write. It is not a manual baseline-formation workflow.
+
 ### Legacy migration and removal
 
-If `navi doctor` reports a legacy-only installation or a dual-install conflict, do not remove or migrate a plugin automatically. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init`; after approval run `navi init --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`.
+If `navi doctor` reports a legacy-only installation or a dual-install conflict, do not remove or migrate a plugin automatically. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init` and capture its fingerprint; after approval run `navi init --expect-plan <fingerprint> --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`.
 
 To remove this source-alpha setup yourself:
 
@@ -182,14 +200,7 @@ npm run typecheck
 
 For local Codex plugin experimentation, use `plugins/navi` through the source marketplace commands above.
 
-This alpha includes a narrow project-local initializer:
-
-```bash
-navi init
-navi init --write
-```
-
-With no confirmed Map, direct `navi init` reports that the baseline must be formed in Codex and makes no changes. After the guided confirmation flow supplies the approved Map, init previews the exact Map-and-trigger action and binds the approved write to that plan. It prepares one target project for Navi behavior; it does not install or sync the global Codex plugin or skill.
+This alpha includes a narrow project-local initializer. With no confirmed Map, direct `navi init` reports that the baseline must be formed in Codex and makes no changes. After the guided confirmation flow supplies the approved Map, init previews the exact Map-and-trigger action and binds the approved write to that plan fingerprint. It prepares one target project for Navi behavior; it does not install or sync the global Codex plugin or skill. Use the two contextual command paths above rather than treating a write flag as a standalone initialization command.
 
 ## Alpha Feedback We Want
 

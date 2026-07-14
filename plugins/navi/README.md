@@ -144,11 +144,27 @@ npm link
 navi doctor
 navi setup
 navi setup --write
-navi init
-navi init --write
 ```
 
 These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision. `navi setup` configures global discovery and does not initialize a target project. Direct `navi init` with no confirmed Map reports the missing baseline and makes no changes. After confirmation, init previews the exact Map-and-trigger action; its write requires the approved plan fingerprint. It does not reinstall the plugin.
+
+Existing confirmed Map trigger path (valid confirmed Map with a missing or recognized legacy trigger):
+
+```text
+navi init
+navi init --expect-plan <fingerprint> --write
+```
+
+The first command previews the exact trigger action and prints its plan fingerprint. Run the second command only after that preview is approved.
+
+Fresh confirmed Map candidate path (advanced/internal integration detail):
+
+```text
+navi init --map-file <confirmed-map-candidate>
+navi init --map-file <confirmed-map-candidate> --expect-plan <fingerprint> --write
+```
+
+This is a Codex-guided candidate flow: Codex first helps the user form and confirm the baseline, then the adapter passes the confirmed candidate into the preview and approved write. It is not a manual baseline-formation workflow.
 
 ### Setup transaction safety
 
@@ -158,7 +174,7 @@ The bootstrap block is an always-visible routing layer, not full Navi behavior. 
 
 ### Legacy migration and removal
 
-`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init`; after approval run `navi init --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`. Do not assume a legacy marketplace selector.
+`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init` and capture its fingerprint; after approval run `navi init --expect-plan <fingerprint> --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`. Do not assume a legacy marketplace selector.
 
 To remove this source-alpha setup yourself:
 
