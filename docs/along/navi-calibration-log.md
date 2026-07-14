@@ -1,9 +1,67 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-03
+Last updated: 2026-07-14
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-14 - No-Action Lane Wait Still Triggered A Continue Reflex
+
+Target project: Navi
+Mode: calibration / implementation-lane supervision
+
+Prompt shape:
+
+The Lane Handoff implementation worktree delivered a real `decision-required`
+event because its clean isolated checkout lacked `node_modules`. The source main
+task presented the exact `npm ci` permission gate, received approval, and sent
+the decision directly back to the worktree. The main task then said that no
+user relay or `continue` input was required. The user nevertheless had to type
+`继续` and identified it as meaningless continuation friction.
+
+Observed behavior:
+
+- Task-to-task delivery and the bounded decision reply worked; the user did not
+  have to copy the permission decision back to the worktree.
+- The worktree resumed, installed lockfile dependencies without tracked-file
+  drift, and continued into Task 1.
+- The main response still ended like an ordinary conversational stop. Its text
+  said that no action was needed, but the interaction did not yet make future
+  event-driven resumption feel reliable.
+- The main task had also made an overly broad Priority Gate judgment: because
+  Lane Handoff implementation planning was not ready for another concurrent
+  implementation lane, it concluded that no useful main-session work existed.
+  A read-only Historical Along boundary inventory was both high-priority and
+  non-conflicting.
+
+Calibration judgment:
+
+This `continue` carried no user decision. The user behavior is understandable
+and product-induced rather than an error: prior task flows trained the user to
+keep the main conversation moving manually, while pre-integration Lane Handoff
+has not yet established trustworthy wake-up behavior.
+
+The correct product response is not polling, keeping an assistant turn open,
+or starting low-value work merely to stay busy. Navi should distinguish:
+
+- a legitimate no-action external wait that will resume from a delivered
+  transition;
+- useful high-priority non-conflicting design or supervision that can continue;
+  and
+- low-priority work that should remain deferred even though it is technically
+  available.
+
+Product follow-up:
+
+- Treat post-integration event-driven wake-up as part of Lane Handoff
+  calibration, not merely successful event formatting.
+- Do not ask the user to keep a source task alive with `continue` while waiting
+  for a lane transition.
+- Apply the Priority Gate to plausible non-conflicting work rather than using
+  one deferred implementation lane to infer whole-session waiting.
+- When no useful lane exists, say that no user action is required and let the
+  next delivered event resume the source task; do not replace the wait with
+  polling or filler work.
 
 ## 2026-07-03 - Alpha.6 Fresh-Session Stage / Vision Distance Check
 
