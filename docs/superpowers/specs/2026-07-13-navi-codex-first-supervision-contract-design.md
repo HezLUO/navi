@@ -39,8 +39,7 @@ The existing `src/core/working-thread-contract.ts` describes Along Working Threa
 
 Working Thread may provide evidence to Navi through the same evidence boundary as:
 
-- a Project Map or Rhythm Map;
-- `.navi/state.md` Project State;
+- the unified confirmed `.navi/project-map.md`;
 - an approved design or implementation plan;
 - Git and filesystem observations;
 - a Codex task or worktree status; and
@@ -226,9 +225,9 @@ Insufficient or conflicting evidence cannot produce a confident stable map. Code
 
 Implementation success, tests passing, package verification, and agent self-assessment are evidence, not product proof.
 
-### Stale State Must Be Challenged
+### Stale Map Must Be Challenged
 
-New repository or project facts may challenge a confirmed but stale Project State or Project Map. The contract exposes the conflict and preserves the user's authority to confirm an update; it does not silently let either source dominate.
+New repository or project facts may challenge a confirmed but stale Project Map. The contract exposes the conflict and preserves the user's authority to confirm an update; it does not silently rewrite the Map.
 
 ### Blocked Means Formally Blocked
 
@@ -264,7 +263,7 @@ The current adapter may rely on real Codex capabilities:
 
 - project and global `AGENTS.md` instructions;
 - Navi skill/plugin discovery;
-- project-local Project Maps and Project State;
+- the project-local confirmed Project Map;
 - Git and filesystem tools;
 - worktree tasks;
 - task messaging;
@@ -304,9 +303,9 @@ The skill/plugin remains the current product delivery surface. It should eventua
 
 `navi init` remains project configuration, not a second Navi installation. Generated guidance should stay concise and should not embed the full contract schema.
 
-### Project State
+### Confirmed Project Map
 
-`.navi/state.md` remains an optional confirmed evidence snapshot. It is not the contract's database, and it cannot become authoritative merely because it exists.
+`.navi/project-map.md` is the unified confirmed navigation input. It carries the stable route or rhythm together with Current Position, Current Boundary, Next Decision, lifecycle, and evidence uncertainty. The contract treats other project records and live observations as evidence that may challenge the Map; it does not create a separate current-state record.
 
 ### Working Thread And MCP
 
@@ -327,7 +326,7 @@ Required fixture classes include:
 - an approved bounded loop continues without meaningless pauses;
 - scoped local commit authorization does not become a blanket commit rule;
 - unapproved push or release escalation requests a user decision;
-- fresh Git evidence challenges stale Project State;
+- fresh Git evidence challenges a stale confirmed Project Map;
 - lane-local blocker is deferred during non-conflicting design;
 - premise-changing blocker becomes a real decision;
 - unavailable task messaging uses an explicit fallback;

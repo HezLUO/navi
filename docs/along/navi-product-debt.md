@@ -1,6 +1,6 @@
 # Navi Product Debt Register
 
-Last updated: 2026-07-03
+Last updated: 2026-07-14
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
@@ -77,18 +77,22 @@ Recommended fix:
 
 ### 3. Installation And Initialization Debt
 
-Status: source-alpha addressed; public distribution open
+Status: confirmed-Map initialization addressed; calibration and public distribution open
 Priority: high before broader real-use validation
 
 Problem:
 
-Fresh-session calibration showed that global skill auto-routing can be inconsistent. The reliable V1 path is:
+Fresh-session calibration showed that global skill auto-routing can be inconsistent. The implemented V1 journey is:
 
 ```text
-global skill + project-local trigger source + project-local Project Map
+global setup once
+-> guided confirmed baseline
+-> one combined .navi/project-map.md + AGENTS.md trigger preview
+-> one fingerprint-bound approved write
+-> fresh-session natural-language supervision
 ```
 
-Source-alpha bootstrap is implemented through explicit user-run marketplace setup (`navi-source` and `navi@navi-source`), `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Legacy migration is explicit: doctor diagnoses legacy-only and dual-install states, while the user installs or removes global plugins. Public distribution remains open: npm publication, public marketplace, stable installer, PATH management, and one-click sync are still separate work.
+Source-alpha bootstrap is implemented through explicit user-run marketplace setup (`navi-source` and `navi@navi-source`), `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Project initialization now requires a guided user-confirmed baseline, writes the canonical `.navi/project-map.md` before the managed trigger, and binds approval to the exact preview fingerprint. Legacy migration remains explicit: doctor diagnoses legacy-only and dual-install states, while the user installs or removes global plugins. Public distribution remains open: npm publication, public marketplace, stable installer, PATH management, and one-click sync are still separate work.
 
 Why it matters:
 
@@ -96,8 +100,8 @@ If a user installs the plugin and expects ordinary questions like `接下来我�
 
 Recommended fix:
 
-- Keep `navi init` narrow: project-local preview by default, `--write` for durable changes, no global plugin install.
-- Add clearer "Install Navi into this project" docs around the command.
+- Calibrate guided baseline formation and the combined preview in real fresh sessions.
+- Keep `navi init` narrow: project-local preview by default, fingerprint-bound `--write` for the approved durable change, no global plugin install.
 - Treat global plugin installation, one-click sync, npm release, and marketplace release as separate distribution projects.
 
 ### 4. Architecture Boundary Debt
@@ -171,7 +175,7 @@ Priority: low-medium
 
 Problem:
 
-Some external target projects used for validation may contain uncommitted Navi initialization files, such as project-local `AGENTS.md` and `docs/along/project-maps/` records.
+Some external target projects used for validation may contain uncommitted Navi initialization files, such as project-local `AGENTS.md` and `.navi/project-map.md` records.
 
 Why it matters:
 
@@ -249,7 +253,7 @@ Recommended fix:
 1. Make public naming Navi-first while preserving legacy ids.
 2. Update the root README product narrative.
 3. Clarify the current architecture boundary.
-4. Improve the project initialization guide.
+4. Calibrate the confirmed-Map initialization journey in fresh sessions.
 5. Keep Web UI future-surface work out of alpha release prep unless explicitly approved.
 6. Add a fresh-session validation log.
 7. Clean up or commit target-project Navi initialization files case by case.

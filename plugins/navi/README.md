@@ -28,7 +28,7 @@ Navi map responses should follow the user's current prompt language by default. 
 
 Navi progress bars should come from a stable **Project Map** rather than a one-off guess. The Project Map records the user's target project, stable target-project stage sequence, current stage, current-stage explanation, optional sub-progress, visible evidence, missing risk, next gate, user confirmation needed, and source.
 
-Project Map source priority is: the map the user just confirmed, the active Working Thread or project record, an approved plan or spec, the most recent unrejected Navi map, then a clearly marked provisional map.
+The canonical Project Map source priority is the user-confirmed `.navi/project-map.md`. Other project records, approved plans, and live observations are evidence that can confirm or challenge its current judgments; they are not alternate Map paths. When the confirmed Map is missing or unreliable, Navi may give an explicitly uncertain read-only judgment but must not represent it as a stored stable Map.
 
 Project-local handoff files, session logs, project state files, TODO files, trackers, and workflow records are valid project records when they live inside the target project directory. They should not be treated as forbidden source-thread history merely because they summarize prior work.
 
@@ -36,13 +36,13 @@ Project-local handoff files, session logs, project state files, TODO files, trac
 
 Do not rely only on global skill auto-routing for real use. A target project can add a short project-local Navi trigger source, usually in `AGENTS.md`, so fresh sessions discover that progress, next-step, continue, confusion, and plan-reliability questions should first receive a compact Navi map. This is a reliability layer because global skill auto-routing can be inconsistent.
 
-Use `docs/along/project-maps/navi-project-trigger-template.md` as the reusable starting point. Keep project-specific rhythm labels in the target project, and keep ordinary clear execution requests quiet when the next action, boundary, and acceptance point are already established. Read-only checks of TODO files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks; answer them directly unless the user also asks for overall progress, next steps, confusion, or plan-reliability judgment.
+Use `docs/navi/project-trigger-template.md` as the exact reusable managed block. Keep ordinary clear execution requests quiet when the next action, boundary, and acceptance point are already established. Read-only checks of TODO files, status files, tracker rows, spreadsheet rows, today's items, a known file, or a specific record are ordinary clear tasks; answer them directly unless the user also asks for overall progress, next steps, confusion, or plan-reliability judgment.
 
 ### Navi project initialization
 
-Use `docs/along/project-maps/navi-project-init.md` when installing Navi into a target project. The minimum reliable path is global skill + project-local trigger source + project-local Project Map or Rhythm Map. Initialization should inspect the target project, draft the trigger source and map, ask for confirmation before durable writes, then run fresh-session validation with an ordinary next-step prompt.
+Use `docs/navi/project-init.md` to configure one target project after global setup. Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision. The final preview covers both exact actions; one approval authorizes the bounded write, with the confirmed Map written first and the managed trigger last.
 
-When a reliable Project Map exists, Navi should render a compact horizontal progress strip and explain the current position in plain language. In the current chat-only version, "graphical" means a text-rendered single-line stage strip with a current-position marker, not a bitmap image or UI widget. If the map is unreliable, Navi must not draw a confident stable bar; it should inspect the source of truth or mark any provisional map as awaiting confirmation.
+When a reliable Project Map exists, Navi should render a compact horizontal progress strip and explain the current position in plain language. In the current chat-only version, "graphical" means a text-rendered single-line stage strip with a current-position marker, not a bitmap image or UI widget. If the Map is unreliable, Navi must not draw a confident stable bar; it should inspect the source of truth and state what needs confirmation.
 
 For flowing long-running projects, Navi should use a **Rhythm Map** instead of forcing a one-way overall progress bar. Flowing projects include internship-style project work, Hong Kong application-style project work, weekly refresh cycles, daily preparation loops, waiting for external feedback, parallel opportunities, and decision gates.
 
@@ -148,7 +148,7 @@ navi init
 navi init --write
 ```
 
-These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. `navi setup` configures global discovery and does not initialize a target project. `navi init` previews project-local Navi files for one target project; an agent may run `navi init --write` only after explicit user approval. It does not reinstall the plugin.
+These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision. `navi setup` configures global discovery and does not initialize a target project. Direct `navi init` with no confirmed Map reports the missing baseline and makes no changes. After confirmation, init previews the exact Map-and-trigger action; its write requires the approved plan fingerprint. It does not reinstall the plugin.
 
 ### Setup transaction safety
 
@@ -240,7 +240,7 @@ Stable bar note: The overall progress bar should describe the user's target proj
 
 Two-layer map note: For orientation prompts, show the overall map first. Current-stage internal progress is the second layer, and sub-progress must not be shown alone. Local-only progress questions may use the current-stage internal strip by itself when the user explicitly asks about a local task or when the stable overall map was just shown and has not changed.
 
-Graphical progress note: The map should use the stable Project Map source priority and render a compact horizontal progress strip when a reliable target-project stage sequence exists. The stage sequence should appear as a single-line stage strip when the chat surface can fit it; Codex should not split the overall stage sequence across multiple lines just because it is long. The current-position marker must be followed by a plain-language explanation of what that stage is doing. If the source is unreliable or inferred from logs, Codex should say it needs the project record, active plan, or user confirmation and must not draw a confident stable bar. A provisional map is acceptable only when clearly labeled as awaiting confirmation.
+Graphical progress note: The map should use the confirmed `.navi/project-map.md` and render a compact horizontal progress strip when a reliable target-project stage sequence exists. The stage sequence should appear as a single-line stage strip when the chat surface can fit it; Codex should not split the overall stage sequence across multiple lines just because it is long. The current-position marker must be followed by a plain-language explanation of what that stage is doing. If the source is unreliable or inferred from logs, Codex should say it needs the project record, active plan, or user confirmation and must not draw a confident stable bar.
 
 Rhythm Map note: For flowing long-running projects, fresh-session validation should check that Codex does not force a single overall completion path. In an internship-style project, `接下来我们应该做什么？` should produce a Rhythm Map that distinguishes weekly refresh, daily preparation, waiting for external feedback, and a decision gate. In a Hong Kong application-style project, the whole project should use a Rhythm Map, while a bounded form-filling subtask may use a linear subtask strip.
 

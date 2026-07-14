@@ -37,9 +37,11 @@ These are explicit user-run source-alpha operations. They mutate global Codex/pl
 
 Global setup uses a recoverable transaction directory and a cooperative same-user lock. It verifies approved bytes, publishes without replacing an existing target, and preserves detected third-party content for manual resolution. This is a cooperative-concurrency boundary, not a claim of adversarial same-user atomicity; do not delete a lock or force a conflicted setup.
 
-Setup once -> approve project init once -> use natural language
+Setup once -> approve project init once -> use natural language.
 
-`navi setup` configures global discovery only: it does not initialize a target project. In each target project, preview the project-local guidance with `navi init`, then an agent may run `navi init --write` only after explicit user approval. `navi init` does not reinstall the plugin.
+Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision.
+
+`navi setup` configures global discovery only: it does not initialize a target project. On the first broad supervision request in an unconfigured project, Navi checks whether Desired Outcome, Route To Outcome, Current Position, and Next Decision or Current Boundary are confirmable. If not, it asks one focused question at a time without writing. Once the guided confirmed baseline is ready, Navi shows one exact preview for the confirmed Map and managed `AGENTS.md` trigger. One approval covers that bounded project write: the Map is written first and the trigger last. `navi init` does not reinstall the plugin.
 
 ### Legacy migration and removal
 
@@ -57,10 +59,10 @@ npm unlink -g navi
 
 For more setup detail, follow:
 
-- `docs/along/project-maps/navi-project-init.md`
-- `docs/along/project-maps/navi-project-trigger-template.md`
+- `docs/navi/project-init.md`
+- `docs/navi/project-trigger-template.md`
 
-The minimum reliable setup is: global skill/plugin availability, a short project-local trigger source in `AGENTS.md`, and a confirmed Project Map or Rhythm Map for that target project. After that setup, ordinary questions like `What should we do next?`, `Where are we now? I do not understand.`, or an unclear `Continue.` should produce a Navi map before ordinary task advice. Chinese prompts such as `接下来我们应该做什么？` are supported too.
+The minimum reliable project configuration is a confirmed `.navi/project-map.md` and the short managed trigger in `AGENTS.md`. After that setup, ordinary questions like `What should we do next?`, `Where are we now? I do not understand.`, or an unclear `Continue.` should produce Navi supervision before ordinary task advice. Chinese prompts such as `接下来我们应该做什么？` are supported too.
 
 Navi maps should follow the user's current prompt language by default. If a target project's saved Project Map or Rhythm Map uses labels in another language, Navi should translate or bilingualize those labels in the current answer rather than returning a full map in the saved record's language.
 
@@ -86,7 +88,7 @@ What is stable in this alpha:
 - Coordination guidance for worktrees, review/merge timing, external waits, and non-conflicting main-session work.
 - Prompt-language following for Navi maps in multilingual target projects.
 - Working Thread continuity for project judgment that needs durable carry-forward.
-- Project-local Navi initialization through `navi init`, `AGENTS.md`, and `docs/along/project-maps/`.
+- Project-local Navi initialization through `navi init`, `AGENTS.md`, and `.navi/project-map.md`.
 - Codex skill/plugin behavior with project-local docs.
 - source package verification through `npm run verify:plugin-package`.
 
@@ -187,7 +189,7 @@ navi init
 navi init --write
 ```
 
-The initializer is dry-run by default and only writes with `--write`. It prepares the target project for Navi behavior; it does not install or sync the global Codex plugin or skill.
+With no confirmed Map, direct `navi init` reports that the baseline must be formed in Codex and makes no changes. After the guided confirmation flow supplies the approved Map, init previews the exact Map-and-trigger action and binds the approved write to that plan. It prepares one target project for Navi behavior; it does not install or sync the global Codex plugin or skill.
 
 ## Alpha Feedback We Want
 
@@ -204,14 +206,13 @@ The most useful alpha feedback is evidence from real or realistic target project
 For reliable Navi behavior in a target project, use:
 
 - a project-local trigger source in `AGENTS.md`;
-- a confirmed Project Map or Rhythm Map under `docs/along/project-maps/`;
+- the confirmed `.navi/project-map.md`;
 - the target project's source records, such as state files, TODO files, trackers, workflow records, and handoffs.
 
 Reusable setup docs:
 
-- `docs/along/project-maps/navi-project-init.md`
-- `docs/along/project-maps/navi-project-trigger-template.md`
-- `docs/along/project-maps/README.md`
+- `docs/navi/project-init.md`
+- `docs/navi/project-trigger-template.md`
 
 ## Architecture Boundary
 

@@ -1,7 +1,7 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: draft backlog after the `0.1.0-alpha` GitHub source release
-Last updated: 2026-07-03
+Last updated: 2026-07-14
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
@@ -60,14 +60,15 @@ Goal: learn whether Navi stays useful, self-initiating, companion-like, and non-
 
 Goal: make the current source alpha easier to inspect, install, and verify without overstating distribution readiness.
 
+- Resolved foundation: project initialization now uses a guided confirmed baseline, one combined `.navi/project-map.md` plus managed-trigger preview, and one fingerprint-bound approved write with Map-first/trigger-last ordering.
 - P0: Clarify the manual Codex plugin install path for users who already understand local Codex plugin or skill workflows.
 - P0: Add a short "verify this checkout" path that starts from a fresh clone and ends with `npm run verify:plugin-package`.
-- P0: Validate the narrow `navi init` project-local initializer with clean temporary target projects and at least one real target project.
+- P0: Calibrate the confirmed-Map init journey in fresh Codex sessions, especially guided baseline questions, declined initialization, partial activation diagnosis, and natural-language supervision after activation.
 - Repository split follow-through: `HezLUO/navi` is the canonical Navi alpha product repository; `HezLUO/along` remains the lightweight umbrella and long-term product vision repository.
 - P1: Add contributor basics: `CONTRIBUTING.md`, issue templates, PR template, and a short maintainer release checklist.
 - P1: Decide whether the repo should expose a public roadmap file from the root README.
 - P1: Improve installer ergonomics without broadening scope: clearer preview, conflict reporting, and source-record hints.
-- P1: Prepare a public Codex marketplace readiness checklist without treating marketplace publication as approved.
+- P1: Define what evidence would be required for later public distribution without preparing a release in this roadmap pass.
 - P2: Define version policy after `0.1.0-alpha`: alpha patches for documentation/packaging fixes, minor version bumps only for meaningful capability changes.
 - P2: Decide whether future release notes should separate product behavior, package shape, and validation evidence.
 
@@ -76,7 +77,7 @@ Goal: make the current source alpha easier to inspect, install, and verify witho
 Goal: keep larger product layers visible without letting them slip into the alpha maintenance scope.
 
 - MCP client validation: test the existing docs-backed stdio Minimal Server V1 from a real MCP client session, especially resource reads, action tools, and confirmed section-patch write-back.
-- Navi project initialization workflow: extend the shipped narrow `navi init` surface only after real-use feedback confirms the dry-run and write model.
+- Navi project initialization workflow: calibrate the shipped confirmed-Map journey before considering any extension to its guided confirmation, dry-run, fingerprinted write, or doctor surfaces.
 - Web UI / local app surface: treat the existing Shared Desk web code as historical Along product-expression work and a possible future Navi capability layer, not as part of the current alpha. A future branch should first define whether the interface is a Navi map review surface, an Along companion surface, or a separate local app.
 - Local companion runtime: evaluate whether Navi should ever gain watcher, scheduler, notification, or always-on presence behavior.
 - Agent adapters: investigate whether Hermes, Claude Code, or other agents can call the same Working Thread and Navi coordination behavior.

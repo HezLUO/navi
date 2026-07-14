@@ -1,5 +1,7 @@
 # Navi Project Trigger Template
 
+> **Superseded:** The active generated managed block is documented in [`docs/navi/project-trigger-template.md`](../../navi/project-trigger-template.md). This file is retained with its original body as historical Along-origin guidance.
+
 Paste this into the target project's `AGENTS.md` when Navi should be reliable in fresh sessions without depending only on global skill auto-routing.
 
 ````markdown

@@ -1,5 +1,9 @@
 # Navi Alpha 14 Confirmed Project State Design
 
+> **Superseded:** The [confirmed Project Map initialization journey](2026-07-13-navi-confirmed-project-map-init-journey-design.md) replaces the
+> public suggested-map flow and separate Project State direction. This file is
+> retained as historical design evidence.
+
 ## Status
 
 This design was revised and approved in conversation on 2026-07-10.

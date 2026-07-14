@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { renderAgentsBlock } from "../../src/cli/navi-init";
 
 async function readRepoText(relativePath: string): Promise<string> {
   return fs.readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
@@ -692,7 +693,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents alpha 13 global install versus project initialization boundary", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
-    const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
+    const initDoc = await readRepoText("docs/navi/project-init.md");
 
     for (const expected of [
       "Navi is installed globally once",
@@ -963,7 +964,7 @@ describe("Along Working Thread Codex skill", () => {
 
     for (const expected of [
       "Project-local Navi trigger source",
-      "docs/along/project-maps/navi-project-trigger-template.md",
+      "docs/navi/project-trigger-template.md",
       "global skill auto-routing can be inconsistent",
     ]) {
       expect(readme).toContain(expected);
@@ -988,7 +989,7 @@ describe("Along Working Thread Codex skill", () => {
   it("documents Navi project initialization as the reliable configuration path", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
     const readme = await readRepoText("plugins/navi/README.md");
-    const initDoc = await readRepoText("docs/along/project-maps/navi-project-init.md");
+    const initDoc = await readRepoText("docs/navi/project-init.md");
 
     for (const expected of [
       "Navi Project Initialization",
@@ -1001,21 +1002,21 @@ describe("Along Working Thread Codex skill", () => {
 
     for (const expected of [
       "Navi project initialization",
-      "navi-project-init.md",
-      "global skill + project-local trigger source",
+      "docs/navi/project-init.md",
+      "guided confirmed baseline",
     ]) {
       expect(readme).toContain(expected);
     }
 
     for (const expected of [
       "# Navi Project Initialization",
-      "Minimum initialization output",
+      "One Preview And One Approval",
       "AGENTS.md",
-      "docs/along/project-maps/",
-      "Project Map or Rhythm Map",
-      "`navi init` is the narrow project-local setup surface",
-      "Do not use `navi init` as a global Codex plugin or skill installer",
-      "Fresh-session validation",
+      ".navi/project-map.md",
+      "Guided Baseline Formation",
+      "`navi init` configures a target project",
+      "does not install Navi again",
+      "Fresh-Session Validation",
     ]) {
       expect(initDoc).toContain(expected);
     }
@@ -1049,8 +1050,8 @@ describe("Along Working Thread Codex skill", () => {
       "stable target-project stage sequence",
       "compact horizontal progress strip",
       "single-line stage strip",
-      "source priority",
-      "provisional map",
+      "Project Map source priority",
+      ".navi/project-map.md",
       "must not draw a confident stable bar",
     ]) {
       expect(readme).toContain(expected);
@@ -1366,6 +1367,69 @@ describe("Along Working Thread repo-contained plugin package", () => {
     expect(debt).toContain("Public distribution remains open");
   });
 
+  it("documents one guided confirmed-map initialization journey in every active setup document", async () => {
+    const activePaths = [
+      "README.md",
+      "README.zh-CN.md",
+      "plugins/navi/README.md",
+      "docs/navi/project-init.md",
+    ];
+
+    for (const activePath of activePaths) {
+      const exists = await repoPathExists(activePath);
+      expect(exists, activePath).toBe(true);
+      if (!exists) continue;
+      const document = await readRepoText(activePath);
+      for (const expected of [
+        "global setup once",
+        "guided confirmed baseline",
+        "one trigger + `.navi/project-map.md` preview",
+        "one approved project init write",
+        "fresh-session natural-language supervision",
+      ]) {
+        expect(document.toLowerCase()).toContain(expected.toLowerCase());
+      }
+
+      for (const forbidden of [
+        "starter map",
+        "provisional map",
+        ".navi/state.md",
+        "docs/along/project-maps/",
+      ]) {
+        expect(document.toLowerCase()).not.toContain(forbidden.toLowerCase());
+      }
+    }
+  });
+
+  it("keeps the active trigger template exactly aligned with generated init output", async () => {
+    const exists = await repoPathExists("docs/navi/project-trigger-template.md");
+    expect(exists).toBe(true);
+    if (!exists) return;
+    const template = await readRepoText("docs/navi/project-trigger-template.md");
+
+    expect(template).toBe(`${renderAgentsBlock()}\n`);
+  });
+
+  it("marks the alpha 13 and alpha 14 directions as superseded historical evidence", async () => {
+    const historicalSpecs = await Promise.all([
+      readRepoText(
+        "docs/superpowers/specs/2026-07-09-navi-alpha13-project-initialization-suggested-map-preview-design.md",
+      ),
+      readRepoText(
+        "docs/superpowers/specs/2026-07-10-navi-alpha14-project-state-snapshot-design.md",
+      ),
+    ]);
+
+    for (const spec of historicalSpecs) {
+      expect(spec).toMatch(/^# .+\n\n> \*\*Superseded:\*\*/u);
+      expect(spec).toContain("confirmed Project Map initialization journey");
+      expect(spec).toContain(
+        "2026-07-13-navi-confirmed-project-map-init-journey-design.md",
+      );
+      expect(spec).toContain("retained as historical design evidence");
+    }
+  });
+
   it("documents the Navi-only source installation and explicit legacy migration path", async () => {
     const [englishReadme, chineseReadme, packageReadme, initDoc, debt] = await Promise.all([
       readRepoText("README.md"),
@@ -1445,14 +1509,14 @@ describe("Along Working Thread repo-contained plugin package", () => {
     const roadmap = await readRepoText("docs/along/roadmaps/navi-post-alpha-roadmap.md");
 
     for (const expected of [
-      "Status: source-alpha addressed; public distribution open",
+      "Status: confirmed-Map initialization addressed; calibration and public distribution open",
       "Source-alpha bootstrap is implemented",
     ]) {
       expect(debt).toContain(expected);
     }
 
     for (const expected of [
-      "Validate the narrow `navi init` project-local initializer",
+      "Calibrate the confirmed-Map init journey",
       "Global plugin installation, one-click sync, npm distribution, or marketplace installation",
     ]) {
       expect(roadmap).toContain(expected);
