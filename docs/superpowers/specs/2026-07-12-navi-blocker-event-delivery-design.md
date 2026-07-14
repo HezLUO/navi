@@ -1,226 +1,328 @@
-# Navi Blocker Event Delivery Design
+# Navi Lane Handoff Event Delivery Design
 
 Date: 2026-07-12
+Revised: 2026-07-14
 
-Status: Approved in conversation; design documentation only
+Status: Approved in conversation; supersedes the blocker-only design in this
+document
 
 ## Summary
 
-Navi should stop requiring the user to carry blocker information from an
-implementation worktree back to the main session. When a bounded worktree goal
-is formally blocked, a Codex adapter may deliver one structured blocker event
-to the source main session.
+Navi should stop requiring the user to inspect implementation worktrees and
+carry coordination information back to the source main session. A bounded
+Codex worktree should deliver one structured handoff event when it reaches one
+of three meaningful lane transitions:
 
-The event is coordination evidence, not a user command or new authorization.
-The main session decides whether the blocker affects the current premise and
-must be handled immediately, or is lane-local and can wait until the current
-non-conflicting design segment closes.
+- `decision-required`: the lane cannot continue without a real user decision;
+- `blocked`: the bounded goal has been formally marked blocked; or
+- `review-ready`: the lane has completed its bounded implementation and is
+  ready for parent review.
 
-The first version is an adapter contract built on host-provided thread
-messaging. It does not add a Supervisor session, background process, durable
+These transitions are not equivalent. In particular, a completed worktree is
+not blocked. It still requires machine-to-machine delivery because otherwise
+the user remains an information bus.
+
+The source main session classifies the event's current impact. It may continue
+non-conflicting design, automatically perform a read-only parent review at the
+next natural checkpoint, route an in-scope remediation back to the worktree,
+or present a real user decision. Event delivery never authorizes scope
+expansion, risk acceptance, merge, push, tag, release, or publication.
+
+The first version is a Codex adapter contract built on host-provided task
+messaging. It does not add a supervisor task, background process, durable
 queue, watcher, database, MCP server, or runtime controller.
 
 ## Problem
 
-The Global Bootstrap remediation worktree correctly marked its bounded goal
-blocked after determining that the requested atomic filesystem guarantee could
-not be proved with the current Node public filesystem API. The main session did
-not learn this automatically. The user had to tell the main session that the
-worktree was blocked.
+The earlier blocker-only design solved only one part of cross-lane
+coordination. Two natural samples exposed the missing transitions:
 
-That makes the user an information bus between two agent lanes. It also creates
-two bad alternatives:
+1. A worktree needed approval to run `npm ci`. It was paused at a real user
+   gate but was not formally blocked. The user had to ask the main session to
+   inspect it.
+2. A completed worktree can become ready for parent review without being
+   blocked or requiring an implementation decision. If no event is delivered,
+   the user must still notice completion and report it to the main session.
 
-- the main session polls the worktree and stops useful non-conflicting design;
-  or
-- the main session continues without knowing that a pending implementation
-  premise now needs a decision.
+Polling every worktree is not an acceptable replacement. It interrupts useful
+main-session design, consumes attention without a state transition, and remains
+a host-side coordination workaround rather than a product contract. A separate
+inbox task also fails if the user must open it, interpret it, and relay its
+contents.
 
-A separate blocker inbox task does not solve this if the user must open it,
-interpret it, and relay its contents. The missing capability is automatic
-machine-to-machine event delivery, not another place to store messages.
+The missing capability is a narrow lane handoff protocol that reports only
+terminal or user-decision transitions and lets the source main session decide
+when the information should affect the conversation.
 
 ## Product Decision
 
-Implement a narrow **Lane Blocker Event Delivery** contract for the Codex
+Implement one versioned **Navi Lane Handoff Event** contract for the Codex
 adapter.
 
 ```text
-bounded worktree goal becomes blocked
-  -> worktree sends one structured event to source main session
+bounded worktree reaches a meaningful lane transition
+  -> worktree sends one structured event to the source main session
   -> main session classifies current-session impact
-  -> main handles now or defers to the next natural decision point
-  -> user sees the blocker only when a real decision is needed
+  -> main reviews, remediates, defers, or presents a real decision
+  -> user acts only where user judgment or authorization is required
 ```
 
-Only formal blockers qualify. Ordinary waiting, a child still running, a test
-failure that remains in scope, task completion, review readiness, and worktree
-completion do not emit blocker events.
+The contract is not a general notification system. Ordinary progress, a child
+still running, an in-scope test failure, a local task commit, a test passing,
+and routine waiting do not emit events.
 
-## Event Contract
+## Unified Event Contract
 
-The event uses this semantic envelope:
+Every handoff uses the same semantic envelope:
 
 ```text
-NAVI_LANE_BLOCKER_EVENT
+NAVI_LANE_HANDOFF_EVENT
 
-event_id: <stable identifier for this blocked goal>
+version: 1
+event_id: <stable identifier for this lane transition>
+kind: decision-required | blocked | review-ready
+source_task: <source main task identifier>
 source_lane: <worktree task identifier>
 goal: <bounded goal summary>
-status: blocked
-reason: <one concrete blocking condition>
-evidence: <minimal verified evidence>
+summary: <minimal factual transition summary>
+evidence: <minimal verified evidence or source references>
 worktree_state: <clean, or exact uncommitted files>
-decision_needed: <the decision required to resume>
 declared_impact: lane-local | premise-changing
 ```
 
 The angle-bracket entries describe required runtime values; they are not open
-design placeholders.
+design placeholders. The event contains facts and source references, not
+hidden reasoning, exhaustive logs, or implied authorization.
 
-`declared_impact` is the worktree's bounded assessment, not the final routing
-decision. A worktree normally lacks enough context to know whether the main
-session is in the middle of unrelated design. The main session remains
-responsible for classifying current-session impact.
+`declared_impact` is the worktree's bounded assessment. The source main session
+has the broader conversation context and makes the final routing decision.
 
-The event must not contain hidden reasoning, exhaustive logs, a request to
-`continue`, implementation instructions, or implied approval for a dependency,
-scope expansion, architecture choice, risk acceptance, merge, push, tag, or
-release.
+### Decision-Required Fields
 
-## Emission Rules
+A `decision-required` event also contains:
 
-The worktree emits an event only when all of these are true:
+```text
+decision_needed: <one decision only the user can make>
+recommendation: <bounded recommendation, or none when no default is justified>
+continuation: <what the lane will do if the decision authorizes it>
+```
 
-1. the lane has a bounded goal;
-2. the same blocking condition has met the host goal's formal blocked rule;
-3. the goal has been marked blocked;
-4. delegation metadata identifies a source main session; and
-5. the host exposes a thread-messaging capability.
+This kind is limited to real gates:
 
-One blocked goal emits at most one event. Automatic goal continuation turns do
-not emit duplicates. The event ID must remain stable across retries.
+- tool, environment, network, installation, or external-write permission;
+- unplanned scope expansion;
+- accepting a known material risk or lowering an acceptance criterion;
+- cross-project modification;
+- merge, push, tag, release, publication, or equivalent authority boundaries;
+  and
+- a product or architecture choice that genuinely requires user judgment.
 
-After delivery, the worktree remains blocked. Delivery does not authorize it to
-resume, weaken the acceptance criteria, change scope, or choose the requested
-architecture decision.
+Ordinary implementation uncertainty remains the lane's engineering work. It
+does not become a user decision merely because the agent is unsure.
 
-If source-session metadata or thread messaging is unavailable, or delivery
-fails, the worktree keeps its ordinary blocked final answer and states that the
-blocker was not delivered to the main session. It must not claim successful
-delivery without host evidence.
+### Blocked Fields
 
-## Main-Session Handling
+A `blocked` event also contains:
 
-Receiving a blocker event does not automatically make the whole session
-blocked.
+```text
+reason: <one concrete blocking condition>
+attempts: <minimal verified attempts already made>
+decision_needed: <the decision required to resume or replace the lane>
+```
 
-The main session should handle the event immediately when it changes the active
-product premise, safety judgment, allowed file scope, acceptance criteria, or a
-decision currently being discussed.
+Only a bounded goal that has met the host goal lifecycle's formal blocked rule
+may emit this kind. Ordinary waiting, an in-scope failure, review readiness,
+and worktree completion are not formal blockers.
 
-When the blocker affects only its implementation lane and the main session has
-useful non-conflicting design work, the main session records the pending blocker
-and continues that design. It presents the blocker at the next natural decision
-point rather than requiring the user to say `continue` or manually relay the
-message.
+After delivery the worktree remains blocked. Delivery does not authorize it to
+resume, weaken the acceptance criteria, change scope, select an architecture,
+or accept risk.
 
-The main session must not send routine acknowledgement messages back to the
-worktree. A response is appropriate only after the user makes the decision
-needed to resume or replace that lane. This prevents thread-to-thread ping-pong.
+### Review-Ready Fields
 
-If the source main session is idle when the event arrives, idle is already a
-natural checkpoint. The main session may present the blocker and its real
-decision directly.
+A `review-ready` event also contains:
 
-## Codex Adapter
+```text
+commits: <exact implementation commits>
+changed_scope: <files or bounded components changed>
+verification: <targeted checks and exact results>
+residual_risks: <known remaining risks, or none>
+```
 
-The first version relies on existing Codex thread messaging:
+This kind is emitted only after the worktree reaches its stated implementation
+acceptance point, performs its final scope audit, and can report exact working
+tree state. It means the implementation lane is ready for source-side review;
+it does not mean the result is merged, released, or proved correct.
 
-1. the main session includes its task ID and this blocker contract in the
-   bounded worktree delegation prompt;
-2. the worktree sends the event to that source task only after formal blocking;
-3. a running source task receives the event as a later turn rather than a forced
-   mid-response interruption; and
-4. an idle source task may be awakened by the delivered event.
+## Emission, Retry, And Deduplication
 
-Navi core defines the event semantics. Codex-specific thread IDs and messaging
-tools remain adapter details. Other agent hosts may provide a different event
-transport or may support only the fallback blocked report.
+The worktree emits one event when it enters one of the three defined
+transitions and delegation metadata identifies a source main task.
 
-Pending blocker state initially remains in main-session context. Context loss is
-a known limitation. The first version does not add durable storage merely to
-solve that hypothetical failure. A durable event queue becomes a design
-candidate only after real evidence shows that delivered pending blockers are
-lost or mishandled.
+Each transition has one stable `event_id`. A failed delivery may be retried
+once immediately with the same ID. Timed retries, background polling, and
+unbounded resend loops are prohibited. The source main session records handled
+IDs in its task context and silently ignores duplicate delivery.
 
-## Component Boundaries
+If a lane resumes after a decision or remediation and later reaches another
+meaningful transition, that transition receives a new ID. A second
+`review-ready` after bounded remediation is a new review cycle and therefore a
+new event.
+
+If source metadata or host task messaging is unavailable, or both delivery
+attempts fail, the worktree keeps its ordinary local handoff report and states
+that delivery failed. It must not claim successful delivery without host tool
+evidence. The first version does not add durable Navi storage merely to hide an
+unsupported or failed host capability.
+
+## Source Main-Session Routing
+
+Receiving an event does not automatically make the whole session blocked and
+does not force a mid-response interruption.
+
+The main session handles a `premise-changing` event at the first available turn
+when it changes the active product premise, safety judgment, allowed file
+scope, acceptance criteria, or a decision currently being discussed.
+
+A `lane-local` event may be retained while useful non-conflicting design
+continues. The main session processes it at the next natural checkpoint rather
+than asking the user to say `continue` or manually relay the event.
+
+The worktree's declared impact remains evidence, not the final classification.
+The main session must stop or switch attention when continued work would edit
+the same files, invalidate acceptance criteria, make the pending result
+obsolete, or build a product judgment on a premise the event challenges.
+
+### Decision-Required Routing
+
+The worktree remains paused. The main session presents the decision only when
+user judgment is actually required, preserves the original gate and
+recommendation boundaries, and sends the user's decision directly back to the
+worktree. The user should not copy the decision between tasks.
+
+### Blocked Routing
+
+A premise-changing or whole-session blocker is presented at the first
+available decision point. A lane-local blocker may be deferred while
+non-conflicting main-session work remains useful. The main session responds to
+the worktree only after the user chooses how to resume, replace, or close the
+lane.
+
+### Review-Ready Routing
+
+At the next non-conflicting natural checkpoint, the main session automatically
+performs a read-only parent review. This review does not require a separate user
+approval and does not authorize edits or integration.
+
+If review finds a defect that can be corrected within the original goal, file
+scope, validation budget, authority envelope, and risk boundary, the main
+session sends one strictly bounded remediation instruction to the same
+worktree. The lane returns a new `review-ready` event after remediation.
+
+If remediation would change product design, expand scope, require permission,
+lower acceptance criteria, or accept new risk, the main session presents a
+real user decision instead. A passing review may lead to a merge decision, but
+merge, push, tag, release, and publication always retain their explicit user
+approval gates.
+
+## Message Direction And Interruption Control
+
+The protocol is one-way at each transition, with bounded replies:
+
+- do not send routine acknowledgements such as `received`;
+- send a reply only with an applicable user decision, a strictly bounded
+  remediation, or an explicit resume/replace instruction;
+- do not create task-to-task conversational loops; and
+- do not turn completion into an immediate user interruption when review can
+  wait for a natural checkpoint.
+
+A running source task receives the event after its current turn rather than as
+a forced mid-response interruption. An idle source task may be awakened by the
+event. Host transcript persistence is sufficient for the first version; Navi
+does not create a second inbox or event database.
+
+## Codex Adapter And Component Boundaries
 
 ### Canonical And Packaged Navi Skill
 
-Add the blocker-event semantics, emission conditions, fallback, and
-main-session handling rule to the canonical Navi reference and keep the packaged
-copy exactly synchronized.
+The full contract belongs in a focused canonical reference, with an exact
+packaged copy. The Navi skill contains concise pointers and the main/worktree
+responsibility boundaries.
 
 ### Project-Local Trigger
 
-Keep generated project guidance small. It should say that when a main session
-creates a bounded worktree and the host supports thread messaging, the
-delegation prompt should carry the source task ID and blocker-event contract.
-Do not duplicate the complete event schema in every generated project file.
+Generated project guidance adds only one concise rule: a bounded worktree
+delegation carries source-task metadata and the Lane Handoff contract, and the
+worktree emits once on `decision-required`, `blocked`, or `review-ready`.
+
+The full schema must not be copied into every generated `AGENTS.md`. Navi
+project initialization remains configuration, not a second product install.
 
 ### Delegation Prompt
 
-The detailed event contract belongs in the worktree delegation prompt because
-that is the lane that must emit it. The prompt must preserve the existing goal,
-scope, validation, commit, and escalation boundaries.
+The main session includes its source task ID and a pointer to the available
+Lane Handoff reference in the bounded worktree delegation. The prompt preserves
+the lane's existing goal, scope, validation, commit, escalation, and authority
+boundaries.
 
 ### Global Bootstrap
 
-Do not add blocker delivery to the global bootstrap. Its only responsibility is
-first-use discovery and project-init routing.
+Global bootstrap remains responsible only for first-use discovery and project
+initialization routing. It does not implement lane messaging or embed the event
+schema.
+
+### Transport Boundary
+
+Navi defines event meaning and routing policy. Codex task IDs, delegation
+metadata, transcript persistence, and task-messaging tools are adapter details.
+Other future agent hosts may provide a different transport or may support only
+the honest local fallback.
 
 ## Validation
 
-Targeted static tests should verify:
+Targeted tests should verify:
 
 - canonical and packaged skill/reference content remain synchronized;
-- generated project guidance contains only the concise delegation requirement;
-- the detailed contract requires every event field;
-- only a formally blocked bounded goal emits an event;
-- ordinary waiting, local failures, task completion, and review readiness do not
-  emit events;
+- the unified envelope requires all common fields and the three exact kinds;
+- each kind requires its own minimal fields and trigger boundary;
+- ordinary progress, tests, task commits, running children, and routine waits
+  do not emit events;
+- one immediate retry reuses the event ID and duplicate receipt is ignored;
 - delivery is not represented as authorization or automatic recovery;
+- `review-ready` leads to source-side read-only review rather than user relay;
+- in-scope remediation is routed back without inventing a new user gate;
+- out-of-scope remediation becomes a real decision;
+- project-local guidance remains concise and omits the full schema;
 - missing source metadata or messaging capability uses an explicit fallback;
   and
-- the global bootstrap does not contain blocker delivery behavior.
+- global bootstrap remains free of lane-delivery behavior.
 
-The implementation does not need a synthetic messaging runtime or a mocked
-background scheduler merely to satisfy tests.
+The implementation does not need a synthetic scheduler, queue, background
+runtime, or mocked project-management system merely to satisfy tests.
 
 ## Real Calibration
 
-Use one future natural worktree blocker after implementation. Do not manufacture
-a blocker solely to obtain a passing result.
+Use the first natural worktree lifecycle after implementation. Do not retrofit
+an already-running worktree or manufacture a blocker solely to obtain a passing
+sample.
 
 Observe whether:
 
-1. the event reaches the source main session without user relay;
-2. it is delivered only once;
-3. the main session distinguishes lane-local blocking from whole-session
-   blocking;
-4. non-conflicting design continues without being hijacked;
-5. the user sees a decision only when their judgment is actually required; and
-6. no reply loop, scope expansion, or implied approval occurs.
+1. each meaningful transition reaches the source main session without user
+   relay;
+2. delivery occurs once, or one retry is safely deduplicated;
+3. unrelated design is not interrupted by lane-local events;
+4. premise-changing events are not deferred past an invalidating decision;
+5. `review-ready` causes automatic parent review at a natural checkpoint;
+6. in-scope remediation returns directly to the lane;
+7. the user sees only decisions that require user judgment; and
+8. no reply loop, scope expansion, implied approval, or runtime dependency is
+   introduced.
 
-The current Global Bootstrap blocker is problem evidence, not a valid success
-sample, because the user already carried it to the main session before this
-contract existed.
-
-If the first version still interrupts unrelated design or loses delivered
-events, stop adding prompt rules. The next design question is a host-supported
-durable event queue or controller with an explicit installation and complexity
-budget.
+If natural calibration shows frequent transport loss, context loss, or routing
+failure, stop adding prompt rules. A durable host event queue or controller may
+then become a separate design candidate with an explicit installation and
+complexity budget.
 
 ## Non-Goals
 
@@ -228,24 +330,29 @@ This design does not authorize:
 
 - a Supervisor Inbox task that the user must inspect;
 - a blocker-solving agent or second product-decision center;
-- completion, progress, waiting, or review-ready notifications;
-- polling the worktree from the main session;
-- automatic worktree resume;
-- automatic architecture or risk decisions;
+- ordinary progress or intermediate child/task-completion notifications;
+- polling every worktree;
+- automatic architecture, product, permission, or risk decisions;
+- automatic scope expansion or acceptance-criteria reduction;
+- automatic merge, push, tag, release, or publication;
 - a background watcher, scheduler, database, durable queue, MCP service, or
   runtime controller;
-- product code changes outside the Codex adapter contract;
-- full tests, release preparation, merge, push, tag, or publication.
+- changes to `src/web` or historical Along runtime surfaces;
+- full tests, release preparation, tag creation, or publication; or
+- support for non-Codex hosts in the first implementation.
 
 ## Acceptance Criteria
 
 The design is successfully implemented when:
 
-- a Codex bounded worktree has a clear path to notify its source main session
-  after formal blocking;
-- the user no longer needs to relay the blocker manually;
-- the event cannot authorize work or expand scope;
-- duplicate and non-blocker notifications are prohibited;
-- the main session can defer lane-local blockers while continuing useful design;
-- unsupported hosts degrade honestly; and
+- a bounded Codex worktree can notify its source main session on
+  `decision-required`, `blocked`, and `review-ready` transitions;
+- the user no longer needs to inspect a worktree or relay lane information;
+- completed work is correctly treated as review-ready rather than blocked;
+- the main session automatically performs read-only parent review at a natural
+  non-conflicting checkpoint;
+- in-scope remediation returns to the same lane without a fake user decision;
+- real authority, scope, risk, merge, push, and release gates remain explicit;
+- duplicate and non-transition notifications are suppressed;
+- unsupported host capabilities degrade honestly; and
 - Navi gains no new runtime or installation burden in this version.
