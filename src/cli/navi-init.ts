@@ -1,6 +1,12 @@
 import fs from "node:fs/promises";
-import type { Dirent } from "node:fs";
+import { constants } from "node:fs";
 import path from "node:path";
+import { inspectProjectEvidence } from "./navi-evidence";
+import {
+  inspectProjectMapFile,
+  NAVI_PROJECT_MAP_RELATIVE_PATH,
+  parseProjectMapDocument,
+} from "./navi-project-map";
 
 export const NAVI_AGENTS_BLOCK_START = "<!-- NAVI:START -->";
 export const NAVI_AGENTS_BLOCK_END = "<!-- NAVI:END -->";
@@ -12,29 +18,6 @@ export const VALIDATION_PROMPT = `请只读，不要修改文件、不要提交�
 接下来我们应该做什么？`;
 
 const AGENTS_RELATIVE_PATH = "AGENTS.md";
-const PROJECT_MAP_RELATIVE_PATH = "docs/along/project-maps/navi-project-map.md";
-const EVIDENCE_SNIPPET_BYTES = 12 * 1024;
-const EVIDENCE_TOTAL_BYTES = 160 * 1024;
-const MAX_EVIDENCE_CANDIDATES = 50;
-const MAX_EVIDENCE_DIRS_VISITED = 120;
-const MAX_EVIDENCE_ENTRIES_VISITED = 600;
-const MAX_EVIDENCE_ENTRIES_PER_DIR = 160;
-const IGNORED_EVIDENCE_DIRS = new Set([".git", "node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
-const KNOWN_EVIDENCE_RELATIVE_PATHS = [
-  AGENTS_RELATIVE_PATH,
-  PROJECT_MAP_RELATIVE_PATH,
-  "PROJECT_STATE.md",
-  "README.md",
-  "README",
-  "STATUS.md",
-  "TODO.md",
-];
-const NEGATION_WORD_PATTERN =
-  String.raw`(?:no|not|without|lacks?|missing|cannot|(?:aren|can|couldn|didn|doesn|don|hadn|hasn|haven|isn|mightn|mustn|needn|shan|shouldn|wasn|weren|won|wouldn)['’]t)`;
-const NEGATION_NEAR_SIGNAL_PATTERN = new RegExp(String.raw`\b${NEGATION_WORD_PATTERN}\b[\s\w,;:/'’-]{0,80}$`);
-const EXPANDED_NEGATION_NEAR_SIGNAL_PATTERN = /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b[\s\w,;:/-]{0,80}$/;
-const NEGATION_IN_SENTENCE_PATTERN = new RegExp(String.raw`\b${NEGATION_WORD_PATTERN}\b`);
-const EXPANDED_NEGATION_IN_SENTENCE_PATTERN = /\b(?:does|do|did|is|are|was|were|has|have|can|will)\s+not(?:\s+have)?\b/;
 
 export type InitActionKind = "create" | "modify" | "skip";
 
@@ -45,24 +28,6 @@ export interface InitAction {
   summary: string;
   content?: string;
   previousContent?: string;
-}
-
-export type ProjectShapeHint = "linear" | "flowing" | "mixed" | "unclear";
-export type SuggestionConfidence = "high" | "medium" | "low";
-
-export interface EvidenceSnippet {
-  relativePath: string;
-  text: string;
-}
-
-export interface SuggestedMapPreview {
-  evidenceRead: string[];
-  shape: ProjectShapeHint;
-  confidence: SuggestionConfidence;
-  suggestedView?: "Project Map" | "Rhythm Map";
-  mapText?: string;
-  why: string[];
-  uncertainOrMissing: string[];
 }
 
 type CreateInitAction = InitAction & {
@@ -83,35 +48,27 @@ interface PreflightedWrite {
   writePath: string;
 }
 
-interface EvidenceCollectionState {
-  candidates: string[];
-  directoriesVisited: number;
-  entriesVisited: number;
-}
-
-interface EvidenceReadResult {
-  text: string;
-  bytesRead: number;
-}
-
-interface ShapeScore {
-  score: number;
-  files: Set<string>;
-}
+export type InitPlanState = "needs-confirmed-map" | "actionable" | "healthy" | "blocked";
 
 export interface InitPlan {
   mode: "dry-run" | "write";
+  state: InitPlanState;
   targetDir: string;
   actions: InitAction[];
   validationPrompt: string;
-  suggestedMapPreview?: SuggestedMapPreview;
+  fingerprint?: string;
+  diagnostic?: string;
+  evidencePaths: string[];
 }
 
 export interface InitOptions {
   targetDir?: string;
   write?: boolean;
-  suggestMap?: boolean;
+  mapFile?: string;
+  expectPlan?: string;
 }
+
+export type ParsedInitOptions = InitOptions & { targetDir: string; write: boolean };
 
 export interface NaviInitIo {
   cwd: string;
@@ -159,62 +116,200 @@ export function resolveTargetPath(targetDir: string, relativePath: string): stri
   return resolvedPath;
 }
 
-export function parseInitArgs(args: string[], cwd = process.cwd()): Required<InitOptions> {
-  const parsed: Required<InitOptions> = {
+export function parseInitArgs(args: string[], cwd = process.cwd()): ParsedInitOptions {
+  const parsed: ParsedInitOptions = {
     targetDir: path.resolve(cwd),
     write: false,
-    suggestMap: false,
   };
+  const seen = new Set<string>();
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
 
-    if (arg === "--target") {
-      const target = args[index + 1];
-      if (!target || target.startsWith("--")) {
-        throw new InitArgsError("Missing value for --target");
-      }
-      parsed.targetDir = path.resolve(cwd, target);
+    if (["--target", "--map-file", "--expect-plan"].includes(arg)) {
+      if (seen.has(arg)) throw new InitArgsError(`Duplicate option: ${arg}`);
+      seen.add(arg);
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) throw new InitArgsError(`Missing value for ${arg}`);
+      if (arg === "--target") parsed.targetDir = path.resolve(cwd, value);
+      else if (arg === "--map-file") parsed.mapFile = path.resolve(cwd, value);
+      else parsed.expectPlan = value;
       index += 1;
       continue;
     }
 
     if (arg === "--write") {
+      if (seen.has(arg)) throw new InitArgsError(`Duplicate option: ${arg}`);
+      seen.add(arg);
       parsed.write = true;
       continue;
     }
 
     if (arg === "--suggest-map") {
-      parsed.suggestMap = true;
-      continue;
+      throw new InitArgsError(
+        "The --suggest-map option was removed. Use Navi in Codex to form and confirm a Project Map, then pass it with --map-file.",
+      );
     }
 
     throw new InitArgsError(`Unknown option: ${arg}`);
   }
 
+  if (parsed.expectPlan !== undefined && !parsed.write) {
+    throw new InitArgsError("--expect-plan requires --write");
+  }
   return parsed;
 }
 
 export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan> {
-  const targetDir = path.resolve(options.targetDir ?? process.cwd());
-  await assertDirectory(targetDir);
+  const requestedTarget = path.resolve(options.targetDir ?? process.cwd());
+  await assertDirectory(requestedTarget);
+  const targetDir = await fs.realpath(requestedTarget);
+  const mode = options.write ? "write" : "dry-run";
+  const mapState = await inspectProjectMapFile(targetDir);
+  const candidate = options.mapFile === undefined
+    ? undefined
+    : await inspectConfirmedMapCandidate(targetDir, options.mapFile);
+  const base = { mode, targetDir, validationPrompt: VALIDATION_PROMPT, evidencePaths: [] as string[] };
+
+  if (mapState.kind === "unsupported" || mapState.kind === "unsafe") {
+    return blockedPlan(base, mapState.diagnostic);
+  }
+  if (mapState.kind === "invalid" && mapState.recognizedVersion !== 1) {
+    return blockedPlan(base, `Existing Project Map is not safely repairable by init: ${mapState.diagnostic}`);
+  }
+  if (mapState.kind === "invalid" && candidate === undefined) {
+    return blockedPlan(base, `Existing recognized Project Map needs a valid confirmed replacement candidate: ${mapState.diagnostic}`);
+  }
+
+  if (mapState.kind === "missing" && candidate === undefined) {
+    const evidence = await inspectProjectEvidence(targetDir);
+    return {
+      ...base,
+      state: "needs-confirmed-map",
+      actions: [],
+      diagnostic: "A confirmed Project Map is required before Navi can activate this project.",
+      evidencePaths: evidence.items.slice(0, 3).map((item) => item.relativePath),
+    };
+  }
 
   const agentsPath = resolveTargetPath(targetDir, AGENTS_RELATIVE_PATH);
-  const mapPath = resolveTargetPath(targetDir, PROJECT_MAP_RELATIVE_PATH);
+  const agentsAction = await planAgentsAction(agentsPath);
+  if (mapState.kind === "valid" && candidate === undefined) {
+    if (agentsAction.kind === "skip") return healthyPlan(base);
+    return { ...base, state: "actionable", actions: [agentsAction] };
+  }
 
-  const actions: InitAction[] = [
-    await planAgentsAction(agentsPath),
-    await planProjectMapAction(targetDir, mapPath),
-  ];
-  const suggestedMapPreview = options.suggestMap ? await suggestProjectMap(targetDir) : undefined;
+  if (mapState.kind === "valid" && candidate !== undefined) {
+    if (mapState.document.text !== candidate.text) {
+      return blockedPlan(base, "The candidate differs from the existing confirmed Project Map. navi init is not a Map-update command.");
+    }
+    if (agentsAction.kind === "skip") return healthyPlan(base);
+    return {
+      ...base,
+      state: "actionable",
+      actions: [mapSkipAction(mapState.mapPath), agentsAction],
+    };
+  }
 
+  if (mapState.kind === "invalid" && candidate !== undefined) {
+    const previousContent = await readRequiredText(mapState.mapPath);
+    return {
+      ...base,
+      state: "actionable",
+      actions: [mapModifyAction(mapState.mapPath, candidate.text, previousContent), agentsAction],
+    };
+  }
+
+  if (mapState.kind === "missing" && candidate !== undefined) {
+    return {
+      ...base,
+      state: "actionable",
+      actions: [mapCreateAction(mapState.mapPath, candidate.text), agentsAction],
+    };
+  }
+
+  return blockedPlan(base, "Project Map state could not be planned safely.");
+}
+
+type InitPlanBase = Pick<InitPlan, "mode" | "targetDir" | "validationPrompt" | "evidencePaths">;
+
+function blockedPlan(base: InitPlanBase, diagnostic: string): InitPlan {
+  return { ...base, state: "blocked", actions: [], diagnostic };
+}
+
+function healthyPlan(base: InitPlanBase): InitPlan {
+  return { ...base, state: "healthy", actions: [] };
+}
+
+function mapCreateAction(mapPath: string, content: string): InitAction {
   return {
-    mode: options.write ? "write" : "dry-run",
-    targetDir,
-    actions,
-    validationPrompt: VALIDATION_PROMPT,
-    suggestedMapPreview,
+    kind: "create",
+    relativePath: NAVI_PROJECT_MAP_RELATIVE_PATH,
+    absolutePath: mapPath,
+    summary: "Create the validated confirmed Project Map.",
+    content,
   };
+}
+
+function mapModifyAction(mapPath: string, content: string, previousContent: string): InitAction {
+  return {
+    kind: "modify",
+    relativePath: NAVI_PROJECT_MAP_RELATIVE_PATH,
+    absolutePath: mapPath,
+    summary: "Repair the recognized version-1 Project Map with the validated confirmed candidate.",
+    content,
+    previousContent,
+  };
+}
+
+function mapSkipAction(mapPath: string): InitAction {
+  return {
+    kind: "skip",
+    relativePath: NAVI_PROJECT_MAP_RELATIVE_PATH,
+    absolutePath: mapPath,
+    summary: "The candidate is byte-identical to the existing valid confirmed Project Map.",
+  };
+}
+
+async function inspectConfirmedMapCandidate(targetDir: string, mapFile: string): Promise<{ text: string }> {
+  const candidatePath = path.resolve(mapFile);
+  let checked;
+  try {
+    checked = await fs.lstat(candidatePath);
+  } catch (error) {
+    throw new Error(`Confirmed Project Map candidate could not be inspected: ${candidatePath}`, { cause: error });
+  }
+  if (checked.isSymbolicLink()) throw new Error("Confirmed Project Map candidate must not be a symbolic link.");
+  if (!checked.isFile()) throw new Error("Confirmed Project Map candidate must be a regular file.");
+
+  const canonicalCandidate = await fs.realpath(candidatePath);
+  if (isPathInside(targetDir, canonicalCandidate)) {
+    throw new Error("Confirmed Project Map candidate must be outside the canonical target root.");
+  }
+
+  let handle;
+  try {
+    handle = await fs.open(candidatePath, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const opened = await handle.stat();
+    if (!opened.isFile() || opened.dev !== checked.dev || opened.ino !== checked.ino) {
+      throw new Error("Confirmed Project Map candidate changed between inspection and opening.");
+    }
+    const text = await handle.readFile({ encoding: "utf8" });
+    const parsed = parseProjectMapDocument(text);
+    if (parsed.kind !== "valid") {
+      throw new Error(`Candidate is not a valid confirmed Project Map: ${parsed.diagnostic}`);
+    }
+    return { text };
+  } catch (error) {
+    if (error instanceof Error && /confirmed Project Map|Candidate is not|changed between/.test(error.message)) throw error;
+    throw new Error("Confirmed Project Map candidate could not be read safely.", { cause: error });
+  } finally {
+    await handle?.close().catch(() => undefined);
+  }
+}
+
+async function readRequiredText(filePath: string): Promise<string> {
+  return fs.readFile(filePath, "utf8");
 }
 
 export async function applyInitPlan(plan: InitPlan): Promise<void> {
@@ -244,8 +339,20 @@ export function renderInitPlan(plan: InitPlan): string {
   lines.push(isDryRun ? "Navi init preview" : "Navi init applied");
   lines.push(`Target: ${plan.targetDir}`);
   lines.push("This does not install Navi again.");
-  lines.push("It adds project-local guidance and a starter map for this project.");
   lines.push("");
+
+  if (plan.state === "needs-confirmed-map") {
+    lines.push(plan.diagnostic ?? "A confirmed Project Map is required before Navi can activate this project.");
+    if (plan.evidencePaths.length > 0) {
+      lines.push("Candidate local sources to review:");
+      for (const evidencePath of plan.evidencePaths.slice(0, 3)) lines.push(`- ${evidencePath}`);
+    }
+    lines.push("Use Navi in the current Codex project session to form and confirm the Project Map.");
+  } else if (plan.state === "blocked") {
+    lines.push(`Blocked: ${plan.diagnostic ?? "Existing project state cannot be changed safely by init."}`);
+  } else if (plan.state === "healthy") {
+    lines.push("Navi is already initialized with a valid confirmed Project Map and current recognized trigger.");
+  }
 
   for (const action of plan.actions) {
     const label = action.kind === "create" ? "Create" : action.kind === "modify" ? "Modify" : "Skip";
@@ -253,27 +360,25 @@ export function renderInitPlan(plan: InitPlan): string {
     lines.push(`  ${action.summary}`);
   }
 
-  lines.push("");
   const writableActions = plan.actions.filter((action) => action.kind === "create" || action.kind === "modify");
-  if (isDryRun) {
+  if (plan.actions.length > 0) lines.push("");
+  if (isDryRun && plan.state === "actionable") {
     lines.push("No files were changed.");
-    lines.push(`Apply with: navi init --target ${quotePosixShellArg(plan.targetDir)} --write`);
-  } else if (writableActions.length === 0) {
+  } else if (!isDryRun && plan.state === "actionable" && writableActions.length === 0) {
     lines.push("No files needed changes.");
-  } else {
+  } else if (!isDryRun && plan.state === "actionable") {
     lines.push("Files were changed according to the plan above.");
   }
 
-  if (plan.suggestedMapPreview) {
-    lines.push("");
-    lines.push(renderSuggestedMapPreview(plan.suggestedMapPreview, plan));
-  }
+  if (plan.fingerprint) lines.push(`Plan fingerprint: ${plan.fingerprint}`);
 
-  lines.push("");
-  lines.push("Fresh-session validation prompt:");
-  lines.push("```text");
-  lines.push(plan.validationPrompt);
-  lines.push("```");
+  if (plan.state === "actionable" || plan.state === "healthy") {
+    lines.push("");
+    lines.push("Fresh-session validation prompt:");
+    lines.push("```text");
+    lines.push(plan.validationPrompt);
+    lines.push("```");
+  }
   lines.push("");
 
   return `${lines.join("\n")}\n`;
@@ -287,17 +392,25 @@ export async function runNaviInitCli(
     stderr: (text) => process.stderr.write(text),
   },
 ): Promise<number> {
-  let options: Required<InitOptions>;
+  let options: ParsedInitOptions;
   try {
     options = parseInitArgs(args, io.cwd);
   } catch (error) {
     io.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
-    io.stderr("Usage: navi init [--target <path>] [--write] [--suggest-map]\n");
+    io.stderr("Usage: navi init [--target <path>] [--map-file <path>] [--expect-plan <value> --write]\n");
     return 1;
   }
 
   try {
     const plan = await buildInitPlan(options);
+    if (plan.state === "needs-confirmed-map" || plan.state === "blocked") {
+      io.stdout(renderInitPlan(plan));
+      return 1;
+    }
+    if (options.write && plan.actions.some((action) => action.kind === "create" || action.kind === "modify") && !options.expectPlan) {
+      io.stderr("Refusing actionable writes without --expect-plan. Preview the plan through the Codex integration first.\n");
+      return 1;
+    }
     await applyInitPlan(plan);
     io.stdout(renderInitPlan(plan));
     return 0;
@@ -404,27 +517,6 @@ function countOccurrences(text: string, needle: string): number {
 
 const SCOPED_COMMIT_AUTHORIZATION = "An approved bounded implementation or worktree plan authorizes its explicitly planned local task commits for its worktree parent and bounded subagents. Do not request separate approval for each such commit; report the commit when the task closes. This does not authorize a commit with unknown staged content, history rewriting, merge, push, tag, release, a user request not to commit, project-owned instructions outside the Navi managed block, cross-project changes, scope expansion, or known-risk acceptance.";
 
-async function planProjectMapAction(targetDir: string, mapPath: string): Promise<InitAction> {
-  const existingMaps = await listExistingProjectMaps(targetDir);
-
-  if (existingMaps.length > 0) {
-    return {
-      kind: "skip",
-      relativePath: PROJECT_MAP_RELATIVE_PATH,
-      absolutePath: mapPath,
-      summary: `Existing Markdown records found under docs/along/project-maps: ${existingMaps.join(", ")}. Navi will not create another starter map automatically.`,
-    };
-  }
-
-  return {
-    kind: "create",
-    relativePath: PROJECT_MAP_RELATIVE_PATH,
-    absolutePath: mapPath,
-    summary: "Create a provisional Navi Project Map starter record.",
-    content: renderProjectMap(targetDir),
-  };
-}
-
 function resolveActionWritePath(targetDir: string, action: InitAction): string {
   const writePath = resolveTargetPath(targetDir, action.relativePath);
 
@@ -450,10 +542,6 @@ async function preflightInitPlan(plan: InitPlan): Promise<PreflightedWrite[]> {
 
     if (writableAction.kind === "create") {
       await assertCreateTargetIsFresh(writePath, writableAction);
-
-      if (writableAction.relativePath === PROJECT_MAP_RELATIVE_PATH) {
-        await assertNoProjectMapsAppeared(targetDir);
-      }
     } else {
       await assertModifyTargetIsFresh(writePath, writableAction);
     }
@@ -509,13 +597,6 @@ async function assertPhysicalWritePath(targetDir: string, writePath: string): Pr
 async function assertCreateTargetIsFresh(writePath: string, action: CreateInitAction): Promise<void> {
   if ((await lstatIfExists(writePath)) !== undefined) {
     throw new Error(`Refusing to create ${action.relativePath}: file already exists since planning`);
-  }
-}
-
-async function assertNoProjectMapsAppeared(targetDir: string): Promise<void> {
-  const existingMaps = await listExistingProjectMaps(targetDir);
-  if (existingMaps.length > 0) {
-    throw new Error(`Refusing to create project map because a project map record now exists: ${existingMaps.join(", ")}`);
   }
 }
 
@@ -666,550 +747,6 @@ ${NAVI_AGENTS_BLOCK_END}`;
 
 const KNOWN_NAVI_AGENTS_BLOCKS = [renderAgentsBlock(false), renderAgentsBlock()] as const;
 
-function renderProjectMap(targetDir: string): string {
-  const projectName = path.basename(targetDir);
-
-  return `# Navi Project Map
-
-Project: ${projectName}
-Map status: provisional
-Project shape: unclear
-
-## Source Records Navi Should Read First
-
-- \`AGENTS.md\`
-- \`README.md\` if present
-- \`PROJECT_STATE.md\` if present
-- task/status files, tracker files, workflow records, or project-local handoffs if present
-
-## Current Map
-
-This map only establishes where Navi should look first. It is not a confirmed project stage sequence yet.
-
-Before drawing a confident Progress Map or Rhythm Map, inspect the project-local source records and ask for user confirmation when the project shape is unclear.
-
-## Map Maintenance
-
-This map is a navigation baseline, not a task log.
-
-Update it when navigation judgment changes, such as when the current stage, focus, main track, map type, source-of-truth files, or project direction changes.
-
-Do not update it for ordinary file edits, tests, commits, pushes, temporary status notes, or bounded subtasks that do not change overall navigation.
-
-Map updates are durable project writes. Codex/Navi may suggest a small patch, but user approval is required before writing.
-
-## Fresh-Session Validation
-
-\`\`\`text
-${VALIDATION_PROMPT}
-\`\`\`
-`;
-}
-
-async function suggestProjectMap(targetDir: string): Promise<SuggestedMapPreview> {
-  const snippets = await collectEvidenceSnippets(targetDir);
-  return buildSuggestedMapPreview(snippets);
-}
-
-async function collectEvidenceSnippets(targetDir: string): Promise<EvidenceSnippet[]> {
-  const snippets: EvidenceSnippet[] = [];
-  let remainingBytes = EVIDENCE_TOTAL_BYTES;
-
-  for (const relativePath of await listEvidenceCandidateFiles(targetDir)) {
-    if (remainingBytes <= 0) {
-      break;
-    }
-
-    const absolutePath = resolveTargetPath(targetDir, relativePath);
-    const raw = await readEvidenceSnippet(absolutePath, Math.min(EVIDENCE_SNIPPET_BYTES, remainingBytes));
-    if (raw === undefined) {
-      continue;
-    }
-
-    remainingBytes -= raw.bytesRead;
-
-    const text = normalizeEvidenceSnippet(targetDir, relativePath, raw.text);
-    if (text.trim().length === 0) {
-      continue;
-    }
-
-    snippets.push({ relativePath, text });
-  }
-
-  return snippets;
-}
-
-async function listEvidenceCandidateFiles(targetDir: string): Promise<string[]> {
-  const state: EvidenceCollectionState = {
-    candidates: [],
-    directoriesVisited: 0,
-    entriesVisited: 0,
-  };
-  for (const relativePath of KNOWN_EVIDENCE_RELATIVE_PATHS) {
-    await addKnownEvidenceCandidateIfFile(targetDir, relativePath, state);
-  }
-  await collectEvidenceCandidateFiles(targetDir, "docs/along/project-maps", state);
-  await collectEvidenceCandidateFiles(targetDir, ".", state);
-  return state.candidates
-    .sort((left, right) => evidencePriority(left) - evidencePriority(right) || compareCodePoint(left, right))
-    .slice(0, MAX_EVIDENCE_CANDIDATES);
-}
-
-async function collectEvidenceCandidateFiles(
-  targetDir: string,
-  relativeDir: string,
-  state: EvidenceCollectionState,
-): Promise<void> {
-  if (
-    state.directoriesVisited >= MAX_EVIDENCE_DIRS_VISITED ||
-    state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED
-  ) {
-    return;
-  }
-
-  state.directoriesVisited += 1;
-  const entries = await readBoundedEvidenceDirectoryEntries(targetDir, relativeDir, state);
-
-  for (const entry of entries.sort((left, right) => compareCodePoint(left.name, right.name))) {
-    const relativePath = relativeDir === "." ? entry.name : path.posix.join(relativeDir, entry.name);
-    if (entry.isDirectory()) {
-      if (!IGNORED_EVIDENCE_DIRS.has(entry.name)) {
-        await collectEvidenceCandidateFiles(targetDir, relativePath, state);
-      }
-      continue;
-    }
-
-    if (entry.isFile() && isEvidenceCandidate(relativePath)) {
-      addEvidenceCandidate(state, relativePath);
-    }
-  }
-}
-
-async function readBoundedEvidenceDirectoryEntries(
-  targetDir: string,
-  relativeDir: string,
-  state: EvidenceCollectionState,
-): Promise<Dirent[]> {
-  const absoluteDir = relativeDir === "." ? targetDir : resolveTargetPath(targetDir, relativeDir);
-  const entries: Dirent[] = [];
-
-  try {
-    const directory = await fs.opendir(absoluteDir);
-    for await (const entry of directory) {
-      if (entries.length >= MAX_EVIDENCE_ENTRIES_PER_DIR || state.entriesVisited >= MAX_EVIDENCE_ENTRIES_VISITED) {
-        break;
-      }
-
-      state.entriesVisited += 1;
-      entries.push(entry);
-    }
-  } catch (error) {
-    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM"].includes(error.code ?? "")) {
-      return [];
-    }
-    throw error;
-  }
-
-  return entries;
-}
-
-async function addKnownEvidenceCandidateIfFile(
-  targetDir: string,
-  relativePath: string,
-  state: EvidenceCollectionState,
-): Promise<void> {
-  if (!isEvidenceCandidate(relativePath)) {
-    return;
-  }
-
-  let stat;
-  try {
-    stat = await fs.lstat(resolveTargetPath(targetDir, relativePath));
-  } catch (error) {
-    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM"].includes(error.code ?? "")) {
-      return;
-    }
-    throw error;
-  }
-
-  if (stat.isFile()) {
-    addEvidenceCandidate(state, relativePath);
-  }
-}
-
-function addEvidenceCandidate(state: EvidenceCollectionState, relativePath: string): void {
-  if (state.candidates.includes(relativePath)) {
-    return;
-  }
-
-  state.candidates.push(relativePath);
-  state.candidates.sort(
-    (left, right) => evidencePriority(left) - evidencePriority(right) || compareCodePoint(left, right),
-  );
-  if (state.candidates.length > MAX_EVIDENCE_CANDIDATES) {
-    state.candidates.length = MAX_EVIDENCE_CANDIDATES;
-  }
-}
-
-async function readEvidenceSnippet(absolutePath: string, maxBytes: number): Promise<EvidenceReadResult | undefined> {
-  if (maxBytes <= 0) {
-    return { text: "", bytesRead: 0 };
-  }
-
-  let handle;
-  try {
-    handle = await fs.open(absolutePath, "r");
-    const stat = await handle.stat();
-    if (stat.size <= maxBytes) {
-      const buffer = Buffer.alloc(maxBytes);
-      const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);
-      return {
-        text: buffer.subarray(0, bytesRead).toString("utf8"),
-        bytesRead,
-      };
-    }
-
-    const headBytes = Math.ceil(maxBytes / 2);
-    const tailBytes = maxBytes - headBytes;
-    const headBuffer = Buffer.alloc(headBytes);
-    const headRead = await handle.read(headBuffer, 0, headBytes, 0);
-    const tailBuffer = Buffer.alloc(tailBytes);
-    const tailRead =
-      tailBytes === 0
-        ? { bytesRead: 0 }
-        : await handle.read(tailBuffer, 0, tailBytes, Math.max(0, stat.size - tailBytes));
-
-    return {
-      text: [
-        headBuffer.subarray(0, headRead.bytesRead).toString("utf8"),
-        "\n\n[Navi evidence omitted between bounded head and tail]\n\n",
-        tailBuffer.subarray(0, tailRead.bytesRead).toString("utf8"),
-      ].join(""),
-      bytesRead: headRead.bytesRead + tailRead.bytesRead,
-    };
-  } catch (error) {
-    if (isNodeError(error) && ["ENOENT", "EACCES", "EPERM", "EISDIR"].includes(error.code ?? "")) {
-      return undefined;
-    }
-    throw error;
-  } finally {
-    await handle?.close();
-  }
-}
-
-function normalizeEvidenceSnippet(targetDir: string, relativePath: string, text: string): string {
-  if (relativePath === AGENTS_RELATIVE_PATH && text.includes(NAVI_AGENTS_BLOCK_START)) {
-    return stripNaviAgentsBlock(text);
-  }
-
-  if (relativePath === PROJECT_MAP_RELATIVE_PATH && isDefaultStarterMap(targetDir, text)) {
-    return "";
-  }
-
-  return text;
-}
-
-function stripNaviAgentsBlock(text: string): string {
-  let result = text;
-  while (result.includes(NAVI_AGENTS_BLOCK_START)) {
-    const start = result.indexOf(NAVI_AGENTS_BLOCK_START);
-    const end = result.indexOf(NAVI_AGENTS_BLOCK_END, start);
-    if (end === -1) {
-      return result;
-    }
-    result = `${result.slice(0, start)}${result.slice(end + NAVI_AGENTS_BLOCK_END.length)}`;
-  }
-  return result;
-}
-
-function isDefaultStarterMap(targetDir: string, text: string): boolean {
-  return text === renderProjectMap(targetDir);
-}
-
-function isEvidenceCandidate(relativePath: string): boolean {
-  const normalized = relativePath.split(path.sep).join("/");
-  const basename = path.posix.basename(normalized);
-  const lowerPath = normalized.toLowerCase();
-  const lowerBase = basename.toLowerCase();
-
-  if (
-    lowerBase.endsWith(".lock") ||
-    lowerBase.endsWith(".png") ||
-    lowerBase.endsWith(".jpg") ||
-    lowerBase.endsWith(".jpeg") ||
-    lowerBase.endsWith(".gif") ||
-    lowerBase.endsWith(".pdf") ||
-    lowerBase.endsWith(".zip")
-  ) {
-    return false;
-  }
-
-  return (
-    lowerBase.startsWith("readme") ||
-    lowerBase === "agents.md" ||
-    lowerBase === "project_state.md" ||
-    lowerBase.startsWith("todo") ||
-    lowerBase.startsWith("status") ||
-    lowerBase === "package.json" ||
-    lowerBase === "pyproject.toml" ||
-    (lowerPath.startsWith("docs/along/project-maps/") && lowerBase.endsWith(".md")) ||
-    (lowerPath.includes("/handoff") && lowerBase.endsWith(".md")) ||
-    (lowerPath.includes("/workflow") && lowerBase.endsWith(".md")) ||
-    (lowerPath.includes("/plan") && lowerBase.endsWith(".md"))
-  );
-}
-
-function evidencePriority(relativePath: string): number {
-  const lower = relativePath.toLowerCase();
-  if (lower === "agents.md") return 0;
-  if (lower.startsWith("docs/along/project-maps/")) return 1;
-  if (lower === "project_state.md") return 2;
-  if (lower.startsWith("readme")) return 3;
-  if (lower.startsWith("todo") || lower.startsWith("status")) return 4;
-  if (lower.includes("/workflow") || lower.includes("/handoff") || lower.includes("/plan")) return 5;
-  if (lower === "package.json" || lower === "pyproject.toml") return 6;
-  return 99;
-}
-
-function compareCodePoint(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
-function buildSuggestedMapPreview(snippets: EvidenceSnippet[]): SuggestedMapPreview {
-  const evidenceRead = snippets.map((snippet) => snippet.relativePath);
-  const flowingScore = scoreEvidenceSignals(snippets, [
-    "application",
-    "internship",
-    "recruiting",
-    "outreach",
-    "research",
-    "operations",
-    "waiting",
-    "follow-up",
-    "feedback",
-    "screening",
-    "refresh",
-    "cycle",
-    "workflow",
-    "handoff",
-  ]);
-  const linearScore = scoreEvidenceSignals(snippets, [
-    "milestone",
-    "spec",
-    "design",
-    "implementation",
-    "validation",
-    "release",
-    "deliverable",
-    "build",
-    "test",
-    "package.json",
-  ]);
-
-  if (snippets.length === 0 || (flowingScore.score < 2 && linearScore.score < 2)) {
-    return {
-      evidenceRead,
-      shape: "unclear",
-      confidence: "low",
-      why: ["Not enough project evidence was found for a reliable shape hint."],
-      uncertainOrMissing: ["Add or confirm PROJECT_STATE.md, README, task/status files, or a project map."],
-    };
-  }
-
-  if (flowingScore.score >= 2 && linearScore.score >= 2) {
-    return {
-      evidenceRead,
-      shape: "mixed",
-      confidence: "medium",
-      suggestedView: "Rhythm Map",
-      mapText: renderFlowingPreviewMap(),
-      why: ["Found both recurring workflow signals and bounded delivery signals."],
-      uncertainOrMissing: ["Confirm whether Navi should orient this project as a recurring workflow or a bounded delivery."],
-    };
-  }
-
-  if (flowingScore.score > linearScore.score) {
-    return {
-      evidenceRead,
-      shape: "flowing",
-      confidence: suggestionConfidence(flowingScore),
-      suggestedView: "Rhythm Map",
-      mapText: renderFlowingPreviewMap(),
-      why: ["Found recurring workflow, waiting, feedback, or follow-up signals."],
-      uncertainOrMissing: ["Confirm the rhythm labels before treating this as a stable map."],
-    };
-  }
-
-  return {
-    evidenceRead,
-    shape: "linear",
-    confidence: suggestionConfidence(linearScore),
-    suggestedView: "Project Map",
-    mapText: renderLinearPreviewMap(),
-    why: ["Found bounded delivery, implementation, validation, build, or release signals."],
-    uncertainOrMissing: ["Confirm the stage labels before treating this as a stable map."],
-  };
-}
-
-function scoreEvidenceSignals(snippets: EvidenceSnippet[], signals: string[]): ShapeScore {
-  const files = new Set<string>();
-  let score = 0;
-
-  for (const snippet of snippets) {
-    const text = snippet.text.toLowerCase();
-    for (const signal of signals) {
-      if (hasPositiveSignal(text, signal)) {
-        score += 1;
-        files.add(snippet.relativePath);
-      }
-    }
-  }
-
-  return { score, files };
-}
-
-function hasPositiveSignal(text: string, signal: string): boolean {
-  const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(signal)}([^a-z0-9]|$)`, "g");
-  let match;
-
-  while ((match = pattern.exec(text)) !== null) {
-    const index = match.index + match[1].length;
-    const prefix = text.slice(Math.max(0, index - 80), index);
-    const sentence = sentenceAround(text, index);
-    if (!hasNegationNearSignal(prefix) && !hasNegationInSentence(sentence)) {
-      return true;
-    }
-
-    if (pattern.lastIndex === match.index) {
-      pattern.lastIndex += 1;
-    }
-  }
-
-  return false;
-}
-
-function hasNegationNearSignal(prefix: string): boolean {
-  return NEGATION_NEAR_SIGNAL_PATTERN.test(prefix) || EXPANDED_NEGATION_NEAR_SIGNAL_PATTERN.test(prefix);
-}
-
-function sentenceAround(text: string, index: number): string {
-  const boundaries = [".", "!", "?", "\n"];
-  let start = 0;
-  for (const boundary of boundaries) {
-    const boundaryIndex = text.lastIndexOf(boundary, index);
-    if (boundaryIndex >= start) {
-      start = boundaryIndex + boundary.length;
-    }
-  }
-
-  let end = text.length;
-  for (const boundary of boundaries) {
-    const boundaryIndex = text.indexOf(boundary, index);
-    if (boundaryIndex !== -1 && boundaryIndex < end) {
-      end = boundaryIndex;
-    }
-  }
-
-  return text.slice(start, end);
-}
-
-function hasNegationInSentence(sentence: string): boolean {
-  return NEGATION_IN_SENTENCE_PATTERN.test(sentence) || EXPANDED_NEGATION_IN_SENTENCE_PATTERN.test(sentence);
-}
-
-function suggestionConfidence(score: ShapeScore): SuggestionConfidence {
-  if (score.score >= 4 && score.files.size >= 2) {
-    return "high";
-  }
-  return "medium";
-}
-
-function renderLinearPreviewMap(): string {
-  return `Project progress
-[Goal] -> [Design/plan] -> [Implementation] -> [Validation] -> [Delivery]
-Stage placement: unconfirmed`;
-}
-
-function renderFlowingPreviewMap(): string {
-  return `Project rhythm
-[Cycle/source refresh] + [Screening/selection] + [Preparation/execution] + [Follow-up/feedback]
-Focus placement: unconfirmed
-
-Current track
-[Read records] -> [Choose small loop] -> [Execute] -> [Record/wait]`;
-}
-
-function renderSuggestedMapPreview(preview: SuggestedMapPreview, plan: InitPlan): string {
-  const lines: string[] = [];
-  lines.push("Navi suggested project map preview");
-  lines.push(plan.mode === "write" ? "Suggested map was not written." : "No files were changed.");
-  lines.push("");
-  lines.push("Evidence read:");
-  if (preview.evidenceRead.length === 0) {
-    lines.push("- none");
-  } else {
-    for (const evidence of preview.evidenceRead) {
-      lines.push(`- ${evidence}`);
-    }
-  }
-  lines.push("");
-  lines.push(`Project shape hint: ${preview.shape} (${preview.confidence} confidence)`);
-  lines.push("Needs confirmation before becoming a stable map.");
-  lines.push("");
-
-  if (preview.mapText && preview.confidence !== "low") {
-    lines.push("Suggested map:");
-    lines.push("```text");
-    lines.push(preview.mapText);
-    lines.push("```");
-    lines.push("");
-  } else {
-    lines.push("Not enough evidence for a reliable map preview.");
-    lines.push("");
-  }
-
-  lines.push("Why this map:");
-  for (const reason of preview.why) {
-    lines.push(`- ${reason}`);
-  }
-  lines.push("");
-  lines.push("Uncertain or missing:");
-  for (const missing of preview.uncertainOrMissing) {
-    lines.push(`- ${missing}`);
-  }
-  lines.push("");
-  lines.push("Next step:");
-  lines.push("- Review or edit the suggested map before treating it as stable.");
-  if (plan.mode === "dry-run") {
-    lines.push(`- Run navi init --target ${quotePosixShellArg(plan.targetDir)} --write to add project-local guidance and a starter map.`);
-  } else {
-    lines.push("- Standard starter files have already been applied; no second init write is needed.");
-  }
-  if (preview.shape === "unclear" || preview.confidence === "low") {
-    lines.push(`- Then rerun navi init --target ${quotePosixShellArg(plan.targetDir)} --suggest-map.`);
-  }
-
-  return lines.join("\n");
-}
-
-async function listExistingProjectMaps(targetDir: string): Promise<string[]> {
-  const mapDir = resolveTargetPath(targetDir, "docs/along/project-maps");
-  let entries;
-  try {
-    entries = await fs.readdir(mapDir, { withFileTypes: true });
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  }
-
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => `docs/along/project-maps/${entry.name}`)
-    .sort();
-}
-
 async function readTextIfExists(filePath: string): Promise<string | undefined> {
   try {
     return await fs.readFile(filePath, "utf8");
@@ -1235,14 +772,6 @@ async function lstatIfExists(filePath: string) {
 function isPathInside(parentPath: string, childPath: string): boolean {
   const relative = path.relative(parentPath, childPath);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
-}
-
-function quotePosixShellArg(value: string): string {
-  return `'${value.replaceAll("'", "'\\''")}'`;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
