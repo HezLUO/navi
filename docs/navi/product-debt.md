@@ -258,3 +258,16 @@ Recommended fix:
 6. Add a fresh-session validation log.
 7. Clean up or commit target-project Navi initialization files case by case.
 8. Calibrate continuation friction and pause reason visibility before adding stronger continuous-execution behavior.
+
+## Complexity Regression Gate
+
+Before Codex proposes a new capability or cross-boundary change, answer:
+
+1. What user problem does it solve?
+2. Which active module and rule owner contains it?
+3. Does it create a second state, rule, or template authority?
+4. Does it depend on Historical Along?
+5. What is the minimum sufficient verification?
+6. Is the user value worth the additional concept and maintenance surface?
+
+This gate is qualitative. It does not run for ordinary conversation, local wording changes, or bounded bug fixes. Being easy to parallelize does not establish product priority.

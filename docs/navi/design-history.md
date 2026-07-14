@@ -2,6 +2,10 @@
 
 This index is navigation metadata. It does not rewrite historical documents.
 
+## Current Phase
+
+Complexity stabilization is the current phase. The next gate is two or three real-project calibrations after parent review and explicit integration, not another capability alpha or release.
+
 ## Active
 
 - `docs/superpowers/specs/2026-07-14-navi-complexity-stabilization-design.md`

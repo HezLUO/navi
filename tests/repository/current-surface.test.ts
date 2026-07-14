@@ -41,13 +41,32 @@ describe("Current Navi repository surface", () => {
     await expect(fs.stat(path.join(root, "docs/along"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
-  it("keeps active Navi tests independent from Historical Along docs", async () => {
-    const activeNaviTests = await fs.readFile(
-      path.join(root, "tests/skills/navi-skill.test.ts"),
-      "utf8",
-    );
+  it("records complexity stabilization as the current phase and real-project calibration as the next gate", async () => {
+    const [debt, roadmap, history] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+    ]);
 
-    expect(activeNaviTests).not.toContain("archive/along/docs/");
+    expect(debt).toContain("## Complexity Regression Gate");
+    expect(debt).toContain("Does it create a second state, rule, or template authority?");
+    expect(debt).toContain("Being easy to parallelize does not establish product priority.");
+
+    for (const document of [roadmap, history]) {
+      expect(document).toContain("Complexity stabilization is the current phase");
+      expect(document).toContain("two or three real-project calibrations");
+      expect(document).toContain("not another capability alpha or release");
+    }
+  });
+
+  it("keeps active Navi tests independent from Historical Along docs", async () => {
+    const activeNaviTests = (await listFiles(path.join(root, "tests/skills")))
+      .filter((file) => file.endsWith(".test.ts"));
+
+    for (const file of activeNaviTests) {
+      const testSource = await fs.readFile(file, "utf8");
+      expect(testSource, path.relative(root, file)).not.toContain("archive/along/docs/");
+    }
   });
 
   it("keeps Historical Along outside Current Navi defaults", async () => {

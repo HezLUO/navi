@@ -5,6 +5,12 @@ Last updated: 2026-07-14
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
+## Current Phase
+
+Complexity stabilization is the current phase. The next gate is two or three real-project calibrations after parent review and explicit integration, not another capability alpha or release.
+
+Those observations should check whether Navi remains understandable, quiet, truthful, and useful, and whether the stabilization introduced any visible regression or new installation burden. They are calibration evidence, not release proof.
+
 ## Product Positioning
 
 Navi should be treated as an independent product surface for non-expert users supervising expert agents.
