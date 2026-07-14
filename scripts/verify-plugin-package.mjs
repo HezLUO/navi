@@ -89,7 +89,7 @@ if (!fs.existsSync(validatorPath)) {
 
 assertCurrentPackageMetadata();
 console.log("Running Navi skill/package tests...");
-run("npm", ["test", "--", "tests/skills/navi-skill.test.ts"]);
+run("npm", ["test", "--", "tests/skills"]);
 console.log("Validating Codex plugin manifest...");
 run("python3", [validatorPath, packageDir]);
 console.log("Checking source/package skill drift...");
