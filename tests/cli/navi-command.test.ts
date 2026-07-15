@@ -4,6 +4,15 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { NAVI_USAGE, resolveNaviCliRoot, runNaviCli } from "../../src/cli/navi";
+import type { NaviInvocationContext } from "../../src/cli/navi-invocation";
+
+const invocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
+  reachability: "fallback",
+  reason: "path-missing",
+  commandPrefix: ["/source/Navi/src/cli/navi-bin.mjs"],
+};
 
 describe("Navi command dispatcher", () => {
   it("decodes the CLI root from its module URL", () => {
@@ -79,6 +88,7 @@ describe("Navi command dispatcher", () => {
     const runInit = vi.fn(async () => 0);
     const runSetup = vi.fn(async () => 0);
     const runDoctor = vi.fn(async () => 0);
+    const resolveInvocation = vi.fn(async () => invocation);
 
     const code = await runNaviCli(["init", "--target", "/tmp/demo"], {
       stdout: (text) => stdout.push(text),
@@ -86,10 +96,11 @@ describe("Navi command dispatcher", () => {
       runInit,
       runSetup,
       runDoctor,
-    });
+    }, { resolveInvocation });
 
     expect(code).toBe(0);
-    expect(runInit).toHaveBeenCalledWith(["--target", "/tmp/demo"]);
+    expect(resolveInvocation).toHaveBeenCalledTimes(1);
+    expect(runInit).toHaveBeenCalledWith(["--target", "/tmp/demo"], invocation);
     expect(runSetup).not.toHaveBeenCalled();
     expect(runDoctor).not.toHaveBeenCalled();
     expect(stdout.join("")).toBe("");
@@ -98,6 +109,7 @@ describe("Navi command dispatcher", () => {
 
   it("shows Navi usage instead of starting Along when no command is given", async () => {
     const stderr: string[] = [];
+    const resolveInvocation = vi.fn(async () => invocation);
 
     const code = await runNaviCli([], {
       stdout: () => undefined,
@@ -105,9 +117,10 @@ describe("Navi command dispatcher", () => {
       runInit: async () => 0,
       runSetup: async () => 0,
       runDoctor: async () => 0,
-    });
+    }, { resolveInvocation });
 
     expect(code).toBe(1);
+    expect(resolveInvocation).not.toHaveBeenCalled();
     expect(stderr.join("")).toContain(NAVI_USAGE);
     expect(stderr.join("")).not.toContain("along start");
   });
@@ -117,28 +130,53 @@ describe("Navi command dispatcher", () => {
     const runSetup = vi.fn(async () => 2);
     const runDoctor = vi.fn(async () => 3);
     const io = { stdout: () => undefined, stderr: () => undefined, runInit, runSetup, runDoctor };
+    const resolveInvocation = vi.fn(async () => invocation);
 
-    expect(await runNaviCli(["setup", "--write"], io)).toBe(2);
-    expect(runSetup).toHaveBeenCalledWith(["--write"]);
+    expect(await runNaviCli(["setup", "--write"], io, { resolveInvocation })).toBe(2);
+    expect(resolveInvocation).toHaveBeenCalledTimes(1);
+    expect(runSetup).toHaveBeenCalledWith(["--write"], invocation);
     expect(runInit).not.toHaveBeenCalled();
     expect(runDoctor).not.toHaveBeenCalled();
 
-    expect(await runNaviCli(["doctor"], io)).toBe(3);
-    expect(runDoctor).toHaveBeenCalledWith([]);
+    expect(await runNaviCli(["doctor"], io, { resolveInvocation })).toBe(3);
+    expect(resolveInvocation).toHaveBeenCalledTimes(2);
+    expect(runDoctor).toHaveBeenCalledWith([], invocation);
     expect(runInit).not.toHaveBeenCalled();
+  });
+
+  it("forwards the complete resolved invocation through the production doctor adapter", async () => {
+    const doctorModuleUrl = new URL("../../src/cli/navi-doctor.ts", import.meta.url).href;
+    const runNaviDoctorCli = vi.fn(async () => 0);
+    const resolveInvocation = vi.fn(async () => invocation);
+    vi.doMock(doctorModuleUrl, () => ({ runNaviDoctorCli }));
+
+    try {
+      expect(await runNaviCli(["doctor"], undefined, { resolveInvocation })).toBe(0);
+      expect(resolveInvocation).toHaveBeenCalledTimes(1);
+      expect(runNaviDoctorCli).toHaveBeenCalledWith(
+        [],
+        undefined,
+        { invocation },
+        { cliRoot: invocation.cliRoot },
+      );
+    } finally {
+      vi.doUnmock(doctorModuleUrl);
+    }
   });
 
   it("rejects start without importing or starting Along runtime", async () => {
     const stderr: string[] = [];
+    const resolveInvocation = vi.fn(async () => invocation);
     const code = await runNaviCli(["start"], {
       stdout: () => undefined,
       stderr: (text) => stderr.push(text),
       runInit: async () => 0,
       runSetup: async () => 0,
       runDoctor: async () => 0,
-    });
+    }, { resolveInvocation });
 
     expect(code).toBe(1);
+    expect(resolveInvocation).not.toHaveBeenCalled();
     expect(stderr.join("")).toContain(NAVI_USAGE);
     expect(stderr.join("")).not.toContain("along start");
   });

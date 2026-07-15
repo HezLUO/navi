@@ -18,6 +18,11 @@ import {
   recoverTransaction,
   type TransactionInspection,
 } from "./navi-transaction";
+import {
+  renderNaviCommand,
+  TRUSTED_BARE_NAVI_INVOCATION,
+  type NaviInvocationContext,
+} from "./navi-invocation";
 
 export type { RunCommand } from "./navi-installation";
 
@@ -71,7 +76,12 @@ export interface NaviSetupDependencies {
   runCommand?: RunCommand;
 }
 
-function setupBlockReason(plan: GlobalSetupPlan): string | undefined {
+const NO_VERIFIED_INVOCATION = "No verified Navi CLI invocation is available; rerun setup from the checked-out Navi source package.";
+
+function setupBlockReason(
+  plan: GlobalSetupPlan,
+  invocation: NaviInvocationContext = TRUSTED_BARE_NAVI_INVOCATION,
+): string | undefined {
   if (plan.transaction.kind === "recoverable-restore" || plan.transaction.kind === "recoverable-cleanup") {
     return undefined;
   }
@@ -85,7 +95,15 @@ function setupBlockReason(plan: GlobalSetupPlan): string | undefined {
   }
 
   if (plan.action.kind === "conflict") {
-    return `${plan.action.summary} Repair the Navi-managed AGENTS.md block manually, then rerun navi setup.`;
+    const setupCommand = renderNaviCommand(invocation, ["setup"]);
+    return setupCommand
+      ? `${plan.action.summary} Repair the Navi-managed AGENTS.md block manually, then rerun ${setupCommand}.`
+      : `${plan.action.summary} Repair the Navi-managed AGENTS.md block manually before retrying setup.`;
+  }
+
+  const setupCommand = renderNaviCommand(invocation, ["setup"]);
+  if (!setupCommand) {
+    return NO_VERIFIED_INVOCATION;
   }
 
   if (plan.operation === "install" && plan.action.kind !== "skip" && (
@@ -93,7 +111,7 @@ function setupBlockReason(plan: GlobalSetupPlan): string | undefined {
     !plan.plugin.current?.installed ||
     !plan.plugin.current.enabled
   )) {
-    return pluginRepairText(plan.plugin);
+    return pluginRepairText(plan.plugin, setupCommand);
   }
 
   return undefined;
@@ -131,7 +149,7 @@ function pluginAvailability(status: NaviInstallationStatus): string {
   }
 }
 
-function pluginRepairText(status: NaviInstallationStatus): string {
+function pluginRepairText(status: NaviInstallationStatus, setupCommand: string): string {
   switch (status.kind) {
     case "legacy":
       return `Navi setup requires navi@navi-source; migrate the legacy plugin ${status.legacy?.selector ?? "along-working-thread"} first.`;
@@ -140,12 +158,12 @@ function pluginRepairText(status: NaviInstallationStatus): string {
         return "Navi setup is blocked because both Navi and the legacy plugin are installed; remove the legacy plugin first.";
       }
       if (status.diagnostic?.includes("non-authoritative selector")) {
-        return `Remove the non-authoritative Navi selector ${status.current?.selector ?? "reported by codex plugin list"}, then install and enable navi@navi-source before rerunning navi setup.`;
+        return `Remove the non-authoritative Navi selector ${status.current?.selector ?? "reported by codex plugin list"}, then install and enable navi@navi-source before rerunning ${setupCommand}.`;
       }
       if (status.diagnostic?.includes("more than once")) {
-        return "Remove duplicate navi@navi-source entries so exactly one installed and enabled current selector remains, then rerun navi setup.";
+        return `Remove duplicate navi@navi-source entries so exactly one installed and enabled current selector remains, then rerun ${setupCommand}.`;
       }
-      return "Resolve the reported Navi plugin selector conflict, then rerun navi setup.";
+      return `Resolve the reported Navi plugin selector conflict, then rerun ${setupCommand}.`;
     case "uninspectable":
       return "Navi setup could not inspect codex plugins; repair codex plugin list and retry.";
     case "missing":
@@ -290,6 +308,7 @@ export async function buildGlobalSetupPlan(
 
 export async function applyGlobalSetupPlan(
   plan: GlobalSetupPlan,
+  invocation: NaviInvocationContext = TRUSTED_BARE_NAVI_INVOCATION,
 ): Promise<"applied" | "recovered"> {
   if (plan.mode === "dry-run") return "applied";
 
@@ -299,7 +318,7 @@ export async function applyGlobalSetupPlan(
   }
   if (plan.transaction.kind !== "none") throw new Error(`Navi setup is blocked by transaction state: ${plan.transaction.kind}.`);
   if (plan.action.kind === "skip") return "applied";
-  const blocked = setupBlockReason(plan);
+  const blocked = setupBlockReason(plan, invocation);
   if (blocked) throw new Error(blocked);
 
   const operation = plan.action.kind === "create"
@@ -316,11 +335,18 @@ export async function applyGlobalSetupPlan(
   return "applied";
 }
 
-export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
+export function renderGlobalSetupPlan(
+  plan: GlobalSetupPlan,
+  invocation: NaviInvocationContext = TRUSTED_BARE_NAVI_INVOCATION,
+): string {
   const availability = pluginAvailability(plan.plugin);
-  const apply = plan.operation === "remove" ? "navi setup --remove --write" : "navi setup --write";
+  const apply = renderNaviCommand(
+    invocation,
+    plan.operation === "remove" ? ["setup", "--remove", "--write"] : ["setup", "--write"],
+  );
+  const recoveryCommand = renderNaviCommand(invocation, ["setup", "--write"]);
   const recovery = plan.transaction.kind === "recoverable-restore" || plan.transaction.kind === "recoverable-cleanup";
-  const blocked = setupBlockReason(plan);
+  const blocked = setupBlockReason(plan, invocation);
   return [
     `Navi setup configures global discovery at ${plan.agentsPath}; it does not initialize a project.`,
     ...(plan.requestedCodexHome === plan.codexHome
@@ -332,7 +358,9 @@ export function renderGlobalSetupPlan(plan: GlobalSetupPlan): string {
     `Transaction state: ${plan.transaction.kind}.`,
     "No files were written.",
     ...(recovery
-      ? ["Next step: run navi setup --write to recover the prior Navi setup transaction only, then rerun the original setup request."]
+      ? [recoveryCommand
+          ? `Next step: run ${recoveryCommand} to recover the prior Navi setup transaction only, then rerun the original setup request.`
+          : NO_VERIFIED_INVOCATION]
       : [
           `Plugin preflight: Navi is ${availability}.`,
           `Planned action: ${plan.action.kind} — ${plan.action.summary}`,
@@ -351,6 +379,7 @@ export async function runNaviSetupCli(
   args: string[],
   io: NaviSetupIo = DEFAULT_SETUP_IO,
   dependencies: NaviSetupDependencies = {},
+  invocation: NaviInvocationContext = TRUSTED_BARE_NAVI_INVOCATION,
 ): Promise<number> {
   if (args.some((arg) => arg !== "--write" && arg !== "--remove") || args.filter((arg) => arg === "--write").length > 1 || args.filter((arg) => arg === "--remove").length > 1) {
     io.stderr("Usage: navi setup [--write] [--remove]\n");
@@ -361,12 +390,15 @@ export async function runNaviSetupCli(
   try {
     const plan = await buildGlobalSetupPlan({ codexHome: dependencies.codexHome, write, remove }, dependencies);
     if (!write) {
-      io.stdout(`${renderGlobalSetupPlan(plan)}\n`);
-      return setupBlockReason(plan) ? 1 : 0;
+      io.stdout(`${renderGlobalSetupPlan(plan, invocation)}\n`);
+      return setupBlockReason(plan, invocation) ? 1 : 0;
     }
-    const result = await applyGlobalSetupPlan(plan);
+    const result = await applyGlobalSetupPlan(plan, invocation);
     if (result === "recovered") {
-      io.stdout("Recovered the prior Navi setup transaction. Rerun the requested setup command to continue.\n");
+      const rerunCommand = renderNaviCommand(invocation, ["setup"]);
+      io.stdout(rerunCommand
+        ? `Recovered the prior Navi setup transaction. Rerun with: ${rerunCommand}.\n`
+        : `Recovered the prior Navi setup transaction. ${NO_VERIFIED_INVOCATION}\n`);
       return 0;
     }
     io.stdout(`${plan.action.summary}\n`);

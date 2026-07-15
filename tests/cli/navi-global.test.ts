@@ -17,6 +17,7 @@ import {
   runNaviSetupCli,
   renderGlobalSetupPlan,
 } from "../../src/cli/navi-global";
+import type { NaviInvocationContext } from "../../src/cli/navi-invocation";
 
 const tempRoots: string[] = [];
 const enabledInstallation = {
@@ -35,6 +36,21 @@ const enabledInstallation = {
 };
 
 const missingInstallation = { kind: "missing" as const, raw: "" };
+
+const fallbackInvocation: NaviInvocationContext = {
+  cliRoot: "/Users/james/Codex Project/Navi",
+  entrypoint: "/Users/james/.hermes/node/bin/navi",
+  reachability: "fallback",
+  reason: "path-missing",
+  commandPrefix: ["/Users/james/.hermes/node/bin/navi"],
+};
+
+const unavailableInvocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
+  reachability: "unavailable",
+  reason: "unavailable",
+};
 
 async function makeTempCodexHome(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-global-"));
@@ -225,14 +241,16 @@ describe("Navi global setup", () => {
     }));
     const output: string[] = [];
 
-    const code = await runNaviSetupCli([], { stdout: (text) => output.push(text), stderr: (text) => output.push(text) }, {
-      codexHome,
-      inspectInstallation: async () => missingInstallation,
-    });
+    const code = await runNaviSetupCli(
+      [],
+      { stdout: (text) => output.push(text), stderr: (text) => output.push(text) },
+      { codexHome, inspectInstallation: async () => missingInstallation },
+      fallbackInvocation,
+    );
 
     expect(code).toBe(0);
     expect(output.join("")).toContain("recover the prior Navi setup transaction");
-    expect(output.join("")).toContain("navi setup --write");
+    expect(output.join("")).toContain("/Users/james/.hermes/node/bin/navi setup --write");
     expect(output.join("")).not.toContain("requires navi@navi-source");
     await expect(fs.access(path.join(codexHome, "AGENTS.md"))).rejects.toThrow();
 
@@ -519,6 +537,42 @@ describe("Navi global setup", () => {
     expect(code).toBe(0);
     expect(output.join("")).toContain("Apply with:");
     expect(output.join("")).toContain(applyCommand);
+  });
+
+  it.each([
+    ["install", [], "/Users/james/.hermes/node/bin/navi setup --write"],
+    ["remove", ["--remove"], "/Users/james/.hermes/node/bin/navi setup --remove --write"],
+  ])("renders a verified fallback for %s preview", async (_name, args, expected) => {
+    const codexHome = await makeTempCodexHome();
+    const output: string[] = [];
+    const code = await runNaviSetupCli(
+      args,
+      { stdout: (text) => output.push(text), stderr: (text) => output.push(text) },
+      { codexHome, inspectInstallation: async () => enabledInstallation },
+      fallbackInvocation,
+    );
+
+    expect(code).toBe(0);
+    expect(output.join("")).toContain(expected);
+    expect(output.join("")).not.toContain("Apply with: navi ");
+  });
+
+  it("blocks a preview when no verified invocation is available", async () => {
+    const codexHome = await makeTempCodexHome();
+    const output: string[] = [];
+
+    const code = await runNaviSetupCli(
+      [],
+      { stdout: (text) => output.push(text), stderr: (text) => output.push(text) },
+      { codexHome, inspectInstallation: async () => enabledInstallation },
+      unavailableInvocation,
+    );
+
+    expect(code).not.toBe(0);
+    expect(output.join("")).toContain(
+      "No verified Navi CLI invocation is available; rerun setup from the checked-out Navi source package.",
+    );
+    expect(output.join("")).not.toContain("Apply with:");
   });
 
   it("explains that removal leaves plugin, CLI, and project-local files intact", async () => {
