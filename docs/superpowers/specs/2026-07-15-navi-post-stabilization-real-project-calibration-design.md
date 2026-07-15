@@ -145,9 +145,10 @@ permission gate. Global source-alpha setup requires separate explicit user
 approval and must not be performed by this documentation task.
 
 After any later approved setup, verify that the loaded source corresponds to
-`main@2ff7e51` or a later explicitly accepted commit. Project-initialization
-warnings are allowed because the protocol intentionally keeps target projects
-read-only and uninitialized.
+`main@2ff7e51` or a later explicitly accepted commit. This protocol performs no
+project initialization or migration. Project-initialization warnings may
+reflect either Loopwright's uninitialized state or `sub_ag_ski`'s intentionally
+preserved legacy, non-current state.
 
 `npm ci` audit findings are separate Distribution & Trust debt. They do not
 enter this behavior calibration or trigger Release mode.
