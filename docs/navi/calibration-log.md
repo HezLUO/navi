@@ -5,6 +5,113 @@ Last updated: 2026-07-15
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
 
+## 2026-07-15 - Independent Validation Was Treated As A Main-Thread Wait
+
+Target project: Navi main supervising the source-alpha migration validation
+Mode: implementation / coordination supervision
+
+Prompt shape:
+
+After the implementation candidate reached `review-ready`, the user approved a
+fresh independent read-only Validation Thread. The Main Thread created that
+thread correctly, but then foregrounded repeated polling and said it would keep
+observing until a dependency request, finding, or integration decision appeared.
+The user asked why the Main Thread needed to wait.
+
+Observed behavior:
+
+Only the integration decision depended on the pending validation result. The
+candidate was frozen, the validator was read-only, and no current Main Thread
+design discussion needed that result. Nevertheless, the coordination behavior
+made validation monitoring the Main Thread's active foreground activity. This
+recreated a whole-session wait even though the three-role workflow was intended
+to let Main, Execution, and Validation advance independently inside their
+declared boundaries.
+
+The technically accurate state was:
+
+- the Validation Thread was reviewing the fixed candidate in the background;
+- merge or bounded remediation could not be decided before its result;
+- the Main Thread remained available for non-conflicting product design and
+  supervision; and
+- only a premise-changing validation finding needed to interrupt an active Main
+  Thread design segment immediately.
+
+Calibration judgment:
+
+This was an execution failure of the existing lane-level waiting, Priority Gate,
+and coordination rules. It does not justify another supervision concept. The
+error was treating active polling as the Main Thread's job instead of treating
+the validator's direct handoff event as the completion signal. A dependency may
+freeze one decision without freezing the whole conversation.
+
+Product follow-up:
+
+- After dispatching independent validation, state explicitly that its result
+  gates integration only, not the whole Main Thread.
+- Do not turn repeated polling into foreground Main Thread work when direct lane
+  handoff delivery is available.
+- Continue an already selected non-conflicting design or supervision topic. If
+  none has been selected, say that precisely rather than claiming the Main
+  Thread must wait.
+- Interrupt active design immediately only for a premise-changing result, safety
+  issue, or user decision that genuinely affects that work. Otherwise queue the
+  result until the current coherent design segment closes.
+- Preserve the user's role as decision owner without making the user either an
+  information bus or a manual scheduler for background threads.
+
+## 2026-07-15 - Calibration Gate Was Mistaken For No Valuable Parallel Work
+
+Target project: Navi main supervising the source-alpha migration worktree
+Mode: calibration / coordination supervision
+
+Prompt shape:
+
+After the execution lane resumed automatically, the main task said there was
+no higher-priority non-conflicting work worth starting before the calibration
+gate. The user asked what that statement meant.
+
+Observed behavior:
+
+The underlying constraint was valid: the main task should not start downstream
+implementation whose premise depends on the pending migration implementation,
+independent review, or real-project calibration. However, the response combined
+three different judgments into one overly broad claim:
+
+- no already-approved independent backlog item had been selected;
+- dependency-sensitive downstream implementation should remain gated; and
+- no valuable non-conflicting design or supervision work existed.
+
+Only the first two judgments were supported. The third was not. Independent
+product positioning, Distribution and Trust exploration, complexity review, or
+a newly raised user problem could still be discussed without changing the
+worktree scope or assuming that calibration had passed.
+
+Calibration judgment:
+
+This was an execution failure of the existing Priority Gate and Coordination
+rules, not evidence that Navi needs another supervision concept. A calibration
+gate blocks claims and implementation that depend on unobserved evidence; it
+does not make every design topic dependent, and it does not require the Main
+Thread to wait.
+
+The correct statement is narrower: there is no preselected higher-priority
+independent task to start automatically. The Main Thread remains available for
+concrete independent design or supervision, while dependent implementation
+stays gated.
+
+Product follow-up:
+
+- Do not use "no worthwhile non-conflicting work" when the actual fact is only
+  "no already-approved independent task has been selected."
+- State which downstream actions are calibration-dependent instead of treating
+  the calibration gate as a whole-session pause.
+- Keep independent design exploration available when it does not edit the same
+  scope, alter acceptance criteria, or assume the pending result.
+- Do not invent filler work merely to avoid waiting; name a concrete candidate
+  when one exists, otherwise state that the user may introduce an independent
+  issue without needing to keep the execution lane alive manually.
+
 ## 2026-07-15 - Missing Non-Conflicting Main Work Signal
 
 Target project: Navi main supervising the integration worktree
