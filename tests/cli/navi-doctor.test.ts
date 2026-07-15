@@ -7,10 +7,40 @@ import { buildNaviDoctorReport, renderNaviDoctorReport, runNaviDoctorCli } from 
 import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
 import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
 import { inspectNaviInstallation, type NaviInstallationStatus } from "../../src/cli/navi-installation";
+import type { NaviInvocationContext } from "../../src/cli/navi-invocation";
 import { NAVI_PROJECT_MAP_RELATIVE_PATH, REQUIRED_PROJECT_MAP_ANCHORS } from "../../src/cli/navi-project-map";
 import { LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION } from "../fixtures/navi-legacy-agents-blocks";
 
 const roots: string[] = [];
+const trustedInvocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "navi",
+  reachability: "pass",
+  reason: "bare",
+  commandPrefix: ["navi"],
+};
+const fallbackInvocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
+  reachability: "fallback",
+  reason: "path-missing",
+  commandPrefix: ["/Users/james/.hermes/node/bin/navi"],
+  pathBin: "/Users/james/.hermes/node/bin",
+};
+const directSourceFallbackInvocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
+  reachability: "fallback",
+  reason: "path-missing",
+  commandPrefix: ["/source/Navi/src/cli/navi-bin.mjs"],
+  pathBin: "/source/Navi/src/cli",
+};
+const unavailableInvocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
+  reachability: "unavailable",
+  reason: "unavailable",
+};
 async function fixture() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-doctor-")); roots.push(root);
   const codexHome = path.join(root, "codex-home"); const projectDir = path.join(root, "project"); const cliRoot = path.join(root, "cli"); const source = path.join(root, "installed-source");
@@ -70,6 +100,68 @@ async function snapshot(root: string): Promise<string[]> { const entries: string
 afterEach(async () => { await Promise.all(roots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true }))); });
 
 describe("Navi doctor", () => {
+  it("passes when bare Navi is trusted", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: trustedInvocation },
+    );
+
+    expect(report.checks.find((check) => check.id === "cli")).toMatchObject({
+      status: "pass",
+      summary: "Navi CLI is reachable as `navi`.",
+    });
+  });
+
+  it("warns without changing the migration stage when a verified fallback is available", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: fallbackInvocation },
+    );
+
+    expect(report.migrationStage).toBe("current-only-bootstrap-missing");
+    expect(report.checks.find((check) => check.id === "cli")).toMatchObject({ status: "warn" });
+    expect(report.nextAction).toContain("/Users/james/.hermes/node/bin/navi setup");
+    expect(report.nextAction).not.toContain("Run navi setup");
+    expect(renderNaviDoctorReport(report)).toContain(
+      "Using verified fallback: /Users/james/.hermes/node/bin/navi",
+    );
+    expect(renderNaviDoctorReport(report)).toContain(
+      "Optional: add the linked Navi bin directory to the PATH inherited by Codex and restart Codex before expecting bare `navi` to work.",
+    );
+  });
+
+  it("omits linked-bin PATH guidance for a direct canonical source fallback", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: directSourceFallbackInvocation },
+    );
+    const cli = report.checks.find((check) => check.id === "cli");
+
+    expect(cli).toMatchObject({ status: "warn" });
+    expect(cli?.details).toContain("Using verified fallback: /source/Navi/src/cli/navi-bin.mjs");
+    expect(cli?.details).not.toContain(
+      "Optional: add the linked Navi bin directory to the PATH inherited by Codex and restart Codex before expecting bare `navi` to work.",
+    );
+    expect(renderNaviDoctorReport(report)).not.toContain(
+      "Optional: add the linked Navi bin directory to the PATH inherited by Codex and restart Codex before expecting bare `navi` to work.",
+    );
+  });
+
+  it("fails command reachability without printing speculative Navi commands", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: unavailableInvocation },
+    );
+
+    expect(report.checks.find((check) => check.id === "cli")).toMatchObject({ status: "fail" });
+    expect(report.nextAction).toMatch(/verified Navi CLI entrypoint/i);
+    expect(report.nextAction).not.toMatch(/\bnavi (?:doctor|setup|init)\b/);
+  });
+
   it.each([
     ["not-initialized", "missing", "missing", "warn"],
     ["map-ready", "missing", "valid", "warn"],
@@ -101,6 +193,23 @@ describe("Navi doctor", () => {
     expect(check?.summary).toMatch(/valid confirmed Project Map.*trigger/i);
     expect(check?.repair).toMatch(/navi init.*preview.*trigger activation/i);
     expect(check?.repair).not.toMatch(/form|regenerate|replace.*Map/i);
+  });
+
+  it("uses the verified fallback to repair a confirmed Map with a missing trigger", async () => {
+    const f = await fixture();
+    const mapPath = path.join(f.projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+    await fs.mkdir(path.dirname(mapPath), { recursive: true });
+    await fs.writeFile(mapPath, confirmedMap());
+    await fs.writeFile(path.join(f.codexHome, "AGENTS.md"), renderGlobalBootstrapBlock());
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: fallbackInvocation },
+    );
+
+    expect(report.checks.find((check) => check.id === "project-init")?.repair).toContain(
+      "/Users/james/.hermes/node/bin/navi init",
+    );
+    expect(report.nextAction).toContain("/Users/james/.hermes/node/bin/navi init");
   });
 
   it("gives a recognized-version-1 invalid Map a corrected-candidate repair preview", async () => {
@@ -435,10 +544,14 @@ describe("Navi doctor", () => {
     const transaction = path.join(f.codexHome, ".AGENTS.md.navi-transaction-test"); await fs.mkdir(transaction, { mode: 0o700 });
     await fs.writeFile(path.join(transaction, "backup"), "old"); await fs.writeFile(path.join(transaction, "stage"), "desired");
     await fs.writeFile(path.join(transaction, "manifest.json"), JSON.stringify({ version: 1, id: "test", pid: 99, operation: "modify", target: "AGENTS.md", expectedHash: createHash("sha256").update("old").digest("hex"), desiredHash: createHash("sha256").update("desired").digest("hex"), stage: "backed-up", createdAt: new Date().toISOString() }));
-    const recoverable = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
+    const recoverable = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: fallbackInvocation },
+    );
     expect(recoverable.checks.find((check) => check.id === "transaction")?.status).toBe("fail");
-    expect(recoverable.checks.find((check) => check.id === "transaction")?.repair).toContain("navi setup --write");
-    expect(recoverable.nextAction).toContain("navi setup --write");
+    expect(recoverable.checks.find((check) => check.id === "transaction")?.repair).toContain("/Users/james/.hermes/node/bin/navi setup --write");
+    expect(recoverable.nextAction).toContain("/Users/james/.hermes/node/bin/navi setup --write");
+    expect(recoverable.nextAction).toBe(recoverable.checks.find((check) => check.id === "transaction")?.repair);
     expect(renderNaviDoctorReport(recoverable).match(/Next action:/g)).toHaveLength(1);
     await fs.rm(transaction, { recursive: true }); await fs.writeFile(path.join(f.codexHome, ".AGENTS.md.navi-lock"), "lock");
     const live = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
