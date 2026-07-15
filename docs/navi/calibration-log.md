@@ -1,9 +1,52 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-15 - Missing Non-Conflicting Main Work Signal
+
+Target project: Navi main supervising the integration worktree
+Mode: calibration / coordination supervision
+
+Prompt shape:
+
+After the user authorized project-local `npm ci`, the main task sent the
+permission directly to the worktree and correctly stated that no user action
+was needed for that lane.
+
+Observed behavior:
+
+The handoff omitted that the Main Thread could continue useful non-conflicting
+design or supervision while the worktree ran. The user had to ask why that
+recommendation was missing. A later handoff said the Main Thread could handle
+"other independent product topics" but still named no concrete topic,
+priority, boundary, or next decision, so the user correctly found it unclear.
+
+Calibration judgment:
+
+This was an execution failure of the existing Coordination and Quietness
+rules, not evidence that Navi needs another product concept. "No user action
+for this lane" was incorrectly allowed to imply "no useful Main Thread
+action." Generic permission to do "other independent work" also provides no
+control gain when it leaves the work unidentified.
+
+In this case, the highest-priority non-conflicting candidate was the Current
+Navi global activation and discovery gap revealed by `navi doctor`.
+Supervised Delivery Loop implementation planning and post-stabilization
+calibration execution were not independent: they remained gated by the pending
+documentation, integration, and setup results.
+
+Product follow-up:
+
+- State that the lane will resume automatically.
+- When useful non-conflicting work exists, name the highest-priority concrete
+  candidate and explain why it does not conflict.
+- When no worthwhile candidate exists, say so directly instead of inventing
+  filler or using a vague placeholder.
+- Keep this as a real coordination-calibration sample. It does not count toward
+  the two post-stabilization target-project sessions.
 
 ## 2026-07-14 - No-Action Lane Wait Still Triggered A Continue Reflex
 
