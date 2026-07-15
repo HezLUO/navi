@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { buildNaviDoctorReport, renderNaviDoctorReport, runNaviDoctorCli } from "../../src/cli/navi-doctor";
 import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
 import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
-import { type NaviInstallationStatus } from "../../src/cli/navi-installation";
+import { inspectNaviInstallation, type NaviInstallationStatus } from "../../src/cli/navi-installation";
 import { NAVI_PROJECT_MAP_RELATIVE_PATH, REQUIRED_PROJECT_MAP_ANCHORS } from "../../src/cli/navi-project-map";
 import { LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION } from "../fixtures/navi-legacy-agents-blocks";
 
@@ -331,6 +331,30 @@ describe("Navi doctor", () => {
     expect(check?.repair).toContain(repair);
     expect(check?.summary).not.toContain("legacy plugin");
     expect(check?.repair).not.toContain("along-working-thread");
+  });
+
+  it("removes the alternate selector when authoritative and alternate Current Navi coexist", async () => {
+    const f = await fixture();
+    const installation = await inspectNaviInstallation(async () => ({
+      code: 0,
+      stdout: [
+        "navi@navi-source  Installed, Enabled  0.1.0  /source/plugins/navi",
+        "navi@other  Installed, Enabled  0.1.0  /alternate/plugins/navi",
+      ].join("\n"),
+      stderr: "",
+    }));
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => installation },
+    );
+
+    expect(report.nextAction).toContain("Remove the non-authoritative Navi selector navi@other");
+    expect(report.nextAction).not.toContain("Remove the non-authoritative Navi selector navi@navi-source");
+    expect(installation).toMatchObject({
+      kind: "conflict",
+      conflictReason: "non-authoritative-current",
+      current: { selector: "navi@other" },
+    });
   });
 
   it("uses init's managed-block recognition instead of accepting damaged project markers", async () => {

@@ -103,7 +103,7 @@ export async function inspectNaviInstallation(
     return {
       kind: "conflict",
       conflictReason: "non-authoritative-current",
-      current,
+      current: alternateNaviRows[0],
       ...(legacy ? { legacy } : {}),
       raw,
       diagnostic: `Navi is installed from a non-authoritative selector: ${alternateNaviRows.map((row) => row.selector).join(", ")}.`,
