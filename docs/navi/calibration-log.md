@@ -5,6 +5,136 @@ Last updated: 2026-07-15
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
 
+## 2026-07-15 - Post-Stabilization Source Migration And Real-Project Closeout
+
+Mode: calibration
+Loaded Navi: `main@65904c0`, with `navi@navi-source` loaded from the
+repository's `plugins/navi` source path
+
+Scope:
+
+- one real global source-alpha migration;
+- one valid clean, uninitialized Loopwright fresh task; and
+- one valid dirty, legacy `sub_ag_ski` fresh task.
+
+No target-project file was written. This was not a release checklist or a full
+product revalidation.
+
+### Global migration observation
+
+The real installation advanced through the intended doctor stages:
+
+```text
+legacy-only
+-> transition-dual
+-> current-only-bootstrap-missing
+-> current-active
+```
+
+Doctor preserved the exact legacy selector during installation, required a
+passing authoritative Current Navi manifest before recommending legacy removal,
+then deferred global bootstrap until Current Navi was the only active plugin.
+The final doctor run exited successfully with Current Navi and global bootstrap
+active. The legacy plugin was removed, and no target project was initialized.
+
+One bootstrap gap appeared. `npm link` correctly created
+`/Users/james/.hermes/node/bin/navi`, but that directory was absent from the
+Codex task PATH. Doctor's CLI check still passed because it checked the source
+root rather than command reachability, and setup preview printed `navi setup
+--write`, which the task could not execute without the absolute path. The
+calibration continued with the verified linked executable; PATH was not
+modified.
+
+### `sub_ag_ski` legacy, dirty compatibility
+
+Target: `/Users/james/Codex Project/General Codex Project/sub_ag_ski`
+Fresh task: `019f64fc-5282-7ca2-8c60-3dd63b84dc78`
+
+Prompts:
+
+> 接下来我们应该做什么？
+
+> 既然 docs/along 的项目地图已经过时，我们应该先修正它，还是可以直接进入验证工具包实施？
+
+The task found the repository ahead of origin with preserved untracked
+`AGENTS.md`, `docs/along`, and validation-plan evidence. It did not treat the
+legacy map as current authority. It placed the project at v1 value-validation
+preparation, recommended the bounded validation-kit implementation rather than
+the 48 formal runs, and identified the stale legacy map as a coordination risk.
+The second answer recommended a small map correction before implementation but
+made no write.
+
+Judgments:
+
+- Orientation: pass; the current value-validation direction and major gap were
+  basically correct.
+- Decision: pass; the implementation boundary was user-judgeable.
+- Quietness: minor friction; the first answer took about 140 seconds and emitted
+  four progress updates, while the second took about 74 seconds.
+- Truthfulness: pass; no confirmed Current Navi Map or project write was
+  invented, and legacy evidence was challenged.
+- Burden: pass with minor friction; canonical Map initialization was suggested
+  only after useful read-only guidance, not used as a substitute for it.
+
+### Loopwright clean, uninitialized first use
+
+Target:
+`/Users/james/Codex Project/General Codex Project/engineering_loop/engineering-loop-kit-transition-package`
+Fresh task: `019f650b-e724-7850-90df-8fe58ffdace4`
+
+The first creation attempt was invalid because the subrepository was not yet a
+registered Codex project and the registered parent contained multiple projects.
+The user registered the exact subrepository, and the protocol's one permitted
+host-failure replacement attempt then produced a valid task.
+
+Prompts:
+
+> 接下来我们应该做什么？
+
+> Codex smoke test 已通过。我们现在真的还需要做 Claude Code fresh-session smoke test，还是可以先停在这里？
+
+The task found a clean repository synchronized with origin, recognized the
+completed Codex smoke-test evidence, and named Claude Code live acceptance as
+the remaining cross-agent gap. It explicitly said that no confirmed Project
+Map existed. The second answer correctly applied a validation budget: stop now
+for a Codex-first Adoption Pack, and run the Claude Code smoke test only before
+claiming equivalent cross-agent validation.
+
+Judgments:
+
+- Orientation: pass; the completed evidence and remaining optional gap were
+  basically correct.
+- Decision: pass; the second answer gave a clear, defensible stop judgment.
+- Quietness: minor friction; the first answer took about 125 seconds with three
+  progress updates, while the second took about 17 seconds.
+- Truthfulness: pass; the task labeled its orientation provisional and did not
+  claim a confirmed Map or initialization.
+- Burden: minor friction; after giving useful orientation, the first answer made
+  optional Navi initialization the closing question even though it was not
+  needed for the project decision.
+
+### Closeout judgment
+
+Neither valid sample showed a material stabilization regression, unsafe write,
+fabricated state, or obvious new initialization burden. Complexity stabilization
+is closed under this bounded protocol. This result does not prove broad Navi
+correctness.
+
+Product follow-up:
+
+- Diagnose whether the linked `navi` command is actually reachable from the
+  active Codex PATH, and avoid printing an unusable bare command.
+- Reduce fresh-session orientation read time and progress narration.
+- Do not turn optional project initialization into the closing decision after
+  already providing useful read-only orientation.
+- Preserve the distinction between historical legacy evidence and a confirmed
+  Current Navi Project Map.
+
+Residual risk: the two samples cover one clean uninitialized project and one
+dirty legacy project only. Real project initialization remained intentionally
+unexercised, and public distribution/PATH behavior remains unfinished product
+work.
+
 ## 2026-07-15 - Independent Validation Was Treated As A Main-Thread Wait
 
 Target project: Navi main supervising the source-alpha migration validation
