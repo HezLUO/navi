@@ -216,6 +216,43 @@ describe("Navi doctor", () => {
     expect(renderNaviDoctorReport(dualReport)).not.toContain("navi init");
   });
 
+  it.each(["distinct", "duplicate"])(
+    "keeps %s multiple legacy rows out of the verified dual transition",
+    async (name) => {
+      const f = await fixture();
+      const legacyRows = name === "distinct"
+        ? [
+            "along-working-thread@personal  Installed, Enabled  0.1.0  /legacy/personal",
+            "along-working-thread@other  Installed, Enabled  0.1.0  /legacy/other",
+          ]
+        : [
+            "along-working-thread@personal  Installed, Enabled  0.1.0  /legacy/personal",
+            "along-working-thread@personal  Installed, Enabled  0.1.0  /legacy/personal",
+          ];
+      const installation = await inspectNaviInstallation(async () => ({
+        code: 0,
+        stdout: [
+          `navi@navi-source  Installed, Enabled  0.1.0  ${f.source}`,
+          ...legacyRows,
+        ].join("\n"),
+        stderr: "",
+      }));
+      const report = await buildNaviDoctorReport(
+        { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+        { inspectInstallation: async () => installation },
+      );
+
+      expect(installation).toMatchObject({
+        kind: "conflict",
+        conflictReason: "ambiguous-legacy",
+      });
+      expect(installation.legacy).toBeUndefined();
+      expect(report.migrationStage).toBe("dual-invalid");
+      expect(report.nextAction).toMatch(/legacy.*ambiguous|exactly one.*legacy/i);
+      expect(report.nextAction).not.toContain("codex plugin remove");
+    },
+  );
+
   it.each(["missing source path", "alternate current", "duplicate current"])(
     "keeps legacy installed for %s",
     async (name) => {

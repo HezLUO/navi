@@ -74,6 +74,9 @@ function legacyRemovalAction(legacySelector: string): string {
 }
 
 function selectorConflictRepair(status: NaviInstallationStatus): string {
+  if (status.conflictReason === "ambiguous-legacy") {
+    return "Keep all legacy plugin installations unchanged. Resolve the ambiguous legacy plugin rows so exactly one identified legacy selector remains, then rerun navi doctor.";
+  }
   if (status.conflictReason === "non-authoritative-current") {
     const selector = status.current?.selector;
     return selector

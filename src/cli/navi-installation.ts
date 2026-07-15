@@ -17,7 +17,8 @@ export type NaviInstallationKind = "current" | "legacy" | "conflict" | "missing"
 export type NaviInstallationConflictReason =
   | "dual-generation"
   | "non-authoritative-current"
-  | "duplicate-current";
+  | "duplicate-current"
+  | "ambiguous-legacy";
 
 export interface NaviInstallationStatus {
   kind: NaviInstallationKind;
@@ -97,8 +98,18 @@ export async function inspectNaviInstallation(
   const exactCurrentRows = naviRows.filter((row) => row.selector === CURRENT_SELECTOR);
   const alternateNaviRows = naviRows.filter((row) => row.selector !== CURRENT_SELECTOR);
   const current = exactCurrentRows[0] ?? alternateNaviRows[0];
-  const legacy = rows.find((row) => row.pluginName === "along-working-thread");
+  const legacyRows = rows.filter((row) => row.pluginName === "along-working-thread");
+  const legacy = legacyRows[0];
 
+  if (legacyRows.length > 1) {
+    return {
+      kind: "conflict",
+      conflictReason: "ambiguous-legacy",
+      ...(current ? { current } : {}),
+      raw,
+      diagnostic: `Legacy plugin identity is ambiguous because multiple rows are installed: ${legacyRows.map((row) => row.selector).join(", ")}.`,
+    };
+  }
   if (alternateNaviRows.length > 0) {
     return {
       kind: "conflict",

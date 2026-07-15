@@ -67,6 +67,21 @@ describe("Navi plugin installation inspection", () => {
   });
 
   it.each([
+    ["distinct", `${CURRENT}\n${LEGACY}\nalong-working-thread@other  Installed, Enabled  0.1.0  /legacy/other`],
+    ["duplicate", `${CURRENT}\n${LEGACY}\n${LEGACY}`],
+  ])("classifies %s multiple legacy rows as ambiguous without selecting one", async (_name, stdout) => {
+    const result = await inspectNaviInstallation(commandResult(stdout));
+
+    expect(result).toMatchObject({
+      kind: "conflict",
+      conflictReason: "ambiguous-legacy",
+      current: { selector: "navi@navi-source" },
+      diagnostic: expect.stringMatching(/legacy.*ambiguous/i),
+    });
+    expect(result.legacy).toBeUndefined();
+  });
+
+  it.each([
     ["current", CURRENT, "current", "navi@navi-source"],
     ["legacy", LEGACY, "legacy", "along-working-thread@personal"],
     ["both", `${CURRENT}\n${LEGACY}`, "conflict", "navi@navi-source"],
