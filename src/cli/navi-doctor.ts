@@ -196,7 +196,7 @@ export async function runNaviDoctorCli(args: string[], io: NaviDoctorIo = DEFAUL
 
 async function buildCliCheck(cliRoot: string, invocation: NaviInvocationContext): Promise<DoctorCheck> {
   if (!await isDirectory(cliRoot)) {
-    return { id: "cli", status: "fail", summary: "Navi CLI root is unavailable.", repair: "Run navi from a checked-out Navi source package." };
+    return { id: "cli", status: "fail", summary: "Navi CLI root is unavailable.", repair: "Use a checked-out Navi source package to establish a verified Navi CLI entrypoint." };
   }
   switch (invocation.reachability) {
     case "pass":

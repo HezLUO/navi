@@ -127,6 +127,83 @@ describe("Navi invocation resolution", () => {
     await expect(fs.stat(executionMarker)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
+  it.each(["directory", "symlink-to-directory"] as const)(
+    "does not count a %s named navi as a PATH candidate",
+    async (kind) => {
+      const f = await fixture();
+      const bin = path.join(f.root, "bin");
+      const candidate = path.join(bin, "navi");
+      await fs.mkdir(bin);
+      if (kind === "directory") {
+        await fs.mkdir(candidate);
+      } else {
+        const target = path.join(f.root, "navi-directory");
+        await fs.mkdir(target);
+        await fs.symlink(target, candidate);
+      }
+
+      const context = await resolveNaviInvocationContext({
+        cliRoot: f.cliRoot,
+        launchedEntrypoint: f.wrapper,
+        envPath: bin,
+        cwd: f.root,
+      });
+
+      expect(context).toMatchObject({
+        reachability: "fallback",
+        reason: "path-missing",
+        commandPrefix: [f.wrapper],
+      });
+      expect(context.pathCandidate).toBeUndefined();
+    },
+  );
+
+  it("accepts a launched symlink to the regular executable wrapper", async () => {
+    const f = await fixture();
+    const launched = path.join(f.root, "launched-navi");
+    await fs.symlink(f.wrapper, launched);
+
+    const context = await resolveNaviInvocationContext({
+      cliRoot: f.cliRoot,
+      launchedEntrypoint: launched,
+      cwd: f.root,
+    });
+
+    expect(context).toMatchObject({
+      reachability: "fallback",
+      reason: "path-missing",
+      commandPrefix: [launched],
+    });
+  });
+
+  it.each(["directory", "symlink-to-directory"] as const)(
+    "rejects a %s as the expected wrapper and launched entrypoint",
+    async (kind) => {
+      const f = await fixture();
+      await fs.rm(f.wrapper);
+      if (kind === "directory") {
+        await fs.mkdir(f.wrapper);
+      } else {
+        const target = path.join(f.root, "wrapper-directory");
+        await fs.mkdir(target);
+        await fs.symlink(target, f.wrapper);
+      }
+
+      const context = await resolveNaviInvocationContext({
+        cliRoot: f.cliRoot,
+        launchedEntrypoint: f.wrapper,
+        envPath: path.join(f.root, "missing-bin"),
+        cwd: f.root,
+      });
+
+      expect(context).toMatchObject({
+        reachability: "unavailable",
+        reason: "unavailable",
+        commandPrefix: undefined,
+      });
+    },
+  );
+
   it("uses the verified executable source npm invocation when npm is reachable on the injected PATH", async () => {
     const f = await fixture();
     const bin = path.join(f.root, "bin");
@@ -152,6 +229,101 @@ describe("Navi invocation resolution", () => {
     expect(renderNaviCommand(context, ["setup", "--write"])).toBe("npm run navi -- setup --write");
     await expect(fs.stat(executionMarker)).rejects.toMatchObject({ code: "ENOENT" });
   });
+
+  it("accepts executable symlinks for both npm and the source wrapper", async () => {
+    const f = await fixture();
+    const sourceTarget = path.join(f.root, "source-wrapper");
+    const bin = path.join(f.root, "bin");
+    const npmTarget = path.join(f.root, "npm-executable");
+    await fs.rm(f.wrapper);
+    await fs.writeFile(sourceTarget, "#!/usr/bin/env node\n");
+    await fs.chmod(sourceTarget, 0o755);
+    await fs.symlink(sourceTarget, f.wrapper);
+    await fs.mkdir(bin);
+    await fs.writeFile(npmTarget, "#!/bin/sh\nexit 0\n");
+    await fs.chmod(npmTarget, 0o755);
+    await fs.symlink(npmTarget, path.join(bin, "npm"));
+
+    const context = await resolveNaviInvocationContext({
+      cliRoot: f.cliRoot,
+      launchedEntrypoint: path.join(f.root, "unknown"),
+      envPath: bin,
+      cwd: f.cliRoot,
+      npmLifecycleEvent: "navi",
+    });
+
+    expect(context).toMatchObject({
+      entrypoint: await fs.realpath(sourceTarget),
+      reachability: "fallback",
+      reason: "path-missing",
+      commandPrefix: ["npm", "run", "navi", "--"],
+    });
+  });
+
+  it.each(["directory", "symlink-to-directory"] as const)(
+    "does not count a %s named npm as executable PATH evidence",
+    async (kind) => {
+      const f = await fixture();
+      const bin = path.join(f.root, "bin");
+      const candidate = path.join(bin, "npm");
+      await fs.mkdir(bin);
+      if (kind === "directory") {
+        await fs.mkdir(candidate);
+      } else {
+        const target = path.join(f.root, "npm-directory");
+        await fs.mkdir(target);
+        await fs.symlink(target, candidate);
+      }
+
+      const context = await resolveNaviInvocationContext({
+        cliRoot: f.cliRoot,
+        launchedEntrypoint: path.join(f.root, "unknown"),
+        envPath: bin,
+        cwd: f.cliRoot,
+        npmLifecycleEvent: "navi",
+      });
+
+      expect(context).toMatchObject({
+        reachability: "unavailable",
+        reason: "unavailable",
+        commandPrefix: undefined,
+      });
+    },
+  );
+
+  it.each(["directory", "symlink-to-directory"] as const)(
+    "rejects a %s as the executable source wrapper",
+    async (kind) => {
+      const f = await fixture();
+      const bin = path.join(f.root, "bin");
+      const npm = path.join(bin, "npm");
+      await fs.rm(f.wrapper);
+      if (kind === "directory") {
+        await fs.mkdir(f.wrapper);
+      } else {
+        const target = path.join(f.root, "source-directory");
+        await fs.mkdir(target);
+        await fs.symlink(target, f.wrapper);
+      }
+      await fs.mkdir(bin);
+      await fs.writeFile(npm, "#!/bin/sh\nexit 0\n");
+      await fs.chmod(npm, 0o755);
+
+      const context = await resolveNaviInvocationContext({
+        cliRoot: f.cliRoot,
+        launchedEntrypoint: path.join(f.root, "unknown"),
+        envPath: bin,
+        cwd: f.cliRoot,
+        npmLifecycleEvent: "navi",
+      });
+
+      expect(context).toMatchObject({
+        reachability: "unavailable",
+        reason: "unavailable",
+        commandPrefix: undefined,
+      });
+    },
+  );
 
   it.each([
     ["empty", ""],

@@ -27,12 +27,14 @@ export interface NaviInvocationDependencies {
   access: typeof fs.access;
   realpath: typeof fs.realpath;
   readFile: typeof fs.readFile;
+  stat: typeof fs.stat;
 }
 
 const DEFAULT_DEPENDENCIES: NaviInvocationDependencies = {
   access: fs.access,
   realpath: fs.realpath,
   readFile: fs.readFile,
+  stat: fs.stat,
 };
 
 export const TRUSTED_BARE_NAVI_INVOCATION: NaviInvocationContext = {
@@ -49,7 +51,7 @@ export async function resolveNaviInvocationContext(
 ): Promise<NaviInvocationContext> {
   const cliRoot = path.resolve(options.cliRoot);
   const expectedEntrypoint = path.join(cliRoot, "src/cli/navi-bin.mjs");
-  const canonicalEntrypoint = await realpathOptional(expectedEntrypoint, dependencies);
+  const canonicalEntrypoint = await executableRealpathOptional(expectedEntrypoint, dependencies);
   if (!canonicalEntrypoint) {
     return {
       cliRoot,
@@ -62,7 +64,7 @@ export async function resolveNaviInvocationContext(
   const pathCandidate = await firstExecutableOnPath(options.envPath, options.cwd, "navi", dependencies);
   const pathMatches = pathCandidate === undefined
     ? false
-    : await resolvesTo(pathCandidate, canonicalEntrypoint, dependencies);
+    : await executableRealpathOptional(pathCandidate, dependencies) === canonicalEntrypoint;
 
   if (pathCandidate !== undefined && pathMatches) {
     return {
@@ -77,7 +79,7 @@ export async function resolveNaviInvocationContext(
   }
 
   const launched = path.resolve(options.launchedEntrypoint);
-  if (await isExecutable(launched, dependencies) && await resolvesTo(launched, canonicalEntrypoint, dependencies)) {
+  if (await executableRealpathOptional(launched, dependencies) === canonicalEntrypoint) {
     return {
       cliRoot,
       entrypoint: canonicalEntrypoint,
@@ -139,32 +141,17 @@ async function firstExecutableOnPath(
 }
 
 async function isExecutable(candidate: string, dependencies: NaviInvocationDependencies): Promise<boolean> {
-  try {
-    await dependencies.access(candidate, constants.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
+  return await executableRealpathOptional(candidate, dependencies) !== undefined;
 }
 
-async function resolvesTo(
-  candidate: string,
-  expected: string,
-  dependencies: NaviInvocationDependencies,
-): Promise<boolean> {
-  try {
-    return await dependencies.realpath(candidate) === expected;
-  } catch {
-    return false;
-  }
-}
-
-async function realpathOptional(
+async function executableRealpathOptional(
   candidate: string,
   dependencies: NaviInvocationDependencies,
 ): Promise<string | undefined> {
   try {
-    return await dependencies.realpath(candidate);
+    await dependencies.access(candidate, constants.X_OK);
+    const canonical = await dependencies.realpath(candidate);
+    return (await dependencies.stat(canonical)).isFile() ? canonical : undefined;
   } catch {
     return undefined;
   }

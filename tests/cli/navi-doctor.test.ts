@@ -185,6 +185,28 @@ describe("Navi doctor", () => {
     expect(report.nextAction).not.toMatch(/\bnavi (?:doctor|setup|init)\b/);
   });
 
+  it("uses non-command guidance when the CLI root is missing", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      {
+        codexHome: f.codexHome,
+        projectDir: f.projectDir,
+        cliRoot: path.join(f.root, "missing-cli-root"),
+      },
+      { inspectInstallation: async () => current(f.source), invocation: unavailableInvocation },
+    );
+    const cli = report.checks.find((check) => check.id === "cli");
+    const rendered = renderNaviDoctorReport(report);
+
+    expect(cli).toMatchObject({
+      status: "fail",
+      repair: "Use a checked-out Navi source package to establish a verified Navi CLI entrypoint.",
+    });
+    expect(report.nextAction).toBe(cli?.repair);
+    expect(rendered).not.toMatch(/\bRun navi\b/i);
+    expect(rendered).not.toMatch(/\bnavi (?:doctor|setup|init)\b/);
+  });
+
   it.each([
     ["not-initialized", "missing", "missing", "warn"],
     ["map-ready", "missing", "valid", "warn"],
