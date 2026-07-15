@@ -8,6 +8,8 @@ Complexity stabilization is the current phase. The next gate is two or three rea
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-15-navi-source-alpha-legacy-migration-design.md`
+- `docs/superpowers/plans/2026-07-15-navi-source-alpha-legacy-migration.md`
 - `docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`
 - `docs/superpowers/specs/2026-07-14-navi-complexity-stabilization-design.md`
 - `docs/superpowers/specs/2026-07-13-navi-confirmed-project-map-init-journey-design.md`

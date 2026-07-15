@@ -66,6 +66,33 @@ describe("Current Navi repository surface", () => {
     expect(active).toContain("`docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`");
   });
 
+  it("separates global legacy cutover from project-local migration", async () => {
+    const [readme, chineseReadme, pluginReadme, projectInit, designHistory] = await Promise.all([
+      fs.readFile(path.join(root, "README.md"), "utf8"),
+      fs.readFile(path.join(root, "README.zh-CN.md"), "utf8"),
+      fs.readFile(path.join(root, "plugins/navi/README.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/project-init.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+    ]);
+
+    for (const text of [readme, pluginReadme]) {
+      expect(text).toContain("short dual-install transition");
+      expect(text).toContain("codex plugin remove <exact legacy selector>");
+      expect(text).toContain("does not scan or initialize target projects");
+      expect(text).toContain("next use of a project with a recognized legacy trigger");
+      expect(text).not.toMatch(/preview an exact project trigger upgrade[\s\S]*validate the target project[\s\S]*remove the exact legacy selector/i);
+    }
+
+    expect(chineseReadme).toContain("短暂 dual-install 过渡");
+    expect(chineseReadme).toContain("codex plugin remove <doctor 报告的精确 legacy selector>");
+    expect(chineseReadme).toContain("不会扫描或初始化目标项目");
+    expect(projectInit).toContain("Global migration is not a project-initialization prerequisite");
+    expect(projectInit).toContain("fingerprint-bound");
+    const active = designHistory.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+    expect(active).toContain("docs/superpowers/specs/2026-07-15-navi-source-alpha-legacy-migration-design.md");
+    expect(active).toContain("docs/superpowers/plans/2026-07-15-navi-source-alpha-legacy-migration.md");
+  });
+
   it("keeps active tests and fixtures independent from Historical Along docs", async () => {
     for (const relativeDir of ["tests/cli", "tests/fixtures", "tests/package", "tests/skills"]) {
       const activeTestFiles = await listFiles(path.join(root, relativeDir));

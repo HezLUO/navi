@@ -63,7 +63,9 @@ navi init --map-file <confirmed-map-candidate> --expect-plan <fingerprint> --wri
 
 ### Legacy migration 和 removal
 
-如果 `navi doctor` 报告 legacy-only installation 或 dual-install conflict，不要自动删除或迁移 plugin。两种诊断都使用同一顺序：安装并启用 `navi@navi-source`；用 `navi init` 预览精确的项目 trigger 升级并记录 fingerprint；获得批准后运行 `navi init --expect-plan <fingerprint> --write`；验证目标项目；显式删除 doctor 报告的精确 `legacy selector`；最后重新运行 `navi doctor` 和 `navi setup`。
+如果 `navi doctor` 报告 legacy-only installation，先保留 doctor 报告的精确 legacy selector，再安装 `navi@navi-source`。在短暂 dual-install 过渡中，doctor 仍把安装状态视为不健康，但会只读检查权威 Current Navi selector、source path 和 manifest。检查通过后，运行 `codex plugin remove <doctor 报告的精确 legacy selector>`，重新运行 `navi doctor`，再预览并明确批准 `navi setup --write`。不要把两个 plugin 长期并存当作兼容模式。
+
+这次全局切换不会扫描或初始化目标项目。之后第一次进入带有 recognized legacy trigger 的项目时，Current Navi 可以提供现有的 fingerprint-bound `navi init` 升级。拒绝项目级升级不会撤销全局激活，也不应在同一会话中反复提醒。
 
 如需自行移除这个 source-alpha setup：
 

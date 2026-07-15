@@ -300,27 +300,57 @@ describe("Navi capability truthfulness", () => {
     expect(packageReadme).not.toContain("Navi is the current V1 product surface of Along.");
   });
 
-  it("gives every active README the same ordered legacy migration sequence", async () => {
+  it("gives every active README the same global-first legacy migration sequence", async () => {
     const readmes = await Promise.all([
-      readRepoText("README.md").then((text) => ({ text, marker: "Use this exact sequence", targetValidation: "validate the target project" })),
-      readRepoText("README.zh-CN.md").then((text) => ({ text, marker: "两种诊断都使用同一顺序", targetValidation: "验证目标项目" })),
-      readRepoText("plugins/navi/README.md").then((text) => ({ text, marker: "Use this exact sequence", targetValidation: "validate the target project" })),
+      readRepoText("README.md").then((text) => ({
+        text,
+        marker: "If `navi doctor` reports a legacy-only installation",
+        migrationActions: [
+          "navi@navi-source",
+          "short dual-install transition",
+          "codex plugin remove <exact legacy selector>",
+          "navi doctor",
+          "navi setup --write",
+          "does not scan or initialize target projects",
+          "next use of a project with a recognized legacy trigger",
+          "fingerprint-bound `navi init` upgrade",
+        ],
+      })),
+      readRepoText("README.zh-CN.md").then((text) => ({
+        text,
+        marker: "如果 `navi doctor` 报告 legacy-only installation",
+        migrationActions: [
+          "navi@navi-source",
+          "短暂 dual-install 过渡",
+          "codex plugin remove <doctor 报告的精确 legacy selector>",
+          "navi doctor",
+          "navi setup --write",
+          "不会扫描或初始化目标项目",
+          "之后第一次进入带有 recognized legacy trigger 的项目时",
+          "fingerprint-bound `navi init` 升级",
+        ],
+      })),
+      readRepoText("plugins/navi/README.md").then((text) => ({
+        text,
+        marker: "If `navi doctor` reports a legacy-only installation",
+        migrationActions: [
+          "navi@navi-source",
+          "short dual-install transition",
+          "codex plugin remove <exact legacy selector>",
+          "navi doctor",
+          "navi setup --write",
+          "does not scan or initialize target projects",
+          "next use of a project with a recognized legacy trigger",
+          "fingerprint-bound `navi init` upgrade",
+        ],
+      })),
     ]);
 
-    for (const { text, marker, targetValidation } of readmes) {
+    for (const { text, marker, migrationActions } of readmes) {
       const readme = text.slice(text.indexOf(marker));
-      const migrationActions = [
-        "navi@navi-source",
-        "navi init",
-        "navi init --expect-plan <fingerprint> --write",
-        targetValidation,
-        "legacy selector",
-        "navi doctor",
-        "navi setup",
-      ];
       let priorIndex = -1;
       for (const action of migrationActions) {
-        const index = readme.indexOf(action);
+        const index = readme.indexOf(action, priorIndex + 1);
         expect(index).toBeGreaterThan(priorIndex);
         priorIndex = index;
       }

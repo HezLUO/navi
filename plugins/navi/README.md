@@ -179,7 +179,9 @@ The bootstrap block is an always-visible routing layer, not full Navi behavior. 
 
 ### Legacy migration and removal
 
-`navi doctor` identifies legacy-only and dual-install states. It does not install, remove, or migrate a global plugin. Use this exact sequence for either diagnosis: install and enable `navi@navi-source`; preview an exact project trigger upgrade with `navi init` and capture its fingerprint; after approval run `navi init --expect-plan <fingerprint> --write`; validate the target project; explicitly remove the exact legacy selector reported by doctor; then rerun `navi doctor` and `navi setup`. Do not assume a legacy marketplace selector.
+If `navi doctor` reports a legacy-only installation, keep the exact reported legacy selector installed and add `navi@navi-source`. During the short dual-install transition, doctor keeps the installation unhealthy but performs read-only checks of the authoritative Current Navi selector, source path, and manifest. After those checks pass, run `codex plugin remove <exact legacy selector>` using the selector reported by doctor, rerun `navi doctor`, then preview and explicitly approve `navi setup --write`. Do not keep both plugins active as a compatibility mode. Use only the exact legacy selector reported by doctor; do not guess its marketplace name.
+
+This global cutover does not scan or initialize target projects. On the next use of a project with a recognized legacy trigger, Current Navi may offer the existing fingerprint-bound `navi init` upgrade. Declining that project-local upgrade does not undo global activation and should not cause repeated reminders in the same session.
 
 To remove this source-alpha setup yourself:
 

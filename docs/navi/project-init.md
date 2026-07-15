@@ -74,6 +74,12 @@ Its body contains ordered anchored sections for Desired Outcome, Route To Outcom
 
 Doctor diagnoses and gives a bounded repair direction. It does not silently initialize or repair the project.
 
+## Relationship To Global Legacy Migration
+
+Global migration is not a project-initialization prerequisite in either direction: the global cutover reaches Current Navi without scanning or modifying target projects, and a project does not need to be upgraded before the exact global legacy selector is removed. After global activation, Current Navi can recognize a deployed legacy project trigger when that project is next used and offer the existing fingerprint-bound preview and approved write.
+
+A missing Map, missing trigger, or recognized legacy trigger remains project-local evidence. It may affect that project's doctor result, but it does not change the global migration stage. Unknown, edited, duplicated, incomplete, or unsafe trigger evidence remains a conflict and is never rewritten automatically.
+
 ## Fresh-Session Validation
 
 After the approved write, start a fresh Codex session in the target project and ask an ordinary natural-language supervision question, such as:
