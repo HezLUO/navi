@@ -48,11 +48,21 @@ describe("Navi plugin installation inspection", () => {
   it("diagnoses alternate and duplicate Navi selectors as conflicts", async () => {
     await expect(inspectNaviInstallation(commandResult("navi@other  Installed, Enabled  0.1.0  /source/plugins/navi"))).resolves.toMatchObject({
       kind: "conflict",
+      conflictReason: "non-authoritative-current",
       diagnostic: "Navi is installed from a non-authoritative selector: navi@other.",
     });
     await expect(inspectNaviInstallation(commandResult(`${CURRENT}\n${CURRENT}`))).resolves.toMatchObject({
       kind: "conflict",
+      conflictReason: "duplicate-current",
       diagnostic: "Navi is installed more than once from navi@navi-source.",
+    });
+    await expect(inspectNaviInstallation(commandResult(
+      `${CURRENT}\nalong-working-thread@personal  Installed, Enabled  0.1.0  /legacy`,
+    ))).resolves.toMatchObject({
+      kind: "conflict",
+      conflictReason: "dual-generation",
+      current: { selector: "navi@navi-source" },
+      legacy: { selector: "along-working-thread@personal" },
     });
   });
 

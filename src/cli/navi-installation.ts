@@ -14,12 +14,18 @@ export interface PluginListRow {
 
 export type NaviInstallationKind = "current" | "legacy" | "conflict" | "missing" | "uninspectable";
 
+export type NaviInstallationConflictReason =
+  | "dual-generation"
+  | "non-authoritative-current"
+  | "duplicate-current";
+
 export interface NaviInstallationStatus {
   kind: NaviInstallationKind;
   current?: PluginListRow;
   legacy?: PluginListRow;
   raw: string;
   diagnostic?: string;
+  conflictReason?: NaviInstallationConflictReason;
 }
 
 export type RunCommand = (
@@ -96,6 +102,7 @@ export async function inspectNaviInstallation(
   if (alternateNaviRows.length > 0) {
     return {
       kind: "conflict",
+      conflictReason: "non-authoritative-current",
       current,
       ...(legacy ? { legacy } : {}),
       raw,
@@ -105,13 +112,23 @@ export async function inspectNaviInstallation(
   if (exactCurrentRows.length > 1) {
     return {
       kind: "conflict",
+      conflictReason: "duplicate-current",
       current,
       ...(legacy ? { legacy } : {}),
       raw,
       diagnostic: `Navi is installed more than once from ${CURRENT_SELECTOR}.`,
     };
   }
-  if (current?.installed && legacy?.installed) return { kind: "conflict", current, legacy, raw, diagnostic: "Both current Navi and legacy plugins are installed." };
+  if (current?.installed && legacy?.installed) {
+    return {
+      kind: "conflict",
+      conflictReason: "dual-generation",
+      current,
+      legacy,
+      raw,
+      diagnostic: "Both current Navi and legacy plugins are installed.",
+    };
+  }
   if (current?.installed && current.enabled) return { kind: "current", current, ...(legacy ? { legacy } : {}), raw };
   if (legacy?.installed) return { kind: "legacy", ...(current ? { current } : {}), legacy, raw };
   return { kind: "missing", ...(current ? { current } : {}), ...(legacy ? { legacy } : {}), raw };
