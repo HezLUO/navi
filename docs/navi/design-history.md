@@ -8,6 +8,7 @@ Complexity stabilization is the current phase. The next gate is two or three rea
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`
 - `docs/superpowers/specs/2026-07-14-navi-complexity-stabilization-design.md`
 - `docs/superpowers/specs/2026-07-13-navi-confirmed-project-map-init-journey-design.md`
 - `docs/superpowers/specs/2026-07-12-navi-blocker-event-delivery-design.md` (revised as Lane Handoff Event Delivery)

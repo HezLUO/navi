@@ -59,6 +59,13 @@ describe("Current Navi repository surface", () => {
     }
   });
 
+  it("lists the approved Supervised Delivery Loop design as active", async () => {
+    const history = await fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8");
+    const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+
+    expect(active).toContain("`docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`");
+  });
+
   it("keeps active tests and fixtures independent from Historical Along docs", async () => {
     for (const relativeDir of ["tests/cli", "tests/fixtures", "tests/package", "tests/skills"]) {
       const activeTestFiles = await listFiles(path.join(root, relativeDir));
