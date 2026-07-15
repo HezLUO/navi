@@ -350,4 +350,3 @@ The design is implemented when:
 - failure guidance preserves the safest available working installation and does
   not invent rollback evidence; and
 - documentation and focused tests enforce the same contract.
-
