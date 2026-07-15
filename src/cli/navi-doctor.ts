@@ -16,11 +16,21 @@ export interface DoctorCheck {
   summary: string;
   repair?: string;
 }
+export type NaviMigrationStage =
+  | "legacy-only"
+  | "transition-dual"
+  | "dual-invalid"
+  | "current-only-bootstrap-missing"
+  | "current-active"
+  | "current-unusable";
+
 export interface NaviDoctorReport {
   requestedCodexHome: string;
   codexHome: string;
   cliRoot: string;
   projectDir: string;
+  migrationStage: NaviMigrationStage;
+  nextAction?: string;
   checks: DoctorCheck[];
 }
 export interface NaviDoctorOptions {
@@ -51,18 +61,29 @@ export interface ProjectInitializationState {
 const DEFAULT_IO: NaviDoctorIo = { stdout: (text) => process.stdout.write(text), stderr: (text) => process.stderr.write(text) };
 const DEFAULT_CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const GLOBAL_REPAIR = "Run navi setup, review the preview, then run navi setup --write.";
-const SOURCE_REPAIR = "Install and enable navi@navi-source before running navi setup --write.";
-function migrationRepair(legacySelector: string): string {
-  return `Install and enable navi@navi-source. Existing confirmed Map branch: preview with navi init, capture the Plan fingerprint, then apply with navi init --expect-plan <fingerprint> --write. Missing confirmed Map branch: use Navi in the current project session to form and confirm a Project Map candidate, preview with navi init --map-file <candidate>, capture the Plan fingerprint, then apply with navi init --map-file <candidate> --expect-plan <fingerprint> --write. Validate the target project, remove the exact legacy selector ${legacySelector}, then rerun navi doctor and navi setup.`;
+const SOURCE_REPAIR = "Install and enable navi@navi-source, then rerun navi doctor.";
+const CURRENT_SOURCE_REPAIR = "Keep the legacy plugin installed. Repair or remove the incomplete Current Navi installation, then rerun navi doctor before removing legacy.";
+const CURRENT_ONLY_SOURCE_REPAIR = "Repair the installed Current Navi source path or manifest, then rerun navi doctor.";
+
+function legacyInstallAction(legacySelector: string): string {
+  return `Install and enable navi@navi-source, then rerun navi doctor. Keep the exact legacy selector ${legacySelector} installed during this verification step.`;
 }
+
+function legacyRemovalAction(legacySelector: string): string {
+  return `Run codex plugin remove ${legacySelector}, then rerun navi doctor. If removal fails, keep both installations unchanged and resolve that Codex plugin error before continuing.`;
+}
+
 function selectorConflictRepair(status: NaviInstallationStatus): string {
-  if (status.diagnostic?.includes("non-authoritative selector")) {
-    return `Remove the non-authoritative Navi selector ${status.current?.selector ?? "reported by codex plugin list"}, then install and enable navi@navi-source before rerunning navi doctor and navi setup.`;
+  if (status.conflictReason === "non-authoritative-current") {
+    const selector = status.current?.selector;
+    return selector
+      ? `Remove the non-authoritative Navi selector ${selector}, then install and enable navi@navi-source before rerunning navi doctor.`
+      : "Keep the legacy installation unchanged and repair codex plugin list so the non-authoritative Current Navi selector can be identified.";
   }
-  if (status.diagnostic?.includes("more than once")) {
-    return "Remove duplicate navi@navi-source entries so exactly one installed and enabled current selector remains, then rerun navi doctor and navi setup.";
+  if (status.conflictReason === "duplicate-current") {
+    return "Remove duplicate navi@navi-source entries so exactly one installed and enabled current selector remains, then rerun navi doctor.";
   }
-  return "Resolve the reported Navi plugin selector conflict, then rerun navi doctor and navi setup.";
+  return "Resolve the reported Current Navi plugin selector conflict, then rerun navi doctor.";
 }
 
 export async function buildNaviDoctorReport(options: NaviDoctorOptions = {}, dependencies: NaviDoctorDependencies = {}): Promise<NaviDoctorReport> {
@@ -72,20 +93,26 @@ export async function buildNaviDoctorReport(options: NaviDoctorOptions = {}, dep
   const projectDir = path.resolve(options.projectDir ?? process.cwd());
   const installation = await (dependencies.inspectInstallation ?? inspectNaviInstallation)();
   const sourcePath = installation.current?.sourcePath ? path.resolve(installation.current.sourcePath) : undefined;
+  const checks = [
+    await buildCliCheck(cliRoot),
+    buildPluginCheck(installation),
+    await buildManifestCheck(installation, sourcePath),
+    await buildGlobalBootstrapCheck(canonical.canonicalPath),
+    await buildPackageCacheCheck(sourcePath),
+    await buildProjectInitCheck(projectDir),
+    await buildTransactionCheck(canonical.canonicalPath),
+  ];
+  const migrationStage = deriveMigrationStage(installation, checks);
+  const nextAction = deriveNextAction(migrationStage, installation, checks);
+
   return {
     requestedCodexHome: canonical.requestedPath,
     codexHome: canonical.canonicalPath,
     cliRoot,
     projectDir,
-    checks: [
-      await buildCliCheck(cliRoot),
-      buildPluginCheck(installation),
-      await buildManifestCheck(installation, sourcePath),
-      await buildGlobalBootstrapCheck(canonical.canonicalPath),
-      await buildPackageCacheCheck(sourcePath),
-      await buildProjectInitCheck(projectDir),
-      await buildTransactionCheck(canonical.canonicalPath),
-    ],
+    migrationStage,
+    ...(nextAction ? { nextAction } : {}),
+    checks,
   };
 }
 
@@ -94,10 +121,13 @@ export function renderNaviDoctorReport(report: NaviDoctorReport): string {
     `Requested CODEX_HOME: ${report.requestedCodexHome}`,
     `Canonical CODEX_HOME: ${report.codexHome}`,
   ];
-  return `${[...roots, ...report.checks.flatMap((check) => [
-    `[${check.status}] ${check.id}: ${check.summary}`,
-    ...(check.repair ? [`  Repair: ${check.repair}`] : []),
-  ])].join("\n")}\n`;
+  const lines = [
+    ...roots,
+    `Migration stage: ${report.migrationStage}`,
+    ...report.checks.map((check) => `[${check.status}] ${check.id}: ${check.summary}`),
+    ...(report.nextAction ? [`Next action: ${report.nextAction}`] : []),
+  ];
+  return `${lines.join("\n")}\n`;
 }
 
 export async function runNaviDoctorCli(args: string[], io: NaviDoctorIo = DEFAULT_IO, dependencies: NaviDoctorDependencies = {}, options: NaviDoctorOptions = {}): Promise<number> {
@@ -117,22 +147,113 @@ async function buildCliCheck(cliRoot: string): Promise<DoctorCheck> {
 function buildPluginCheck(status: NaviInstallationStatus): DoctorCheck {
   switch (status.kind) {
     case "current": return { id: "plugin", status: "pass", summary: `Navi plugin is installed and enabled${status.current?.version ? ` (${status.current.version}).` : "."}` };
-    case "legacy": return { id: "plugin", status: "fail", summary: `Only legacy plugin ${status.legacy?.selector ?? "along-working-thread"} is installed.`, repair: migrationRepair(status.legacy?.selector ?? "along-working-thread") };
-    case "conflict": return status.legacy
-      ? { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy.selector} are both installed.`, repair: migrationRepair(status.legacy.selector) }
+    case "legacy": return { id: "plugin", status: "fail", summary: `Only legacy plugin ${status.legacy?.selector ?? "unidentified"} is installed.`, repair: SOURCE_REPAIR };
+    case "conflict": return status.conflictReason === "dual-generation"
+      ? { id: "plugin", status: "fail", summary: `Navi and legacy plugin ${status.legacy?.selector ?? "unidentified"} are both installed.`, repair: CURRENT_SOURCE_REPAIR }
       : { id: "plugin", status: "fail", summary: `Navi plugin installation conflict${status.diagnostic ? `: ${status.diagnostic}` : "."}`, repair: selectorConflictRepair(status) };
     case "uninspectable": return { id: "plugin", status: "fail", summary: `Navi plugin installation could not be inspected${status.diagnostic ? `: ${status.diagnostic}` : "."}`, repair: "Repair codex plugin list, then rerun navi doctor." };
     case "missing": return { id: "plugin", status: "fail", summary: "Navi plugin is missing or disabled.", repair: SOURCE_REPAIR };
   }
 }
+
+function hasInspectableAuthoritativeCurrent(
+  status: NaviInstallationStatus,
+  sourcePath: string | undefined,
+): sourcePath is string {
+  return status.current?.selector === "navi@navi-source"
+    && status.current.installed
+    && status.current.enabled
+    && sourcePath !== undefined;
+}
+
 async function buildManifestCheck(status: NaviInstallationStatus, sourcePath: string | undefined): Promise<DoctorCheck> {
-  if (status.kind !== "current" || !sourcePath) return { id: "manifest", status: "warn", summary: "Navi plugin source is unavailable; manifest inspection is incomplete." };
+  if (!hasInspectableAuthoritativeCurrent(status, sourcePath)) {
+    return { id: "manifest", status: "warn", summary: "Navi plugin source is unavailable; manifest inspection is incomplete." };
+  }
   try {
     const manifest = JSON.parse(await fs.readFile(path.join(sourcePath, ".codex-plugin", "plugin.json"), "utf8")) as { interface?: { defaultPrompt?: unknown } };
     const prompts = manifest.interface?.defaultPrompt;
     if (Array.isArray(prompts) && prompts.length <= 3) return { id: "manifest", status: "pass", summary: "Installed Navi plugin manifest defaultPrompt contains at most 3 entries." };
-    return { id: "manifest", status: "fail", summary: "Installed Navi plugin manifest defaultPrompt must contain at most 3 entries.", repair: "Reduce plugin interface.defaultPrompt to at most 3 entries." };
+    return { id: "manifest", status: "fail", summary: "Installed Navi plugin manifest defaultPrompt must contain at most 3 entries.", repair: "Repair the Current Navi plugin manifest, then rerun navi doctor." };
   } catch { return { id: "manifest", status: "warn", summary: "Navi plugin source is unavailable; manifest inspection is incomplete." }; }
+}
+
+function checkById(reportChecks: DoctorCheck[], id: DoctorCheck["id"]): DoctorCheck {
+  const check = reportChecks.find((candidate) => candidate.id === id);
+  if (!check) throw new Error(`Navi doctor internal error: missing ${id} check.`);
+  return check;
+}
+
+function deriveMigrationStage(
+  installation: NaviInstallationStatus,
+  checks: DoctorCheck[],
+): NaviMigrationStage {
+  const manifest = checkById(checks, "manifest");
+  const bootstrap = checkById(checks, "global-bootstrap");
+
+  if (installation.kind === "legacy") return "legacy-only";
+  if (installation.kind === "conflict") {
+    const verifiedTransition = installation.conflictReason === "dual-generation"
+      && installation.current?.selector === "navi@navi-source"
+      && installation.current.installed
+      && installation.current.enabled
+      && manifest.status === "pass";
+    return verifiedTransition ? "transition-dual" : "dual-invalid";
+  }
+  if (installation.kind !== "current" || manifest.status !== "pass") {
+    return "current-unusable";
+  }
+  return bootstrap.status === "pass"
+    ? "current-active"
+    : "current-only-bootstrap-missing";
+}
+
+function deriveNextAction(
+  stage: NaviMigrationStage,
+  installation: NaviInstallationStatus,
+  checks: DoctorCheck[],
+): string | undefined {
+  const transaction = checkById(checks, "transaction");
+  if (transaction.status === "fail") return transaction.repair ?? transaction.summary;
+
+  const cli = checkById(checks, "cli");
+  if (cli.status === "fail") return cli.repair ?? cli.summary;
+
+  const bootstrap = checkById(checks, "global-bootstrap");
+  if (bootstrap.status === "fail" && /unsafe/i.test(bootstrap.summary)) {
+    return bootstrap.repair ?? bootstrap.summary;
+  }
+
+  switch (stage) {
+    case "legacy-only": {
+      const selector = installation.legacy?.selector;
+      return selector
+        ? legacyInstallAction(selector)
+        : "Repair codex plugin list so the exact legacy selector can be identified, then rerun navi doctor.";
+    }
+    case "transition-dual": {
+      const selector = installation.legacy?.selector;
+      return selector
+        ? legacyRemovalAction(selector)
+        : "Keep both installations unchanged and repair codex plugin list so the exact legacy selector can be identified.";
+    }
+    case "dual-invalid": {
+      const repair = checkById(checks, "plugin").repair ?? CURRENT_SOURCE_REPAIR;
+      return installation.legacy
+        ? `Keep the exact legacy selector ${installation.legacy.selector} installed. ${repair}`
+        : repair;
+    }
+    case "current-unusable": {
+      const plugin = checkById(checks, "plugin");
+      const manifest = checkById(checks, "manifest");
+      if (installation.kind !== "current") return plugin.repair ?? SOURCE_REPAIR;
+      return manifest.repair ?? CURRENT_ONLY_SOURCE_REPAIR;
+    }
+    case "current-only-bootstrap-missing":
+      return bootstrap.repair ?? GLOBAL_REPAIR;
+    case "current-active":
+      return checkById(checks, "project-init").repair;
+  }
 }
 async function buildGlobalBootstrapCheck(codexHome: string): Promise<DoctorCheck> {
   const target = path.join(codexHome, "AGENTS.md");

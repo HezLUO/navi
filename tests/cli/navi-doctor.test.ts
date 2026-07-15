@@ -175,22 +175,123 @@ describe("Navi doctor", () => {
     expect(report.checks.find((check) => check.id === "package-cache")?.status).toBe("warn");
   });
 
-  it("reports legacy and conflict installation states truthfully", async () => {
-    const f = await fixture(); const legacy = { selector: "along-working-thread@personal", pluginName: "along-working-thread", installed: true, enabled: true, raw: "legacy" };
-    const legacyReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ kind: "legacy", legacy, raw: "legacy" }) });
-    const conflictReport = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => ({ ...current(f.source), kind: "conflict", legacy }) });
-    for (const output of [legacyReport, conflictReport].map((report) => report.checks.find((check) => check.id === "plugin")?.repair ?? "")) {
-      expect(output).toMatch(
-        /Existing confirmed Map branch:[\s\S]*preview with navi init,[\s\S]*capture the Plan fingerprint,[\s\S]*apply with navi init --expect-plan <fingerprint> --write/i,
+  it("guides legacy-only and verified dual transition with one global action", async () => {
+    const f = await fixture();
+    const legacy = {
+      selector: "along-working-thread@personal",
+      pluginName: "along-working-thread",
+      marketplaceName: "personal",
+      installed: true,
+      enabled: true,
+      raw: "legacy",
+    };
+
+    const legacyReport = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => ({ kind: "legacy", legacy, raw: "legacy" }) },
+    );
+    expect(legacyReport.migrationStage).toBe("legacy-only");
+    expect(legacyReport.nextAction).toContain("navi@navi-source");
+    expect(renderNaviDoctorReport(legacyReport)).not.toMatch(/navi init|navi setup --write/);
+
+    const dualReport = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      {
+        inspectInstallation: async () => ({
+          ...current(f.source),
+          kind: "conflict",
+          conflictReason: "dual-generation",
+          legacy,
+        }),
+      },
+    );
+    expect(dualReport.migrationStage).toBe("transition-dual");
+    expect(dualReport.checks.find((check) => check.id === "manifest")?.status).toBe("pass");
+    expect(dualReport.nextAction).toBe(
+      "Run codex plugin remove along-working-thread@personal, then rerun navi doctor. If removal fails, keep both installations unchanged and resolve that Codex plugin error before continuing.",
+    );
+    expect(renderNaviDoctorReport(dualReport)).toContain("Migration stage: transition-dual");
+    expect(renderNaviDoctorReport(dualReport).match(/Next action:/g)).toHaveLength(1);
+    expect(renderNaviDoctorReport(dualReport)).not.toContain("  Repair:");
+    expect(renderNaviDoctorReport(dualReport)).not.toContain("navi init");
+  });
+
+  it.each(["missing source path", "alternate current", "duplicate current"])(
+    "keeps legacy installed for %s",
+    async (name) => {
+      const f = await fixture();
+      const legacy = {
+        selector: "along-working-thread@personal",
+        pluginName: "along-working-thread",
+        marketplaceName: "personal",
+        installed: true,
+        enabled: true,
+        raw: "legacy",
+      };
+      const installation: NaviInstallationStatus = name === "missing source path"
+        ? { ...current(), kind: "conflict", conflictReason: "dual-generation", legacy }
+        : name === "alternate current"
+          ? {
+              kind: "conflict",
+              conflictReason: "non-authoritative-current",
+              current: { selector: "navi@other", pluginName: "navi", marketplaceName: "other", installed: true, enabled: true, raw: "alternate" },
+              legacy,
+              raw: "alternate",
+              diagnostic: "Navi is installed from a non-authoritative selector: navi@other.",
+            }
+          : {
+              ...current(f.source),
+              kind: "conflict",
+              conflictReason: "duplicate-current",
+              legacy,
+              diagnostic: "Navi is installed more than once from navi@navi-source.",
+            };
+
+      const report = await buildNaviDoctorReport(
+        { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+        { inspectInstallation: async () => installation },
       );
-      expect(output).toMatch(
-        /Missing confirmed Map branch:[\s\S]*form and confirm a Project Map candidate,[\s\S]*preview with navi init --map-file <candidate>,[\s\S]*capture the Plan fingerprint,[\s\S]*apply with navi init --map-file <candidate> --expect-plan <fingerprint> --write/i,
-      );
-      expect(output).not.toMatch(/navi init --write(?:[\s.,]|$)/);
-      expect(output).not.toMatch(/navi init --map-file <candidate>[\s\S]*apply with navi init --expect-plan <fingerprint> --write/i);
-      expect(output).toMatch(/validate the target project[\s\S]*along-working-thread@personal[\s\S]*navi doctor[\s\S]*navi setup/i);
-    }
-    expect(conflictReport.checks.find((check) => check.id === "plugin")?.status).toBe("fail");
+      expect(report.migrationStage).toBe("dual-invalid");
+      expect(report.nextAction).toMatch(/keep.*legacy.*installed/i);
+      expect(report.nextAction).not.toContain("codex plugin remove along-working-thread@personal");
+    },
+  );
+
+  it("reports current-only bootstrap work before project initialization", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source) },
+    );
+
+    expect(report.migrationStage).toBe("current-only-bootstrap-missing");
+    expect(report.nextAction).toBe("Run navi setup, review the preview, then run navi setup --write.");
+    expect(renderNaviDoctorReport(report)).not.toContain("navi init");
+  });
+
+  it("keeps current-active global status independent from project initialization", async () => {
+    const f = await fixture();
+    await fs.writeFile(path.join(f.codexHome, "AGENTS.md"), renderGlobalBootstrapBlock());
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source) },
+    );
+
+    expect(report.migrationStage).toBe("current-active");
+    expect(report.checks.find((check) => check.id === "project-init")?.status).toBe("warn");
+    expect(report.nextAction).toMatch(/Project Map candidate/i);
+  });
+
+  it("reports an installed Current Navi without inspectable source as unusable", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current() },
+    );
+
+    expect(report.migrationStage).toBe("current-unusable");
+    expect(report.nextAction).toMatch(/source path or manifest/i);
+    expect(renderNaviDoctorReport(report)).not.toContain("navi setup --write");
   });
 
   it.each([
@@ -198,6 +299,7 @@ describe("Navi doctor", () => {
       "an alternate Navi selector",
       {
         kind: "conflict" as const,
+        conflictReason: "non-authoritative-current" as const,
         current: { selector: "navi@other", pluginName: "navi", marketplaceName: "other", installed: true, enabled: true, raw: "alternate" },
         raw: "alternate",
         diagnostic: "Navi is installed from a non-authoritative selector: navi@other.",
@@ -209,6 +311,7 @@ describe("Navi doctor", () => {
       "duplicate current selectors",
       {
         kind: "conflict" as const,
+        conflictReason: "duplicate-current" as const,
         current: { selector: "navi@navi-source", pluginName: "navi", marketplaceName: "navi-source", installed: true, enabled: true, raw: "duplicate" },
         raw: "duplicate",
         diagnostic: "Navi is installed more than once from navi@navi-source.",
@@ -263,6 +366,7 @@ describe("Navi doctor", () => {
     expect(renderNaviDoctorReport(report)).toContain(`Requested CODEX_HOME: ${alias}`);
     expect(renderNaviDoctorReport(report)).toContain(`Canonical CODEX_HOME: ${report.codexHome}`);
     expect(report.checks.find((check) => check.id === "global-bootstrap")?.status).toBe("fail");
+    expect(report.nextAction).toMatch(/symlink|regular file/i);
   });
 
   it("fails recoverable transactions with recovery guidance and live transactions without it", async () => {
@@ -273,6 +377,8 @@ describe("Navi doctor", () => {
     const recoverable = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
     expect(recoverable.checks.find((check) => check.id === "transaction")?.status).toBe("fail");
     expect(recoverable.checks.find((check) => check.id === "transaction")?.repair).toContain("navi setup --write");
+    expect(recoverable.nextAction).toContain("navi setup --write");
+    expect(renderNaviDoctorReport(recoverable).match(/Next action:/g)).toHaveLength(1);
     await fs.rm(transaction, { recursive: true }); await fs.writeFile(path.join(f.codexHome, ".AGENTS.md.navi-lock"), "lock");
     const live = await buildNaviDoctorReport({ codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot }, { inspectInstallation: async () => current(f.source) });
     expect(live.checks.find((check) => check.id === "transaction")?.status).toBe("fail");
