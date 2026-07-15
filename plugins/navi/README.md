@@ -151,6 +151,8 @@ navi setup
 navi setup --write
 ```
 
+If the active Codex environment cannot resolve bare `navi` after `npm link`, start diagnosis from the repository root with `npm run navi -- doctor`. Doctor reports the PATH limitation and carries one verified fallback into later setup or init guidance. The fallback does not edit PATH or shell configuration. Adding the linked npm bin directory to the PATH inherited by Codex and restarting Codex is optional convenience, not a prerequisite while the fallback works.
+
 These operations mutate global Codex/plugin/npm state, including Codex configuration or cache and npm's global link state. Navi never runs them automatically. `navi doctor` is troubleshooting, not a normal daily step. Setup once -> approve project init once -> use natural language. Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision. `navi setup` configures global discovery and does not initialize a target project. Direct `navi init` with no confirmed Map reports the missing baseline and makes no changes. After confirmation, init previews the exact Map-and-trigger action; its write requires the approved plan fingerprint. It does not reinstall the plugin.
 
 Existing confirmed Map trigger path (valid confirmed Map with a missing or recognized legacy trigger):

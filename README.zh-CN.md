@@ -31,6 +31,8 @@ navi setup
 navi setup --write
 ```
 
+如果当前 Codex 环境在 `npm link` 后仍无法解析裸命令 `navi`，请从仓库根目录运行 `npm run navi -- doctor` 开始诊断。Doctor 会报告 PATH 路径限制，并在后续 setup 或 init 指引中继续提供一个已验证的备用调用方式。该备用方式不会编辑 PATH 或 shell 配置。将 linked npm bin 目录加入 Codex 继承的 PATH 并重启 Codex 只是一项可选便利；只要该备用方式有效，就不是前提条件。
+
 这些都是用户明确执行的 source-alpha 操作，会修改全局 Codex/plugin/npm 状态（包括 Codex configuration 或 cache，以及 npm 的全局 link state）；`navi setup` 不会替你安装 plugin 或执行这些操作。`navi doctor` 用于 troubleshooting，不是日常步骤；它会检查 source-alpha 前提条件并指出缺失时的修复方向。
 
 ### Setup transaction 安全边界

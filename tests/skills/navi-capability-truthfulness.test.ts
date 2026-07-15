@@ -274,6 +274,11 @@ describe("Navi capability truthfulness", () => {
       ]) {
         expect(readme).toContain(expected);
       }
+
+      expect(readme).toContain("npm run navi -- doctor");
+      expect(readme).toMatch(/PATH|路径/);
+      expect(readme).toMatch(/fallback|备用/);
+      expect(readme).not.toMatch(/automatically (?:edit|modify).*PATH/i);
     }
 
     for (const expected of [

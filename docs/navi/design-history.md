@@ -4,10 +4,12 @@ This index is navigation metadata. It does not rewrite historical documents.
 
 ## Current Phase
 
-Complexity stabilization is the current phase. The next gate is two or three real-project calibrations after parent review and explicit integration, not another capability alpha or release.
+Complexity stabilization and its bounded two-project calibration are closed. Source-alpha CLI invocation reachability is the current bounded implementation gate. After parent review and explicit integration, the next gate is one post-integration real-environment calibration, not distribution or release.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-15-navi-source-alpha-cli-invocation-design.md`
+- `docs/superpowers/plans/2026-07-15-navi-source-alpha-cli-invocation.md`
 - `docs/superpowers/specs/2026-07-15-navi-source-alpha-legacy-migration-design.md`
 - `docs/superpowers/plans/2026-07-15-navi-source-alpha-legacy-migration.md`
 - `docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`
