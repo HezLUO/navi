@@ -59,7 +59,7 @@ export async function resolveNaviInvocationContext(
       commandPrefix: undefined,
     };
   }
-  const pathCandidate = await firstExecutableOnPath(options.envPath, options.cwd, dependencies);
+  const pathCandidate = await firstExecutableOnPath(options.envPath, options.cwd, "navi", dependencies);
   const pathMatches = pathCandidate === undefined
     ? false
     : await resolvesTo(pathCandidate, canonicalEntrypoint, dependencies);
@@ -89,7 +89,13 @@ export async function resolveNaviInvocationContext(
     };
   }
 
-  if (options.npmLifecycleEvent === "navi" && path.resolve(options.cwd) === cliRoot && await hasExecutableSourceScript(cliRoot, dependencies)) {
+  const npmCandidate = options.envPath
+    ? await firstExecutableOnPath(options.envPath, options.cwd, "npm", dependencies)
+    : undefined;
+  if (options.npmLifecycleEvent === "navi"
+    && path.resolve(options.cwd) === cliRoot
+    && npmCandidate !== undefined
+    && await hasExecutableSourceScript(cliRoot, dependencies)) {
     return {
       cliRoot,
       entrypoint: canonicalEntrypoint,
@@ -121,11 +127,12 @@ export function renderNaviCommand(
 async function firstExecutableOnPath(
   envPath: string | undefined,
   cwd: string,
+  command: string,
   dependencies: NaviInvocationDependencies,
 ): Promise<string | undefined> {
   if (envPath === undefined) return undefined;
   for (const directory of envPath.split(path.delimiter)) {
-    const candidate = path.join(path.resolve(cwd, directory), "navi");
+    const candidate = path.join(path.resolve(cwd, directory), command);
     if (await isExecutable(candidate, dependencies)) return candidate;
   }
   return undefined;

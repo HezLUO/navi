@@ -35,6 +35,14 @@ const directSourceFallbackInvocation: NaviInvocationContext = {
   commandPrefix: ["/source/Navi/src/cli/navi-bin.mjs"],
   pathBin: "/source/Navi/src/cli",
 };
+const differentlyNamedFallbackInvocation: NaviInvocationContext = {
+  cliRoot: "/source/Navi",
+  entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
+  reachability: "fallback",
+  reason: "path-missing",
+  commandPrefix: ["/Users/james/.hermes/node/bin/navi-dev"],
+  pathBin: "/Users/james/.hermes/node/bin",
+};
 const unavailableInvocation: NaviInvocationContext = {
   cliRoot: "/source/Navi",
   entrypoint: "/source/Navi/src/cli/navi-bin.mjs",
@@ -146,6 +154,21 @@ describe("Navi doctor", () => {
       "Optional: add the linked Navi bin directory to the PATH inherited by Codex and restart Codex before expecting bare `navi` to work.",
     );
     expect(renderNaviDoctorReport(report)).not.toContain(
+      "Optional: add the linked Navi bin directory to the PATH inherited by Codex and restart Codex before expecting bare `navi` to work.",
+    );
+  });
+
+  it("omits linked-bin PATH guidance for a differently named verified entrypoint", async () => {
+    const f = await fixture();
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: differentlyNamedFallbackInvocation },
+    );
+    const cli = report.checks.find((check) => check.id === "cli");
+
+    expect(cli).toMatchObject({ status: "warn" });
+    expect(cli?.details).toContain("Using verified fallback: /Users/james/.hermes/node/bin/navi-dev");
+    expect(cli?.details).not.toContain(
       "Optional: add the linked Navi bin directory to the PATH inherited by Codex and restart Codex before expecting bare `navi` to work.",
     );
   });

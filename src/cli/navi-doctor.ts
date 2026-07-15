@@ -207,6 +207,7 @@ async function buildCliCheck(cliRoot: string, invocation: NaviInvocationContext)
         && invocation.commandPrefix?.length === 1
         && path.isAbsolute(invocation.commandPrefix[0])
         && invocation.commandPrefix[0] !== invocation.entrypoint
+        && path.basename(invocation.commandPrefix[0]) === "navi"
         && path.dirname(invocation.commandPrefix[0]) === invocation.pathBin;
       return {
         id: "cli",

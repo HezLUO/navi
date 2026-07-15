@@ -108,8 +108,9 @@ describe("Navi invocation resolution", () => {
     const f = await fixture();
     const bin = path.join(f.root, "bin");
     const other = path.join(f.root, "other-navi");
+    const executionMarker = path.join(f.root, "unexpected-navi-execution");
     await fs.mkdir(bin);
-    await fs.writeFile(other, "#!/bin/sh\nexit 0\n");
+    await fs.writeFile(other, `#!/bin/sh\ntouch '${executionMarker}'\n`);
     await fs.chmod(other, 0o755);
     await fs.symlink(other, path.join(bin, "navi"));
 
@@ -123,15 +124,22 @@ describe("Navi invocation resolution", () => {
     expect(context).toMatchObject({ reachability: "fallback", reason: "path-mismatch" });
     expect(context.commandPrefix).toEqual([f.wrapper]);
     expect(renderNaviCommand(context, ["doctor"])).toBe(`'${f.wrapper}' doctor`);
+    await expect(fs.stat(executionMarker)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
-  it("uses the verified executable source npm invocation when the launched entrypoint is unknown", async () => {
+  it("uses the verified executable source npm invocation when npm is reachable on the injected PATH", async () => {
     const f = await fixture();
+    const bin = path.join(f.root, "bin");
+    const npm = path.join(bin, "npm");
+    const executionMarker = path.join(f.root, "unexpected-npm-execution");
+    await fs.mkdir(bin);
+    await fs.writeFile(npm, `#!/bin/sh\ntouch '${executionMarker}'\n`);
+    await fs.chmod(npm, 0o755);
 
     const context = await resolveNaviInvocationContext({
       cliRoot: f.cliRoot,
       launchedEntrypoint: path.join(f.root, "unknown"),
-      envPath: "",
+      envPath: bin,
       cwd: f.cliRoot,
       npmLifecycleEvent: "navi",
     });
@@ -142,6 +150,31 @@ describe("Navi invocation resolution", () => {
       commandPrefix: ["npm", "run", "navi", "--"],
     });
     expect(renderNaviCommand(context, ["setup", "--write"])).toBe("npm run navi -- setup --write");
+    await expect(fs.stat(executionMarker)).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it.each([
+    ["empty", ""],
+    ["undefined", undefined],
+  ] as const)("rejects the source npm invocation when PATH is %s", async (_name, envPath) => {
+    const f = await fixture();
+    const npm = path.join(f.cliRoot, "npm");
+    await fs.writeFile(npm, "#!/bin/sh\nexit 0\n");
+    await fs.chmod(npm, 0o755);
+
+    const context = await resolveNaviInvocationContext({
+      cliRoot: f.cliRoot,
+      launchedEntrypoint: path.join(f.root, "unknown"),
+      ...(envPath === undefined ? {} : { envPath }),
+      cwd: f.cliRoot,
+      npmLifecycleEvent: "navi",
+    });
+
+    expect(context).toMatchObject({
+      reachability: "unavailable",
+      reason: "unavailable",
+      commandPrefix: undefined,
+    });
   });
 
   it("rejects the source npm invocation when its direct script target is not executable", async () => {

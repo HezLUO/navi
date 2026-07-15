@@ -50,10 +50,17 @@ describe("Current Navi repository surface", () => {
   });
 
   it("records verified CLI invocation as the current bounded implementation gate", async () => {
-    const history = await fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8");
+    const [history, roadmap] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+    ]);
     const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+    const currentPhase = roadmap.match(/## Current Phase\n(?<phase>[\s\S]*?)\n## /)?.groups?.phase ?? "";
 
     expect(history).toContain("Source-alpha CLI invocation reachability is the current bounded implementation gate");
+    expect(currentPhase).toContain("Complexity stabilization and its bounded two-project calibration are closed");
+    expect(currentPhase).toContain("Source-alpha CLI invocation reachability is the current bounded implementation gate");
+    expect(currentPhase).toContain("the next gate is one post-integration real-environment calibration, not distribution or release");
     expect(active).toContain("docs/superpowers/specs/2026-07-15-navi-source-alpha-cli-invocation-design.md");
     expect(active).toContain("docs/superpowers/plans/2026-07-15-navi-source-alpha-cli-invocation.md");
   });
