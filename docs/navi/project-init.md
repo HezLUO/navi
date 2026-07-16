@@ -9,7 +9,9 @@ Navi is installed globally once. navi init initializes a target project, does no
 
 `navi init` configures a target project. It does not install Navi again.
 
-Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision.
+Journey contract: global source setup once -> adaptive project evidence judgment -> user-confirmed Desired Outcome plus Outcome Boundary -> one v2 Map and managed-trigger preview -> one fingerprint-bound approved write -> fresh-session supervision -> material boundary revision only with user confirmation.
+
+Compatibility shorthand for the same path: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision.
 
 ## Just-In-Time Entry
 
@@ -31,6 +33,7 @@ Navi first runs an eligibility check. The baseline is ready only when it can pre
 A baseline is confirmable only when it includes both Current Boundary and Next Decision.
 
 - Desired Outcome;
+- Outcome Boundary;
 - Route To Outcome or working rhythm;
 - Current Position;
 - Current Boundary; and
@@ -75,13 +78,15 @@ The advanced adapter integration passes an already confirmed candidate with `nav
 The canonical path is exactly `.navi/project-map.md`. A valid file has frontmatter with:
 
 ```yaml
-navi_map: 1
+navi_map: 2
 map_status: confirmed
 project_status: active | paused | closed
 last_confirmed: YYYY-MM-DD
 ```
 
-Its body contains ordered anchored sections for Desired Outcome, Route To Outcome, Current Position, Current Boundary, Next Decision, and Evidence And Uncertainty. Existing roadmaps, plans, trackers, handoffs, and project records remain evidence; they are not alternate Map paths.
+Its body contains ordered anchored sections for Desired Outcome, Outcome Boundary, Route To Outcome, Current Position, Current Boundary, Next Decision, optional Parallel Lanes, Evidence And Uncertainty, and Map Maintenance. Outcome Boundary contains Enough Outcome, Acceptance Evidence, Outside This Boundary, and Revisit Trigger. Existing roadmaps, plans, trackers, handoffs, and project records remain evidence; they are not alternate Map paths.
+
+Current main writes Project Map contract version 2 with a user-confirmed Outcome Boundary. Existing version-1 Maps remain readable and do not require immediate reinitialization. In other words, a version 1 Map is readable and does not require reinitialization before Navi provides useful read-only supervision. A version-1 Map can receive one fingerprint-bound approved Outcome Boundary augmentation; Navi does not migrate or rewrite it automatically. Version 2 is required for every new or upgraded write, and this exact v1-to-v2 augmentation is the only Map migration accepted through `navi init`. The comparison locates the two allowed fields from parsed metadata and removes the inserted section by its Outcome Boundary and Route To Outcome anchor ranges; after CRLF/LF line-ending normalization, every other byte must remain unchanged. This current-main behavior remains unreleased until a later tag explicitly includes it.
 
 ## Doctor States
 

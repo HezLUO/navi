@@ -41,11 +41,17 @@ Global setup uses a recoverable transaction directory and a cooperative same-use
 
 Setup once -> approve project init once -> use natural language.
 
-Journey contract: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision.
+Journey contract: global source setup once -> adaptive project evidence judgment -> user-confirmed Desired Outcome plus Outcome Boundary -> one v2 Map and managed-trigger preview -> one fingerprint-bound approved write -> fresh-session supervision -> material boundary revision only with user confirmation.
+
+Compatibility shorthand for the same path: global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision.
 
 Current source uses one visible, prompt/docs-backed project entry. Coherent evidence—not project maturity—selects the Evidence-First Candidate. Mature projects may have coherent, conflicting, insufficient, or stale evidence and follow the corresponding profile route; a direction conflict returns to the user, while insufficient evidence falls back to Guided Baseline Formation. Both paths use the same confirmed Map preview and fingerprint-bound write. This is not a runtime classifier or background repository scanner.
 
-`navi setup` configures global discovery only: it does not initialize a target project. On the first broad supervision request in an unconfigured project, Navi checks whether Desired Outcome, Route To Outcome, Current Position, Current Boundary, and Next Decision are confirmable. The baseline is confirmable only when it includes both Current Boundary and Next Decision. If not, Navi asks one focused question at a time without writing. Once the guided confirmed baseline is ready, Navi shows one exact preview for the confirmed Map and managed `AGENTS.md` trigger. One approval covers that bounded project write: the Map is written first and the trigger last. `navi init` does not reinstall the plugin.
+`navi setup` configures global discovery only: it does not initialize a target project. On the first broad supervision request in an unconfigured project, Navi checks whether Desired Outcome, Outcome Boundary, Route To Outcome, Current Position, Current Boundary, and Next Decision are confirmable. The baseline is confirmable only when it includes both Current Boundary and Next Decision. If not, Navi asks one focused question at a time without writing. Once the guided confirmed baseline is ready, Navi shows one exact preview for the confirmed Map and managed `AGENTS.md` trigger. One approval covers that bounded project write: the Map is written first and the trigger last. `navi init` does not reinstall the plugin.
+
+Current main writes Project Map contract version 2 with a user-confirmed Outcome Boundary. Existing version-1 Maps remain readable and do not require immediate reinitialization. A version-1 Map can receive one fingerprint-bound approved Outcome Boundary augmentation; Navi does not migrate or rewrite it automatically. This current-main behavior remains unreleased until a later tag explicitly includes it.
+
+Version 2 is required for every new or upgraded Map write, and that exact augmentation is the only Map migration accepted through `navi init`.
 
 Existing confirmed Map trigger path (valid confirmed Map with a missing or recognized legacy trigger):
 

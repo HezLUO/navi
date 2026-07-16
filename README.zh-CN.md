@@ -41,11 +41,17 @@ navi setup --write
 
 全局 setup 一次 -> 每个项目批准 init 一次 -> 之后使用自然语言。
 
-Journey contract：global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision。
+Journey contract：global source setup once -> adaptive project evidence judgment -> user-confirmed Desired Outcome plus Outcome Boundary -> one v2 Map and managed-trigger preview -> one fingerprint-bound approved write -> fresh-session supervision -> material boundary revision only with user confirmation。
+
+Compatibility shorthand for the same path：global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision。
 
 当前 source 使用一个用户可见的项目入口，由 prompt/docs-backed 行为完成分流。证据连贯时才会形成 evidence-first candidate，项目是否成熟本身不决定分流；成熟项目也可能具有连贯、冲突、不足或过时的证据，并按对应 profile 处理。方向冲突交给用户确认；证据不足时进入 Guided Baseline Formation。两条路径共用同一个 confirmed Map preview 和 fingerprint-bound write。这不是 runtime classifier，也不是后台仓库扫描器。
 
-`navi setup` 只配置全局 discovery，不会初始化目标项目。在未配置项目中的第一次 broad supervision request，Navi 会先判断 Desired Outcome、Route To Outcome、Current Position、Current Boundary 和 Next Decision 是否可确认；baseline 只有同时包含 Current Boundary 和 Next Decision 才可确认。如果还不够，就一次只问一个 focused question，并且不写文件。形成 guided confirmed baseline 后，Navi 会一次预览 confirmed Map 和 managed `AGENTS.md` trigger。一次批准只覆盖这次 bounded project write：先写 Map，最后写 trigger。`navi init` 不会重新安装 plugin。
+`navi setup` 只配置全局 discovery，不会初始化目标项目。在未配置项目中的第一次 broad supervision request，Navi 会先判断 Desired Outcome、Outcome Boundary、Route To Outcome、Current Position、Current Boundary 和 Next Decision 是否可确认；baseline 只有同时包含 Current Boundary 和 Next Decision 才可确认。如果还不够，就一次只问一个 focused question，并且不写文件。形成 guided confirmed baseline 后，Navi 会一次预览 confirmed Map 和 managed `AGENTS.md` trigger。一次批准只覆盖这次 bounded project write：先写 Map，最后写 trigger。`navi init` 不会重新安装 plugin。
+
+当前 main 使用 Project Map contract version 2 写入经过用户确认的 Outcome Boundary。现有 version-1 Map 仍然可读，不需要立即重新初始化。version-1 Map 只能通过一次经过预览、指纹绑定和用户批准的 Outcome Boundary 补充升级；Navi 不会自动迁移或重写它。该 current-main 行为仍未发布，只有后续 tag 明确包含时才属于已发布版本。
+
+每次新写入或升级写入都必须使用 version 2；上述精确补充是 `navi init` 接受的唯一 Map migration。
 
 Existing confirmed Map trigger path（已有 valid confirmed Map，但缺少 trigger 或使用 recognized legacy trigger）：
 

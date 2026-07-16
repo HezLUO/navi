@@ -49,7 +49,7 @@ describe("Current Navi repository surface", () => {
     expect(debt).toContain("Being easy to parallelize does not establish product priority.");
   });
 
-  it("records adaptive project entry as the current bounded gate", async () => {
+  it("records Outcome Boundary calibration as the current bounded gate", async () => {
     const [history, roadmap] = await Promise.all([
       fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
       fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
@@ -60,13 +60,10 @@ describe("Current Navi repository surface", () => {
 
     for (const currentPhase of [historyPhase, roadmapPhase]) {
       expect(currentPhase).toContain("Supervised Delivery Loop V1 is integrated");
-      expect(currentPhase).toContain("adaptive project entry implementation is the current bounded gate");
-      expect(currentPhase).toContain("first mature real-project calibration");
-      expect(currentPhase).toContain(
-        "new or evidence-poor project calibration follows after the mature-project result is understood",
-      );
+      expect(currentPhase).toMatch(/Outcome Boundary[\s\S]*real-project calibration/i);
+      expect(currentPhase).toContain("Product Complete");
       expect(currentPhase).not.toContain(
-        "Codex-first Supervised Delivery Loop V1 implementation is the current bounded gate",
+        "adaptive project entry implementation is the current bounded gate",
       );
     }
 
@@ -76,6 +73,24 @@ describe("Current Navi repository surface", () => {
     expect(active).toContain(
       "`docs/superpowers/plans/2026-07-16-navi-adaptive-project-entry.md`",
     );
+  });
+
+  it("documents the unreleased version-2 Project Map write contract", async () => {
+    const [projectInit, roadmap, readme] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/project-init.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "README.md"), "utf8"),
+    ]);
+
+    expect(projectInit).toMatch(/navi_map: 2[\s\S]*Outcome Boundary/i);
+    expect(projectInit).toMatch(/version 1[\s\S]*readable[\s\S]*does not require reinitialization/i);
+    expect(projectInit).toMatch(/preview[\s\S]*fingerprint[\s\S]*approval/i);
+    expect(projectInit).toMatch(
+      /parsed metadata[\s\S]*anchor ranges[\s\S]*line-ending normalization[\s\S]*every other byte/i,
+    );
+    expect(roadmap).toMatch(/Outcome Boundary[\s\S]*real-project calibration/i);
+    expect(readme).toMatch(/current main[\s\S]*unreleased/i);
+    expect(readme).not.toMatch(/runtime scheduler|background service is included/i);
   });
 
   it("requires both current boundary and next decision in current entry docs", async () => {

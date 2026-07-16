@@ -4,10 +4,13 @@ This index is navigation metadata. It does not rewrite historical documents.
 
 ## Current Phase
 
-Supervised Delivery Loop V1 is integrated; adaptive project entry implementation is the current bounded gate. The first post-integration product calibration is the first mature real-project calibration; new or evidence-poor project calibration follows after the mature-project result is understood. Distribution, release, runtime, UI, and other-agent work remain outside this gate.
+Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. The current bounded gate is Outcome Boundary and Product Complete real-project calibration. Distribution, release, runtime, UI, and other-agent work remain outside this gate.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-16-navi-outcome-boundary-design.md`
+- `docs/superpowers/specs/2026-07-16-navi-codex-first-product-completion-design.md`
+- `docs/superpowers/plans/2026-07-16-navi-outcome-boundary-product-completion.md`
 - `docs/superpowers/specs/2026-07-16-navi-adaptive-project-entry-design.md`
 - `docs/superpowers/plans/2026-07-16-navi-adaptive-project-entry.md`
 - `docs/superpowers/specs/2026-07-15-navi-source-alpha-cli-invocation-design.md`

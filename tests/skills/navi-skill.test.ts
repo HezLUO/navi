@@ -194,6 +194,24 @@ describe("Navi skill and package structure", () => {
 
   });
 
+  it("keeps the package documentation truthful about version-2 Map writes", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme]) {
+      expect(surface).toMatch(/Current main writes Project Map contract version 2[\s\S]*user-confirmed Outcome Boundary/i);
+      expect(surface).toMatch(/version-1 Maps remain readable[\s\S]*do not require immediate reinitialization/i);
+      expect(surface).toMatch(/fingerprint-bound approved Outcome Boundary augmentation[\s\S]*does not migrate or rewrite it automatically/i);
+      expect(surface).toMatch(/current-main behavior remains unreleased[\s\S]*later tag explicitly includes it/i);
+    }
+    expect(chineseReadme).toMatch(/当前 main 使用 Project Map contract version 2[\s\S]*经过用户确认的 Outcome Boundary/);
+    expect(chineseReadme).toMatch(/version-1 Map 仍然可读[\s\S]*不需要立即重新初始化/);
+    expect(chineseReadme).toMatch(/预览、指纹绑定和用户批准[\s\S]*不会自动迁移或重写/);
+  });
+
   it("uses the Navi package identity and source marketplace catalog", async () => {
     const canonicalSkillRoot = path.join(repoRoot, ".agents", "skills", "navi");
     const pluginRoot = path.join(repoRoot, "plugins", "navi");

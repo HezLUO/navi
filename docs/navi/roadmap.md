@@ -1,15 +1,15 @@
 # Navi Post-Alpha Backlog / Roadmap
 
-Status: active backlog during the adaptive project entry implementation gate
+Status: active backlog during the Outcome Boundary and Product Complete real-project calibration gate
 Last updated: 2026-07-16
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
 ## Current Phase
 
-Supervised Delivery Loop V1 is integrated; adaptive project entry implementation is the current bounded gate. The first post-integration product calibration is the first mature real-project calibration; new or evidence-poor project calibration follows after the mature-project result is understood.
+Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. The next gate is Outcome Boundary and Product Complete real-project calibration across mature and evidence-poor project entry, supervised delivery, and closure evidence.
 
-This gate is limited to the adaptive entry prompt/docs contract and bounded current-source support. Distribution, release, runtime, UI, and other-agent work remain outside it. Real permission, scope, risk, merge, push, tag, and release decisions remain explicit.
+This is a Calibration gate, not release preparation. It is limited to testing whether the current prompt/docs-backed behavior helps real users set a truthful completion line and recognize Product Complete without expanding it automatically. Distribution, release, runtime, UI, and other-agent work remain outside it. Real permission, scope, risk, merge, push, tag, and release decisions remain explicit.
 
 ## Product Positioning
 
