@@ -98,7 +98,7 @@ Wait for a later release if you need npm distribution, public marketplace instal
 
 Latest tagged GitHub source release: `0.1.0-alpha.3`.
 
-Current main branch: includes unreleased post-`0.1.0-alpha.3` work, including the Lane Handoff behavior described below. It remains unreleased until a later tag explicitly includes it.
+Current main branch: includes unreleased post-`0.1.0-alpha.3` work, including the Lane Handoff and Supervised Delivery Loop behavior described below. Lane Handoff remains unreleased, and Supervised Delivery Loop remains unreleased, until a later tag explicitly includes them.
 
 What is stable in this alpha:
 
@@ -145,6 +145,12 @@ Current installation, discovery, and project triggers use Navi identifiers only.
 Navi V1 is docs-backed and turn-bound. It works while an active agent session is running; it does not watch files, send operating-system or background notifications, or act when Codex is closed.
 
 When a bounded Codex worktree has source-task metadata and host task messaging, Navi can deliver one `decision-required`, `blocked`, or `review-ready` transition back to the source main task. This is Codex task-to-task coordination during an active session, not a background watcher, user notification service, durable queue, or automatic permission to resume, merge, push, or release.
+
+### Codex-first Supervised Delivery Loop
+
+Current main includes an unreleased, prompt/docs-backed Supervised Delivery Loop for approved bounded implementation work. The persistent Main Thread owns goals and decisions, a worktree Execution Thread changes files and returns evidence, and one fresh read-only Validation Thread independently reviews the exact snapshot before acceptance.
+
+The loop uses Codex host task creation and task-to-task messaging during the active session while the source task is active. It is not a scheduler, not a durable queue, not a watcher, and not a background service, and it does not automatically merge, push, tag, or release. Permission, scope, architecture, known-risk, integration, and publication decisions remain explicit.
 
 ## What Navi Does
 

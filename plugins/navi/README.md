@@ -16,6 +16,12 @@ Navi is an independent source-alpha product for supervising expert agents. This 
 
 When a bounded Codex worktree has source-task metadata and host task messaging, Navi can deliver one `decision-required`, `blocked`, or `review-ready` transition back to the source main task. This is Codex task-to-task coordination during an active session, not a background watcher, user notification service, durable queue, or automatic permission to resume, merge, push, or release.
 
+### Codex-first Supervised Delivery Loop
+
+Current main includes an unreleased, prompt/docs-backed Supervised Delivery Loop for approved bounded implementation work. The persistent Main Thread owns goals and decisions, a worktree Execution Thread changes files and returns evidence, and one fresh read-only Validation Thread independently reviews the exact snapshot before acceptance.
+
+The loop uses Codex host task creation and task-to-task messaging during the active session while the source task is active. It is not a scheduler, not a durable queue, not a watcher, and not a background service, and it does not automatically merge, push, tag, or release. Permission, scope, architecture, known-risk, integration, and publication decisions remain explicit.
+
 ## Navi
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
@@ -106,7 +112,7 @@ The core value is **anti-self-certification**. It does not make implementation s
 
 Latest tagged GitHub source release: `0.1.0-alpha.3`.
 
-Current main includes unreleased post-`0.1.0-alpha.3` source work. The prompt/docs-backed Codex Lane Handoff behavior described in this README is current source behavior and remains unreleased until a later tag explicitly includes it.
+Current main includes unreleased post-`0.1.0-alpha.3` source work. The prompt/docs-backed Codex Lane Handoff remains unreleased current source behavior, and Supervised Delivery Loop remains unreleased current source behavior, until a later tag explicitly includes them.
 
 It packages the current skill-first behavior and a prompt/docs-backed Codex Lane Handoff adapter. It does not add runtime, memory, presence, background autonomy, another-agent support, or automatic worktree orchestration. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 

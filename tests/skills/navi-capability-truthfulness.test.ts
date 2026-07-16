@@ -37,6 +37,26 @@ describe("Navi capability truthfulness", () => {
     expect(chineseReadme).toMatch(/不包含后台 watcher[\s\S]*通知服务/i);
   });
 
+  it("describes supervised delivery as unreleased active-session behavior", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme]) {
+      expect(surface).toMatch(/Supervised Delivery Loop[\s\S]*Main Thread[\s\S]*Execution Thread[\s\S]*Validation Thread/i);
+      expect(surface).toMatch(/Codex host[\s\S]*active session/i);
+      expect(surface).toMatch(/unreleased[\s\S]*not a scheduler[\s\S]*not a background service/i);
+      expect(surface).toMatch(/does not automatically merge, push, tag, or release/i);
+    }
+
+    expect(chineseReadme).toMatch(/Supervised Delivery Loop[\s\S]*主线程[\s\S]*执行线程[\s\S]*验证线程/i);
+    expect(chineseReadme).toMatch(/Codex host[\s\S]*活跃会话/i);
+    expect(chineseReadme).toMatch(/尚未发布[\s\S]*不是调度器[\s\S]*不是后台服务/i);
+    expect(chineseReadme).toContain("不是调度器，也不是后台服务");
+  });
+
   it("distinguishes the latest tagged alpha from unreleased Lane Handoff behavior", async () => {
     const [readme, chineseReadme, pluginReadme] = await Promise.all([
       readRepoText("README.md"),

@@ -49,7 +49,7 @@ describe("Current Navi repository surface", () => {
     expect(debt).toContain("Being easy to parallelize does not establish product priority.");
   });
 
-  it("records verified CLI invocation as the current bounded implementation gate", async () => {
+  it("records supervised delivery as the current bounded implementation gate", async () => {
     const [history, roadmap] = await Promise.all([
       fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
       fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
@@ -57,10 +57,20 @@ describe("Current Navi repository surface", () => {
     const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
     const currentPhase = roadmap.match(/## Current Phase\n(?<phase>[\s\S]*?)\n## /)?.groups?.phase ?? "";
 
-    expect(history).toContain("Source-alpha CLI invocation reachability is the current bounded implementation gate");
-    expect(currentPhase).toContain("Complexity stabilization and its bounded two-project calibration are closed");
-    expect(currentPhase).toContain("Source-alpha CLI invocation reachability is the current bounded implementation gate");
-    expect(currentPhase).toContain("the next gate is one post-integration real-environment calibration, not distribution or release");
+    for (const currentSurface of [history, currentPhase]) {
+      expect(currentSurface).toContain(
+        "Source-alpha CLI invocation reachability and its real-environment calibration are closed",
+      );
+      expect(currentSurface).toContain(
+        "Codex-first Supervised Delivery Loop V1 implementation is the current bounded gate",
+      );
+      expect(currentSurface).toContain(
+        "the next gate is the first natural bounded calibration, not distribution or release",
+      );
+      expect(currentSurface).not.toContain(
+        "Source-alpha CLI invocation reachability is the current bounded implementation gate",
+      );
+    }
     expect(active).toContain("docs/superpowers/specs/2026-07-15-navi-source-alpha-cli-invocation-design.md");
     expect(active).toContain("docs/superpowers/plans/2026-07-15-navi-source-alpha-cli-invocation.md");
   });
@@ -70,6 +80,27 @@ describe("Current Navi repository surface", () => {
     const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
 
     expect(active).toContain("`docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`");
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-15-navi-supervised-delivery-loop.md`",
+    );
+  });
+
+  it("keeps supervised delivery contracts in one active owner", async () => {
+    const [skill, delivery, supervision] = await Promise.all([
+      fs.readFile(path.join(root, ".agents/skills/navi/SKILL.md"), "utf8"),
+      fs.readFile(
+        path.join(root, ".agents/skills/navi/references/supervised-delivery-v1.md"),
+        "utf8",
+      ),
+      fs.readFile(
+        path.join(root, ".agents/skills/navi/references/supervision-v1.md"),
+        "utf8",
+      ),
+    ]);
+
+    expect(skill).toContain("references/supervised-delivery-v1.md");
+    expect(delivery).toContain("NAVI_VALIDATION_RESULT");
+    expect(supervision).not.toContain("NAVI_VALIDATION_RESULT\nversion: 1");
   });
 
   it("separates global legacy cutover from project-local migration", async () => {

@@ -98,7 +98,7 @@ Navi map 默认应该跟随用户当前 prompt 的语言。如果目标项目保
 
 最新 tagged GitHub source release：`0.1.0-alpha.3`。
 
-当前 main branch：包含 `0.1.0-alpha.3` 之后尚未发布的工作，包括下文描述的 Lane Handoff 行为；除非后续 tag 明确包含它，否则该能力仍是未发布的 current source behavior。
+当前 main branch：包含 `0.1.0-alpha.3` 之后尚未发布的工作，包括下文描述的 Lane Handoff 和 Supervised Delivery Loop 行为；除非后续 tag 明确包含它们，否则 Lane Handoff 仍是未发布的 current source behavior，Supervised Delivery Loop 也是如此。
 
 这个 alpha 中稳定的内容：
 
@@ -145,6 +145,12 @@ plugins/navi
 Navi V1 是 docs-backed 且 turn-bound 的。它在活跃 agent session 中工作；它不会 watch files、发送操作系统或后台 notifications，也不会在 Codex 关闭后继续行动。
 
 当一个有明确边界的 Codex worktree 带有 source-task metadata 且 host 提供任务消息能力时，Navi 可以把一次 `decision-required`、`blocked` 或 `review-ready` 转换直接交给来源主任务。这是活跃会话中 Codex 任务之间的协调，不是后台 watcher、用户通知服务、持久队列，也不会自动授权恢复执行、merge、push 或 release。
+
+### Codex-first Supervised Delivery Loop
+
+当前 main 包含一个尚未发布、由 prompt/docs 支撑的 Supervised Delivery Loop，用于已批准且边界明确的实现工作。持续存在的主线程负责目标和决策，worktree 执行线程负责修改文件并返回证据，一个新建的只读验证线程在接受结果前独立审查精确 snapshot。
+
+该闭环使用 Codex host 的任务创建和任务间消息能力，并且只在来源任务仍活跃的活跃会话中工作。它不是调度器，也不是后台服务；也不是持久队列或 watcher，并且不会自动 merge、push、tag 或 release。权限、范围、架构、已知风险、集成和发布决策仍需明确处理。
 
 ## Navi 做什么
 

@@ -4,7 +4,7 @@ This index is navigation metadata. It does not rewrite historical documents.
 
 ## Current Phase
 
-Complexity stabilization and its bounded two-project calibration are closed. Source-alpha CLI invocation reachability is the current bounded implementation gate. After parent review and explicit integration, the next gate is one post-integration real-environment calibration, not distribution or release.
+Source-alpha CLI invocation reachability and its real-environment calibration are closed. Codex-first Supervised Delivery Loop V1 implementation is the current bounded gate. After parent review and explicit integration, the next gate is the first natural bounded calibration, not distribution or release.
 
 ## Active
 
@@ -13,6 +13,7 @@ Complexity stabilization and its bounded two-project calibration are closed. Sou
 - `docs/superpowers/specs/2026-07-15-navi-source-alpha-legacy-migration-design.md`
 - `docs/superpowers/plans/2026-07-15-navi-source-alpha-legacy-migration.md`
 - `docs/superpowers/specs/2026-07-14-navi-supervised-delivery-loop-design.md`
+- `docs/superpowers/plans/2026-07-15-navi-supervised-delivery-loop.md`
 - `docs/superpowers/specs/2026-07-14-navi-complexity-stabilization-design.md`
 - `docs/superpowers/specs/2026-07-13-navi-confirmed-project-map-init-journey-design.md`
 - `docs/superpowers/specs/2026-07-12-navi-blocker-event-delivery-design.md` (revised as Lane Handoff Event Delivery)
