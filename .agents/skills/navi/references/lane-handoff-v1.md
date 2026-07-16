@@ -66,6 +66,7 @@ Use `kind: review-ready` only after the lane reaches its stated implementation a
 
 Add:
 
+reviewed_snapshot: exact commit or immutable snapshot
 commits: exact implementation commits
 changed_scope: exact files or bounded components changed
 verification: targeted checks and exact results
@@ -93,7 +94,7 @@ The source main task tracks handled event IDs in its task context and must silen
 
 A premise-changing event is handled at the first available turn when it changes a current premise, safety judgment, file scope, acceptance criterion, or user decision. A lane-local event may wait until the next natural checkpoint while useful non-conflicting design continues.
 
-For decision-required, present the one real decision and send the result directly back to the lane. For blocked, present the resume, replace, or close decision only when user judgment is required. For review-ready, perform read-only parent review at the next natural checkpoint without asking the user to relay the result.
+For decision-required, present the one real decision and send the result directly back to the lane. For blocked, present the resume, replace, or close decision only when user judgment is required. For review-ready, first perform the bounded source-side scope and snapshot audit at the next natural checkpoint; this is the read-only parent review. When the originating Execution Contract includes `validation_preauthorized: true`, follow `supervised-delivery-v1.md`: mark the lane validation-pending and create at most one fresh read-only Validation Thread for the exact event and snapshot. Without that preauthorization, do not create a task automatically; present the applicable review decision.
 
 If review finds a defect inside the original goal, scope, validation budget, authority, and risk boundaries, send one strictly bounded remediation to the same lane. If remediation changes product design, expands scope, requires permission, lowers acceptance criteria, or accepts new risk, present a real user decision instead.
 

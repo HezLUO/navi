@@ -86,3 +86,47 @@ Before sending, confirm the payload must begin exactly with `NAVI_VALIDATION_RES
 - Level 3 examines authorization, filesystem, migration, or other costly failure boundaries and may run one approved bounded integration suite.
 
 No validation level silently enters Release mode or repeats the executor's complete test transcript merely to obtain a second green run.
+
+## Lifecycle And Identity
+
+For one valid preauthorized review-ready transition, the active Main Thread creates one fresh Validation Thread for one reviewed_event_id and exact reviewed_snapshot. Mark the lane validation-pending until a valid result returns; review-ready alone is not acceptance.
+
+The initial valid review-ready event creates one fresh Validation Thread. Each bounded remediation re-review reuses that same Validation Thread rather than creating a replacement.
+
+Duplicate handoff event IDs: ignore them idempotently. Duplicate validation result IDs: ignore them idempotently. A result with the wrong reviewed_event_id or wrong reviewed_snapshot is stale evidence and cannot change acceptance state. A second review-ready event after bounded remediation uses a new event ID and snapshot.
+
+Reuse the same executor-validator pair for in-scope remediation and focused re-review. The pair may perform at most two remediation rounds. New scope, permission, architecture, baseline, goal, validation-budget expansion, or known-risk acceptance returns to the user instead of mutating the pair's contract.
+
+Do not create the validator when implementation starts, poll for ordinary progress, or create multiple validators for the same event. Host task creation and messaging are the transport; Navi makes no background-delivery promise after active tasks close.
+
+## Verdict Routing
+
+| Verdict | Next owner | Required transition |
+| --- | --- | --- |
+| accept | Main Thread | Present supportable evidence and the real merge or acceptance decision. |
+| remediation-required | same Execution Thread | Route only in-scope findings, then return the new snapshot to the same Validation Thread for focused re-review. |
+| decision-required | user | Present the concrete scope, permission, architecture, or risk decision with a recommendation. |
+| unable-to-verify | Main Thread | Decide the evidence or premise question: whether missing evidence is already authorized, whether the environment must change, or whether the premise must be reconsidered. |
+
+`validator_write_state: invalidated` cannot support acceptance. Restore a clean exact-snapshot review boundary before another result is considered.
+
+Planned tests remain owned by the Execution Thread. Validation may run only bounded checks needed for a concrete doubt. Full release verification remains owned by explicit Release mode.
+
+## Findings Severity
+
+- Critical means an authorization violation, unsafe behavior, data loss, or a premise that cannot be accepted as designed.
+- Important means the approved contract is not met, a meaningful regression or omission exists, or evidence is insufficient for acceptance.
+- Minor means a bounded quality issue that does not invalidate acceptance and normally becomes explicit debt.
+
+## Remediation Stop Rule
+
+After two remediation rounds, any remaining Critical or Important issue stops automatic routing. The Main Thread must reassess the plan, architecture, or acceptance criteria and present a real decision. Minor findings default to explicit debt unless they materially affect the current decision.
+
+## Failure Handling
+
+- Failure to create the preauthorized validator leaves the lane validation-pending; it never implies acceptance.
+- Host task messaging failure uses one explicit local fallback report. Do not claim delivery, start a timed retry, or create a polling loop.
+- Insufficient evidence returns to the Execution Thread only when collecting that evidence is already inside the approved contract and verification budget.
+- A missing or mismatched snapshot produces unable-to-verify or stale evidence.
+- A formally blocked Execution Thread reports through Lane Handoff instead of waiting for the user to discover it.
+- Closed Codex tasks have no background continuation or later-delivery guarantee.

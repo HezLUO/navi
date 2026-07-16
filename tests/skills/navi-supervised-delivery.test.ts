@@ -136,4 +136,66 @@ describe("Navi Supervised Delivery Loop V1", () => {
     );
     expect(wire).toMatch(/same transition[\s\S]*same result_id/i);
   });
+
+  it("creates at most one validator for one review-ready snapshot", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const lifecycle = extractSection(reference, "## Lifecycle And Identity");
+    const laneHandoff = await readRepoText(
+      ".agents/skills/navi/references/lane-handoff-v1.md",
+    );
+    const reviewReady = extractSection(laneHandoff, "## Review Ready");
+
+    expect(lifecycle).toMatch(/one fresh Validation Thread[\s\S]*one reviewed_event_id/i);
+    expect(lifecycle).toMatch(/duplicate handoff event IDs[\s\S]*ignore/i);
+    expect(lifecycle).toMatch(/duplicate validation result IDs[\s\S]*ignore/i);
+    expect(lifecycle).toMatch(/wrong reviewed_snapshot[\s\S]*stale evidence/i);
+    expect(lifecycle).toMatch(/same executor-validator pair[\s\S]*at most two/i);
+    expect(lifecycle).toMatch(
+      /initial valid review-ready[\s\S]*one fresh Validation Thread[\s\S]*remediation[\s\S]*same Validation Thread/i,
+    );
+    expect(reviewReady).toMatch(
+      /reviewed_snapshot: exact commit or immutable snapshot/i,
+    );
+  });
+
+  it("routes every validation verdict to one next owner", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const routing = extractSection(reference, "## Verdict Routing");
+
+    const expectedRows = [
+      ["accept", "Main Thread", "merge or acceptance decision"],
+      ["remediation-required", "same Execution Thread", "same Validation Thread"],
+      ["decision-required", "user", "scope, permission, architecture, or risk"],
+      ["unable-to-verify", "Main Thread", "evidence or premise"],
+    ];
+    for (const row of expectedRows) {
+      for (const cell of row) expect(routing).toContain(cell);
+    }
+  });
+
+  it("invalidates validator writes and caps remediation", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    expect(reference).toMatch(/validator_write_state: invalidated[\s\S]*cannot support acceptance/i);
+    expect(reference).toMatch(/two remediation rounds[\s\S]*reassess the plan, architecture, or acceptance criteria/i);
+    expect(reference).toMatch(/planned tests[\s\S]*Execution Thread[\s\S]*Release mode/i);
+  });
+
+  it("keeps failed coordination honest and bounded", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const failure = extractSection(reference, "## Failure Handling");
+
+    expect(failure).toMatch(/failure to create[\s\S]*validation-pending/i);
+    expect(failure).toMatch(/messaging failure[\s\S]*explicit local fallback/i);
+    expect(failure).toMatch(/timed retry[\s\S]*polling loop/i);
+    expect(failure).toMatch(/insufficient evidence[\s\S]*approved contract/i);
+    expect(failure).toMatch(/formally blocked[\s\S]*Lane Handoff/i);
+  });
 });
