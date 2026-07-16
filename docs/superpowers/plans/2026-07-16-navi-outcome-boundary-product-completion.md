@@ -14,7 +14,7 @@
 - The Main Thread records the exact integrated `main` HEAD in the Execution Contract before creating the implementation worktree. That immutable HEAD is the implementation baseline.
 - Execute implementation in one true Codex-managed worktree. Do not implement in the Main Thread.
 - Use four task commits. Each task receives a fresh task-level review before the next task starts.
-- At final `review-ready`, create one fresh Level 3 read-only Validation Thread for the exact candidate snapshot. Reuse that validator for at most two in-scope remediation rounds.
+- At final `review-ready`, create one fresh Level 3 read-only Validation Thread for the exact candidate snapshot. It must be a true Codex task that can deliver a structured result directly to the Main Thread; an internal `multi_agent` subagent that requires `wait_agent` does not satisfy this contract. Reuse that validator for at most two in-scope remediation rounds.
 - Do not merge, push, tag, release, publish, or modify a target project without a separate explicit user decision.
 - Do not touch `work/`, Historical Along, MCP/runtime/UI, global Codex state, global npm state, package versions, release metadata, or dependencies.
 - Do not add a database, daemon, watcher, scheduler, queue, second Map file, second project-entry command, automatic Map write, or support for agents other than Codex.
@@ -870,6 +870,8 @@ Delivery sample. Collect from actual events rather than reconstructing them:
 
 - one task-scoped Execution Thread;
 - one candidate-scoped read-only Validation Thread;
+- the Validation Thread is a true Codex task and delivers its structured result
+  directly to the Main Thread without user prompting, relay, or `wait_agent`;
 - zero user-relayed lane events;
 - zero duplicate validators for one event and snapshot;
 - zero validator writes;

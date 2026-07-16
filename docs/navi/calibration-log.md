@@ -5,6 +5,50 @@ Last updated: 2026-07-16
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
 
+## 2026-07-16 - Adaptive Entry Validation Did Not Return To The Main Task
+
+Target project: Navi
+Mode: implementation integration / Supervised Delivery calibration
+Reviewed snapshot: `6eb7881d7421a6b5ddf2e66eaa6173be00f4482d`
+
+Expected behavior:
+
+After Adaptive Entry reached `review-ready`, the Main Thread should have created
+one true read-only Codex Validation Task. That task should have reviewed the
+exact snapshot and delivered a structured validation result directly to the
+Main Thread without making the user monitor or relay task state.
+
+Observed behavior:
+
+The Main Thread instead used an internal `multi_agent` subagent as though it
+were the product's Validation Thread. The subagent completed with an `accept`
+verdict, but completion remained behind the internal `wait_agent` lifecycle.
+The Main Thread did not resume from a delivered result. The user had to notice
+that Adaptive Entry had not returned, ask for an inspection, and thereby act as
+the liveness monitor.
+
+Calibration judgment:
+
+The Adaptive Entry candidate itself passed independent review, but this natural
+three-role workflow sample failed the direct-return criterion. The failure is an
+orchestration-primitive mismatch: an internal subagent is not a Codex task and
+must not be counted as a Validation Thread merely because it performed
+read-only review. This sample does not yet prove that Navi needs a Runtime
+Surface. The next calibration must first use the host's real Codex task and
+direct task-messaging path.
+
+Product follow-up:
+
+- Create validation work as a true Codex Validation Task capable of sending a
+  structured result directly to the Main Thread.
+- Do not use `multi_agent` plus `wait_agent` as a substitute for cross-task
+  delivery or count that path as a successful three-role calibration.
+- Treat a completed validation result that requires user prompting or relay as
+  a failed zero-information-bus acceptance criterion, even when the verdict is
+  `accept`.
+- Reconsider Runtime Surface only if the correct host task primitive still
+  cannot reliably deliver, deduplicate, or resume bounded validation events.
+
 ## 2026-07-16 - Source-Alpha CLI Invocation Real-Environment Closeout
 
 Target project: Navi
