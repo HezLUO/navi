@@ -506,6 +506,20 @@ describe("Navi capability truthfulness", () => {
     expect(canonicalSkill).toContain("must not silently escalate a bounded implementation task");
   });
 
+  it("keeps Outcome Boundary changes and legacy supervision truthful", async () => {
+    const canonicalSkill = await readRepoText(".agents/skills/navi/SKILL.md");
+
+    expect(canonicalSkill).toContain(
+      "Navi must not silently change a user-confirmed Outcome Boundary.",
+    );
+    expect(canonicalSkill).toMatch(
+      /Navi must not treat implementation momentum, passing tests, or an attractive[\s\S]*future feature as approval to expand the whole-goal completion line\./,
+    );
+    expect(canonicalSkill).toMatch(
+      /Navi must not require a legacy-readable version-1 Map to be reinitialized[\s\S]*before providing useful read-only supervision\./,
+    );
+  });
+
   it("documents restrained positioning, validation, and version boundaries", async () => {
     const readme = await readRepoText("plugins/navi/README.md");
     const version = await readRepoText("plugins/navi/VERSION.md");

@@ -685,4 +685,47 @@ Chinese orientation prompts should still allow Chinese headings and explanations
       expect(contract).not.toMatch(/rewrite (the )?Map silently/i);
     }
   });
+
+  it("owns the dual-boundary completion and compatibility policy", async () => {
+    const projectMap = await readRepoText(
+      ".agents/skills/navi/references/project-map-v1.md",
+    );
+
+    expect(projectMap).toMatch(
+      /Outcome Boundary[\s\S]*Enough Outcome[\s\S]*Acceptance Evidence[\s\S]*Outside This Boundary[\s\S]*Revisit Trigger/i,
+    );
+    expect(projectMap).toMatch(
+      /Outcome Boundary[\s\S]*whole current goal[\s\S]*Current Boundary[\s\S]*current stage/i,
+    );
+    expect(projectMap).toMatch(
+      /version 1[\s\S]*legacy[\s\S]*readable[\s\S]*version 2[\s\S]*new/i,
+    );
+    expect(projectMap).toMatch(
+      /Existing Boundary[\s\S]*Proposed Boundary[\s\S]*Reason For Change[\s\S]*Decision Required/i,
+    );
+    expect(projectMap).toMatch(/ordinary commits[\s\S]*do not[\s\S]*reconfirm/i);
+    expect(projectMap).toMatch(/Acceptance Evidence[\s\S]*quiet/i);
+  });
+
+  it("distinguishes legacy v1 anchors from required v2 anchors", async () => {
+    const projectMap = await readRepoText(
+      ".agents/skills/navi/references/project-map-v1.md",
+    );
+    const model = extractMarkdownSection(projectMap, "### Confirmed Project Map Model");
+    const legacyAnchors = model.match(
+      /Version 1 legacy-readable Maps use these stable required anchors:\n(?<anchors>[\s\S]*?)\n\nVersion 2 Maps use these stable required anchors:/,
+    )?.groups?.anchors;
+    const currentAnchors = model.match(
+      /Version 2 Maps use these stable required anchors:\n(?<anchors>[\s\S]*?)\n\nOptional Parallel Lanes/,
+    )?.groups?.anchors;
+
+    expect(legacyAnchors).toBeDefined();
+    expect(legacyAnchors).toContain("Desired Outcome");
+    expect(legacyAnchors).toContain("Route To Outcome");
+    expect(legacyAnchors).not.toContain("Outcome Boundary");
+    expect(currentAnchors).toBeDefined();
+    expect(currentAnchors).toContain("Desired Outcome");
+    expect(currentAnchors).toContain("Outcome Boundary");
+    expect(currentAnchors).toContain("Route To Outcome");
+  });
 });

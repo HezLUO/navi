@@ -22,7 +22,7 @@ Record conceptually:
 
 profile: coherent | conflicting | insufficient | stale
 sources: bounded evidence used
-supported_judgments: Desired Outcome, route or rhythm, Current Position, Current Boundary, or Next Decision supported by evidence
+supported_judgments: Desired Outcome, Outcome Boundary for version 2, route or rhythm, Current Position, Current Boundary, or Next Decision supported by evidence
 missing_judgments: required judgments still needing user input
 conflicts: incompatible decision-relevant claims
 uncertainty: incomplete or apparently outdated evidence
@@ -32,8 +32,8 @@ Do not persist the profile as a project file.
 
 Classify the evidence using these criteria:
 
-- `coherent`: evidence supports every required baseline area with no unresolved material conflict.
-- `conflicting`: incompatible claims would change the Desired Outcome, major route, current phase, stopping boundary, or Next Decision.
+- `coherent`: evidence supports every required baseline area, including the Outcome Boundary required for a version 2 candidate, with no unresolved material conflict.
+- `conflicting`: incompatible claims would change the Desired Outcome, Outcome Boundary, major route, current phase, stopping boundary, or Next Decision.
 - `insufficient`: one or more required baseline areas cannot be made confirmable.
 - `stale`: an apparently authoritative source is plausibly passed by current repository facts. Perform a targeted code or Git check, then reclassify. If the check cannot resolve the issue, preserve uncertainty or ask the user; do not silently demote the source.
 
@@ -56,11 +56,11 @@ Navi must not use modification time, fixed filename priority, code state, or mod
 
 ## Evidence-First Candidate
 
-Build a complete candidate before questioning the user. Do not ask the user to repeat supported facts. Ask only about missing, conflicting, or route-changing judgments. Distinguish observed implementation state from intended direction, preserve evidence and uncertainty, then show one complete candidate for final confirmation.
+Build a complete candidate before questioning the user. For version 2, only coherent evidence forms a complete Outcome Boundary candidate; code and tests may support implementation state and Acceptance Evidence but cannot choose the whole-goal completion line. Do not ask the user to repeat supported facts. Ask only about missing, conflicting, or route-changing judgments. Distinguish observed implementation state from intended direction, preserve evidence and uncertainty, then show one complete candidate for final confirmation.
 
 ## Guided Baseline Formation
 
-Ask about one missing judgment at a time. Confirm Desired Outcome, Current Position, Current Boundary, Next Decision, and either a route or working rhythm. A new project may confirm an explicitly provisional route or working rhythm. Record unknowns in Evidence And Uncertainty; a stored candidate must not contain a blank placeholder or fabricated certainty.
+Ask about one missing judgment at a time. Confirm Desired Outcome, Outcome Boundary, Current Position, Current Boundary, Next Decision, and either a route or working rhythm. When the Outcome Boundary lacks enough evidence, offer two or three project-specific completion levels with concrete trade-offs rather than a fixed Navi maturity ladder. A new project may confirm an explicitly provisional route or working rhythm, or a provisional Outcome Boundary. Provisional means the user confirms the boundary as the current working completion hypothesis and it includes a Revisit Trigger; it does not claim a permanent product boundary. Record unknowns in Evidence And Uncertainty; a stored candidate must not contain a blank placeholder or fabricated certainty.
 
 ## Layered Authority
 
@@ -72,4 +72,4 @@ Both strategies use one combined Map and managed-trigger preview, one fingerprin
 
 ## Material Updates
 
-Propose a bounded Map diff only when Desired Outcome, major route or Product Stage, Current Boundary, Next Decision, or decision-relevant evidence conflict materially changes. Routine commits, tests, and local completion do not independently trigger a Map update.
+Propose a bounded Map diff only when Desired Outcome, Outcome Boundary, major route or Product Stage, Current Boundary, Next Decision, or decision-relevant evidence conflict materially changes. Routine commits, tests, and local completion do not independently trigger a Map update.

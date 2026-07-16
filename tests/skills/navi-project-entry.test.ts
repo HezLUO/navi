@@ -284,4 +284,19 @@ describe("Navi adaptive project entry", () => {
       expect(packaged).toBe(canonical);
     }
   });
+
+  it("forms evidence-backed and guided Outcome Boundary candidates", async () => {
+    const projectEntry = await readRepoText(
+      ".agents/skills/navi/references/project-entry-v1.md",
+    );
+
+    expect(projectEntry).toMatch(/coherent[\s\S]*Outcome Boundary candidate/i);
+    expect(projectEntry).toMatch(/two or three[\s\S]*completion levels/i);
+    expect(projectEntry).toMatch(
+      /provisional[\s\S]*user confirms[\s\S]*Revisit Trigger/i,
+    );
+    expect(projectEntry).toMatch(
+      /no default recommendation|supports no default recommendation/i,
+    );
+  });
 });

@@ -341,6 +341,25 @@ describe("Navi supervision contracts", () => {
     }
   });
 
+  it("routes dual-boundary supervision without duplicating its schema", async () => {
+    const [projectMap, supervision] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/project-map-v1.md"),
+      readRepoText(".agents/skills/navi/references/supervision-v1.md"),
+    ]);
+
+    expect(supervision).toMatch(/Outcome Boundary[\s\S]*project-map-v1\.md/i);
+    expect(supervision).toMatch(
+      /outside[\s\S]*scope|over-validation[\s\S]*Acceptance Evidence/i,
+    );
+    expect(supervision).toMatch(/Silent Tracking|lightest sufficient surface/i);
+    expect(projectMap).toMatch(
+      /Enough Outcome[\s\S]*Acceptance Evidence[\s\S]*Outside This Boundary[\s\S]*Revisit Trigger/i,
+    );
+    expect(supervision).not.toMatch(
+      /Enough Outcome[\s\S]*Acceptance Evidence[\s\S]*Outside This Boundary[\s\S]*Revisit Trigger/i,
+    );
+  });
+
   it("defines one unified Codex Lane Handoff contract without adding a runtime", async () => {
     const [canonicalSkill, canonicalReference] = await Promise.all([
       readRepoText(".agents/skills/navi/SKILL.md"),

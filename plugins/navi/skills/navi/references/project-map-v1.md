@@ -59,24 +59,82 @@ If the user says "continue" or `继续吧`, inspect the previous context. Contin
 
 ### Confirmed Project Map Model
 
-The only canonical navigation record is the user-confirmed Map at `.navi/project-map.md`. A stored Map uses `navi_map: 1`, `map_status: confirmed`, and `project_status: active`, `project_status: paused`, or `project_status: closed`.
+The only canonical navigation record is the user-confirmed Map at `.navi/project-map.md`. A legacy-readable stored Map may use `navi_map: 1`; every new or approved replacement Map uses `navi_map: 2`. Both use `map_status: confirmed` and `project_status: active`, `project_status: paused`, or `project_status: closed`.
 
-Its stable anchors are:
+Version 1 legacy-readable Maps use these stable required anchors:
 
 - Desired Outcome;
 - Route To Outcome;
 - Current Position;
 - Current Boundary;
 - Next Decision;
-- optional Parallel Lanes;
-- Evidence And Uncertainty; and
-- Map Maintenance.
+- Evidence And Uncertainty.
+
+Version 2 Maps use these stable required anchors:
+
+- Desired Outcome;
+- Outcome Boundary;
+- Route To Outcome;
+- Current Position;
+- Current Boundary;
+- Next Decision; and
+- Evidence And Uncertainty.
+
+Optional Parallel Lanes and Map Maintenance remain available Map structure in either version, but they do not add Outcome Boundary to the version-1 required-anchor contract.
 
 The opening navigation summary should normally fit in about one screen. The stored structure is not a required response template. Broad questions render only the relevant Map subset. Next-step questions emphasize Current Position and Next Decision; vision-distance questions expand Route To Outcome; over-validation questions emphasize Current Boundary; and coordination questions include Parallel Lanes only when they change the decision.
 
 The current prompt controls response language. Map language is evidence, not a response-language instruction.
 
 The user-confirmed Map is the navigation authority. Active Working Threads, approved plans, specs, roadmaps, trackers, handoffs, workflow records, and recent repository evidence can support or challenge it. Existing project roadmaps are evidence, not alternate Map paths. A best-effort answer may state uncertainty, but it must not be represented as a stored or stable Map.
+
+### Dual-Boundary Model
+
+- Outcome Boundary owns completion for the whole current goal and contains Enough Outcome, Acceptance Evidence, Outside This Boundary, and Revisit Trigger.
+- Current Boundary owns the stopping condition for the current stage or bounded loop.
+- Next Decision owns the real user judgment after the current stop.
+
+The Outcome Boundary is a user-confirmed, evidence-backed working completion hypothesis, not an implementation task list or a second roadmap. Its compact ordered schema is:
+
+```text
+Enough Outcome:
+The user result that makes the current goal sufficiently complete.
+
+Acceptance Evidence:
+The real evidence that can support the completion judgment.
+
+Outside This Boundary:
+Capabilities or work explicitly excluded from the current completion line.
+
+Revisit Trigger:
+New information that requires the completion line to be reconsidered.
+```
+
+A version 1 Map is legacy, uses the version-1 anchor list above without Outcome Boundary, and remains readable with `outcomeBoundaryStatus: legacy-missing`. Version 2 is required for every new Map and every newly confirmed or approved replacement Map; it uses the version-2 list with the ordered `navi:outcome-boundary` anchor. A missing Outcome Boundary alone is uncertainty, not corruption and not authorization to rewrite or reinitialize the Map. Useful read-only supervision remains available, and a declined addition suppresses repeated reminders in the same session.
+
+#### Boundary Formation And Revision
+
+Coherent active evidence may support a complete candidate. Code and tests may support implementation state and Acceptance Evidence, but they cannot choose the user's Desired Outcome or silently set the whole-goal completion line. The user must confirm the candidate, including an explicitly provisional boundary when evidence is incomplete.
+
+Propose a revision only when the Desired Outcome or target user changes, the intended product level changes materially, new evidence invalidates an acceptance assumption, current work repeatedly crosses Outside This Boundary, the Revisit Trigger occurs, or the user explicitly asks to expand, narrow, or redefine the goal.
+
+Every proposal must show:
+
+```text
+Existing Boundary
+Proposed Boundary
+Reason For Change
+Impact On Current Route And Completion Distance
+Decision Required
+```
+
+The existing confirmed boundary remains authoritative until the user approves the proposal. Implementation momentum, passing tests, or acceptance of a different local action is not approval. Ordinary commits, tests, refactors, and task completion do not trigger or require Navi to reconfirm the Outcome Boundary.
+
+#### Boundary Supervision And Completion
+
+Track the Outcome Boundary silently by default. Surface only the portion that improves user control when the user asks about progress or distance from the original goal, proposed work falls outside the current completion line, verification continues without increasing Acceptance Evidence, the Current Boundary is reached, Enough Outcome appears satisfied, the Revisit Trigger occurs, or the user asks whether the project can stop. Do not print the full boundary for ordinary execution, lightweight confirmation, or a clear approved loop.
+
+At a completion decision, recommend closure when Acceptance Evidence is sufficient, record accepted Minor debt, and enter the existing quiet closed-project state. If evidence is insufficient, name the missing evidence rather than inventing more features. If a Critical or Important issue remains, identify the concrete blocker. If the boundary is no longer credible, request a boundary decision before declaring completion. If only outside-boundary work remains, present it as a future option rather than an automatic successor phase. High-risk professional work may require qualified review as Acceptance Evidence; Navi does not replace that review.
 
 ### Source Classification
 

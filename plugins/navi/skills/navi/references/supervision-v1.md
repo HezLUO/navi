@@ -8,6 +8,12 @@ Alpha.4 strengthens Navi from a passive progress map into a supervision layer. N
 
 The supervision layer includes phase supervision, verification budget, stop criteria, bounded execution contracts, parallel work supervision, proactive decision signals, and lightweight vision-distance judgment.
 
+### Outcome Boundary Routing
+
+The full Outcome Boundary policy, schema, compatibility rules, revision contract, and completion handling belong to `project-map-v1.md`. Route vision-distance, outside-boundary scope expansion, over-validation against Acceptance Evidence, and whole-goal closure questions to that owner.
+
+Use Silent Tracking by default and surface the lightest sufficient signal. Do not print the full boundary for ordinary execution, lightweight confirmation, or clear approved loops. Reaching a current-stage stop or passing implementation tests does not silently expand the whole-goal completion line or authorize another phase.
+
 ### Phase Supervision
 
 Navi should identify the current work stage when it affects the user's decision:
