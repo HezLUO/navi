@@ -103,6 +103,51 @@ describe("navi init confirmed Map planning", () => {
     expect(await snapshot(project)).toEqual(before);
   });
 
+  it("prioritizes mature-project evidence when the confirmed Map is missing", async () => {
+    const project = await createProject();
+    await fs.writeFile(path.join(project, "README.md"), "# Project\n");
+    await fs.writeFile(path.join(project, "ROADMAP.md"), "# Roadmap\n");
+    await fs.writeFile(path.join(project, "STATUS.md"), "# Status\n");
+    await fs.writeFile(path.join(project, "package.json"), "{}\n");
+
+    const plan = await buildInitPlan({ targetDir: project });
+
+    expect(plan.state).toBe("needs-confirmed-map");
+    expect(plan.evidencePaths).toEqual(["README.md", "ROADMAP.md", "STATUS.md"]);
+    expect(plan.actions).toEqual([]);
+  });
+
+  it("reports each exact root plan, spec, handoff, and workflow as missing-map evidence", async () => {
+    for (const relativePath of ["PLAN.md", "SPEC.md", "HANDOFF.md", "WORKFLOW.md"]) {
+      const project = await createProject();
+      await fs.writeFile(path.join(project, relativePath), `# ${relativePath}\n`);
+
+      const plan = await buildInitPlan({ targetDir: project });
+
+      expect(plan.state).toBe("needs-confirmed-map");
+      expect(plan.evidencePaths).toEqual([relativePath]);
+      expect(plan.actions).toEqual([]);
+    }
+  });
+
+  it("does not let nested package READMEs crowd a root ROADMAP out of InitPlan evidence", async () => {
+    const project = await createProject();
+    await fs.writeFile(path.join(project, "README.md"), "# Project\n");
+    await fs.writeFile(path.join(project, "ROADMAP.md"), "# Roadmap\n");
+    await fs.mkdir(path.join(project, "packages", "alpha"), { recursive: true });
+    await fs.mkdir(path.join(project, "packages", "beta"), { recursive: true });
+    await fs.writeFile(path.join(project, "packages", "alpha", "README.md"), "# Alpha\n");
+    await fs.writeFile(path.join(project, "packages", "beta", "README.md"), "# Beta\n");
+
+    const plan = await buildInitPlan({ targetDir: project });
+
+    expect(plan.evidencePaths).toEqual([
+      "README.md",
+      "ROADMAP.md",
+      "packages/alpha/README.md",
+    ]);
+  });
+
   it("names at most three bounded local evidence sources without inferring a Map", async () => {
     const project = await createProject();
     await fs.writeFile(path.join(project, "README.md"), "# Project\n");

@@ -19,18 +19,88 @@ afterEach(async () => {
 });
 
 describe("bounded Navi project evidence inspection", () => {
-  it("discovers only candidate local text sources in deterministic priority order", async () => {
+  it("discovers bounded mature-project sources in deterministic priority order", async () => {
     const root = await projectRoot();
     await fs.writeFile(path.join(root, "package.json"), "{}\n");
     await fs.writeFile(path.join(root, "README.md"), "# Read me\n");
+    await fs.writeFile(path.join(root, "ROADMAP.md"), "# Route\n");
     await fs.writeFile(path.join(root, "STATUS.md"), "# Status\n");
+    await fs.writeFile(path.join(root, "TRACKER.md"), "# Tracker\n");
     await fs.writeFile(path.join(root, "photo.png"), "not really an image\n");
+    await fs.mkdir(path.join(root, "docs", "specs"), { recursive: true });
+    await fs.writeFile(path.join(root, "docs", "specs", "active.md"), "# Active spec\n");
 
     const result = await inspectProjectEvidence(root);
 
-    expect(result.items.map((item) => item.relativePath)).toEqual(["README.md", "STATUS.md", "package.json"]);
-    expect(result.items.map((item) => item.text)).toEqual(["# Read me\n", "# Status\n", "{}\n"]);
+    expect(result.items.map((item) => item.relativePath)).toEqual([
+      "README.md",
+      "ROADMAP.md",
+      "docs/specs/active.md",
+      "STATUS.md",
+      "TRACKER.md",
+      "package.json",
+    ]);
     expect(result.truncated).toBe(false);
+  });
+
+  it("prioritizes exact root plan, spec, handoff, and workflow evidence", async () => {
+    const root = await projectRoot();
+    await fs.writeFile(path.join(root, "README.md"), "# Read me\n");
+    await fs.writeFile(path.join(root, "ROADMAP.md"), "# Route\n");
+    await fs.writeFile(path.join(root, "PLAN.md"), "# Active plan\n");
+    await fs.writeFile(path.join(root, "SPEC.md"), "# Active spec\n");
+    await fs.writeFile(path.join(root, "HANDOFF.md"), "# Current handoff\n");
+    await fs.writeFile(path.join(root, "STATUS.md"), "# Status\n");
+    await fs.writeFile(path.join(root, "WORKFLOW.md"), "# Current workflow\n");
+
+    const result = await inspectProjectEvidence(root);
+
+    expect(result.items.map((item) => item.relativePath)).toEqual([
+      "README.md",
+      "ROADMAP.md",
+      "PLAN.md",
+      "SPEC.md",
+      "HANDOFF.md",
+      "STATUS.md",
+      "WORKFLOW.md",
+    ]);
+  });
+
+  it("preserves exact root evidence when bounded root traversal truncates", async () => {
+    const root = await projectRoot();
+    for (let index = 0; index < 180; index += 1) {
+      await fs.writeFile(path.join(root, `unrelated-${String(index).padStart(3, "0")}.txt`), "ignored\n");
+    }
+    for (const relativePath of ["PLAN.md", "SPEC.md", "HANDOFF.md", "WORKFLOW.md"]) {
+      await fs.writeFile(path.join(root, relativePath), `# ${relativePath}\n`);
+    }
+
+    const result = await inspectProjectEvidence(root);
+
+    expect(result.items.map((item) => item.relativePath)).toEqual([
+      "PLAN.md",
+      "SPEC.md",
+      "HANDOFF.md",
+      "WORKFLOW.md",
+    ]);
+    expect(result.truncated).toBe(true);
+  });
+
+  it("keeps one recognized legacy project record behind current mature-project sources", async () => {
+    const root = await projectRoot();
+    await fs.writeFile(path.join(root, "README.md"), "# Current project\n");
+    await fs.writeFile(path.join(root, "ROADMAP.md"), "# Current route\n");
+    const legacyDir = path.join(root, "docs", "along", "project-maps");
+    await fs.mkdir(legacyDir, { recursive: true });
+    await fs.writeFile(path.join(legacyDir, "confirmed.md"), "# Legacy evidence\n");
+
+    const result = await inspectProjectEvidence(root);
+
+    expect(result.items.map((item) => item.relativePath)).toEqual([
+      "README.md",
+      "ROADMAP.md",
+      "docs/along/project-maps/confirmed.md",
+    ]);
   });
 
   it("keeps candidate count bounded and deterministic", async () => {

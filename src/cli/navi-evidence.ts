@@ -21,11 +21,18 @@ const MAX_EVIDENCE_ENTRIES_PER_DIR = 160;
 const IGNORED_EVIDENCE_DIRS = new Set([".git", "node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
 const KNOWN_EVIDENCE_RELATIVE_PATHS = [
   "AGENTS.md",
-  "PROJECT_STATE.md",
   "README.md",
   "README",
+  "ROADMAP.md",
+  "ROADMAP",
+  "PLAN.md",
+  "SPEC.md",
+  "HANDOFF.md",
+  "WORKFLOW.md",
+  "PROJECT_STATE.md",
   "STATUS.md",
   "TODO.md",
+  "TRACKER.md",
 ];
 const NAVI_AGENTS_BLOCK_START = "<!-- NAVI:START -->";
 const NAVI_AGENTS_BLOCK_END = "<!-- NAVI:END -->";
@@ -279,28 +286,47 @@ function isEvidenceCandidate(relativePath: string): boolean {
   if ([".lock", ".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip"].some((suffix) => lowerBase.endsWith(suffix))) {
     return false;
   }
+  const isMarkdown = lowerBase.endsWith(".md");
   return lowerBase.startsWith("readme")
     || lowerBase === "agents.md"
     || lowerBase === "project_state.md"
+    || lowerBase.startsWith("roadmap")
     || lowerBase.startsWith("todo")
     || lowerBase.startsWith("status")
+    || lowerBase.startsWith("tracker")
+    || lowerBase === "plan.md"
+    || lowerBase === "spec.md"
+    || lowerBase === "handoff.md"
+    || lowerBase === "workflow.md"
     || lowerBase === "package.json"
     || lowerBase === "pyproject.toml"
-    || (lowerPath.startsWith("docs/along/project-maps/") && lowerBase.endsWith(".md"))
-    || (lowerPath.includes("/handoff") && lowerBase.endsWith(".md"))
-    || (lowerPath.includes("/workflow") && lowerBase.endsWith(".md"))
-    || (lowerPath.includes("/plan") && lowerBase.endsWith(".md"));
+    || (lowerPath.startsWith("docs/along/project-maps/") && isMarkdown)
+    || (lowerPath.includes("/handoff") && isMarkdown)
+    || (lowerPath.includes("/workflow") && isMarkdown)
+    || (lowerPath.includes("/plan") && isMarkdown)
+    || (lowerPath.includes("/spec") && isMarkdown);
 }
 
 function evidencePriority(relativePath: string): number {
   const lower = relativePath.toLowerCase();
+  const base = path.posix.basename(lower);
   if (lower === "agents.md") return 0;
-  if (lower.startsWith("docs/along/project-maps/")) return 1;
-  if (lower === "project_state.md") return 2;
-  if (lower.startsWith("readme")) return 3;
-  if (lower.startsWith("todo") || lower.startsWith("status")) return 4;
-  if (lower.includes("/workflow") || lower.includes("/handoff") || lower.includes("/plan")) return 5;
-  if (lower === "package.json" || lower === "pyproject.toml") return 6;
+  if (lower === "readme" || lower === "readme.md") return 1;
+  if (base.startsWith("roadmap")) return 2;
+  if (base === "plan.md" || base === "spec.md" || lower.includes("/plan") || lower.includes("/spec")) return 3;
+  if (
+    base === "project_state.md"
+    || base.startsWith("status")
+    || base.startsWith("todo")
+    || base.startsWith("tracker")
+    || base === "workflow.md"
+    || base === "handoff.md"
+    || lower.includes("/workflow")
+    || lower.includes("/handoff")
+  ) return 4;
+  if (lower.startsWith("docs/along/project-maps/")) return 5;
+  if (base.startsWith("readme")) return 6;
+  if (base === "package.json" || base === "pyproject.toml") return 7;
   return 99;
 }
 
