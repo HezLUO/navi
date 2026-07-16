@@ -72,6 +72,10 @@ complexity.
     Navi must not manufacture a next phase merely to preserve momentum.
 12. The user owns the final Product Complete decision. Execution and Validation
     Threads provide evidence but cannot accept product risk for the user.
+13. Every newly confirmed Project Map must distinguish the whole-goal Outcome
+    Boundary from the current-stage Current Boundary.
+14. Existing Maps remain readable while the next approved write adds the
+    user-confirmed Outcome Boundary.
 
 ## Completion Gates
 
@@ -83,6 +87,7 @@ journey:
 ```text
 enter a project
 -> establish a trustworthy Project Map
+-> confirm what whole-goal outcome is enough
 -> understand stage, vision distance, boundary, and next decision
 -> supervise daily work without unnecessary interruption
 -> deliver bounded implementation through independent validation
@@ -121,8 +126,8 @@ Navi must:
   understandable experience;
 - establish a truthful Project Map without requiring the user to classify the
   project first;
-- explain Desired Outcome, Current Position, route or working rhythm, Current
-  Boundary, Next Decision, and material uncertainty;
+- explain Desired Outcome, Outcome Boundary, Current Position, route or working
+  rhythm, Current Boundary, Next Decision, and material uncertainty;
 - make distance from the original vision visible rather than reporting only the
   current action;
 - update the Map after a material navigation change; and
@@ -205,6 +210,8 @@ For the Supervised Delivery sample, the expected observable outcomes are:
 Product Complete requires:
 
 - all three product pillars to have sufficient natural evidence;
+- one user-confirmed Outcome Boundary that distinguishes whole-goal completion
+  from the current-stage stopping condition;
 - the source operation journey to be usable without creator-only intervention;
 - no unresolved Critical or Important product issue; and
 - no recurrence of the same Important issue class after its accepted repair
@@ -292,13 +299,17 @@ At the time this design was approved, the remaining bounded route was:
 
 1. complete independent validation and integration judgment for Adaptive
    Project Entry;
-2. calibrate mature-project stale or conflicting entry in `sub_ag_ski`;
-3. calibrate Guided Baseline Formation in a new or evidence-poor project;
-4. complete one natural Supervised Delivery cycle, including direct event
+2. implement the approved dual-boundary Project Map design through a separate
+   bounded plan, preserving read compatibility for existing Maps;
+3. calibrate mature-project stale or conflicting entry in `sub_ag_ski`,
+   including one evidence-backed Outcome Boundary candidate;
+4. calibrate Guided Baseline Formation and a provisional Outcome Boundary in a
+   new or evidence-poor project;
+5. complete one natural Supervised Delivery cycle, including direct event
    routing, independent validation, and a natural closure observation;
-5. correct any remaining Critical or Important issue within an explicitly
+6. correct any remaining Critical or Important issue within an explicitly
    approved boundary; and
-6. present the three-pillar evidence and accepted Minor debt for the user's
+7. present the three-pillar evidence and accepted Minor debt for the user's
    Product Complete decision.
 
 If these observations reveal no new structural defect, the remaining distance
@@ -318,4 +329,3 @@ period.
 - Rebranding Historical Along source as the current Navi product.
 - Treating source-package verification as cryptographic attestation.
 - Automatically starting Distribution Ready work after Product Complete.
-
