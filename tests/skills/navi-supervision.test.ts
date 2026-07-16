@@ -454,4 +454,18 @@ describe("Navi supervision contracts", () => {
     expect(skill).toContain("references/lane-handoff-v1.md");
     expect(laneHandoff).toMatch(/task-to-task coordination[\s\S]*not a background/i);
   });
+
+  it("connects review-ready coordination to independent validation", async () => {
+    const [skill, projectMap, laneHandoff, delivery] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/project-map-v1.md"),
+      readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+      readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
+    ]);
+
+    expect(skill).toContain("references/supervised-delivery-v1.md");
+    expect(projectMap).toMatch(/review-ready[\s\S]*independent Validation Thread/i);
+    expect(laneHandoff).toMatch(/validation_preauthorized: true[\s\S]*validation-pending/i);
+    expect(delivery).toMatch(/Main Thread[\s\S]*Execution Thread[\s\S]*Validation Thread/i);
+  });
 });

@@ -24,6 +24,7 @@ Read only the references needed for the current request:
 - `references/challenge-v1.md` for drift, anti-self-certification, risk challenge, and professional-judgment boundaries.
 - `references/working-thread-v1.md` for durable Working Thread continuity, creation, wrap-up, and write-back.
 - `references/lane-handoff-v1.md` for bounded Codex lane delivery and source-task routing.
+- `references/supervised-delivery-v1.md` for preauthorized independent validation, exact-snapshot review, findings routing, and bounded remediation.
 
 Do not load every reference for an ordinary narrow request.
 
@@ -52,6 +53,11 @@ Do not load every reference for an ordinary narrow request.
 - Codex must not let a completed worktree automatically interrupt the main session unless the result may change the current premise, risk, file scope, merge path, release readiness, or user decision.
 - Codex must not continue main-session work that would edit the same files, expand the worktree scope, invalidate acceptance criteria, make a pending result obsolete, or create incompatible product judgments.
 - Codex must not start a Release Lane, merge, cherry-pick, push, create a worktree, create a Codex thread, or poll external lanes without explicit user approval.
+- Codex must enforce this boundary: do not create more than one Validation Thread for the same review-ready event and exact snapshot.
+- Codex must enforce this boundary: do not let a Validation Thread write files, implement fixes, merge, push, tag, release, or accept product risk.
+- Codex must not ask the user to relay review-ready events, validation results, or in-scope remediation between tasks when host task messaging is available.
+- Codex must not treat review-ready as accepted; a preauthorized Supervised Delivery Loop remains validation-pending until a valid exact-snapshot result returns.
+- Codex must not exceed two in-scope remediation rounds without returning to product or user judgment.
 - Codex must not force lane tables into ordinary answers; alpha.7 uses silent tracking by default and surfaces coordination only when it affects user control.
 - Codex must not stop after a completed action with only a bare completion report when the session remains active and the next user decision is not visible.
 - Codex must not include bare `continue` or `继续` as a fake option; continuing must name the concrete next action, boundary, and stop point.
@@ -89,6 +95,7 @@ Do not load every reference for an ordinary narrow request.
 - Use `references/project-map-v1.md` for confirmed Map authority, Progress/Rhythm Map rendering, lifecycle, maintenance, language following, and initialization baseline policy.
 - Use `references/challenge-v1.md` for drift challenge, anti-self-certification, lightweight validation, and professional-judgment boundaries.
 - Use `references/working-thread-v1.md` only for durable continuity records and confirmed write-back.
+- For an approved bounded implementation contract with validation preauthorization, use `references/supervised-delivery-v1.md`; create the fresh validator only at review-ready, route routine in-scope findings without asking for another `continue`, and preserve explicit user control over permission, scope, risk, merge, push, tag, release, and publication.
 
 ## Output Style
 

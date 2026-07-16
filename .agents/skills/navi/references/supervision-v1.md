@@ -498,6 +498,12 @@ Alpha.7 is not automatic creation of worktrees, automatic creation of Codex thre
 
 Alpha.7 should improve coordination judgment in the current chat-based alpha surface. It should not become an orchestration engine.
 
+### Codex-First Supervised Delivery
+
+For approved bounded implementation delivery, Lane Handoff transports execution transitions and `supervised-delivery-v1.md` owns independent validation contracts, results, and remediation routing. This is a User Supervision workflow state, not a fifth Work Mode, a release lane, or Runtime Surface.
+
+The Main Thread remains useful during non-conflicting execution and validation. Only permission, scope, architecture, risk, acceptance, merge, push, tag, release, publication, or a genuinely blocked whole session requires user interruption.
+
 ## Alpha 8 Decision Handoff Quality
 
 Alpha.8 adds Decision Handoff Quality on top of alpha.5 pause semantics, alpha.6 stage-and-vision supervision, and alpha.7 coordination.

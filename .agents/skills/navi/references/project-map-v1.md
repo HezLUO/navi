@@ -150,6 +150,8 @@ The initial Map write requires the final preview and approval. Later maintenance
 
 Main-session design may continue while a bounded implementation worktree performs non-conflicting work. When the delegation carries source-task metadata and host task messaging is available, a completed accepted lane emits a `review-ready` Navi Lane Handoff event; `decision-required` and formally `blocked` use the same focused contract. Delivery does not force an immediate interruption. The source main task reviews at the next natural checkpoint, or earlier when the result changes the current premise, risk, scope, acceptance criteria, merge path, release readiness, or user decision. Use `lane-handoff-v1.md` for emission, retry, fallback, routing, and authority boundaries.
 
+When an approved Execution Contract preauthorizes independent validation, a valid review-ready event enters the Codex-first Supervised Delivery Loop: the source Main Thread creates one fresh read-only independent Validation Thread for the exact snapshot under `supervised-delivery-v1.md`. The user does not relay the event or approve routine in-scope review routing.
+
 ### Project Lifecycle
 
 `project_status: active` means the project is advancing and the Map names the current boundary and next decision.

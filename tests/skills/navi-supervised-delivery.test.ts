@@ -198,4 +198,23 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(failure).toMatch(/insufficient evidence[\s\S]*approved contract/i);
     expect(failure).toMatch(/formally blocked[\s\S]*Lane Handoff/i);
   });
+
+  it("keeps one detailed owner and a byte-identical package mirror", async () => {
+    const [skill, delivery, packagedDelivery, projectMap, supervision] =
+      await Promise.all([
+        readRepoText(".agents/skills/navi/SKILL.md"),
+        readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
+        readRepoText("plugins/navi/skills/navi/references/supervised-delivery-v1.md"),
+        readRepoText(".agents/skills/navi/references/project-map-v1.md"),
+        readRepoText(".agents/skills/navi/references/supervision-v1.md"),
+      ]);
+
+    expect(skill).toContain("references/supervised-delivery-v1.md");
+    expect(skill).toMatch(/do not create more than one Validation Thread/i);
+    expect(skill).toMatch(/do not let a Validation Thread write/i);
+    expect(packagedDelivery).toBe(delivery);
+    expect(projectMap).toContain("supervised-delivery-v1.md");
+    expect(supervision).toContain("supervised-delivery-v1.md");
+    expect(supervision).not.toContain("NAVI_VALIDATION_RESULT\nversion: 1");
+  });
 });
