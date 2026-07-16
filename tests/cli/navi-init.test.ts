@@ -21,6 +21,7 @@ import {
   renderAgentsBlock,
 } from "../../src/cli/navi-project-trigger";
 import {
+  LEGACY_PROJECT_MAP_ANCHORS,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   REQUIRED_PROJECT_MAP_ANCHORS,
   parseProjectMapDocument,
@@ -47,6 +48,29 @@ ${REQUIRED_PROJECT_MAP_ANCHORS.map((anchor, index) =>
 ).join("\n\n")}
 `;
 }
+
+function renderConfirmedMap(version: 1 | 2, anchors: readonly string[]): string {
+  return `---
+navi_map: ${version}
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-16
+---
+# Navi Project Map
+
+${anchors.map((anchor) => {
+  const heading = anchor.replace("navi:", "").split("-").map(
+    (part) => part[0]!.toUpperCase() + part.slice(1),
+  ).join(" ");
+  const value = anchor === "navi:route-to-outcome" ? "Confirmed route." : `Confirmed ${heading}.`;
+  return `<!-- ${anchor} -->\n## ${heading}\n\n${value}`;
+}).join("\n\n")}
+`;
+}
+
+const legacyConfirmedMap = () => renderConfirmedMap(1, LEGACY_PROJECT_MAP_ANCHORS);
+const currentConfirmedMapWithOnlyOutcomeBoundaryAdded = () =>
+  renderConfirmedMap(2, REQUIRED_PROJECT_MAP_ANCHORS);
 
 async function createProject(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-init-"));
@@ -191,6 +215,23 @@ describe("navi init arguments and command journey", () => {
 
     expect(code).toBe(0);
     await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(confirmedMap());
+    await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Project Supervision");
+  });
+
+  it("writes one fingerprint-bound exact legacy Outcome Boundary upgrade", async () => {
+    const project = await createProject();
+    await writeCanonicalMap(project, legacyConfirmedMap());
+    const candidateText = currentConfirmedMapWithOnlyOutcomeBoundaryAdded();
+    const candidate = await writeCandidate(project, candidateText);
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
+    ], io);
+
+    expect(code).toBe(0);
+    await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(candidateText);
     await expect(fs.readFile(path.join(project, "AGENTS.md"), "utf8")).resolves.toContain("Navi Project Supervision");
   });
 

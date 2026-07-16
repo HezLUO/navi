@@ -4,9 +4,12 @@ import path from "node:path";
 import { inspectProjectEvidence } from "./navi-evidence";
 import { createInitPlanFingerprint } from "./navi-init-fingerprint";
 import {
+  CURRENT_PROJECT_MAP_VERSION,
   inspectProjectMapFile,
+  isOutcomeBoundaryOnlyUpgrade,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   parseProjectMapDocument,
+  type ProjectMapDocument,
 } from "./navi-project-map";
 import {
   inspectProjectTriggerDocument,
@@ -113,6 +116,14 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
     };
   }
 
+  if (
+    (mapState.kind === "missing" || mapState.kind === "invalid")
+    && candidate !== undefined
+    && candidate.document.version !== CURRENT_PROJECT_MAP_VERSION
+  ) {
+    return blockedPlan(base, "A replacement confirmed Project Map must use version 2 with Outcome Boundary.");
+  }
+
   const agentsPath = resolveTargetPath(targetDir, AGENTS_RELATIVE_PATH);
   const triggerDocument = await inspectProjectTriggerDocument(targetDir);
   if (triggerDocument.state.kind === "unsafe") {
@@ -129,15 +140,26 @@ export async function buildInitPlan(options: InitOptions = {}): Promise<InitPlan
   }
 
   if (mapState.kind === "valid" && candidate !== undefined) {
-    if (mapState.document.text !== candidate.text) {
-      return blockedPlan(base, "The candidate differs from the existing confirmed Project Map. navi init is not a Map-update command.");
+    if (mapState.document.text === candidate.text) {
+      if (agentsAction.kind === "skip") return healthyPlan(base);
+      return actionablePlan(base, [mapSkipAction(mapState.mapPath), agentsAction], {
+        candidateMap: candidate.text,
+        agentsBefore,
+        mapBefore: mapState.document.text,
+      });
     }
-    if (agentsAction.kind === "skip") return healthyPlan(base);
-    return actionablePlan(base, [mapSkipAction(mapState.mapPath), agentsAction], {
-      candidateMap: candidate.text,
-      agentsBefore,
-      mapBefore: mapState.document.text,
-    });
+    if (isOutcomeBoundaryOnlyUpgrade(mapState.document, candidate.document)) {
+      return actionablePlan(
+        base,
+        [mapModifyAction(mapState.mapPath, candidate.text, mapState.document.text), agentsAction],
+        {
+          candidateMap: candidate.text,
+          agentsBefore,
+          mapBefore: mapState.document.text,
+        },
+      );
+    }
+    return blockedPlan(base, "navi init permits only an exact legacy Outcome Boundary upgrade, not a generic Map update.");
   }
 
   if (mapState.kind === "invalid" && candidate !== undefined) {
@@ -233,7 +255,10 @@ function mapSkipAction(mapPath: string): InitAction {
   };
 }
 
-async function inspectConfirmedMapCandidate(targetDir: string, mapFile: string): Promise<{ text: string }> {
+async function inspectConfirmedMapCandidate(
+  targetDir: string,
+  mapFile: string,
+): Promise<{ text: string; document: ProjectMapDocument }> {
   const candidatePath = path.resolve(mapFile);
   let checked;
   try {
@@ -261,7 +286,7 @@ async function inspectConfirmedMapCandidate(targetDir: string, mapFile: string):
     if (parsed.kind !== "valid") {
       throw new Error(`Candidate is not a valid confirmed Project Map: ${parsed.diagnostic}`);
     }
-    return { text };
+    return { text, document: parsed.document };
   } catch (error) {
     if (error instanceof Error && /confirmed Project Map|Candidate is not|changed between/.test(error.message)) throw error;
     throw new Error("Confirmed Project Map candidate could not be read safely.", { cause: error });

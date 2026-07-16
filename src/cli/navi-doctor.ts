@@ -11,7 +11,11 @@ import {
   TRUSTED_BARE_NAVI_INVOCATION,
   type NaviInvocationContext,
 } from "./navi-invocation";
-import { inspectProjectMapFile, type ProjectMapFileState } from "./navi-project-map";
+import {
+  inspectProjectMapFile,
+  type OutcomeBoundaryStatus,
+  type ProjectMapFileState,
+} from "./navi-project-map";
 import { inspectTransaction } from "./navi-transaction";
 
 export type DoctorCheckStatus = "pass" | "warn" | "fail";
@@ -63,6 +67,7 @@ export interface ProjectInitializationState {
   trigger: ProjectTriggerState;
   map: ProjectMapFileState;
   lifecycle?: "active" | "paused" | "closed";
+  outcomeBoundaryStatus?: OutcomeBoundaryStatus;
 }
 
 const DEFAULT_IO: NaviDoctorIo = { stdout: (text) => process.stdout.write(text), stderr: (text) => process.stderr.write(text) };
@@ -380,21 +385,27 @@ export async function inspectProjectInitialization(projectDir: string): Promise<
     inspectProjectMapFile(projectDir),
   ]);
   const lifecycle = map.kind === "valid" ? map.document.projectStatus : undefined;
+  const outcomeBoundaryStatus = map.kind === "valid"
+    ? map.document.outcomeBoundaryStatus
+    : undefined;
+  const validMapDetails = lifecycle && outcomeBoundaryStatus
+    ? { lifecycle, outcomeBoundaryStatus }
+    : {};
 
   if (map.kind === "invalid" || map.kind === "unsupported" || map.kind === "unsafe") {
     return { kind: "map-invalid", trigger, map };
   }
   if (trigger.kind === "invalid" || trigger.kind === "unsafe") {
-    return { kind: "trigger-invalid", trigger, map, ...(lifecycle ? { lifecycle } : {}) };
+    return { kind: "trigger-invalid", trigger, map, ...validMapDetails };
   }
   if (map.kind === "missing") {
     return trigger.kind === "missing"
       ? { kind: "not-initialized", trigger, map }
       : { kind: "trigger-orphaned", trigger, map };
   }
-  if (trigger.kind === "missing") return { kind: "map-ready", trigger, map, lifecycle };
-  if (trigger.kind === "legacy") return { kind: "trigger-invalid", trigger, map, lifecycle };
-  return { kind: "healthy", trigger, map, lifecycle };
+  if (trigger.kind === "missing") return { kind: "map-ready", trigger, map, ...validMapDetails };
+  if (trigger.kind === "legacy") return { kind: "trigger-invalid", trigger, map, ...validMapDetails };
+  return { kind: "healthy", trigger, map, ...validMapDetails };
 }
 
 async function buildProjectInitCheck(projectDir: string, invocation: NaviInvocationContext): Promise<DoctorCheck> {
@@ -421,7 +432,9 @@ async function buildProjectInitCheck(projectDir: string, invocation: NaviInvocat
       return {
         id: "project-init",
         status: "warn",
-        summary: "This project has a valid confirmed Project Map but its Navi project trigger is missing.",
+        summary: state.outcomeBoundaryStatus === "legacy-missing"
+          ? "This project has a readable legacy confirmed Project Map but its Navi project trigger is missing; its Outcome Boundary is not yet confirmed."
+          : "This project has a valid confirmed Project Map but its Navi project trigger is missing.",
         repair: init && initWithFingerprint
           ? `Run ${init} to preview the exact trigger activation, then use its fingerprint with ${initWithFingerprint} after approval.`
           : "Establish a verified Navi CLI entrypoint before previewing and approving the fingerprint-bound trigger activation.",
@@ -472,6 +485,14 @@ async function buildProjectInitCheck(projectDir: string, invocation: NaviInvocat
           : "Preserve project-owned AGENTS.md instructions and manually resolve only the damaged or unsafe Navi trigger before previewing activation again from a verified Navi CLI entrypoint.",
       };
     case "healthy":
+      if (state.outcomeBoundaryStatus === "legacy-missing") {
+        return {
+          id: "project-init",
+          status: "warn",
+          summary: "Navi project initialization is readable and healthy, but this legacy Map has no confirmed Outcome Boundary.",
+          repair: candidatePreview,
+        };
+      }
       return {
         id: "project-init",
         status: "pass",

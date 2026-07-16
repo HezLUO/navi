@@ -58,6 +58,8 @@ const REQUIRED_FRONTMATTER_KEYS = [
   "last_confirmed",
 ] as const;
 
+const FRONTMATTER_SCALAR_LINE = /^([A-Za-z_][A-Za-z0-9_-]*):[ \t]*(\S(?:.*\S)?)[ \t]*$/;
+
 function invalid(diagnostic: string, recognizedVersion?: ProjectMapContractVersion): ProjectMapParseResult {
   return {
     kind: "invalid",
@@ -90,7 +92,7 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
 
   const metadata = new Map<string, string>();
   for (const line of lines.slice(1, delimiters[1])) {
-    const match = /^([A-Za-z_][A-Za-z0-9_-]*):[ \t]*(\S(?:.*\S)?)[ \t]*$/.exec(line);
+    const match = FRONTMATTER_SCALAR_LINE.exec(line);
     if (!match) return invalid(`Project Map frontmatter contains a non-scalar metadata line: ${line}`);
     const [, key, value] = match;
     if (metadata.has(key)) return invalid(`Project Map frontmatter contains duplicate metadata key: ${key}`);
@@ -163,6 +165,109 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
       text,
     },
   };
+}
+
+export function isOutcomeBoundaryOnlyUpgrade(
+  current: ProjectMapDocument,
+  candidate: ProjectMapDocument,
+): boolean {
+  if (current.version !== LEGACY_PROJECT_MAP_VERSION) return false;
+  if (candidate.version !== CURRENT_PROJECT_MAP_VERSION) return false;
+  if (current.projectStatus !== candidate.projectStatus) return false;
+
+  const currentSource = inspectParsedMapComparisonSource(current);
+  const candidateSource = inspectParsedMapComparisonSource(candidate);
+  if (currentSource === undefined || candidateSource === undefined) return false;
+
+  const normalizedCurrent = canonicalizeUpgradeComparisonSource(currentSource, false);
+  const normalizedCandidate = canonicalizeUpgradeComparisonSource(candidateSource, true);
+
+  return normalizedCandidate === normalizedCurrent;
+}
+
+function normalizeMapForUpgradeComparison(text: string): string {
+  return text.replace(/\r\n/g, "\n");
+}
+
+interface TextRange {
+  start: number;
+  end: number;
+}
+
+interface ParsedMapComparisonSource {
+  text: string;
+  metadataLines: Map<string, TextRange>;
+  anchors: Map<string, number>;
+}
+
+function inspectParsedMapComparisonSource(
+  document: ProjectMapDocument,
+): ParsedMapComparisonSource | undefined {
+  const text = normalizeMapForUpgradeComparison(document.text);
+  const lines = text.split("\n");
+  const lineStarts: number[] = [];
+  let offset = 0;
+  for (const line of lines) {
+    lineStarts.push(offset);
+    offset += line.length + 1;
+  }
+
+  const closingDelimiter = lines.findIndex((line, index) => index > 0 && line === "---");
+  if (closingDelimiter < 0) return undefined;
+
+  const metadataLines = new Map<string, TextRange>();
+  for (let index = 1; index < closingDelimiter; index += 1) {
+    const match = FRONTMATTER_SCALAR_LINE.exec(lines[index]!);
+    if (!match) return undefined;
+    metadataLines.set(match[1]!, {
+      start: lineStarts[index]!,
+      end: lineStarts[index]! + lines[index]!.length,
+    });
+  }
+
+  const bodyStart = lineStarts[closingDelimiter + 1] ?? text.length;
+  const anchors = new Map<string, number>();
+  const requiredAnchors = document.version === CURRENT_PROJECT_MAP_VERSION
+    ? REQUIRED_PROJECT_MAP_ANCHORS
+    : LEGACY_PROJECT_MAP_ANCHORS;
+  for (const anchor of requiredAnchors) {
+    const markerIndex = text.indexOf(`<!-- ${anchor} -->`, bodyStart);
+    if (markerIndex < 0) return undefined;
+    anchors.set(anchor, markerIndex);
+  }
+
+  return { text, metadataLines, anchors };
+}
+
+function canonicalizeUpgradeComparisonSource(
+  source: ParsedMapComparisonSource,
+  removeOutcomeBoundary: boolean,
+): string | undefined {
+  const versionLine = source.metadataLines.get("navi_map");
+  const lastConfirmedLine = source.metadataLines.get("last_confirmed");
+  if (versionLine === undefined || lastConfirmedLine === undefined) return undefined;
+
+  const edits: Array<TextRange & { replacement: string }> = [
+    { ...versionLine, replacement: "navi_map: <upgrade-version>" },
+    { ...lastConfirmedLine, replacement: "last_confirmed: <upgrade-date>" },
+  ];
+  if (removeOutcomeBoundary) {
+    const outcomeBoundary = source.anchors.get("navi:outcome-boundary");
+    const routeToOutcome = source.anchors.get("navi:route-to-outcome");
+    if (
+      outcomeBoundary === undefined
+      || routeToOutcome === undefined
+      || outcomeBoundary >= routeToOutcome
+    ) return undefined;
+    edits.push({ start: outcomeBoundary, end: routeToOutcome, replacement: "" });
+  }
+
+  return edits
+    .sort((left, right) => right.start - left.start)
+    .reduce(
+      (text, edit) => text.slice(0, edit.start) + edit.replacement + text.slice(edit.end),
+      source.text,
+    );
 }
 
 export async function inspectProjectMapFile(projectDir: string): Promise<ProjectMapFileState> {

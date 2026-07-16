@@ -3,7 +3,12 @@ import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { buildNaviDoctorReport, renderNaviDoctorReport, runNaviDoctorCli } from "../../src/cli/navi-doctor";
+import {
+  buildNaviDoctorReport,
+  inspectProjectInitialization,
+  renderNaviDoctorReport,
+  runNaviDoctorCli,
+} from "../../src/cli/navi-doctor";
 import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
 import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
 import { inspectNaviInstallation, type NaviInstallationStatus } from "../../src/cli/navi-installation";
@@ -85,6 +90,27 @@ last_confirmed: 2026-07-14
 ${LEGACY_PROJECT_MAP_ANCHORS.map((anchor, index) => `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}.`).join("\n\n")}
 `;
 }
+function renderConfirmedMap(version: 1 | 2, anchors: readonly string[]): string {
+  return `---
+navi_map: ${version}
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-16
+---
+# Navi Project Map
+
+${anchors.map((anchor) => {
+  const heading = anchor.replace("navi:", "").split("-").map(
+    (part) => part[0]!.toUpperCase() + part.slice(1),
+  ).join(" ");
+  const value = anchor === "navi:route-to-outcome" ? "Confirmed route." : `Confirmed ${heading}.`;
+  return `<!-- ${anchor} -->\n## ${heading}\n\n${value}`;
+}).join("\n\n")}
+`;
+}
+const legacyConfirmedMap = () => renderConfirmedMap(1, LEGACY_PROJECT_MAP_ANCHORS);
+const currentConfirmedMapWithOnlyOutcomeBoundaryAdded = () =>
+  renderConfirmedMap(2, REQUIRED_PROJECT_MAP_ANCHORS);
 type TriggerFixture = "missing" | "current" | "legacy" | "invalid";
 type MapFixture = "missing" | "valid" | "valid-paused" | "valid-closed" | "invalid" | "unsupported" | "unsafe";
 async function buildFixtureReport(triggerFixture: TriggerFixture, mapFixture: MapFixture) {
@@ -254,6 +280,63 @@ describe("Navi doctor", () => {
     expect(check?.summary).toMatch(/valid confirmed Project Map.*trigger/i);
     expect(check?.repair).toMatch(/navi init.*preview.*trigger activation/i);
     expect(check?.repair).not.toMatch(/form|regenerate|replace.*Map/i);
+  });
+
+  it("warns that a healthy readable v1 Map lacks a confirmed Outcome Boundary", async () => {
+    const f = await fixture();
+    const mapPath = path.join(f.projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+    await fs.mkdir(path.dirname(mapPath), { recursive: true });
+    await fs.writeFile(mapPath, legacyConfirmedMap(), "utf8");
+    await fs.writeFile(path.join(f.projectDir, "AGENTS.md"), `${renderAgentsBlock()}\n`, "utf8");
+
+    expect(await inspectProjectInitialization(f.projectDir)).toMatchObject({
+      kind: "healthy",
+      outcomeBoundaryStatus: "legacy-missing",
+    });
+
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: trustedInvocation },
+    );
+    expect(report.checks.find((check) => check.id === "project-init")).toMatchObject({
+      status: "warn",
+    });
+    expect(report.checks.find((check) => check.id === "project-init")?.summary).toMatch(
+      /readable[\s\S]*Outcome Boundary/i,
+    );
+    expect(report.checks.find((check) => check.id === "project-init")?.repair).toMatch(
+      /navi init --map-file ['"]?<candidate>['"]?/,
+    );
+  });
+
+  it("prioritizes missing-trigger activation for a readable v1 Map", async () => {
+    const f = await fixture();
+    const mapPath = path.join(f.projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+    await fs.mkdir(path.dirname(mapPath), { recursive: true });
+    await fs.writeFile(mapPath, legacyConfirmedMap(), "utf8");
+
+    const report = await buildNaviDoctorReport(
+      { codexHome: f.codexHome, projectDir: f.projectDir, cliRoot: f.cliRoot },
+      { inspectInstallation: async () => current(f.source), invocation: trustedInvocation },
+    );
+    const check = report.checks.find((candidate) => candidate.id === "project-init");
+
+    expect(check).toMatchObject({ status: "warn" });
+    expect(check?.summary).toMatch(/trigger.*missing/i);
+    expect(check?.repair).toMatch(/preview.*trigger activation/i);
+  });
+
+  it("keeps the current v2 Outcome Boundary status confirmed", async () => {
+    const f = await fixture();
+    const mapPath = path.join(f.projectDir, NAVI_PROJECT_MAP_RELATIVE_PATH);
+    await fs.mkdir(path.dirname(mapPath), { recursive: true });
+    await fs.writeFile(mapPath, currentConfirmedMapWithOnlyOutcomeBoundaryAdded(), "utf8");
+    await fs.writeFile(path.join(f.projectDir, "AGENTS.md"), `${renderAgentsBlock()}\n`, "utf8");
+
+    expect(await inspectProjectInitialization(f.projectDir)).toMatchObject({
+      kind: "healthy",
+      outcomeBoundaryStatus: "confirmed",
+    });
   });
 
   it("uses the verified fallback to repair a confirmed Map with a missing trigger", async () => {

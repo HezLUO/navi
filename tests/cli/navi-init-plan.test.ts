@@ -17,6 +17,7 @@ import {
 import {
   LEGACY_PROJECT_MAP_ANCHORS,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
+  parseProjectMapDocument,
   REQUIRED_PROJECT_MAP_ANCHORS,
 } from "../../src/cli/navi-project-map";
 
@@ -50,6 +51,55 @@ ${LEGACY_PROJECT_MAP_ANCHORS.map((anchor, index) =>
   `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}${suffix}.`,
 ).join("\n\n")}
 `;
+}
+
+function renderConfirmedMap(version: 1 | 2, anchors: readonly string[]): string {
+  return `---
+navi_map: ${version}
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-16
+---
+# Navi Project Map
+
+${anchors.map((anchor) => {
+  const heading = anchor.replace("navi:", "").split("-").map(
+    (part) => part[0]!.toUpperCase() + part.slice(1),
+  ).join(" ");
+  const value = anchor === "navi:route-to-outcome" ? "Confirmed route." : `Confirmed ${heading}.`;
+  return `<!-- ${anchor} -->\n## ${heading}\n\n${value}`;
+}).join("\n\n")}
+`;
+}
+
+const legacyConfirmedMap = () => renderConfirmedMap(1, LEGACY_PROJECT_MAP_ANCHORS);
+const currentConfirmedMapWithOnlyOutcomeBoundaryAdded = () =>
+  renderConfirmedMap(2, REQUIRED_PROJECT_MAP_ANCHORS);
+
+function renderConfirmedMapWithSyntax(
+  version: 1 | 2,
+  anchors: readonly string[],
+  options: {
+    metadataLines?: readonly string[];
+    anchorSeparator?: string;
+    lineEnding?: "\n" | "\r\n";
+  } = {},
+): string {
+  const metadataLines = options.metadataLines ?? [
+    `navi_map: ${version}`,
+    "map_status: confirmed",
+    "project_status: active",
+    "last_confirmed: 2026-07-16",
+  ];
+  const anchorSeparator = options.anchorSeparator ?? "\n\n";
+  const text = `---\n${metadataLines.join("\n")}\n---\n# Navi Project Map\n\n${anchors.map((anchor) => {
+    const heading = anchor.replace("navi:", "").split("-").map(
+      (part) => part[0]!.toUpperCase() + part.slice(1),
+    ).join(" ");
+    const value = anchor === "navi:route-to-outcome" ? "Confirmed route." : `Confirmed ${heading}.`;
+    return `<!-- ${anchor} -->\n## ${heading}\n\n${value}`;
+  }).join(anchorSeparator)}\n`;
+  return options.lineEnding === "\r\n" ? text.replace(/\n/g, "\r\n") : text;
 }
 
 async function createProject(): Promise<string> {
@@ -215,6 +265,178 @@ describe("navi init confirmed Map planning", () => {
     expect(plan.actions.map((action) => [action.kind, action.relativePath])).toEqual([["create", "AGENTS.md"]]);
   });
 
+  it("keeps a legacy v1 Map readable and permits trigger-only activation", async () => {
+    const project = await createProject();
+    await writeCanonicalMap(project, legacyConfirmedMap());
+
+    const plan = await buildInitPlan({ targetDir: project });
+
+    expect(plan.actions.map((action) => action.relativePath)).toEqual(["AGENTS.md"]);
+  });
+
+  it("requires v2 for a newly created Map", async () => {
+    const project = await createProject();
+    const candidate = await writeCandidate(project, legacyConfirmedMap());
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate });
+
+    expect(plan).toMatchObject({ state: "blocked", actions: [] });
+    expect(plan.diagnostic).toMatch(/version 2|Outcome Boundary/i);
+  });
+
+  it("plans one exact v1-to-v2 Outcome Boundary augmentation", async () => {
+    const project = await createProject();
+    const before = legacyConfirmedMap();
+    const after = currentConfirmedMapWithOnlyOutcomeBoundaryAdded();
+    await writeCanonicalMap(project, before);
+    const candidate = await writeCandidate(project, after);
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate });
+
+    expect(plan.actions[0]).toMatchObject({
+      kind: "modify",
+      relativePath: NAVI_PROJECT_MAP_RELATIVE_PATH,
+      previousContent: before,
+      content: after,
+    });
+  });
+
+  it.each([
+    {
+      name: "no separator whitespace",
+      current: [
+        "navi_map:1",
+        "map_status:confirmed",
+        "project_status:active",
+        "last_confirmed:2026-07-16",
+      ],
+      candidate: [
+        "navi_map:2",
+        "map_status:confirmed",
+        "project_status:active",
+        "last_confirmed:2026-07-17",
+      ],
+    },
+    {
+      name: "tabs and trailing whitespace",
+      current: [
+        "navi_map:\t+01  ",
+        "map_status:\tconfirmed\t",
+        "project_status:\tactive  ",
+        "last_confirmed:\t2026-07-16  ",
+      ],
+      candidate: [
+        "navi_map: 02\t",
+        "map_status:\tconfirmed\t",
+        "project_status:\tactive  ",
+        "last_confirmed: 2026-07-17\t",
+      ],
+    },
+    {
+      name: "mixed spaces",
+      current: [
+        "navi_map:    1",
+        "map_status:  confirmed",
+        "project_status: active",
+        "last_confirmed:   2026-07-16",
+      ],
+      candidate: [
+        "navi_map:\t2",
+        "map_status:  confirmed",
+        "project_status: active",
+        "last_confirmed:\t2026-07-18",
+      ],
+    },
+  ])("accepts an exact upgrade with parser-accepted $name frontmatter", async ({ current, candidate }) => {
+    const project = await createProject();
+    const before = renderConfirmedMapWithSyntax(1, LEGACY_PROJECT_MAP_ANCHORS, { metadataLines: current });
+    const after = renderConfirmedMapWithSyntax(2, REQUIRED_PROJECT_MAP_ANCHORS, { metadataLines: candidate });
+    expect(parseProjectMapDocument(before).kind).toBe("valid");
+    expect(parseProjectMapDocument(after).kind).toBe("valid");
+    await writeCanonicalMap(project, before);
+    const candidatePath = await writeCandidate(project, after);
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidatePath });
+
+    expect(plan.actions[0]).toMatchObject({
+      kind: "modify",
+      previousContent: before,
+      content: after,
+    });
+  });
+
+  it.each([
+    ["adjacent anchors", ""],
+    ["single-newline anchors", "\n"],
+    ["blank-line anchors", "\n\n"],
+    ["indented anchors", "\n  "],
+  ])("accepts an exact upgrade with parser-accepted %s", async (_name, anchorSeparator) => {
+    const project = await createProject();
+    const before = renderConfirmedMapWithSyntax(1, LEGACY_PROJECT_MAP_ANCHORS, { anchorSeparator });
+    const after = renderConfirmedMapWithSyntax(2, REQUIRED_PROJECT_MAP_ANCHORS, { anchorSeparator });
+    expect(parseProjectMapDocument(before).kind).toBe("valid");
+    expect(parseProjectMapDocument(after).kind).toBe("valid");
+    await writeCanonicalMap(project, before);
+    const candidatePath = await writeCandidate(project, after);
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidatePath });
+
+    expect(plan.actions[0]).toMatchObject({ kind: "modify", content: after });
+  });
+
+  it("accepts CRLF normalization and a last_confirmed-only change", async () => {
+    const project = await createProject();
+    const before = renderConfirmedMapWithSyntax(1, LEGACY_PROJECT_MAP_ANCHORS, { lineEnding: "\r\n" });
+    const after = renderConfirmedMapWithSyntax(2, REQUIRED_PROJECT_MAP_ANCHORS, {
+      metadataLines: [
+        "navi_map: 2",
+        "map_status: confirmed",
+        "project_status: active",
+        "last_confirmed: 2026-07-19",
+      ],
+    });
+    await writeCanonicalMap(project, before);
+    const candidatePath = await writeCandidate(project, after);
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidatePath });
+
+    expect(plan.actions[0]).toMatchObject({ kind: "modify", content: after });
+  });
+
+  it.each([
+    ["map_status spacing", (text: string) => text.replace("map_status: confirmed", "map_status:\tconfirmed")],
+    ["project_status spacing", (text: string) => text.replace("project_status: active", "project_status:  active")],
+    ["extra metadata", (text: string) => text.replace("last_confirmed: 2026-07-16", "last_confirmed: 2026-07-16\nowner: Navi")],
+    ["metadata order", (text: string) => text.replace("map_status: confirmed\nproject_status: active", "project_status: active\nmap_status: confirmed")],
+    ["non-boundary heading", (text: string) => text.replace("## Route To Outcome", "## Route Toward Outcome")],
+    ["non-boundary body", (text: string) => text.replace("Confirmed route.", "Changed route.")],
+    ["non-boundary anchor spacing", (text: string) => text.replace("<!-- navi:current-position -->", "  <!-- navi:current-position -->")],
+  ])("rejects an upgrade with a parser-accepted %s mutation", async (_name, mutate) => {
+    const project = await createProject();
+    const before = legacyConfirmedMap();
+    const after = mutate(currentConfirmedMapWithOnlyOutcomeBoundaryAdded());
+    expect(parseProjectMapDocument(after).kind).toBe("valid");
+    await writeCanonicalMap(project, before);
+    const candidatePath = await writeCandidate(project, after);
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidatePath });
+
+    expect(plan).toMatchObject({ state: "blocked", actions: [] });
+  });
+
+  it("rejects a legacy upgrade that also changes Route To Outcome", async () => {
+    const project = await createProject();
+    await writeCanonicalMap(project, legacyConfirmedMap());
+    const candidate = await writeCandidate(
+      project,
+      currentConfirmedMapWithOnlyOutcomeBoundaryAdded().replace("Confirmed route", "Changed route"),
+    );
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate });
+
+    expect(plan).toMatchObject({ state: "blocked", actions: [] });
+  });
+
   it("blocks a symlinked AGENTS.md whose external bytes contain the current trigger", async () => {
     const project = await createProject();
     await writeCanonicalMap(project);
@@ -279,7 +501,7 @@ describe("navi init confirmed Map planning", () => {
 
     expect(plan.state).toBe("blocked");
     expect(plan.actions).toEqual([]);
-    expect(plan.diagnostic).toMatch(/update command|different/i);
+    expect(plan.diagnostic).toMatch(/generic Map update|different/i);
     await expect(fs.readFile(path.join(project, NAVI_PROJECT_MAP_RELATIVE_PATH), "utf8")).resolves.toBe(original);
   });
 
@@ -300,6 +522,18 @@ describe("navi init confirmed Map planning", () => {
       previousContent: invalid,
       content: candidateText,
     });
+  });
+
+  it("requires v2 when repairing a recognized-version-1 invalid Map", async () => {
+    const project = await createProject();
+    const invalid = legacyMap().replace("map_status: confirmed", "map_status: draft");
+    await writeCanonicalMap(project, invalid);
+    const candidate = await writeCandidate(project, legacyConfirmedMap());
+
+    const plan = await buildInitPlan({ targetDir: project, mapFile: candidate });
+
+    expect(plan).toMatchObject({ state: "blocked", actions: [] });
+    expect(plan.diagnostic).toMatch(/version 2|Outcome Boundary/i);
   });
 
   it("refuses repair when .navi changes after safe invalid-Map inspection without reading external bytes", async () => {

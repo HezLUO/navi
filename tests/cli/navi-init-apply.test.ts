@@ -47,6 +47,29 @@ ${LEGACY_PROJECT_MAP_ANCHORS.map((anchor, index) =>
 `;
 }
 
+function renderConfirmedMap(version: 1 | 2, anchors: readonly string[]): string {
+  return `---
+navi_map: ${version}
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-16
+---
+# Navi Project Map
+
+${anchors.map((anchor) => {
+  const heading = anchor.replace("navi:", "").split("-").map(
+    (part) => part[0]!.toUpperCase() + part.slice(1),
+  ).join(" ");
+  const value = anchor === "navi:route-to-outcome" ? "Confirmed route." : `Confirmed ${heading}.`;
+  return `<!-- ${anchor} -->\n## ${heading}\n\n${value}`;
+}).join("\n\n")}
+`;
+}
+
+const legacyConfirmedMap = () => renderConfirmedMap(1, LEGACY_PROJECT_MAP_ANCHORS);
+const currentConfirmedMapWithOnlyOutcomeBoundaryAdded = () =>
+  renderConfirmedMap(2, REQUIRED_PROJECT_MAP_ANCHORS);
+
 async function createProject(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-init-"));
   tempRoots.add(root);
@@ -170,6 +193,24 @@ describe("navi init preview drift", () => {
 
     expect(code).toBe(1);
     expect(io.errors()).toMatch(/fingerprint|plan.*changed|does not match/i);
+    await expect(fs.readFile(mapPath, "utf8")).resolves.toBe(changed);
+    await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
+  });
+
+  it("rejects a changed legacy Map after upgrade preview before any target write", async () => {
+    const project = await createProject();
+    const mapPath = await writeCanonicalMap(project, legacyConfirmedMap());
+    const candidate = await writeCandidate(project, currentConfirmedMapWithOnlyOutcomeBoundaryAdded());
+    const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
+    const changed = legacyConfirmedMap().replace("Confirmed route", "Changed route");
+    await fs.writeFile(mapPath, changed);
+    const io = testIo();
+
+    const code = await runNaviInitCli([
+      "--target", project, "--map-file", candidate, "--expect-plan", fingerprintFor(preview), "--write",
+    ], io);
+
+    expect(code).toBe(1);
     await expect(fs.readFile(mapPath, "utf8")).resolves.toBe(changed);
     await expect(fs.access(path.join(project, "AGENTS.md"))).rejects.toThrow();
   });
