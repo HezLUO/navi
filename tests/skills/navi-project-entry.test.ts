@@ -207,4 +207,81 @@ describe("Navi adaptive project entry", () => {
     expect(reference).not.toContain("`navi init --new`");
     expect(reference).not.toContain("`navi init --existing`");
   });
+
+  it("routes the skill and Project Map owner without duplicating the entry contract", async () => {
+    const [skill, projectMap, entry] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/project-map-v1.md"),
+      readRepoText(".agents/skills/navi/references/project-entry-v1.md"),
+    ]);
+
+    const entryReferenceLine = skill
+      .split("\n")
+      .find((line) => line.includes("references/project-entry-v1.md"));
+    expect(entryReferenceLine).toBeDefined();
+    expect(entryReferenceLine).toMatch(
+      /sole owner[\s\S]*adaptive project entry[\s\S]*Evidence Profile classification[\s\S]*profile-to-strategy routing[\s\S]*baseline formation/i,
+    );
+    expect(skill).toMatch(/uninitialized[\s\S]*adaptive project entry/i);
+    expect(projectMap).toContain("project-entry-v1.md");
+    expect(projectMap).toContain("Project Map schema, rendering, lifecycle, and maintenance");
+    expect(projectMap).toMatch(
+      /project-entry-v1\.md[\s\S]*broad supervision[\s\S]*bounded evidence scan[\s\S]*adaptive baseline-formation strategy/i,
+    );
+    expect(projectMap).not.toContain("runs the Init Eligibility Gate");
+    expect(projectMap).not.toContain("performs Guided Baseline Formation when needed");
+    expect(projectMap).not.toContain("profile: coherent | conflicting | insufficient | stale");
+    expect(entry).toContain("profile: coherent | conflicting | insufficient | stale");
+  });
+
+  it("keeps evidence classification and profile routing details only in project-entry-v1", async () => {
+    const [skill, projectMap, entry] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/project-map-v1.md"),
+      readRepoText(".agents/skills/navi/references/project-entry-v1.md"),
+    ]);
+    const entryReferenceLine = skill
+      .split("\n")
+      .find((line) => line.includes("references/project-entry-v1.md"));
+    expect(entryReferenceLine).toBeDefined();
+    const adaptive = extractSection(projectMap, "#### Adaptive Baseline Formation");
+
+    for (const expected of [
+      "coherent -> Evidence-First Candidate",
+      "conflicting -> Conflict Resolution",
+      "insufficient -> Guided Baseline Formation",
+      "stale -> Targeted Code Check, then reclassify",
+    ]) {
+      expect(entry).toContain(expected);
+    }
+
+    for (const secondaryOwnerSection of [entryReferenceLine ?? "", adaptive]) {
+      for (const duplicatedDetail of [
+        "coherent",
+        "conflicting",
+        "insufficient",
+        "stale",
+        "Evidence-First Candidate",
+        "Conflict Resolution",
+        "Guided Baseline Formation",
+        "Targeted Code Check",
+      ]) {
+        expect(secondaryOwnerSection).not.toContain(duplicatedDetail);
+      }
+    }
+  });
+
+  it("keeps every modified package skill file byte-identical", async () => {
+    for (const relativePath of [
+      "SKILL.md",
+      "references/project-map-v1.md",
+      "references/project-entry-v1.md",
+    ]) {
+      const [canonical, packaged] = await Promise.all([
+        readRepoText(`.agents/skills/navi/${relativePath}`),
+        readRepoText(`plugins/navi/skills/navi/${relativePath}`),
+      ]);
+      expect(packaged).toBe(canonical);
+    }
+  });
 });

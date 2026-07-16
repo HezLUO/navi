@@ -527,9 +527,9 @@ Chinese orientation prompts should still allow Chinese headings and explanations
     };
     const confirmedMapContract = [
       ".navi/project-map.md",
-      "Init Eligibility Gate",
-      "Guided Baseline Formation",
-      "one missing key judgment at a time",
+      "project-entry-v1.md",
+      "Adaptive Baseline Formation",
+      "Project Map schema, rendering, lifecycle, and maintenance",
       "Map language is evidence, not a response-language instruction",
       "meaningful navigation boundary",
       "project_status: active",
@@ -541,6 +541,10 @@ Chinese orientation prompts should still allow Chinese headings and explanations
     for (const phrase of confirmedMapContract) {
       expect(canonicalReference).toContain(phrase);
     }
+
+    expect(canonicalReference).not.toContain(
+      "profile: coherent | conflicting | insufficient | stale",
+    );
 
     expect(pluginManifest.interface.defaultPrompt).toContain(
       "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
@@ -556,17 +560,57 @@ Chinese orientation prompts should still allow Chinese headings and explanations
     }
   });
 
-  it("relates incomplete baseline formation to a combined approved initialization preview", async () => {
+  it("routes adaptive baseline formation to its owner before the combined approved initialization preview", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/project-map-v1.md");
-    const eligibility = extractMarkdownSection(reference, "#### Init Eligibility Gate");
-    const guided = extractMarkdownSection(reference, "#### Guided Baseline Formation");
+    const adaptive = extractMarkdownSection(reference, "#### Adaptive Baseline Formation");
     const finalPreview = extractMarkdownSection(reference, "#### Final Preview And Activation");
 
-    expect(guided).toMatch(/one missing key judgment[\s\S]*one focused question/i);
-    expect(guided).toMatch(/confirms or corrects[\s\S]*until the minimum baseline is confirmable/i);
-    expect(eligibility).toMatch(/Desired Outcome[\s\S]*route or working rhythm[\s\S]*Current Position[\s\S]*(Next Decision|Current Boundary)/i);
+    expect(adaptive).toContain("project-entry-v1.md");
+    expect(adaptive).toContain("Project Map schema, rendering, lifecycle, and maintenance");
+    expect(adaptive).toMatch(
+      /hand[\s\S]*adaptive project entry[\s\S]*bounded evidence profiling[\s\S]*profile-to-strategy routing[\s\S]*baseline formation[\s\S]*project-entry-v1\.md/i,
+    );
+    for (const duplicatedDetail of [
+      "coherent",
+      "conflicting",
+      "insufficient",
+      "stale",
+      "Evidence-First Candidate",
+      "Conflict Resolution",
+      "Guided Baseline Formation",
+      "Targeted Code Check",
+    ]) {
+      expect(adaptive).not.toContain(duplicatedDetail);
+    }
     expect(finalPreview).toMatch(/One final preview[\s\S]*\.navi\/project-map\.md[\s\S]*AGENTS\.md/i);
     expect(finalPreview).toMatch(/One approval[\s\S]*both writes[\s\S]*Map is written first[\s\S]*trigger last/i);
+  });
+
+  it("hands unclear project scope to the adaptive-entry owner", async () => {
+    const reference = await readRepoText(".agents/skills/navi/references/project-map-v1.md");
+    const projectShape = extractMarkdownSection(reference, "### Project Shape Selection");
+
+    expect(projectShape).toMatch(
+      /unclear scope[\s\S]*project-entry-v1\.md[\s\S]*rather than inventing or storing stages/i,
+    );
+    expect(projectShape).not.toContain("Guided Baseline Formation");
+  });
+
+  it("routes valid confirmed Map state before adaptive baseline formation", async () => {
+    const reference = await readRepoText(".agents/skills/navi/references/project-map-v1.md");
+    const initialization = extractMarkdownSection(reference, "### Navi Project Initialization");
+
+    const stateFirstIndex = initialization.indexOf("#### Project State First");
+    const adaptiveIndex = initialization.indexOf("#### Adaptive Baseline Formation");
+    expect(stateFirstIndex).toBeGreaterThanOrEqual(0);
+    expect(adaptiveIndex).toBeGreaterThan(stateFirstIndex);
+    expect(initialization).toMatch(
+      /valid confirmed `?\.navi\/project-map\.md`?[\s\S]*skip adaptive baseline formation[\s\S]*existing Project Map behavior/i,
+    );
+    expect(initialization).toMatch(
+      /only the managed trigger is missing[\s\S]*`navi init`[\s\S]*trigger-only preview and activation/i,
+    );
+    expect(initialization).toMatch(/do not reconfirm or regenerate the baseline/i);
   });
 
   it("requires the ordered private-candidate, preview, approval, fingerprinted-apply, and cleanup adapter journey", async () => {

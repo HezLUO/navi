@@ -19,6 +19,7 @@ It remains a turn-bound self-initiation skill: when judgment is shaky, the defau
 
 Read only the references needed for the current request:
 
+- `references/project-entry-v1.md` is the sole owner for adaptive project entry, Evidence Profile classification, profile-to-strategy routing, and baseline formation.
 - `references/project-map-v1.md` for progress, next-step, stop/wait, lifecycle, Map maintenance, and vision-distance questions.
 - `references/supervision-v1.md` for work mode, verification budget, pause, continuation, coordination, quietness, and decision-handoff judgment.
 - `references/challenge-v1.md` for drift, anti-self-certification, risk challenge, and professional-judgment boundaries.
@@ -91,8 +92,10 @@ Do not load every reference for an ordinary narrow request.
 - Do not require the user to name Navi or say "Progress Map" before giving a map for clear progress, next-step, continue, done, or confusion questions.
 - Match the Navi map response language to the user's current prompt by default. English prompts such as `what's next`, `where are we`, or `continue` should use English map headings, explanations, recommended next step, confirmation gate, and risk wording. Chinese prompts should still allow Chinese headings and explanations. If project records contain stage labels in another language, translate or bilingualize those labels in the current response language rather than letting the source record language take over the whole map.
 - Navi is a supervision layer, not just a progress reporter. It helps the user decide whether to continue, stop, wait, approve, or move to the next phase.
+- When broad supervision appears in an uninitialized project, use `references/project-entry-v1.md` to choose the baseline-formation strategy before using `references/project-map-v1.md` for the confirmed Map, rendering, and lifecycle.
+- This keeps adaptive project entry ownership in one reference.
 - Use `references/supervision-v1.md` for phase/mode, verification budget, pause/continuation, coordination, quietness, and decision-handoff policy.
-- Use `references/project-map-v1.md` for confirmed Map authority, Progress/Rhythm Map rendering, lifecycle, maintenance, language following, and initialization baseline policy.
+- Use `references/project-map-v1.md` for confirmed Map authority, Progress/Rhythm Map rendering, lifecycle, maintenance, language following, and initialization preview/write boundary.
 - Use `references/challenge-v1.md` for drift challenge, anti-self-certification, lightweight validation, and professional-judgment boundaries.
 - Use `references/working-thread-v1.md` only for durable continuity records and confirmed write-back.
 - For an approved bounded implementation contract with validation preauthorization, use `references/supervised-delivery-v1.md`; create the fresh validator only at review-ready, route routine in-scope findings without asking for another `continue`, and preserve explicit user control over permission, scope, risk, merge, push, tag, release, and publication.

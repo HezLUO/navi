@@ -98,19 +98,21 @@ The managed `AGENTS.md` block is the reusable trigger source. It stays concise, 
 
 Navi Project Initialization is the minimum reliable path to configure Navi for a target project. It uses the global skill plus the managed project-local trigger and confirmed `.navi/project-map.md`.
 
-#### Init Eligibility Gate
+#### Project State First
 
-A broad first-use request without a confirmed Map runs the Init Eligibility Gate; it does not initialize immediately. Initialization becomes eligible when Navi can present user-confirmable answers for Desired Outcome, broad route or working rhythm, Current Position, and Next Decision or Current Boundary. Project files are not mandatory evidence because current user confirmation is valid evidence.
+Inspect `.navi/project-map.md` and the managed project-local trigger before adaptive baseline formation. When a valid confirmed `.navi/project-map.md` exists, skip adaptive baseline formation and use the existing Project Map behavior.
 
-#### Guided Baseline Formation
+If only the managed trigger is missing, use the existing `navi init` trigger-only preview and activation path. Do not reconfirm or regenerate the baseline.
 
-When the baseline is incomplete, Guided Baseline Formation performs no writes and does not ask the user to fill a blank form. It names one missing key judgment, proposes a candidate answer from current evidence, and asks one focused question. The user confirms or corrects the candidate; Navi repeats only until the minimum baseline is confirmable. In short, Guided Baseline Formation asks one focused question about one missing key judgment at a time.
+#### Adaptive Baseline Formation
 
-The user may stop or decline at any point. Navi then continues best-effort read-only supervision, does not write project files, and does not repeat the same initialization reminder in that session.
+Only when no valid confirmed Map is available, hand adaptive project entry, bounded evidence profiling, profile-to-strategy routing, and baseline formation to `project-entry-v1.md`.
+
+This reference continues to own the Project Map schema, rendering, lifecycle, and maintenance. The baseline formed there must converge on the confirmed Map and exact preview/write boundary below.
 
 #### Final Preview And Activation
 
-After the baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. Codex must create a private candidate file outside the target project, then run the read-only `navi init --map-file <candidate>` preview. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. It must present one combined Map+trigger preview and obtain approval. One approval may authorize both writes. Apply only with `navi init --map-file <candidate> --expect-plan <fingerprint> --write`; never bypass the CLI with direct project writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map. Codex must remove the private candidate after success or explicit abandonment.
+After a missing or invalid baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. Codex must create a private candidate file outside the target project, then run the read-only `navi init --map-file <candidate>` preview. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. It must present one combined Map+trigger preview and obtain approval. One approval may authorize both writes. Apply only with `navi init --map-file <candidate> --expect-plan <fingerprint> --write`; never bypass the CLI with direct project writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map. Codex must remove the private candidate after success or explicit abandonment.
 
 ### Global Bootstrap And Project Handoff
 
@@ -124,7 +126,7 @@ The bootstrap is prompt-backed, not a runtime interceptor, background watcher, M
 
 Navi is installed globally once. navi init initializes a target project for reliable fresh-session behavior and does not install Navi again. Global-only Navi can provide best-effort read-only supervision, but project-local initialization is the reliable path for confirmed Map evidence and trigger behavior.
 
-Use initialization when a broad supervision need appears in a project without local Navi guidance. Codex first inspects bounded evidence, runs the Init Eligibility Gate, performs Guided Baseline Formation when needed, and asks for user confirmation before writing durable project files.
+Use `project-entry-v1.md` when broad supervision appears in a project without local Navi guidance. It owns the bounded evidence scan and adaptive baseline-formation strategy, and asks for user confirmation before writing durable project files; this reference resumes ownership at the confirmed Map and exact preview/write boundary.
 
 Minimum initialization output is a confirmed `.navi/project-map.md` plus the managed `AGENTS.md` trigger. One final preview covers both exact actions. The Map is written first and trigger activation is last.
 
@@ -191,7 +193,7 @@ If the project shape is mixed, Navi should pick the narrowest useful map:
 
 - whole long-running project: Rhythm Map;
 - specific bounded subtask: linear subtask strip;
-- unclear scope: state uncertainty and use Guided Baseline Formation rather than inventing or storing stages.
+- unclear scope: state uncertainty and hand baseline-formation judgment to `project-entry-v1.md` rather than inventing or storing stages.
 
 ### Rhythm Map
 

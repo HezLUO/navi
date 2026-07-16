@@ -125,6 +125,7 @@ describe("Navi skill and package structure", () => {
     const owners = {
       "supervision-v1.md": ["Alpha 4 Supervision Layer", "Alpha 12 Quietness And Rule Density Control"],
       "project-map-v1.md": ["Progress Map", "Confirmed Project Map Model", "Rhythm Map"],
+      "project-entry-v1.md": ["Evidence Profile", "Profile Routing", "Confirmed Exit"],
       "challenge-v1.md": ["Challenge Layer", "Challenge Brief", "Professional Judgment Boundary"],
       "working-thread-v1.md": ["Working Thread Definition", "Record Location", "Bounded Adaptive Write-Back"],
       "lane-handoff-v1.md": ["Unified Event", "Pre-Send Wire-Format Check", "Source Main Task"],
@@ -135,6 +136,38 @@ describe("Navi skill and package structure", () => {
       const canonical = await readRepoText(`.agents/skills/navi/references/${file}`);
       for (const heading of headings) expect(canonical).toContain(`## ${heading}`);
     }
+
+    const requiredReferences = skill.slice(
+      skill.indexOf("## Required References"),
+      skill.indexOf("## Hard Boundaries"),
+    );
+    const projectEntryReference = requiredReferences
+      .split("\n")
+      .find((line) => line.includes("references/project-entry-v1.md"));
+    expect(projectEntryReference).toBe(
+      "- `references/project-entry-v1.md` is the sole owner for adaptive project entry, Evidence Profile classification, profile-to-strategy routing, and baseline formation.",
+    );
+    for (const duplicatedDetail of [
+      "coherent",
+      "conflicting",
+      "insufficient",
+      "stale",
+      "Evidence-First Candidate",
+      "Conflict Resolution",
+      "Guided Baseline Formation",
+      "Targeted Code Check",
+    ]) {
+      expect(projectEntryReference).not.toContain(duplicatedDetail);
+    }
+
+    const behaviorGuardrails = skill.slice(
+      skill.indexOf("## Behavior Guardrails"),
+      skill.indexOf("## Output Style"),
+    );
+    expect(behaviorGuardrails).toContain(
+      "`references/project-map-v1.md` for confirmed Map authority, Progress/Rhythm Map rendering, lifecycle, maintenance, language following, and initialization preview/write boundary.",
+    );
+    expect(behaviorGuardrails).not.toContain("initialization baseline policy");
   });
 
   it("documents project-local Navi trigger sources", async () => {
@@ -217,6 +250,7 @@ describe("Navi skill and package structure", () => {
       "plugins/navi/skills/navi/agents/openai.yaml",
       "plugins/navi/skills/navi/references/challenge-v1.md",
       "plugins/navi/skills/navi/references/lane-handoff-v1.md",
+      "plugins/navi/skills/navi/references/project-entry-v1.md",
       "plugins/navi/skills/navi/references/project-map-v1.md",
       "plugins/navi/skills/navi/references/supervision-v1.md",
       "plugins/navi/skills/navi/references/working-thread-v1.md",
