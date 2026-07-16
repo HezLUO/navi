@@ -49,30 +49,49 @@ describe("Current Navi repository surface", () => {
     expect(debt).toContain("Being easy to parallelize does not establish product priority.");
   });
 
-  it("records supervised delivery as the current bounded implementation gate", async () => {
+  it("records adaptive project entry as the current bounded gate", async () => {
     const [history, roadmap] = await Promise.all([
       fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
       fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
     ]);
     const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
-    const currentPhase = roadmap.match(/## Current Phase\n(?<phase>[\s\S]*?)\n## /)?.groups?.phase ?? "";
+    const historyPhase = history.match(/## Current Phase\n(?<phase>[\s\S]*?)\n## /)?.groups?.phase ?? "";
+    const roadmapPhase = roadmap.match(/## Current Phase\n(?<phase>[\s\S]*?)\n## /)?.groups?.phase ?? "";
 
-    for (const currentSurface of [history, currentPhase]) {
-      expect(currentSurface).toContain(
-        "Source-alpha CLI invocation reachability and its real-environment calibration are closed",
+    for (const currentPhase of [historyPhase, roadmapPhase]) {
+      expect(currentPhase).toContain("Supervised Delivery Loop V1 is integrated");
+      expect(currentPhase).toContain("adaptive project entry implementation is the current bounded gate");
+      expect(currentPhase).toContain("first mature real-project calibration");
+      expect(currentPhase).toContain(
+        "new or evidence-poor project calibration follows after the mature-project result is understood",
       );
-      expect(currentSurface).toContain(
+      expect(currentPhase).not.toContain(
         "Codex-first Supervised Delivery Loop V1 implementation is the current bounded gate",
       );
-      expect(currentSurface).toContain(
-        "the next gate is the first natural bounded calibration, not distribution or release",
-      );
-      expect(currentSurface).not.toContain(
-        "Source-alpha CLI invocation reachability is the current bounded implementation gate",
-      );
     }
-    expect(active).toContain("docs/superpowers/specs/2026-07-15-navi-source-alpha-cli-invocation-design.md");
-    expect(active).toContain("docs/superpowers/plans/2026-07-15-navi-source-alpha-cli-invocation.md");
+
+    expect(active).toContain(
+      "`docs/superpowers/specs/2026-07-16-navi-adaptive-project-entry-design.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-16-navi-adaptive-project-entry.md`",
+    );
+  });
+
+  it("requires both current boundary and next decision in current entry docs", async () => {
+    const englishSurfaces = await Promise.all([
+      "README.md",
+      "plugins/navi/README.md",
+      "docs/navi/project-init.md",
+    ].map((relative) => fs.readFile(path.join(root, relative), "utf8")));
+    const chineseReadme = await fs.readFile(path.join(root, "README.zh-CN.md"), "utf8");
+
+    for (const surface of englishSurfaces) {
+      expect(surface).toMatch(/both Current Boundary and Next Decision/i);
+      expect(surface).not.toMatch(/Next Decision or Current Boundary|Current Boundary or Next Decision/i);
+    }
+    expect(chineseReadme).toContain("同时包含 Current Boundary 和 Next Decision");
+    expect(chineseReadme).not.toMatch(/Next Decision 或 Current Boundary|Current Boundary 或 Next Decision/i);
   });
 
   it("lists the approved Supervised Delivery Loop design as active", async () => {

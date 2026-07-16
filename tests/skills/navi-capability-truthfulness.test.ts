@@ -6,6 +6,70 @@ async function readRepoText(relativePath: string): Promise<string> {
 }
 
 describe("Navi capability truthfulness", () => {
+  it("describes adaptive project entry without claiming runtime or authority selection", async () => {
+    const [readme, chineseReadme, pluginReadme, projectInit] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+      readRepoText("docs/navi/project-init.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme, projectInit]) {
+      expect(surface).toMatch(
+        /one (?:user-visible|visible)(?:,\s*prompt\/docs-backed)? project entry/i,
+      );
+      expect(surface).toMatch(/coherent evidence[\s\S]*Evidence-First Candidate/i);
+      expect(surface).toMatch(
+        /mature projects?[\s\S]*coherent[\s\S]*conflicting[\s\S]*insufficient[\s\S]*stale/i,
+      );
+      expect(surface).toMatch(/insufficient evidence[\s\S]*Guided Baseline Formation/i);
+      expect(surface).toMatch(
+        /prompt\/docs-backed[\s\S]*not (?:a persisted file,\s*)?(?:a )?runtime classifier(?:,| or) background (?:repository )?scanner/i,
+      );
+    }
+
+    for (const surface of [readme, pluginReadme]) {
+      expect(surface).toMatch(/direction conflict[\s\S]*user/i);
+      expect(surface).toMatch(/confirmed (?:Project )?Map[\s\S]*fingerprint-bound write/i);
+    }
+
+    for (const surface of [readme, pluginReadme, projectInit]) {
+      expect(surface).toMatch(
+        /baseline[\s\S]*confirmable only when[\s\S]*both Current Boundary and Next Decision/i,
+      );
+      expect(surface).not.toMatch(/Next Decision or Current Boundary|Current Boundary or Next Decision/i);
+    }
+
+    expect(projectInit).not.toMatch(/a mature project follows the coherent-evidence route/i);
+    expect(projectInit).toMatch(
+      /coherent evidence—not project (?:type|maturity)—selects the Evidence-First Candidate/i,
+    );
+    expect(projectInit).toMatch(
+      /mature projects? may have coherent, conflicting, insufficient, or stale evidence/i,
+    );
+    expect(projectInit).toMatch(/coherent evidence\s*->\s*an evidence-first candidate/i);
+    expect(projectInit).toMatch(
+      /(?:direction conflict[\s\S]*user|conflicting evidence\s*->\s*one focused user direction decision)/i,
+    );
+    expect(projectInit).toMatch(
+      /(?:confirmed (?:Project )?Map[\s\S]*fingerprint-bound write|confirmed `?\.navi\/project-map\.md`?[\s\S]*plan fingerprint[\s\S]*bounded project initialization write)/i,
+    );
+    expect(projectInit).toMatch(/Evidence Profile[\s\S]*not an index/i);
+    expect(projectInit).toMatch(
+      /Evidence Profile[\s\S]*not an automatic authority selector/i,
+    );
+
+    expect(chineseReadme).toMatch(/一个(?:用户可见的)?项目入口/);
+    expect(chineseReadme).toMatch(/证据连贯[\s\S]*evidence-first candidate/i);
+    expect(chineseReadme).toMatch(/成熟项目[\s\S]*连贯[\s\S]*冲突[\s\S]*不足[\s\S]*过时/);
+    expect(chineseReadme).toMatch(/证据不足[\s\S]*Guided Baseline Formation/i);
+    expect(chineseReadme).toMatch(/方向冲突[\s\S]*用户确认/);
+    expect(chineseReadme).toMatch(/prompt\/docs-backed[\s\S]*不是 runtime classifier/i);
+    expect(chineseReadme).toMatch(/confirmed Map[\s\S]*fingerprint-bound write/i);
+    expect(chineseReadme).toMatch(/baseline[\s\S]*只有同时包含 Current Boundary 和 Next Decision 才可确认/i);
+    expect(chineseReadme).not.toMatch(/Next Decision 或 Current Boundary|Current Boundary 或 Next Decision/i);
+  });
+
   it("uses the truthful Historical Along path for active Shared Desk references", async () => {
     const activeReferences = [
       "docs/navi/product-debt.md",

@@ -1,15 +1,15 @@
 # Navi Post-Alpha Backlog / Roadmap
 
-Status: active backlog during the Codex-first Supervised Delivery Loop V1 implementation gate
-Last updated: 2026-07-15
+Status: active backlog during the adaptive project entry implementation gate
+Last updated: 2026-07-16
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
 ## Current Phase
 
-Source-alpha CLI invocation reachability and its real-environment calibration are closed. Codex-first Supervised Delivery Loop V1 implementation is the current bounded gate. After parent review and explicit integration, the next gate is the first natural bounded calibration, not distribution or release.
+Supervised Delivery Loop V1 is integrated; adaptive project entry implementation is the current bounded gate. The first post-integration product calibration is the first mature real-project calibration; new or evidence-poor project calibration follows after the mature-project result is understood.
 
-That first natural bounded calibration should confirm that review-ready evidence reaches one fresh read-only validator without manual user relays, hidden continuation prompts, validator writes, or unauthorized release-level checks. Real permission, scope, risk, merge, push, tag, and release decisions must remain explicit. This is calibration evidence, not distribution or release proof.
+This gate is limited to the adaptive entry prompt/docs contract and bounded current-source support. Distribution, release, runtime, UI, and other-agent work remain outside it. Real permission, scope, risk, merge, push, tag, and release decisions remain explicit.
 
 ## Product Positioning
 

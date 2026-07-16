@@ -4,10 +4,12 @@ This index is navigation metadata. It does not rewrite historical documents.
 
 ## Current Phase
 
-Source-alpha CLI invocation reachability and its real-environment calibration are closed. Codex-first Supervised Delivery Loop V1 implementation is the current bounded gate. After parent review and explicit integration, the next gate is the first natural bounded calibration, not distribution or release.
+Supervised Delivery Loop V1 is integrated; adaptive project entry implementation is the current bounded gate. The first post-integration product calibration is the first mature real-project calibration; new or evidence-poor project calibration follows after the mature-project result is understood. Distribution, release, runtime, UI, and other-agent work remain outside this gate.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-16-navi-adaptive-project-entry-design.md`
+- `docs/superpowers/plans/2026-07-16-navi-adaptive-project-entry.md`
 - `docs/superpowers/specs/2026-07-15-navi-source-alpha-cli-invocation-design.md`
 - `docs/superpowers/plans/2026-07-15-navi-source-alpha-cli-invocation.md`
 - `docs/superpowers/specs/2026-07-15-navi-source-alpha-legacy-migration-design.md`

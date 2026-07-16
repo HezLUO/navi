@@ -15,14 +15,36 @@ Journey contract: global setup once -> guided confirmed baseline -> one trigger 
 
 Initialization begins when a user asks a broad supervision question in a project that has neither a confirmed Map nor project-local Navi guidance. Typical questions include `what's next?`, `where are we?`, `should we continue?`, `should we stop?`, or a statement that the current progress is unclear.
 
+For this entry contract, coherent evidence—not project type—selects the Evidence-First Candidate. Mature projects may have coherent, conflicting, insufficient, or stale evidence and follow the corresponding profile route.
+
+Navi presents one visible project entry. It first performs a bounded evidence scan and selects an internal baseline strategy:
+
+- coherent evidence -> an evidence-first candidate for confirmation;
+- conflicting evidence -> one focused user direction decision;
+- insufficient evidence -> Guided Baseline Formation;
+- apparently stale evidence -> one targeted code or Git check, then reclassification.
+
+The Evidence Profile is prompt/docs-backed, turn-local Codex judgment. It is not a persisted file, runtime classifier, background scanner, or authority decision; it is not an index and not an automatic authority selector.
+
 Navi first runs an eligibility check. The baseline is ready only when it can present these judgments for confirmation:
+
+A baseline is confirmable only when it includes both Current Boundary and Next Decision.
 
 - Desired Outcome;
 - Route To Outcome or working rhythm;
-- Current Position; and
-- Next Decision or Current Boundary.
+- Current Position;
+- Current Boundary; and
+- Next Decision.
 
 When one judgment is missing, Guided Baseline Formation asks one focused question at a time. It names the missing judgment, proposes a candidate from available project evidence, and lets the user confirm or correct it. This stage is read-only.
+
+### Layered Authority
+
+Project documents retain detailed domain ownership: roadmaps own product sequencing, specifications own design, plans own bounded execution, trackers own item state, and code and tests provide implemented-behavior evidence. The confirmed `.navi/project-map.md` owns Navi's confirmed supervision baseline and does not replace those sources.
+
+### New Projects
+
+A new project may confirm an explicitly provisional route or working rhythm, with unknowns recorded in Evidence And Uncertainty. A stored candidate must not contain blank placeholders or fabricated certainty.
 
 If the user declines or stops, Navi continues with explicitly uncertain, best-effort read-only supervision and does not repeat the same initialization reminder in that session.
 

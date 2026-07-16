@@ -43,7 +43,9 @@ navi setup --write
 
 Journey contract：global setup once -> guided confirmed baseline -> one trigger + `.navi/project-map.md` preview -> one approved project init write -> fresh-session natural-language supervision。
 
-`navi setup` 只配置全局 discovery，不会初始化目标项目。在未配置项目中的第一次 broad supervision request，Navi 会先判断 Desired Outcome、Route To Outcome、Current Position，以及 Next Decision 或 Current Boundary 是否可确认。如果还不够，就一次只问一个 focused question，并且不写文件。形成 guided confirmed baseline 后，Navi 会一次预览 confirmed Map 和 managed `AGENTS.md` trigger。一次批准只覆盖这次 bounded project write：先写 Map，最后写 trigger。`navi init` 不会重新安装 plugin。
+当前 source 使用一个用户可见的项目入口，由 prompt/docs-backed 行为完成分流。证据连贯时才会形成 evidence-first candidate，项目是否成熟本身不决定分流；成熟项目也可能具有连贯、冲突、不足或过时的证据，并按对应 profile 处理。方向冲突交给用户确认；证据不足时进入 Guided Baseline Formation。两条路径共用同一个 confirmed Map preview 和 fingerprint-bound write。这不是 runtime classifier，也不是后台仓库扫描器。
+
+`navi setup` 只配置全局 discovery，不会初始化目标项目。在未配置项目中的第一次 broad supervision request，Navi 会先判断 Desired Outcome、Route To Outcome、Current Position、Current Boundary 和 Next Decision 是否可确认；baseline 只有同时包含 Current Boundary 和 Next Decision 才可确认。如果还不够，就一次只问一个 focused question，并且不写文件。形成 guided confirmed baseline 后，Navi 会一次预览 confirmed Map 和 managed `AGENTS.md` trigger。一次批准只覆盖这次 bounded project write：先写 Map，最后写 trigger。`navi init` 不会重新安装 plugin。
 
 Existing confirmed Map trigger path（已有 valid confirmed Map，但缺少 trigger 或使用 recognized legacy trigger）：
 
