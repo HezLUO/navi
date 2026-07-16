@@ -9,6 +9,7 @@ import {
   type InitPlan,
 } from "../../src/cli/navi-init-plan";
 import {
+  LEGACY_PROJECT_MAP_ANCHORS,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   REQUIRED_PROJECT_MAP_ANCHORS,
   parseProjectMapDocument,
@@ -18,7 +19,7 @@ const tempRoots = new Set<string>();
 
 function confirmedMap(suffix = ""): string {
   return `---
-navi_map: 1
+navi_map: 2
 map_status: confirmed
 project_status: active
 last_confirmed: 2026-07-14
@@ -26,6 +27,21 @@ last_confirmed: 2026-07-14
 # Navi Project Map
 
 ${REQUIRED_PROJECT_MAP_ANCHORS.map((anchor, index) =>
+  `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}${suffix}.`,
+).join("\n\n")}
+`;
+}
+
+function legacyMap(suffix = ""): string {
+  return `---
+navi_map: 1
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-14
+---
+# Navi Project Map
+
+${LEGACY_PROJECT_MAP_ANCHORS.map((anchor, index) =>
   `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}${suffix}.`,
 ).join("\n\n")}
 `;
@@ -140,11 +156,11 @@ describe("navi init preview drift", () => {
     const project = await createProject();
     const mapPath = await writeCanonicalMap(
       project,
-      confirmedMap().replace("map_status: confirmed", "map_status: draft"),
+      legacyMap().replace("map_status: confirmed", "map_status: draft"),
     );
     const candidate = await writeCandidate(project);
     const preview = await buildInitPlan({ targetDir: project, mapFile: candidate });
-    const changed = confirmedMap().replace("map_status: confirmed", "map_status: proposed");
+    const changed = legacyMap().replace("map_status: confirmed", "map_status: proposed");
     await fs.writeFile(mapPath, changed);
     const io = testIo();
 

@@ -8,7 +8,11 @@ import { renderGlobalBootstrapBlock } from "../../src/cli/navi-global";
 import { renderAgentsBlock } from "../../src/cli/navi-project-trigger";
 import { inspectNaviInstallation, type NaviInstallationStatus } from "../../src/cli/navi-installation";
 import type { NaviInvocationContext } from "../../src/cli/navi-invocation";
-import { NAVI_PROJECT_MAP_RELATIVE_PATH, REQUIRED_PROJECT_MAP_ANCHORS } from "../../src/cli/navi-project-map";
+import {
+  LEGACY_PROJECT_MAP_ANCHORS,
+  NAVI_PROJECT_MAP_RELATIVE_PATH,
+  REQUIRED_PROJECT_MAP_ANCHORS,
+} from "../../src/cli/navi-project-map";
 import { LEGACY_AGENTS_BLOCK_WITH_SCOPED_AUTHORIZATION } from "../fixtures/navi-legacy-agents-blocks";
 
 const roots: string[] = [];
@@ -59,7 +63,7 @@ async function fixture() {
 function current(sourcePath?: string): NaviInstallationStatus { return { kind: "current", current: { selector: "navi@navi-source", pluginName: "navi", marketplaceName: "navi-source", installed: true, enabled: true, ...(sourcePath ? { sourcePath } : {}), raw: "current" }, raw: "current" }; }
 function confirmedMap(projectStatus: "active" | "paused" | "closed" = "active"): string {
   return `---
-navi_map: 1
+navi_map: 2
 map_status: confirmed
 project_status: ${projectStatus}
 last_confirmed: 2026-07-14
@@ -67,6 +71,18 @@ last_confirmed: 2026-07-14
 # Navi Project Map
 
 ${REQUIRED_PROJECT_MAP_ANCHORS.map((anchor, index) => `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}.`).join("\n\n")}
+`;
+}
+function legacyMap(projectStatus: "active" | "paused" | "closed" = "active"): string {
+  return `---
+navi_map: 1
+map_status: confirmed
+project_status: ${projectStatus}
+last_confirmed: 2026-07-14
+---
+# Navi Project Map
+
+${LEGACY_PROJECT_MAP_ANCHORS.map((anchor, index) => `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}.`).join("\n\n")}
 `;
 }
 type TriggerFixture = "missing" | "current" | "legacy" | "invalid";
@@ -94,8 +110,8 @@ async function buildFixtureReport(triggerFixture: TriggerFixture, mapFixture: Ma
           : mapFixture === "valid-closed"
             ? confirmedMap("closed")
             : mapFixture === "unsupported"
-              ? confirmedMap().replace("navi_map: 1", "navi_map: 2")
-              : confirmedMap().replace("map_status: confirmed", "map_status: draft");
+              ? confirmedMap().replace("navi_map: 2", "navi_map: 3")
+              : legacyMap().replace("map_status: confirmed", "map_status: draft");
       await fs.writeFile(mapPath, text);
     }
   }
@@ -268,8 +284,8 @@ describe("Navi doctor", () => {
   });
 
   it.each([
-    ["unknown-format", confirmedMap().replace("navi_map: 1", "navi_map: one")],
-    ["unsupported", confirmedMap().replace("navi_map: 1", "navi_map: 2")],
+    ["unknown-format", confirmedMap().replace("navi_map: 2", "navi_map: one")],
+    ["unsupported", confirmedMap().replace("navi_map: 2", "navi_map: 3")],
   ] as const)("gives a %s Map manual preservation guidance without an overwrite command", async (_name, mapText) => {
     const f = await fixture();
     await fs.writeFile(path.join(f.projectDir, "AGENTS.md"), `${renderAgentsBlock()}\n`);

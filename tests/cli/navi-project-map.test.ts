@@ -4,24 +4,30 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   inspectProjectMapFile,
+  LEGACY_PROJECT_MAP_ANCHORS,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   parseProjectMapDocument,
   REQUIRED_PROJECT_MAP_ANCHORS,
 } from "../../src/cli/navi-project-map";
 
 const roots: string[] = [];
-const map = (headings: string[]) => `---
-navi_map: 1
+const legacyMap = () => renderMap(1, LEGACY_PROJECT_MAP_ANCHORS);
+const currentMap = () => renderMap(2, REQUIRED_PROJECT_MAP_ANCHORS);
+
+function renderMap(version: 1 | 2, anchors: readonly string[]): string {
+  return `---
+navi_map: ${version}
 map_status: confirmed
 project_status: active
-last_confirmed: 2026-07-13
+last_confirmed: 2026-07-16
 ---
 # Navi Project Map
 
-${REQUIRED_PROJECT_MAP_ANCHORS.map((anchor, index) =>
-  `<!-- ${anchor} -->\n## ${headings[index]}\n\nConfirmed value ${index + 1}.`,
+${anchors.map((anchor, index) =>
+  `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}.`,
 ).join("\n\n")}
 `;
+}
 
 async function temporaryRoot(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "navi-project-map-"));
@@ -41,14 +47,33 @@ afterEach(async () => {
 });
 
 describe("confirmed Navi Project Map contract", () => {
-  it.each([
-    ["English", ["Desired Outcome", "Route To Outcome", "Current Position", "Current Boundary", "Next Decision", "Evidence And Uncertainty"]],
-    ["Chinese", ["期望结果", "实现路线", "当前位置", "当前边界", "下一决策", "证据与不确定性"]],
-  ])("accepts %s natural-language headings with stable anchors", (_name, headings) => {
-    expect(parseProjectMapDocument(map(headings))).toMatchObject({
+  it("accepts the legacy version-one contract", () => {
+    expect(parseProjectMapDocument(legacyMap())).toMatchObject({
       kind: "valid",
-      document: { version: 1, mapStatus: "confirmed", projectStatus: "active", lastConfirmed: "2026-07-13" },
+      document: { version: 1, outcomeBoundaryStatus: "legacy-missing" },
     });
+  });
+
+  it("accepts the current version-two contract", () => {
+    expect(parseProjectMapDocument(currentMap())).toMatchObject({
+      kind: "valid",
+      document: { version: 2, outcomeBoundaryStatus: "confirmed" },
+    });
+  });
+
+  it("rejects a current Map missing the Outcome Boundary anchor", () => {
+    expect(parseProjectMapDocument(
+      currentMap().replace("<!-- navi:outcome-boundary -->", ""),
+    )).toMatchObject({ kind: "invalid", recognizedVersion: 2 });
+  });
+
+  it("rejects a legacy Map containing the reserved Outcome Boundary anchor", () => {
+    expect(parseProjectMapDocument(
+      legacyMap().replace(
+        "<!-- navi:route-to-outcome -->",
+        "<!-- navi:outcome-boundary -->\n## Outcome Boundary\n\nPartial.\n\n<!-- navi:route-to-outcome -->",
+      ),
+    )).toMatchObject({ kind: "invalid", recognizedVersion: 1 });
   });
 
   it.each([
@@ -60,9 +85,9 @@ describe("confirmed Navi Project Map contract", () => {
       .replace("<!-- navi:swap-anchor -->", "<!-- navi:current-position -->")],
     ["draft status", (text: string) => text.replace("map_status: confirmed", "map_status: draft")],
     ["invalid lifecycle", (text: string) => text.replace("project_status: active", "project_status: waiting")],
-    ["invalid date", (text: string) => text.replace("2026-07-13", "13/07/2026")],
+    ["invalid date", (text: string) => text.replace("2026-07-16", "13/07/2026")],
   ])("rejects %s", (_name, mutate) => {
-    expect(parseProjectMapDocument(mutate(map(["A", "B", "C", "D", "E", "F"]))).kind).toBe("invalid");
+    expect(parseProjectMapDocument(mutate(currentMap())).kind).toBe("invalid");
   });
 
   it("does not count required anchors embedded only in optional frontmatter metadata", () => {
@@ -70,10 +95,10 @@ describe("confirmed Navi Project Map contract", () => {
       (anchor, index) => `metadata_${index}: <!-- ${anchor} -->`,
     ).join("\n");
     const text = `---
-navi_map: 1
+navi_map: 2
 map_status: confirmed
 project_status: active
-last_confirmed: 2026-07-13
+last_confirmed: 2026-07-16
 ${metadataAnchors}
 ---
 # Navi Project Map
@@ -81,27 +106,27 @@ ${metadataAnchors}
 No body anchors.
 `;
 
-    expect(parseProjectMapDocument(text)).toMatchObject({ kind: "invalid", recognizedVersion: 1 });
+    expect(parseProjectMapDocument(text)).toMatchObject({ kind: "invalid", recognizedVersion: 2 });
   });
 
   it("preserves an unsupported future contract version", () => {
-    expect(parseProjectMapDocument(map(["A", "B", "C", "D", "E", "F"]).replace("navi_map: 1", "navi_map: 2"))).toMatchObject({ kind: "unsupported", version: 2 });
+    expect(parseProjectMapDocument(currentMap().replace("navi_map: 2", "navi_map: 3"))).toMatchObject({ kind: "unsupported", version: 3 });
   });
 
   it.each([
     ["0", 0],
-    ["02", 2],
+    ["03", 3],
     ["-1", -1],
   ])("preserves unsupported base-10 integer version %s", (rawVersion, version) => {
-    const text = map(["A", "B", "C", "D", "E", "F"]).replace("navi_map: 1", `navi_map: ${rawVersion}`);
+    const text = currentMap().replace("navi_map: 2", `navi_map: ${rawVersion}`);
 
     expect(parseProjectMapDocument(text)).toMatchObject({ kind: "unsupported", version });
   });
 
   it("preserves the original text and accepts unique scalar metadata", () => {
-    const text = map(["A", "B", "C", "D", "E", "F"]).replace(
-      "last_confirmed: 2026-07-13",
-      "last_confirmed: 2026-07-13\nowner: Navi team",
+    const text = currentMap().replace(
+      "last_confirmed: 2026-07-16",
+      "last_confirmed: 2026-07-16\nowner: Navi team",
     );
 
     expect(parseProjectMapDocument(text)).toMatchObject({ kind: "valid", document: { text } });
@@ -113,15 +138,15 @@ No body anchors.
     ["malformed metadata", (text: string) => text.replace("map_status: confirmed", "map_status confirmed")],
     ["duplicate required key", (text: string) => text.replace("map_status: confirmed", "map_status: confirmed\nmap_status: confirmed")],
     ["missing required key", (text: string) => text.replace("project_status: active\n", "")],
-    ["non-integer version", (text: string) => text.replace("navi_map: 1", "navi_map: 1.0")],
-    ["impossible calendar date", (text: string) => text.replace("2026-07-13", "2026-02-29")],
+    ["non-integer version", (text: string) => text.replace("navi_map: 2", "navi_map: 2.0")],
+    ["impossible calendar date", (text: string) => text.replace("2026-07-16", "2026-02-29")],
   ])("rejects %s frontmatter", (_name, mutate) => {
-    expect(parseProjectMapDocument(mutate(map(["A", "B", "C", "D", "E", "F"]))).kind).toBe("invalid");
+    expect(parseProjectMapDocument(mutate(currentMap())).kind).toBe("invalid");
   });
 
-  it("reports a future version before validating version-one contract fields", () => {
-    const future = map(["A", "B", "C", "D", "E", "F"])
-      .replace("navi_map: 1", "navi_map: 12")
+  it("reports a future version before validating recognized contract fields", () => {
+    const future = currentMap()
+      .replace("navi_map: 2", "navi_map: 12")
       .replace("map_status: confirmed", "map_status: draft")
       .replace("<!-- navi:next-decision -->", "");
 
@@ -129,7 +154,7 @@ No body anchors.
   });
 
   it.each(["active", "paused", "closed"] as const)("accepts the %s project lifecycle", (status) => {
-    const text = map(["A", "B", "C", "D", "E", "F"]).replace("project_status: active", `project_status: ${status}`);
+    const text = currentMap().replace("project_status: active", `project_status: ${status}`);
 
     expect(parseProjectMapDocument(text)).toMatchObject({ kind: "valid", document: { projectStatus: status } });
   });
@@ -144,7 +169,7 @@ No body anchors.
 
   it("reads a valid regular file without modifying it", async () => {
     const root = await temporaryRoot();
-    const text = map(["A", "B", "C", "D", "E", "F"]);
+    const text = currentMap();
     const mapPath = await writeProjectMap(root, text);
     const before = await fs.stat(mapPath);
 
@@ -160,7 +185,7 @@ No body anchors.
   it("never follows or replaces a symlink at the map path", async () => {
     const root = await temporaryRoot();
     const targetPath = path.join(root, "outside-map.md");
-    const text = map(["A", "B", "C", "D", "E", "F"]);
+    const text = currentMap();
     await fs.writeFile(targetPath, text, "utf8");
     const mapPath = path.join(root, NAVI_PROJECT_MAP_RELATIVE_PATH);
     await fs.mkdir(path.dirname(mapPath), { recursive: true });
@@ -175,7 +200,7 @@ No body anchors.
     const root = await temporaryRoot();
     const externalDirectory = `${root}-external-navi`;
     roots.push(externalDirectory);
-    const text = map(["A", "B", "C", "D", "E", "F"]);
+    const text = currentMap();
     const externalMap = path.join(externalDirectory, "project-map.md");
     await fs.mkdir(externalDirectory);
     await fs.writeFile(externalMap, text, "utf8");
@@ -191,8 +216,8 @@ No body anchors.
 
   it("does not read an external Map when the .navi directory is replaced after inspection", async () => {
     const root = await temporaryRoot();
-    const originalText = map(["A", "B", "C", "D", "E", "F"]);
-    const externalText = originalText.replace("2026-07-13", "2026-07-14");
+    const originalText = currentMap();
+    const externalText = originalText.replace("2026-07-16", "2026-07-17");
     const mapPath = await writeProjectMap(root, originalText);
     const mapDirectory = path.dirname(mapPath);
     const movedDirectory = path.join(root, "checked-navi");
@@ -250,8 +275,8 @@ No body anchors.
 
   it("does not follow a symlink substituted after lstat", async () => {
     const root = await temporaryRoot();
-    const originalText = map(["A", "B", "C", "D", "E", "F"]);
-    const targetText = originalText.replace("2026-07-13", "2026-07-14");
+    const originalText = currentMap();
+    const targetText = originalText.replace("2026-07-16", "2026-07-17");
     const mapPath = await writeProjectMap(root, originalText);
     const movedPath = path.join(root, "checked-map.md");
     const targetPath = path.join(root, "replacement-map.md");
@@ -287,13 +312,13 @@ No body anchors.
 
   it("returns invalid parser state without rewriting invalid content", async () => {
     const root = await temporaryRoot();
-    const text = map(["A", "B", "C", "D", "E", "F"]).replace("map_status: confirmed", "map_status: draft");
+    const text = currentMap().replace("map_status: confirmed", "map_status: draft");
     const mapPath = await writeProjectMap(root, text);
 
     await expect(inspectProjectMapFile(root)).resolves.toMatchObject({
       kind: "invalid",
       mapPath,
-      recognizedVersion: 1,
+      recognizedVersion: 2,
       safelyReadText: text,
     });
     await expect(fs.readFile(mapPath, "utf8")).resolves.toBe(text);
@@ -301,10 +326,10 @@ No body anchors.
 
   it("returns unsupported parser state without rewriting future content", async () => {
     const root = await temporaryRoot();
-    const text = map(["A", "B", "C", "D", "E", "F"]).replace("navi_map: 1", "navi_map: 2");
+    const text = currentMap().replace("navi_map: 2", "navi_map: 3");
     const mapPath = await writeProjectMap(root, text);
 
-    await expect(inspectProjectMapFile(root)).resolves.toMatchObject({ kind: "unsupported", mapPath, version: 2 });
+    await expect(inspectProjectMapFile(root)).resolves.toMatchObject({ kind: "unsupported", mapPath, version: 3 });
     await expect(fs.readFile(mapPath, "utf8")).resolves.toBe(text);
   });
 });

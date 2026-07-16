@@ -24,7 +24,7 @@ const tempRoots = new Set<string>();
 
 function confirmedMap(suffix = ""): string {
   return `---
-navi_map: 1
+navi_map: 2
 map_status: confirmed
 project_status: active
 last_confirmed: 2026-07-14

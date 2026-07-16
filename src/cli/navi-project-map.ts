@@ -3,7 +3,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 export const NAVI_PROJECT_MAP_RELATIVE_PATH = ".navi/project-map.md";
-export const REQUIRED_PROJECT_MAP_ANCHORS = [
+export const LEGACY_PROJECT_MAP_VERSION = 1 as const;
+export const CURRENT_PROJECT_MAP_VERSION = 2 as const;
+
+export const LEGACY_PROJECT_MAP_ANCHORS = [
   "navi:desired-outcome",
   "navi:route-to-outcome",
   "navi:current-position",
@@ -12,26 +15,39 @@ export const REQUIRED_PROJECT_MAP_ANCHORS = [
   "navi:evidence-and-uncertainty",
 ] as const;
 
+export const REQUIRED_PROJECT_MAP_ANCHORS = [
+  "navi:desired-outcome",
+  "navi:outcome-boundary",
+  "navi:route-to-outcome",
+  "navi:current-position",
+  "navi:current-boundary",
+  "navi:next-decision",
+  "navi:evidence-and-uncertainty",
+] as const;
+
+export type ProjectMapContractVersion = 1 | 2;
+export type OutcomeBoundaryStatus = "legacy-missing" | "confirmed";
 export type ProjectLifecycleStatus = "active" | "paused" | "closed";
 
 export interface ProjectMapDocument {
-  version: 1;
+  version: ProjectMapContractVersion;
   mapStatus: "confirmed";
   projectStatus: ProjectLifecycleStatus;
   lastConfirmed: string;
+  outcomeBoundaryStatus: OutcomeBoundaryStatus;
   text: string;
 }
 
 export type ProjectMapParseResult =
   | { kind: "valid"; document: ProjectMapDocument }
   | { kind: "unsupported"; version: number; diagnostic: string }
-  | { kind: "invalid"; diagnostic: string; recognizedVersion?: 1 };
+  | { kind: "invalid"; diagnostic: string; recognizedVersion?: ProjectMapContractVersion };
 
 export type ProjectMapFileState =
   | { kind: "missing"; mapPath: string }
   | { kind: "valid"; mapPath: string; document: ProjectMapDocument }
   | { kind: "unsupported"; mapPath: string; version: number; diagnostic: string }
-  | { kind: "invalid"; mapPath: string; diagnostic: string; recognizedVersion: 1; safelyReadText: string }
+  | { kind: "invalid"; mapPath: string; diagnostic: string; recognizedVersion: ProjectMapContractVersion; safelyReadText: string }
   | { kind: "invalid"; mapPath: string; diagnostic: string; recognizedVersion?: undefined }
   | { kind: "unsafe"; mapPath: string; diagnostic: string };
 
@@ -42,11 +58,11 @@ const REQUIRED_FRONTMATTER_KEYS = [
   "last_confirmed",
 ] as const;
 
-function invalid(diagnostic: string, recognizedVersion?: 1): ProjectMapParseResult {
+function invalid(diagnostic: string, recognizedVersion?: ProjectMapContractVersion): ProjectMapParseResult {
   return {
     kind: "invalid",
     diagnostic,
-    ...(recognizedVersion === 1 ? { recognizedVersion } : {}),
+    ...(recognizedVersion !== undefined ? { recognizedVersion } : {}),
   };
 }
 
@@ -93,7 +109,7 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
   if (!Number.isSafeInteger(version)) {
     return invalid("Project Map navi_map must be a safe base-10 integer.");
   }
-  if (version !== 1) {
+  if (version !== LEGACY_PROJECT_MAP_VERSION && version !== CURRENT_PROJECT_MAP_VERSION) {
     return {
       kind: "unsupported",
       version,
@@ -102,30 +118,36 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
   }
 
   if (metadata.get("map_status") !== "confirmed") {
-    return invalid("Project Map map_status must be confirmed.", 1);
+    return invalid("Project Map map_status must be confirmed.", version);
   }
 
   const projectStatus = metadata.get("project_status")!;
   if (projectStatus !== "active" && projectStatus !== "paused" && projectStatus !== "closed") {
-    return invalid("Project Map project_status must be active, paused, or closed.", 1);
+    return invalid("Project Map project_status must be active, paused, or closed.", version);
   }
 
   const lastConfirmed = metadata.get("last_confirmed")!;
   if (!isCalendarDate(lastConfirmed)) {
-    return invalid("Project Map last_confirmed must be a valid YYYY-MM-DD calendar date.", 1);
+    return invalid("Project Map last_confirmed must be a valid YYYY-MM-DD calendar date.", version);
   }
 
   const body = lines.slice(delimiters[1] + 1).join("\n");
+  if (version === LEGACY_PROJECT_MAP_VERSION && body.includes("<!-- navi:outcome-boundary -->")) {
+    return invalid("Project Map version 1 must not contain the reserved anchor: navi:outcome-boundary", version);
+  }
+  const requiredAnchors = version === CURRENT_PROJECT_MAP_VERSION
+    ? REQUIRED_PROJECT_MAP_ANCHORS
+    : LEGACY_PROJECT_MAP_ANCHORS;
   let previousAnchorIndex = -1;
-  for (const anchor of REQUIRED_PROJECT_MAP_ANCHORS) {
+  for (const anchor of requiredAnchors) {
     const marker = `<!-- ${anchor} -->`;
     const firstIndex = body.indexOf(marker);
-    if (firstIndex < 0) return invalid(`Project Map is missing required anchor: ${anchor}`, 1);
+    if (firstIndex < 0) return invalid(`Project Map is missing required anchor: ${anchor}`, version);
     if (body.indexOf(marker, firstIndex + marker.length) >= 0) {
-      return invalid(`Project Map contains duplicate required anchor: ${anchor}`, 1);
+      return invalid(`Project Map contains duplicate required anchor: ${anchor}`, version);
     }
     if (firstIndex < previousAnchorIndex) {
-      return invalid(`Project Map required anchor is out of order: ${anchor}`, 1);
+      return invalid(`Project Map required anchor is out of order: ${anchor}`, version);
     }
     previousAnchorIndex = firstIndex;
   }
@@ -133,10 +155,11 @@ export function parseProjectMapDocument(text: string): ProjectMapParseResult {
   return {
     kind: "valid",
     document: {
-      version: 1,
+      version,
       mapStatus: "confirmed",
       projectStatus,
       lastConfirmed,
+      outcomeBoundaryStatus: version === CURRENT_PROJECT_MAP_VERSION ? "confirmed" : "legacy-missing",
       text,
     },
   };
@@ -215,8 +238,8 @@ export async function inspectProjectMapFile(projectDir: string): Promise<Project
       diagnostic: result.diagnostic,
     };
   }
-  return result.recognizedVersion === 1
-    ? { kind: "invalid", mapPath, diagnostic: result.diagnostic, recognizedVersion: 1, safelyReadText: text }
+  return result.recognizedVersion !== undefined
+    ? { kind: "invalid", mapPath, diagnostic: result.diagnostic, recognizedVersion: result.recognizedVersion, safelyReadText: text }
     : { kind: "invalid", mapPath, diagnostic: result.diagnostic };
 }
 

@@ -15,6 +15,7 @@ import {
   renderAgentsBlock,
 } from "../../src/cli/navi-project-trigger";
 import {
+  LEGACY_PROJECT_MAP_ANCHORS,
   NAVI_PROJECT_MAP_RELATIVE_PATH,
   REQUIRED_PROJECT_MAP_ANCHORS,
 } from "../../src/cli/navi-project-map";
@@ -23,7 +24,7 @@ const tempRoots = new Set<string>();
 
 function confirmedMap(suffix = ""): string {
   return `---
-navi_map: 1
+navi_map: 2
 map_status: confirmed
 project_status: active
 last_confirmed: 2026-07-14
@@ -31,6 +32,21 @@ last_confirmed: 2026-07-14
 # Navi Project Map
 
 ${REQUIRED_PROJECT_MAP_ANCHORS.map((anchor, index) =>
+  `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}${suffix}.`,
+).join("\n\n")}
+`;
+}
+
+function legacyMap(suffix = ""): string {
+  return `---
+navi_map: 1
+map_status: confirmed
+project_status: active
+last_confirmed: 2026-07-14
+---
+# Navi Project Map
+
+${LEGACY_PROJECT_MAP_ANCHORS.map((anchor, index) =>
   `<!-- ${anchor} -->\n## Section ${index + 1}\n\nConfirmed value ${index + 1}${suffix}.`,
 ).join("\n\n")}
 `;
@@ -269,7 +285,7 @@ describe("navi init confirmed Map planning", () => {
 
   it("plans an exact guarded repair for a recognized-version-1 invalid Map", async () => {
     const project = await createProject();
-    const invalid = confirmedMap().replace("map_status: confirmed", "map_status: draft");
+    const invalid = legacyMap().replace("map_status: confirmed", "map_status: draft");
     await writeCanonicalMap(project, invalid);
     const candidateText = confirmedMap();
     const candidate = await writeCandidate(project, candidateText);
@@ -288,7 +304,7 @@ describe("navi init confirmed Map planning", () => {
 
   it("refuses repair when .navi changes after safe invalid-Map inspection without reading external bytes", async () => {
     const project = await createProject();
-    const invalid = confirmedMap().replace("map_status: confirmed", "map_status: draft");
+    const invalid = legacyMap().replace("map_status: confirmed", "map_status: draft");
     const mapPath = await writeCanonicalMap(project, invalid);
     const candidate = await writeCandidate(project);
     const mapDirectory = path.dirname(mapPath);
@@ -332,7 +348,7 @@ describe("navi init confirmed Map planning", () => {
 
   it.each([
     ["unknown", "not a recognized Map\n"],
-    ["unsupported", confirmedMap().replace("navi_map: 1", "navi_map: 2")],
+    ["unsupported", confirmedMap().replace("navi_map: 2", "navi_map: 3")],
   ])("blocks and preserves an %s existing Map", async (_name, existing) => {
     const project = await createProject();
     await writeCanonicalMap(project, existing);
