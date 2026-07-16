@@ -1,9 +1,68 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-16 - Source-Alpha CLI Invocation Real-Environment Closeout
+
+Target project: Navi
+Mode: calibration
+Loaded Navi: integrated `main@0fc2d23`
+
+Scope:
+
+- reproduce the active Codex process's missing bare-command reachability;
+- verify the existing linked absolute entrypoint without changing global state;
+- run one read-only doctor command through that entrypoint; and
+- stop after the rendered fallback and next action are shown executable.
+
+No PATH, shell profile, plugin, global bootstrap, target-project file, release
+state, or dependency was changed. Setup and init were not executed.
+
+Observed environment:
+
+- `command -v navi` exited `1`, confirming that bare `navi` was unavailable in
+  the PATH inherited by the Codex process;
+- `/Users/james/.hermes/node/bin/navi` was a symlink to the current repository
+  wrapper;
+- its resolved target was
+  `/Users/james/Codex Project/General Codex Project/Navi/src/cli/navi-bin.mjs`;
+  and
+- the resolved target was a regular executable file.
+
+Observed doctor behavior:
+
+```text
+Migration stage: current-active
+[warn] cli: Bare `navi` is not reachable from the PATH inherited by Codex; a verified fallback will be used.
+Using verified fallback: /Users/james/.hermes/node/bin/navi
+```
+
+The absolute doctor invocation exited `0`. Plugin, manifest, global-bootstrap,
+and transaction checks passed. Doctor kept the missing project Map/trigger as a
+warning and rendered the next init preview through the same verified absolute
+entrypoint instead of returning to a speculative bare command.
+
+Calibration judgment:
+
+The source-alpha CLI invocation gate is satisfied for the real environment that
+exposed the defect. Navi now distinguishes source existence from command
+reachability, preserves the valid absolute fallback, and renders one executable
+next action without managing PATH. Running setup or init would not add evidence
+for this decision and would cross from read-only calibration into state change.
+
+Residual risk and follow-up:
+
+- Executable evidence is point-in-time and retains normal TOCTOU risk.
+- npm fallback proves regular-file plus execute permission, not npm provenance.
+- The renderer intentionally supports the documented POSIX shell surface only.
+- Independent validation accepted two Minor debt items: branch-specific
+  launched-entrypoint directory rejection lacks its own direct negative test,
+  and the active plan describes embedded empty PATH components imprecisely.
+- Do not reopen this implementation lane for those Minors. The next product
+  gate is the approved Codex-first Supervised Delivery Loop V1 implementation.
 
 ## 2026-07-15 - Post-Stabilization Source Migration And Real-Project Closeout
 
@@ -134,6 +193,52 @@ Residual risk: the two samples cover one clean uninitialized project and one
 dirty legacy project only. Real project initialization remained intentionally
 unexercised, and public distribution/PATH behavior remains unfinished product
 work.
+
+## 2026-07-15 - Unselected Parallel Work Was Reported Without A Recommendation
+
+Target project: Navi main supervising the source-alpha CLI invocation worktree
+Mode: implementation / coordination supervision
+
+Prompt shape:
+
+After the user authorized project-local `npm ci`, the Main Thread delivered the
+decision directly to the Execution Thread. It then said that no non-conflicting
+design topic had been selected and that the user could either name one or wait
+for the next Lane Handoff event. The user asked why no topic had been selected
+and requested an overall progress and next-step explanation.
+
+Observed behavior:
+
+The narrow fact was correct: no separate Main Thread design topic had received
+explicit selection before the CLI worktree started. The response also correctly
+avoided inventing filler work or polling the lane. However, Navi already had
+enough roadmap, product-debt, and calibration evidence to identify concrete
+independent candidates. The response named neither those candidates nor the
+highest-priority recommendation, so the user again had to perform the portfolio
+scan and ask what should happen next.
+
+Calibration judgment:
+
+This is a repeated execution failure of the existing Priority Gate,
+Coordination, and decision-handoff rules. It does not justify another
+supervision concept. Saying "nothing has been selected" is status evidence, not
+useful supervision, when Navi can already compare known non-conflicting work.
+The Main Thread should preserve the user's decision authority while still doing
+the expert work of identifying plausible choices and recommending one.
+
+Product follow-up:
+
+- After a lane resumes, inspect active roadmap, debt, and calibration evidence
+  for non-conflicting candidates instead of stopping at "none selected."
+- Exclude candidates that edit the lane's files, alter its premise or acceptance
+  criteria, depend on its unobserved result, or have lower priority than a
+  deliberate wait.
+- When useful candidates remain, name the smallest relevant set and recommend
+  the highest-priority one with its purpose and boundary.
+- When no candidate survives that check, state why waiting is the deliberate
+  recommendation; do not invent filler work.
+- Keep this behavior lightweight. A candidate recommendation should appear only
+  when it improves user control, not as a mandatory menu after every handoff.
 
 ## 2026-07-15 - Independent Validation Was Treated As A Main-Thread Wait
 
