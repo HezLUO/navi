@@ -257,6 +257,17 @@ Recommended fix:
 - Consider adding a concise pause explanation to Navi output when Codex stops at a decision gate.
 - Consider adding bounded continuation contracts to `navi init` guidance only after calibration shows the wording reduces friction without weakening user control.
 
+### 9. Task Model Routing Calibration Debt
+
+Status: open, intentionally deferred from the bounded foundation
+Priority: medium before broader model-routing claims
+
+The host model catalog remains dynamic and requires natural calibration. Current preferred model mappings are routing preferences rather than permanent host truth, so actual route application, supported reasoning combinations, entitlements, modalities, and cross-surface behavior still need bounded observation in real Codex tasks.
+
+The Main Turn Host Adapter remains a separate milestone. Its turn-boundary behavior must be designed and calibrated independently; the current Task Routing Foundation does not switch active turns or complete three-role routing.
+
+This debt is not a current implementation failure or release blocker. Shadow calibration, task-level live calibration, and later main-turn calibration should remain distinct, and runtime primitives should be reconsidered only if the thin adapter proves insufficient.
+
 ## Suggested Order
 
 1. Make public naming Navi-first while preserving legacy ids.

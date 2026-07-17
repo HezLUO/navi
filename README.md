@@ -170,6 +170,12 @@ Current main includes an unreleased, prompt/docs-backed Supervised Delivery Loop
 
 The loop uses Codex host task creation and task-to-task messaging during the active session while the source task is active. It is not a scheduler, not a durable queue, not a watcher, and not a background service, and it does not automatically merge, push, tag, or release. Permission, scope, architecture, known-risk, integration, and publication decisions remain explicit.
 
+### Task model routing on current main
+
+Current main contains an unreleased, prompt/docs-backed Task Routing Foundation for Supervised Delivery work with an explicit user-authorized routing policy. It can resolve and apply model plus reasoning choices when Codex creates bounded Execution and Validation Tasks. Validation derives its route independently from Validation Level rather than inheriting the executor's route.
+
+This is not complete three-role automatic routing. The Main Turn Host Adapter is not implemented, active turns cannot switch models, Navi does not control Fast mode, and it does not provide a runtime scheduler, database, queue, daemon, or background service. Real host behavior still requires post-integration natural calibration.
+
 ## What Navi Does
 
 Navi Progress Maps are for questions like:

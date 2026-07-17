@@ -569,4 +569,29 @@ describe("Navi capability truthfulness", () => {
     expect(reference).toContain("the Navi skill may be installed and readable");
     expect(reference).not.toContain("the Along Working Thread skill may be installed and readable");
   });
+
+  it("describes task model routing without claiming complete main-thread automation", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme]) {
+      expect(surface).toMatch(
+        /unreleased[\s\S]*Task Routing Foundation[\s\S]*Execution[\s\S]*Validation/i,
+      );
+      expect(surface).toMatch(/explicit user-authorized[\s\S]*model[\s\S]*reasoning/i);
+      expect(surface).toMatch(/Main Turn Host Adapter[\s\S]*not implemented/i);
+      expect(surface).toMatch(
+        /does not control Fast mode[\s\S]*does not provide a runtime scheduler/i,
+      );
+    }
+
+    expect(chineseReadme).toMatch(
+      /尚未发布[\s\S]*Task Routing Foundation[\s\S]*Execution[\s\S]*Validation/i,
+    );
+    expect(chineseReadme).toMatch(/用户明确授权[\s\S]*模型[\s\S]*reasoning/i);
+    expect(chineseReadme).toMatch(/Main Turn Host Adapter[\s\S]*尚未实现/i);
+  });
 });

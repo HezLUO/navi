@@ -90,7 +90,9 @@ describe("Current Navi repository surface", () => {
     );
     expect(roadmap).toMatch(/Outcome Boundary[\s\S]*real-project calibration/i);
     expect(readme).toMatch(/current main[\s\S]*unreleased/i);
-    expect(readme).not.toMatch(/runtime scheduler|background service is included/i);
+    expect(readme).not.toMatch(
+      /runtime scheduler is included|background service is included/i,
+    );
   });
 
   it("requires both current boundary and next decision in current entry docs", async () => {
@@ -231,5 +233,25 @@ describe("Current Navi repository surface", () => {
         /(?:from\s+|import\()["'][^"']*(?:archive\/along|src\/(?:core|mcp|server|web))/
       );
     }
+  });
+
+  it("indexes task model routing while keeping the main adapter as a separate gate", async () => {
+    const [history, roadmap, debt] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+    ]);
+    const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+
+    expect(active).toContain(
+      "`docs/superpowers/specs/2026-07-18-navi-codex-model-reasoning-routing-design.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-18-navi-task-model-routing-foundation.md`",
+    );
+    expect(roadmap).toMatch(/Task Routing Foundation[\s\S]*Main Turn Host Adapter/i);
+    expect(roadmap).toMatch(/Task-level[\s\S]*does not complete[\s\S]*three-role/i);
+    expect(debt).toMatch(/host model catalog[\s\S]*natural calibration/i);
+    expect(debt).toMatch(/Main Turn Host Adapter[\s\S]*separate/i);
   });
 });

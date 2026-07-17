@@ -82,6 +82,14 @@ Goal: carry the unreleased Distribution feasibility candidate through independen
 - P2: Define version policy after `0.1.0-alpha`: alpha patches for documentation/packaging fixes, minor version bumps only for meaningful capability changes.
 - P2: Decide whether future release notes should separate product behavior, package shape, and validation evidence.
 
+## Codex Model And Reasoning Routing
+
+Task Routing Foundation is the first bounded milestone for user-authorized Codex model and reasoning selection in Execution and Validation Tasks. Task-level completion does not complete three-role automatic routing.
+
+The Main Turn Host Adapter is the next separate milestone and must apply a route only at a future turn boundary while preserving the same Main Thread. Shadow calibration, task-level natural calibration, and main-turn natural calibration remain separate gates; static contract tests do not replace them.
+
+Runtime Surface should be reconsidered only if natural calibration shows that the thin Host Adapter cannot reliably preserve turn-boundary routing, task recovery, or concurrent-lane correctness.
+
 ## Future Capability Layers
 
 Goal: keep larger product layers visible without letting them slip into the alpha maintenance scope.

@@ -8,6 +8,8 @@ Supervised Delivery Loop V1 is integrated, and adaptive project entry is integra
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-18-navi-codex-model-reasoning-routing-design.md`
+- `docs/superpowers/plans/2026-07-18-navi-task-model-routing-foundation.md`
 - `docs/superpowers/specs/2026-07-17-navi-distribution-ready-design.md`
 - `docs/superpowers/plans/2026-07-17-navi-distribution-feasibility.md`
 - `docs/superpowers/specs/2026-07-16-navi-outcome-boundary-design.md`
