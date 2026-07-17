@@ -2,9 +2,10 @@
 
 ## Status
 
-Approved calibration-method design. This document defines how a future bounded
-Navi installation calibration distinguishes harmless Codex-managed config
-updates from unexplained or product-relevant global state changes.
+Approved calibration-method design, amended after the first bounded diagnostic
+stopped at Git-identity verification. This document defines how a future
+bounded Navi installation calibration distinguishes harmless Codex-managed
+config updates from unexplained or product-relevant global state changes.
 
 This design does not authorize a diagnostic run, global Codex state mutation,
 plugin or marketplace switching, target-project access, implementation,
@@ -29,6 +30,19 @@ state, an unexplained host side effect, or a security/product-impacting change.
 
 The prior rule treated every byte change as failure. That is safe but too
 coarse: it can misclassify normal host persistence as a Navi product defect.
+
+The first diagnostic attempt added two method findings without running its
+minimum Codex session:
+
+- official plugin JSON represents a Git-backed marketplace in two layers:
+  `marketplaceSource` retains the Git origin while plugin `source` is the local
+  resolved checkout path; and
+- the two official marketplace `add` transactions changed only
+  `marketplaces.navi-source.last_updated` after all substantive local source,
+  ref, plugin identity, and enabled-state fields were restored.
+
+The attempt is `INCOMPLETE`, not failed product evidence. Its verifier confused
+the two source layers and stopped before snapshot `C`.
 
 ## Product And Calibration Judgment
 
@@ -77,6 +91,54 @@ Each comparison answers a different question:
 The session-drift verdict must never compare `A` directly with `C`, because the
 approved marketplace/plugin switch may legitimately change config state.
 
+## Marketplace Identity Model
+
+Git marketplace identity is not represented by one field:
+
+- marketplace `marketplaceSource.sourceType = git` and its source URL identify
+  the configured origin;
+- the marketplace `root` identifies Codex's resolved local checkout;
+- `git -C <root> rev-parse HEAD` proves the immutable checkout snapshot;
+- plugin `marketplaceName` and plugin `marketplaceSource` associate the plugin
+  with that Git marketplace; and
+- plugin `source.source = local` is expected when its path resolves to the
+  plugin directory inside the verified marketplace checkout.
+
+A verifier must evaluate these facts together. It must not reject a Git-backed
+plugin merely because the resolved plugin source is local, and it must not
+infer Git identity from a local path without checking the marketplace origin
+and checkout HEAD.
+
+## Managed Marketplace Metadata
+
+The first diagnostic independently observed this no-session sequence:
+
+```text
+A -> B: source_type, source, ref, and last_updated changed
+B -> D: source_type, source, ref, and last_updated changed
+A -> D: only last_updated changed
+```
+
+All three `last_updated` values were parseable timestamps in strictly
+increasing order. Because no Codex session ran and each transition was caused
+by an official marketplace `add`, the single A/D timestamp difference is an
+independently verified Codex-managed transaction observation.
+
+This is a narrow exception, not a general ignore list. A/D may classify only
+`marketplaces.navi-source.last_updated` as `expected-managed-change` when:
+
+- official restoration commands completed;
+- original marketplace and plugin structure is restored exactly;
+- the A/D semantic diff contains no other path;
+- both values are parseable timestamps and `D` is later than `A`; and
+- source type, source, ref, plugin identity, version, enabled state, and local
+  path all match the original state.
+
+The raw A/D hash inequality remains visible as a harness observation. Any
+`last_updated` change in B/C remains subject to ordinary session-drift
+classification because the marketplace transaction has already completed at
+snapshot B.
+
 ## Evidence Safety
 
 Raw snapshots may contain private paths, user preferences, credentials, MCP
@@ -112,6 +174,10 @@ product control surface.
 
 This classification requires evidence. A field is not expected merely because
 Codex wrote it.
+
+The exact A/D-only `marketplaces.navi-source.last_updated` case defined under
+Managed Marketplace Metadata satisfies this evidence requirement. No other
+marketplace path inherits that classification.
 
 ### `unexplained-change`
 
@@ -157,6 +223,10 @@ result is `INCONCLUSIVE`, not a proven Navi or Codex defect.
 Target-project writes remain a separate strict boundary. Any unapproved target
 write fails the calibration regardless of config classification.
 
+For restoration specifically, semantic `no-change` or the one qualified
+A/D-only `last_updated` expected-managed change counts as restoration PASS.
+Every other A/D difference keeps restoration incomplete.
+
 ## Minimum Diagnostic Experiment
 
 Do not repeat the complete installation and onboarding journey merely to
@@ -167,13 +237,15 @@ Use one separate stateful Calibration Task with one bounded primary experiment:
 1. prove the current local Navi state and official-command restoration path;
 2. create the private evidence root and capture `A`;
 3. perform one explicitly authorized immutable Git-backed Navi switch;
-4. capture `B`;
+4. capture `B` and verify marketplace Git origin, resolved checkout HEAD,
+   plugin association, and plugin path inside that checkout as separate facts;
 5. run one minimum read-only Codex session that performs no `navi init`, does
    not inspect a real target project, and writes no project file;
 6. capture `C`;
-7. generate the redacted semantic `B -> C` diff and classify it;
-8. restore the original local Navi state immediately;
-9. capture `D` and verify `A -> D`; and
+7. restore the original local Navi state immediately;
+8. capture `D` and verify official structural restoration;
+9. generate the redacted semantic `B -> C` and `A -> D` diffs and classify
+   them offline; and
 10. deliver one structured result directly to the Main Task.
 
 The primary experiment runs once. It does not automatically start a local
@@ -190,6 +262,8 @@ user's preference against validation loops.
 - Global mutation uses only official Codex plugin and marketplace commands.
 - Direct edits to `config.toml` or the managed plugin cache are forbidden.
 - Restoration outranks additional diagnosis after any mutation.
+- A failed B verifier must restore immediately, but it must evaluate the
+  Marketplace Identity Model before declaring Git identity invalid.
 - The Navi repository, original target projects, `docs/navi/calibration-log.md`,
   and `work/` remain unchanged.
 - No repository test, full product journey, release check, tag, or publication
@@ -222,6 +296,8 @@ The diagnostic design is satisfied when one bounded experiment returns:
 
 - exact `A`, `B`, `C`, and `D` hashes;
 - restoration confirmation;
+- exact B marketplace origin, checkout HEAD, plugin association, and resolved
+  local plugin path confirmation;
 - a safe redacted list of changed key paths or `no-change`;
 - one classification from this design;
 - explicit separation of Navi product evidence from harness evidence;

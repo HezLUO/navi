@@ -56,15 +56,16 @@ Codex task messaging.
   segment only, never its value.
 - Automatic classification is conservative: no change becomes `no-change`;
   changed security/product-control paths become `security-or-product-impact`;
-  every other changed path becomes `unexplained-change`. The operator must not
-  invent `expected-managed-change`; that requires later documented or
-  independently verified evidence and a Main Task judgment.
+  every other changed path becomes `unexplained-change`. The only automatic
+  post-comparison override is the design's independently verified A/D-only
+  `marketplaces.navi-source.last_updated` transaction case. The operator must
+  not assign `expected-managed-change` to another path or to B/C.
 - Missing snapshots, parse failure, unsafe output, or unavailable `tomllib`
   produces `evidence-insufficient` after restoration.
 - Restoration is complete only when official plugin/marketplace structure
-  matches preflight and the `A -> D` semantic config diff is empty. Byte
-  inequality with semantic equality is a formatting observation, not an
-  automatic product failure.
+  matches preflight and the `A -> D` semantic config diff is empty or contains
+  only the qualified managed `last_updated` case. Byte inequality remains a
+  visible harness observation, not an automatic product failure.
 - Do not start a local-plugin control, retry the session, or run a second
   reproduction automatically. The Main Task decides whether another control
   is worth its cost.
@@ -108,6 +109,7 @@ No repository file is modified by the Calibration Operator.
     config-A.sha256
     marketplaces-B.json
     plugins-B.json
+    marketplace-B-head.txt
     config-B.toml
     config-B.sha256
     switch-stdout.txt
@@ -126,6 +128,7 @@ No repository file is modified by the Calibration Operator.
     config-D.sha256
     diff-B-C.redacted.json
     diff-A-D.redacted.json
+    managed-A-D-check.txt
   session-root/
   restore-navi-source.sh
 ```
@@ -300,6 +303,8 @@ Task. It must include:
 - verified local marketplace/plugin structure;
 - restore script path and hash;
 - the four switch commands in Task 3;
+- the B verifier's separate Git-origin, checkout-HEAD, plugin-association, and
+  resolved-local-path checks;
 - the one minimum session command shape;
 - the immediate restore-before-analysis rule; and
 - one decision requesting the complete switch/session/restore contract.
@@ -368,7 +373,92 @@ chmod 600 "$EVIDENCE"/*
 Verify from official JSON that exactly one `navi-source` marketplace resolves
 from `https://github.com/HezLUO/navi.git`, its checkout HEAD equals the exact
 candidate, and exactly one enabled `navi@navi-source` v0.1.0 resolves from that
-marketplace. Do not infer identity solely from cache contents.
+marketplace. The plugin's resolved `source.source = local` is expected; its
+path must equal `plugins/navi` inside the verified Git checkout.
+
+Run this exact verifier:
+
+```bash
+VERIFY_EXIT=0
+node --input-type=module - \
+  "$EVIDENCE/marketplaces-B.json" \
+  "$EVIDENCE/plugins-B.json" \
+  "$EVIDENCE/marketplace-B-head.txt" \
+  '358b6b4c9fd95fcfe169a8647238859e363e8fa3' <<'NODE' || VERIFY_EXIT=$?
+import childProcess from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
+const [marketFile, pluginFile, headFile, candidate] = process.argv.slice(2);
+const markets = JSON.parse(fs.readFileSync(marketFile, "utf8")).marketplaces;
+const plugins = JSON.parse(fs.readFileSync(pluginFile, "utf8")).installed;
+const selectedMarkets = markets.filter((entry) => entry.name === "navi-source");
+const selectedPlugins = plugins.filter((entry) => entry.pluginId === "navi@navi-source");
+
+if (selectedMarkets.length !== 1 || selectedPlugins.length !== 1) {
+  throw new Error("expected exactly one Git marketplace and installed Navi plugin");
+}
+
+const market = selectedMarkets[0];
+const plugin = selectedPlugins[0];
+if (
+  market.marketplaceSource?.sourceType !== "git" ||
+  market.marketplaceSource.source !== "https://github.com/HezLUO/navi.git" ||
+  typeof market.root !== "string" ||
+  !path.isAbsolute(market.root)
+) {
+  throw new Error("marketplace Git origin is not the expected candidate source");
+}
+
+const root = fs.realpathSync(market.root);
+if (!fs.statSync(root).isDirectory()) {
+  throw new Error("resolved marketplace root is not a directory");
+}
+
+const expectedPluginPath = fs.realpathSync(path.join(root, "plugins/navi"));
+const actualPluginPath = fs.realpathSync(plugin.source?.path ?? "");
+if (
+  plugin.marketplaceName !== "navi-source" ||
+  plugin.installed !== true ||
+  plugin.enabled !== true ||
+  plugin.version !== "0.1.0" ||
+  plugin.marketplaceSource?.sourceType !== "git" ||
+  plugin.marketplaceSource.source !== "https://github.com/HezLUO/navi.git" ||
+  plugin.source?.source !== "local" ||
+  actualPluginPath !== expectedPluginPath
+) {
+  throw new Error("plugin is not the expected resolved member of the Git marketplace");
+}
+
+const head = childProcess.execFileSync(
+  "git",
+  ["-C", root, "rev-parse", "HEAD"],
+  {encoding: "utf8"},
+).trim();
+if (head !== candidate) {
+  throw new Error("marketplace checkout HEAD does not match the immutable candidate");
+}
+
+fs.writeFileSync(headFile, `${head}\n`, {mode: 0o600});
+NODE
+chmod 600 "$EVIDENCE/marketplace-B-head.txt" 2>/dev/null || true
+
+if (( VERIFY_EXIT != 0 )); then
+  "$CAL_ROOT/restore-navi-source.sh" \
+    > "$EVIDENCE/restore-stdout.txt" \
+    2> "$EVIDENCE/restore-stderr.txt"
+  codex plugin marketplace list --json > "$EVIDENCE/marketplaces-D.json"
+  codex plugin list --json > "$EVIDENCE/plugins-D.json"
+  install -m 600 "$CONFIG" "$EVIDENCE/config-D.toml"
+  shasum -a 256 "$EVIDENCE/config-D.toml" > "$EVIDENCE/config-D.sha256"
+  chmod 600 "$EVIDENCE"/*
+  exit "$VERIFY_EXIT"
+fi
+```
+
+Do not infer Git identity solely from `plugin.source`, cache contents, or a
+local path. If verification fails, restore and capture `D` before stopping;
+do not run the minimum session.
 
 - [ ] **Step 3: Run the single minimum no-tool session**
 
@@ -585,12 +675,65 @@ report until this audit passes.
 
 - [ ] **Step 3: Classify restoration and session drift**
 
+First evaluate the one allowed managed-metadata shape without printing either
+timestamp value:
+
+```bash
+python3 - \
+  "$EVIDENCE/config-A.toml" \
+  "$EVIDENCE/config-D.toml" \
+  "$EVIDENCE/diff-A-D.redacted.json" \
+  "$EVIDENCE/managed-A-D-check.txt" <<'PY'
+import datetime as dt
+import json
+import sys
+import tomllib
+from pathlib import Path
+
+a_path, d_path, diff_path, output_path = map(Path, sys.argv[1:5])
+with a_path.open("rb") as handle:
+    config_a = tomllib.load(handle)
+with d_path.open("rb") as handle:
+    config_d = tomllib.load(handle)
+report = json.loads(diff_path.read_text(encoding="utf-8"))
+
+def timestamp(config):
+    value = config["marketplaces"]["navi-source"]["last_updated"]
+    if not isinstance(value, str):
+        raise TypeError("last_updated must be a string")
+    return dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+expected_change = [{
+    "afterType": "string",
+    "beforeType": "string",
+    "impact": "security-or-product-impact",
+    "kind": "modified",
+    "path": "marketplaces.navi-source.last_updated",
+}]
+qualified = report.get("changes") == expected_change and timestamp(config_d) > timestamp(config_a)
+output_path.write_text(
+    f"managed_last_updated_qualified={'yes' if qualified else 'no'}\n",
+    encoding="utf-8",
+)
+output_path.chmod(0o600)
+PY
+```
+
+This check does not independently declare restoration PASS. The operator must
+also confirm restore exit 0 and exact A/D official marketplace/plugin
+structure before applying the exception.
+
 Use these exact rules:
 
 - `A/D` structural state fails: `security-or-product-impact`, restoration
   failure, stop.
-- `A/D` semantic classification is not `no-change`: restoration incomplete,
-  report its highest impact; do not accept the session result.
+- `A/D` semantic `no-change`: restoration PASS.
+- `A/D` contains exactly one modified string path named
+  `marketplaces.navi-source.last_updated`, both values are parseable timestamps
+  with `D > A`, official restore exited 0, and structural restoration matches
+  A: classify that path as `expected-managed-change` and restoration PASS.
+- Any other `A/D` semantic difference: restoration incomplete, report its
+  highest impact; do not accept the session result.
 - `A/D` semantic equality with different hashes: restoration PASS with one
   formatting-only observation.
 - `B/C` `no-change`: config-stability PASS.
@@ -600,7 +743,7 @@ Use these exact rules:
   another control requires a new Main Task decision.
 - Missing/unsafe/unparseable evidence: `evidence-insufficient`.
 
-Never automatically assign `expected-managed-change`.
+Never assign `expected-managed-change` outside the exact qualified A/D case.
 
 - [ ] **Step 4: Send one direct decision event with the diagnostic result**
 
