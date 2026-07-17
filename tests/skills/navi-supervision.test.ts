@@ -433,6 +433,43 @@ describe("Navi supervision contracts", () => {
     );
   });
 
+  it("waits for direct lane events without polling task chat", async () => {
+    const [reference, packagedReference] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+      readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
+    ]);
+    const awaiting = extractMarkdownSection(
+      reference,
+      "## Awaiting Direct Event",
+    );
+
+    expect(awaiting).toMatch(
+      /successful direct task-message delivery[\s\S]*Awaiting Direct Event/i,
+    );
+    expect(awaiting).toMatch(/workflow state[\s\S]*not a\s+Work Mode/i);
+    for (const forbidden of [
+      "read_thread",
+      "list_threads",
+      "wait_agent",
+      "timer",
+      "polling loop",
+    ]) {
+      expect(awaiting).toContain(forbidden);
+    }
+    expect(awaiting).toMatch(/continue[\s\S]*non-conflicting/i);
+    expect(awaiting).toMatch(
+      /no useful non-conflicting work[\s\S]*end the current turn[\s\S]*direct inbound event/i,
+    );
+    expect(awaiting).toMatch(
+      /user explicitly requests[\s\S]*delivery failure[\s\S]*safety deadline/i,
+    );
+    expect(awaiting).toMatch(/one bounded inspection[\s\S]*not a loop/i);
+    expect(awaiting).toMatch(
+      /inbound event[\s\S]*inspection result[\s\S]*delivery failure[\s\S]*exits/i,
+    );
+    expect(packagedReference).toBe(reference);
+  });
+
   it("requires a V1 wire-format conformance check before Lane Handoff delivery", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/lane-handoff-v1.md",

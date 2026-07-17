@@ -88,6 +88,30 @@ If source-task metadata or task messaging is unavailable, or both attempts fail,
 
 Delivery is coordination evidence, not authorization. It does not authorize resume, recovery, scope expansion, acceptance-criteria reduction, risk acceptance, merge, push, tag, release, or publication.
 
+## Awaiting Direct Event
+
+After successful direct task-message delivery to a live Codex task, the sender
+enters `Awaiting Direct Event` for that lane. This is a workflow state, not a
+Work Mode, Product Stage, scheduler, watcher, notification service, queue, or
+Runtime Surface.
+
+While this state is active, do not call `read_thread`, `list_threads`,
+`wait_agent`, schedule a timer, or build a polling loop merely to observe
+ordinary progress. Continue useful non-conflicting design or supervision. If
+no useful non-conflicting work remains, end the current turn and wait for the
+direct inbound event.
+
+One bounded inspection is allowed only when the user explicitly requests task
+status, the host reports task-message delivery failure or messaging is
+unavailable, or the approved contract declares a concrete safety deadline for
+temporary external or global state. An allowed inspection is one-shot evidence,
+not a loop, recurring timer, or substitute for direct delivery.
+
+An inbound event, an allowed inspection result, or a reported delivery failure
+exits `Awaiting Direct Event` and returns the lane to ordinary Source Main Task
+routing. Silence is not new evidence, user approval, a blocker, or permission
+to expand scope.
+
 ## Source Main Task
 
 The source main task tracks handled event IDs in its task context and must silently ignore duplicate receipt. Receiving an event does not make the whole session blocked and does not force a mid-response interruption.
