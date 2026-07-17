@@ -186,16 +186,25 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(reference).toMatch(/planned tests[\s\S]*Execution Thread[\s\S]*Release mode/i);
   });
 
-  it("routes successful delivery into the shared no-poll waiting state", async () => {
-    const [skill, delivery, packagedSkill, packagedDelivery] = await Promise.all([
-      readRepoText(".agents/skills/navi/SKILL.md"),
-      readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
-      readRepoText("plugins/navi/skills/navi/SKILL.md"),
-      readRepoText(
-        "plugins/navi/skills/navi/references/supervised-delivery-v1.md",
-      ),
-    ]);
+  it("uses the shared one-shot reconciliation owner after direct delivery", async () => {
+    const [skill, delivery, laneHandoff, packagedSkill, packagedDelivery] =
+      await Promise.all([
+        readRepoText(".agents/skills/navi/SKILL.md"),
+        readRepoText(
+          ".agents/skills/navi/references/supervised-delivery-v1.md",
+        ),
+        readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+        readRepoText("plugins/navi/skills/navi/SKILL.md"),
+        readRepoText(
+          "plugins/navi/skills/navi/references/supervised-delivery-v1.md",
+        ),
+      ]);
     const lifecycle = extractSection(delivery, "## Lifecycle And Identity");
+    const failure = extractSection(delivery, "## Failure Handling");
+    const reconciliation = extractSection(
+      laneHandoff,
+      "## Main-Task Reconciliation",
+    );
 
     expect(skill).toMatch(
       /successful direct task-message delivery[\s\S]*Awaiting Direct Event/i,
@@ -204,8 +213,23 @@ describe("Navi Supervised Delivery Loop V1", () => {
       /Execution Thread[\s\S]*Validation Thread[\s\S]*Awaiting Direct Event/i,
     );
     expect(lifecycle).toMatch(
-      /lane-handoff-v1\.md[\s\S]*do not poll[\s\S]*inbound event/i,
+      /dependent control checkpoint[\s\S]*Main-Task Reconciliation[\s\S]*lane-handoff-v1\.md/i,
     );
+    expect(lifecycle).toMatch(/ordinary progress[\s\S]*must not trigger/i);
+    expect(failure).toMatch(
+      /completed task[\s\S]*valid event[\s\S]*delivery-protocol-failure[\s\S]*not authorization/i,
+    );
+
+    for (const detailedOwnerTerm of [
+      "last_reconciliation_reason",
+      "create, replace, cancel, or redirect",
+      "only useful remaining action is waiting",
+      "one bounded re-delivery",
+    ]) {
+      expect(reconciliation).toContain(detailedOwnerTerm);
+      expect(delivery).not.toContain(detailedOwnerTerm);
+    }
+
     expect(packagedSkill).toBe(skill);
     expect(packagedDelivery).toBe(delivery);
   });

@@ -101,8 +101,11 @@ After the Main Thread sends work to an Execution Thread or Validation Thread
 and direct task-message delivery succeeds, enter `Awaiting Direct Event` as
 defined by `lane-handoff-v1.md`. Do not poll either task for ordinary progress;
 continue non-conflicting Main Thread work or let the inbound event resume
-routing. The generic owner defines every bounded inspection exception and exit
-condition; do not duplicate or broaden them here.
+routing. Before a dependent control checkpoint, an unresolved relevant task
+uses the `Main-Task Reconciliation` policy in `lane-handoff-v1.md`. Ordinary
+progress must not trigger reconciliation. The generic owner defines relevance,
+checkpoints, inspection budget, quietness, and exit conditions; do not duplicate
+or broaden them here.
 
 Do not create the validator when implementation starts, poll for ordinary progress, or create multiple validators for the same event. Host task creation and messaging are the transport; Navi makes no background-delivery promise after active tasks close.
 
@@ -136,4 +139,5 @@ After two remediation rounds, any remaining Critical or Important issue stops au
 - Insufficient evidence returns to the Execution Thread only when collecting that evidence is already inside the approved contract and verification budget.
 - A missing or mismatched snapshot produces unable-to-verify or stale evidence.
 - A formally blocked Execution Thread reports through Lane Handoff instead of waiting for the user to discover it.
+- A completed task found without a valid event follows Lane Handoff `delivery-protocol-failure`; recovered terminal facts are not authorization, and any bounded re-delivery remains owned by `lane-handoff-v1.md`.
 - Closed Codex tasks have no background continuation or later-delivery guarantee.
