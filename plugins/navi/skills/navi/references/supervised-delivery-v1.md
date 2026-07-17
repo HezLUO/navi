@@ -32,6 +32,26 @@ handoff_format: NAVI_LANE_HANDOFF_EVENT V1 review-ready
 
 Preauthorization covers creating one fresh independent Validation Thread only for the initial valid review-ready transition and reusing the same Validation Thread for up to two in-scope remediation re-reviews. It does not authorize permissions, scope expansion, risk acceptance, merge, push, tag, release, publication, or reduced acceptance criteria.
 
+## Model Routing Extension
+
+Model routing is additive to the existing Execution Contract, which remains valid. This opt-in extension records exactly:
+
+model_routing_policy: balanced
+model_routing_authorized: true
+execution_route: NAVI_ROUTE_DECISION V1
+validation_route: derive at review-ready from validation_level
+router_check_preauthorized: true
+
+When this extension is absent, omit model and thinking overrides, use `application_state: host-default`, and create no Router Check. The extension does not authorize an experimental model, Fast mode, service-tier changes, a lower capability floor, new permissions, scope expansion, risk acceptance, merge, push, tag, release, or publication.
+
+## Task Route Lifecycle
+
+Before creating the Execution Thread's Codex task, build its NAVI_ROUTE_DECISION from the approved Execution Contract and `model-routing-v1.md`. Ask the Codex host to apply the resolved `model` and `thinking` fields. Record `application_state: applied` only after the host accepted the requested combination.
+
+After the exact snapshot reaches review-ready, derive the Validation route from `validation_level` independently before creating the Validation Thread. Level 1 uses `fast + medium`; Level 2 uses `standard + high`; Level 3 uses `strong + high`, optionally `xhigh` only when the host supports it and the costly failure boundary warrants it. Validation must not inherit the Execution Thread's fast lease, and the executor does not choose the capability needed to accept its own work.
+
+Reuse the same Validation Thread for bounded remediation re-review. Re-evaluate its floor and apply any changed route only at a follow-up turn boundary. Route schemas, host resolution, fallback, leases, user overrides, and quietness remain owned by `model-routing-v1.md`; do not duplicate them here.
+
 ## Validation Contract
 
 Create the fresh Validation Thread only for the initial valid review-ready transition. Send exactly:
@@ -45,6 +65,7 @@ validation_level: 1 | 2 | 3
 command_budget: bounded checks permitted for concrete doubts
 read_only: true
 report_to: source_task
+route_decision: NAVI_ROUTE_DECISION V1 when the routing extension is active; otherwise host-default
 
 The Validation Contract must not include the executor's full transcript, private reasoning, or self-review conversation. It may include repository specs, plans, diffs, commands, and evidence needed to judge the contract.
 
@@ -133,6 +154,8 @@ Planned tests remain owned by the Execution Thread. Validation may run only boun
 After two remediation rounds, any remaining Critical or Important issue stops automatic routing. The Main Thread must reassess the plan, architecture, or acceptance criteria and present a real decision. Minor findings default to explicit debt unless they materially affect the current decision.
 
 ## Failure Handling
+
+When a required route cannot be applied, return `decision-required` to the Main Thread. Navi must not claim automatic switching succeeded and must not silently lower tier or widen scope. Preserve `recommended-not-applied` as truthful evidence and leave merge, push, tag, release, publication, permission, and risk decisions with their existing owners.
 
 - Failure to create the preauthorized validator leaves the lane validation-pending; it never implies acceptance.
 - Host task messaging failure uses one explicit local fallback report. Do not claim delivery, start a timed retry, or create a polling loop.
