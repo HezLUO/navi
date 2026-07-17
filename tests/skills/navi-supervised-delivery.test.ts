@@ -186,6 +186,30 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(reference).toMatch(/planned tests[\s\S]*Execution Thread[\s\S]*Release mode/i);
   });
 
+  it("routes successful delivery into the shared no-poll waiting state", async () => {
+    const [skill, delivery, packagedSkill, packagedDelivery] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
+      readRepoText(
+        "plugins/navi/skills/navi/references/supervised-delivery-v1.md",
+      ),
+    ]);
+    const lifecycle = extractSection(delivery, "## Lifecycle And Identity");
+
+    expect(skill).toMatch(
+      /successful direct task-message delivery[\s\S]*Awaiting Direct Event/i,
+    );
+    expect(lifecycle).toMatch(
+      /Execution Thread[\s\S]*Validation Thread[\s\S]*Awaiting Direct Event/i,
+    );
+    expect(lifecycle).toMatch(
+      /lane-handoff-v1\.md[\s\S]*do not poll[\s\S]*inbound event/i,
+    );
+    expect(packagedSkill).toBe(skill);
+    expect(packagedDelivery).toBe(delivery);
+  });
+
   it("keeps failed coordination honest and bounded", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/supervised-delivery-v1.md",

@@ -54,6 +54,7 @@ Do not load every reference for an ordinary narrow request.
 - Codex must not let a completed worktree automatically interrupt the main session unless the result may change the current premise, risk, file scope, merge path, release readiness, or user decision.
 - Codex must not continue main-session work that would edit the same files, expand the worktree scope, invalidate acceptance criteria, make a pending result obsolete, or create incompatible product judgments.
 - Codex must not start a Release Lane, merge, cherry-pick, push, create a worktree, create a Codex thread, or poll external lanes without explicit user approval.
+- After successful direct task-message delivery, Codex must enter the `Awaiting Direct Event` state owned by `references/lane-handoff-v1.md`; it must not poll the task for ordinary progress.
 - Codex must enforce this boundary: do not create more than one Validation Thread for the same review-ready event and exact snapshot.
 - Codex must enforce this boundary: do not let a Validation Thread write files, implement fixes, merge, push, tag, release, or accept product risk.
 - Codex must not ask the user to relay review-ready events, validation results, or in-scope remediation between tasks when host task messaging is available.

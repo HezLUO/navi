@@ -97,6 +97,13 @@ Duplicate handoff event IDs: ignore them idempotently. Duplicate validation resu
 
 Reuse the same executor-validator pair for in-scope remediation and focused re-review. The pair may perform at most two remediation rounds. New scope, permission, architecture, baseline, goal, validation-budget expansion, or known-risk acceptance returns to the user instead of mutating the pair's contract.
 
+After the Main Thread sends work to an Execution Thread or Validation Thread
+and direct task-message delivery succeeds, enter `Awaiting Direct Event` as
+defined by `lane-handoff-v1.md`. Do not poll either task for ordinary progress;
+continue non-conflicting Main Thread work or let the inbound event resume
+routing. The generic owner defines every bounded inspection exception and exit
+condition; do not duplicate or broaden them here.
+
 Do not create the validator when implementation starts, poll for ordinary progress, or create multiple validators for the same event. Host task creation and messaging are the transport; Navi makes no background-delivery promise after active tasks close.
 
 ## Verdict Routing
