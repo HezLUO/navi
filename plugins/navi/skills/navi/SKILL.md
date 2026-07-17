@@ -26,10 +26,13 @@ Read only the references needed for the current request:
 - `references/working-thread-v1.md` for durable Working Thread continuity, creation, wrap-up, and write-back.
 - `references/lane-handoff-v1.md` for bounded Codex lane delivery and source-task routing.
 - `references/supervised-delivery-v1.md` for preauthorized independent validation, exact-snapshot review, findings routing, and bounded remediation.
+- `references/model-routing-v1.md` is the sole owner for Codex task model tiers, reasoning effort, capability floors, Router Checks, Route Leases, host model resolution, and task-level route failure.
 
 Do not load every reference for an ordinary narrow request.
 
 ## Hard Boundaries
+
+Task model routing requires an explicit user-authorized policy and remains owned by `references/model-routing-v1.md`. Navi must not switch an active turn, and a fast model must not approve its own downgrade or extend its own lease. Navi must not enable Fast mode or change service tier. The Main Turn Host Adapter is not implemented. Do not turn task routing into runtime, persistence, polling, or a visible route report on every response.
 
 - This skill may be considered by default in any installed, active Codex project when the user request matches Navi Progress Map, Challenge Layer, or Working Thread behavior.
 - Codex must not silently create durable Working Thread docs.

@@ -304,6 +304,10 @@ Work Mode must affect behavior:
 - Implementation mode uses targeted validation around changed behavior.
 - Release mode is the only default place for full tests, typecheck, package verification, release notes, tags, pushes, and release checks.
 
+### Task Model Routing
+
+Work Mode (`Design`, `Calibration`, `Implementation`, or `Release`) is one Routing Context input; it does not replace role, scope, reversibility, uncertainty, or Validation Level. A routing-enabled Supervised Delivery contract invokes `model-routing-v1.md` for the Execution and Validation tasks. Keep ordinary routing quiet. An unavailable required route or a route below the deterministic floor becomes a real user decision with a recommendation. Main Thread turn routing remains the separate Main Turn Host Adapter milestone.
+
 ### Vision Distance
 
 Vision Distance should be stage-relative.

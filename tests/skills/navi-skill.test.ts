@@ -392,4 +392,14 @@ describe("Navi skill and package structure", () => {
       expect(packagedText, relativePath).toBe(sourceText);
     }
   });
+
+  it("keeps task routing bounded to explicit user authorization", async () => {
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+
+    expect(skill).toMatch(/model routing[\s\S]*explicit user-authorized policy/i);
+    expect(skill).toMatch(/must not switch[\s\S]*active turn/i);
+    expect(skill).toMatch(/fast model[\s\S]*must not[\s\S]*downgrade[\s\S]*extend/i);
+    expect(skill).toMatch(/must not enable[\s\S]*Fast mode/i);
+    expect(skill).toMatch(/Main Turn Host Adapter[\s\S]*not implemented/i);
+  });
 });

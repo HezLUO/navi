@@ -589,4 +589,26 @@ describe("Navi supervision contracts", () => {
     expect(laneHandoff).toMatch(/validation_preauthorized: true[\s\S]*validation-pending/i);
     expect(delivery).toMatch(/Main Thread[\s\S]*Execution Thread[\s\S]*Validation Thread/i);
   });
+
+  it("routes task model decisions to one canonical owner", async () => {
+    const [skill, supervision, routing, packagedSkill, packagedSupervision] =
+      await Promise.all([
+        readRepoText(".agents/skills/navi/SKILL.md"),
+        readRepoText(".agents/skills/navi/references/supervision-v1.md"),
+        readRepoText(".agents/skills/navi/references/model-routing-v1.md"),
+        readRepoText("plugins/navi/skills/navi/SKILL.md"),
+        readRepoText("plugins/navi/skills/navi/references/supervision-v1.md"),
+      ]);
+
+    expect(skill).toContain("references/model-routing-v1.md");
+    expect(supervision).toMatch(
+      /Task Model Routing[\s\S]*model-routing-v1\.md[\s\S]*Supervised Delivery/i,
+    );
+    expect(supervision).toMatch(/Design[\s\S]*Calibration[\s\S]*Implementation[\s\S]*Release/i);
+    expect(supervision).toMatch(/ordinary routing[\s\S]*quiet/i);
+    expect(supervision).not.toContain("NAVI_ROUTE_DECISION\nversion: 1");
+    expect(routing).toContain("NAVI_ROUTE_DECISION\nversion: 1");
+    expect(packagedSkill).toBe(skill);
+    expect(packagedSupervision).toBe(supervision);
+  });
 });
