@@ -1,9 +1,186 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-17 - Semantic Config Drift Was Codex Host State, Not Navi
+
+Target project: Navi
+Mode: bounded Distribution calibration / Codex host diagnosis
+Status: calibration closed; residual trust state removed; no Navi product defect
+
+Prompt shape:
+
+After the Git-backed installation journey showed that `config.toml` changed,
+the Main Thread ran a separate minimum diagnostic rather than repeating the
+full onboarding journey. One stateful operator captured private A/B/C/D
+snapshots around an immutable Git marketplace switch, one no-tool Codex
+session in an empty private root, and immediate restoration of the original
+local Navi installation.
+
+Observed behavior:
+
+- The corrected B verifier confirmed the Git marketplace origin, exact checkout
+  HEAD, plugin association, and resolved package-local plugin path.
+- The minimum session exited successfully, returned the exact requested text,
+  emitted no tool events, and did not access a target project.
+- Codex updated marketplace revision/update metadata while resolving the Git
+  marketplace snapshot.
+- Codex also persisted a `trusted` project entry for the temporary session
+  root. The redacted key digest exactly matched the canonical private
+  session-root path.
+- Official marketplace/plugin restoration returned Navi to exactly one local
+  `navi-source` marketplace and one installed, enabled `navi@navi-source`
+  version 0.1.0. The marketplace timestamp remained as verified managed
+  transaction metadata, while the temporary trusted-project entry remained a
+  separate security-control change.
+- The first exact cleanup candidate was valid and atomically installed, but its
+  postcheck treated any nonzero `codex doctor --json` exit as cleanup failure.
+  Doctor had loaded the config successfully; its nonzero exit came from the
+  pre-existing non-interactive `TERM=dumb` environment check. The operator
+  correctly rolled back the candidate.
+- A final cleanup compared doctor checks before and after instead of demanding
+  global health. It removed only the authorized temporary trust table, kept
+  `config.load` healthy, introduced no worsened check, preserved file mode
+  `0600`, and preserved the original local Navi marketplace/plugin structure.
+
+Calibration judgment:
+
+The observed global drift belongs to Codex host behavior and the calibration
+harness, not Navi product behavior. `--skip-git-repo-check` allows execution
+outside a Git repository but does not establish that Codex will avoid
+persisting project trust metadata. Similarly, a Git-backed marketplace has two
+identity layers: `marketplaceSource` records the Git origin, while plugin
+`source=local` can correctly identify the resolved local checkout.
+
+This calibration does not justify a Navi code fix or another automatic retry.
+Git-backed installation identity, minimum session execution, target safety,
+and restoration of the local Navi installation passed. Global config stability
+failed for the original temporary-root harness and was diagnosed. The complete
+Distribution journey remains incomplete because no target write and no second
+fresh-session activation were authorized.
+
+Product follow-up:
+
+- Do not rerun this Navi calibration merely to obtain another green result.
+- Keep Git identity verification split across marketplace origin, checkout
+  HEAD, plugin association, and resolved local path.
+- Compare doctor baselines for cleanup verification; do not confuse unrelated
+  pre-existing environment failures with config regression.
+- Treat temporary project-trust persistence as Codex host/config behavior and
+  require explicit cleanup authorization.
+- Retain private evidence only until this redacted record is accepted, then
+  delete raw snapshots and cleanup backups through a separate explicit action.
+
+## 2026-07-17 - Closed After Dispatch Without Evaluating Non-Conflicting Work
+
+Target project: Navi
+Mode: implementation coordination / supervision
+Status: observed error sample; Awaiting Direct Event correction in progress
+
+Prompt shape:
+
+After the Main Thread committed an implementation plan and created a true
+Codex-managed worktree task, it correctly stated that the task would return by
+direct event and that the user did not need to relay task state. It then ended
+with a closeout-style report. The user still had to type `continue` and
+identified that continuation as meaningless.
+
+Observed behavior:
+
+The direct-event mechanism was not the failure. The Main Thread had not first
+performed and surfaced the required priority judgment: whether useful,
+high-priority, non-conflicting design or supervision work remained. It treated
+"the worktree will notify us" as sufficient reason to close the active Main
+Thread turn. Only after the user's correction did it inspect the roadmap and
+current dependencies.
+
+Calibration judgment:
+
+This is an avoidable continuation-friction sample. After dispatch, the Main
+Thread must not poll the task, but "do not poll" does not mean "stop the Main
+Thread automatically." It should first choose and continue worthwhile
+non-conflicting work. If every currently selected high-priority next step
+depends on the outstanding result, it should explicitly classify the pause as
+a meaningful whole-session wait and state that no user `continue` is needed.
+
+The later dependency review found that the current wait was meaningful:
+
+- the exact Git installation preview decision depended on the active
+  calibration result;
+- integration of `Awaiting Direct Event` depended on its implementation and
+  independent validation result;
+- local-marketplace calibration and Distribution Preview release work depended
+  on those two gates; and
+- starting Runtime Surface, UI, other-agent support, contributor polish, or
+  lower-priority distribution work merely to stay busy would violate the
+  approved priority order.
+
+Product follow-up:
+
+- Make post-dispatch handling a two-step judgment: enter `Awaiting Direct
+  Event`, then evaluate worthwhile non-conflicting work before ending the Main
+  Thread turn.
+- Do not manufacture low-priority work to avoid waiting.
+- When the wait is genuinely session-wide, name the dependency and say that
+  direct event delivery will resume the task without user prompting.
+- Calibrate both branches: one sample where the Main Thread continues useful
+  design, and one where it correctly waits without polling or requiring
+  `continue`.
+
+## 2026-07-16 - Bounded Project-Local `npm ci` Preauthorization
+
+Target project: Navi
+Mode: design decision from implementation coordination
+Status: approved workflow decision; not yet incorporated into the active Navi
+skill contract
+
+Prompt shape:
+
+The Outcome Boundary Execution Thread reached a clean-worktree dependency gate
+because `node_modules` was absent. The user approved project-local `npm ci`,
+then questioned whether repeating this permission decision for every trusted
+Navi worktree provided meaningful control.
+
+Decision:
+
+Do not treat every project-local dependency restore as a new high-intensity
+user decision. A future Execution Contract may preauthorize `npm ci` without a
+second Navi confirmation only when all of these conditions are explicit:
+
+- the user trusts the repository and the exact execution baseline;
+- an existing lockfile defines the dependency graph;
+- installation is project-local and does not use `sudo`, `-g`, or global npm
+  configuration;
+- `package.json` and the lockfile must remain unchanged;
+- no new private registry, credential, dependency change, or package-manager
+  policy is introduced; and
+- the executor audits package metadata and worktree state after installation.
+
+Safety judgment:
+
+This is bounded preauthorization, not blanket approval for arbitrary
+repositories. npm lifecycle scripts can execute code with the permissions of
+the Codex process, access network resources, and potentially write outside
+`node_modules`; a lockfile fixes dependency identity and integrity but does not
+make that code trustworthy. Missing lockfile evidence, an untrusted repository
+or baseline, package metadata drift, global installation, elevated privilege,
+new credential use, or expanded write scope remains a real permission decision
+and must return to the user. Host sandbox or network approval remains
+authoritative and cannot be bypassed by Navi.
+
+Product follow-up:
+
+- Add a narrowly named dependency-restore policy to a future Supervised
+  Delivery contract revision rather than hiding it in general permission text.
+- Record the exact command, baseline, lockfile evidence, allowed writes, script
+  policy, network expectation, and post-install audit in the Execution
+  Contract.
+- Do not retrofit this rule into an already active implementation lane or claim
+  it is implemented until its canonical owner and focused contract coverage are
+  approved.
 
 ## 2026-07-16 - Adaptive Entry Validation Did Not Return To The Main Task
 
