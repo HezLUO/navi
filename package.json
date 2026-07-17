@@ -20,6 +20,7 @@
     "navi": "./src/cli/navi-bin.mjs",
     "build:plugin-init": "node scripts/build-plugin-init.mjs",
     "check:plugin-init": "node scripts/build-plugin-init.mjs --check",
+    "stage:plugin-distribution": "node scripts/stage-plugin-distribution.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

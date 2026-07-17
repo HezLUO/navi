@@ -236,6 +236,7 @@ describe("Navi skill and package structure", () => {
     const pluginManifest = JSON.parse(manifestSource) as { name: string };
     const marketplace = JSON.parse(marketplaceSource) as {
       name: string;
+      interface: { displayName: string };
       plugins: Array<{
         name: string;
         source: { source: string; path: string };
@@ -248,6 +249,7 @@ describe("Navi skill and package structure", () => {
     expect(packagedFrontmatter.name).toBe("navi");
     expect(pluginManifest.name).toBe("navi");
     expect(marketplace.name).toBe("navi-source");
+    expect(marketplace.interface.displayName).toBe("Navi Releases");
     expect(marketplace.plugins).toEqual([
       expect.objectContaining({
         name: "navi",

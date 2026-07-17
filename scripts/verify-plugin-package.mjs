@@ -43,8 +43,8 @@ function assertCurrentPackageMetadata() {
 
   if (manifest?.name !== "navi") fail("Plugin manifest must use the navi identifier.");
   if (marketplace?.name !== "navi-source") fail("Marketplace must be named navi-source.");
-  if (marketplace?.interface?.displayName !== "Navi Source") {
-    fail("Marketplace display name must be Navi Source.");
+  if (marketplace?.interface?.displayName !== "Navi Releases") {
+    fail("Marketplace display name must be Navi Releases.");
   }
   if (!Array.isArray(marketplace?.plugins) || marketplace.plugins.length !== 1) {
     fail("Marketplace must contain exactly one Navi plugin entry.");
