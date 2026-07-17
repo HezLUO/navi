@@ -101,16 +101,58 @@ ordinary progress. Continue useful non-conflicting design or supervision. If
 no useful non-conflicting work remains, end the current turn and wait for the
 direct inbound event.
 
-One bounded inspection is allowed only when the user explicitly requests task
+One bounded inspection is allowed when the user explicitly requests task
 status, the host reports task-message delivery failure or messaging is
 unavailable, or the approved contract declares a concrete safety deadline for
-temporary external or global state. An allowed inspection is one-shot evidence,
-not a loop, recurring timer, or substitute for direct delivery.
+temporary external or global state. These exceptions do not exhaust dependent
+checkpoints; use `Main-Task Reconciliation` below for that owner. An allowed
+inspection is one-shot evidence, not a loop, recurring timer, or substitute for
+direct delivery.
 
 An inbound event, an allowed inspection result, or a reported delivery failure
 exits `Awaiting Direct Event` and returns the lane to ordinary Source Main Task
 routing. Silence is not new evidence, user approval, a blocker, or permission
 to expand scope.
+
+## Main-Task Reconciliation
+
+Direct task messaging remains the primary path. The Source Main Task keeps
+only turn-local context for each unresolved relevant task: `task_id`, `goal`,
+`declared_impact`, `expected_transition`, `last_handled_event_id`,
+`delivery_state`, and `last_reconciliation_reason`. This is not persistent
+state, a task database, or a queue.
+
+`delivery_state` is `awaiting-direct-event` while direct delivery is primary,
+`reconciliation-needed` at one dependent checkpoint before inspection, and
+`closed` after the recovered or directly delivered transition is handled.
+
+An unresolved task is reconciliation-relevant only when its next transition
+may change the product premise, acceptance, authorized scope, material risk,
+merge/push/tag/release/publication readiness, temporary global or external state,
+or the next real user decision. Ordinary progress and unrelated exploration do
+not qualify.
+
+A dependent control checkpoint occurs only before the Main Task presents a
+dependent user decision; will create, replace, cancel, or redirect a related
+task; performs a merge, push, tag, release, or publish action on affected work;
+claims that the only useful remaining action is waiting; or will close the affected product lane or session phase. Completing an ordinary design section is not itself a checkpoint.
+
+At one checkpoint, use the known `task_id` directly. Prefer a host one-shot
+completion snapshot or bounded wait when available; otherwise perform one read-only task inspection. Inspect one relevant task at most once for one checkpoint. Do not list or search tasks when the identifier is known. A task that is still running remains quiet and the Main Task must not read it again at that checkpoint.
+
+If the task completed with a valid event, recover it, deduplicate by
+`event_id`, and use the existing routing. If it completed without a valid
+event, mark `delivery-protocol-failure`; terminal facts are not user authorization. Request at most one bounded re-delivery from the same task only when a required field is missing. Do not ask the user to relay the result and do not create a duplicate task.
+
+On task unavailability or read failure, do not retry in a loop. Stop a
+dependent high-impact action, or continue independent work with the state
+unresolved. A duplicate `event_id` is silently ignored.
+
+Successful reconciliation is quiet. Surface only a recovered
+decision-changing event, a delivery-protocol failure, or a host capability gap
+that prevents a dependent high-impact action. Do not add a timer, periodic polling, durable queue, watcher, daemon, or Runtime Surface.
+
+When the Main Task receives no further turn and the host exposes no completion wakeup, V1 cannot reconcile by itself. Keep that limit explicit rather than claiming background delivery.
 
 ## Source Main Task
 

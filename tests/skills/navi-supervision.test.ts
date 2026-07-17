@@ -433,20 +433,23 @@ describe("Navi supervision contracts", () => {
     );
   });
 
-  it("waits for direct lane events without polling task chat", async () => {
-    const [reference, packagedReference] = await Promise.all([
+  it("waits for direct lane events and reconciles only at dependent checkpoints", async () => {
+    const [skill, reference, packagedSkill, packagedReference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
       readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+      readRepoText("plugins/navi/skills/navi/SKILL.md"),
       readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
     ]);
-    const awaiting = extractMarkdownSection(
-      reference,
-      "## Awaiting Direct Event",
-    );
+    const awaiting = extractMarkdownSection(reference, "## Awaiting Direct Event");
+    const reconciliation = extractMarkdownSection(reference, "## Main-Task Reconciliation");
 
     expect(awaiting).toMatch(
       /successful direct task-message delivery[\s\S]*Awaiting Direct Event/i,
     );
     expect(awaiting).toMatch(/workflow state[\s\S]*not a\s+Work Mode/i);
+    expect(awaiting).toMatch(/ordinary progress/i);
+    expect(awaiting).toMatch(/do not[\s\S]*poll/i);
+    expect(awaiting).toMatch(/user explicitly requests task\s+status/i);
     for (const forbidden of [
       "read_thread",
       "list_threads",
@@ -467,6 +470,68 @@ describe("Navi supervision contracts", () => {
     expect(awaiting).toMatch(
       /inbound event[\s\S]*inspection result[\s\S]*delivery failure[\s\S]*exits/i,
     );
+
+    for (const boundary of [
+      "product premise",
+      "acceptance",
+      "authorized scope",
+      "material risk",
+      "temporary global or external state",
+      "next real user decision",
+      "dependent user decision",
+      "create, replace, cancel, or redirect",
+      "merge, push, tag, release, or publish",
+      "only useful remaining action is waiting",
+      "close the affected product lane or session phase",
+    ]) {
+      expect(reconciliation).toContain(boundary);
+    }
+
+    for (const stateField of [
+      "task_id",
+      "goal",
+      "declared_impact",
+      "expected_transition",
+      "last_handled_event_id",
+      "delivery_state",
+      "last_reconciliation_reason",
+    ]) {
+      expect(reconciliation).toContain(stateField);
+    }
+    for (const deliveryState of [
+      "awaiting-direct-event",
+      "reconciliation-needed",
+      "closed",
+    ]) {
+      expect(reconciliation).toContain(deliveryState);
+    }
+
+    expect(reconciliation).toMatch(/known `task_id`[\s\S]*one-shot[\s\S]*one read-only task inspection/i);
+    expect(reconciliation).toMatch(/at most once[\s\S]*one checkpoint/i);
+    expect(reconciliation).toMatch(/still running[\s\S]*quiet[\s\S]*must not read it again/i);
+    expect(reconciliation).toMatch(/completed[\s\S]*valid event[\s\S]*existing routing/i);
+    expect(reconciliation).toMatch(/delivery-protocol-failure[\s\S]*not user authorization/i);
+    expect(reconciliation).toMatch(/one bounded re-delivery[\s\S]*same task/i);
+    expect(reconciliation).toMatch(/read failure[\s\S]*do not retry in a loop/i);
+    expect(reconciliation).toMatch(/duplicate[\s\S]*event_id[\s\S]*silently ignore/i);
+    expect(reconciliation).toMatch(/do not ask the user[\s\S]*relay/i);
+    expect(reconciliation).toMatch(/turn-local[\s\S]*not[\s\S]*persistent/i);
+    expect(reconciliation).toMatch(
+      /no further turn[\s\S]*no completion wakeup[\s\S]*cannot reconcile/i,
+    );
+
+    for (const forbiddenCapability of [
+      "timer",
+      "periodic polling",
+      "durable queue",
+      "daemon",
+      "Runtime Surface",
+    ]) {
+      expect(reconciliation).toContain(forbiddenCapability);
+    }
+
+    expect(skill).toMatch(/dependent control checkpoint[\s\S]*unresolved relevant task[\s\S]*lane-handoff-v1\.md/i);
+    expect(packagedSkill).toBe(skill);
     expect(packagedReference).toBe(reference);
   });
 
