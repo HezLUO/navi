@@ -14,9 +14,19 @@ Navi is an independent open-source product for supervising expert agents. It is 
 
 This repository is the canonical open-source alpha home for Navi. Current main branch behavior includes Progress/Rhythm Maps, Challenge Layer, pause semantics, stage/vision supervision, and coordination guidance. Navi shows where the project is, what is missing, whether to continue, when to stop, how much validation is enough, and whether parallel work should wait or continue.
 
+## Distribution feasibility on current main
+
+Latest tagged GitHub source release: `0.1.0-alpha.3`. Current main contains an unreleased Distribution feasibility candidate; it is not an activated public release entry.
+
+The controlled primary design is a Git-backed `navi-source` marketplace. The checked-in root catalog remains a local source/calibration catalog, while the staging tool can render an immutable remote catalog and a local-marketplace bundle from the same plugin bytes.
+
+Installed onboarding uses a package-local init entry resolved from the actually loaded Navi skill. It renders a read-only preview first and performs the fingerprint-bound write only after explicit approval. It does not require a source checkout, a hardcoded Codex cache path, or a bare `navi` command. If Node or the package entry is unavailable, Navi refuses direct project writes rather than installing a runtime silently.
+
+The Public Plugin Directory is optional and is not a release prerequisite; Navi is not available there now. A GitHub Release local-marketplace ZIP, checksums, update, rollback, and uninstall promises belong to a later explicit Release plan. Bare `navi`, npm publication, a Bootstrap Installer, Runtime Surface, UI, MCP, background updates, and other-agent support are not ordinary-user prerequisites for this candidate. Real marketplace installation and cross-environment calibration have not happened in this implementation lane.
+
 ## Source-alpha setup
 
-This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. Public npm/marketplace/one-click installation remains out of scope.
+This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. Public npm/marketplace/one-click installation remains out of scope for this implementation lane; the current-main marketplace candidate is staged but not activated or released.
 
 Verify the checked-out source before installation, then run this sequence from the repository root:
 
@@ -100,7 +110,7 @@ Navi maps should follow the user's current prompt language by default. If a targ
 
 Use this alpha if you want to test Navi's current supervision behavior in active Codex sessions, review the plugin source package, or give feedback on whether Progress/Rhythm Maps and Challenge Layer behavior help non-expert users steer expert-agent work.
 
-Wait for a later release if you need npm distribution, public marketplace installation, global Codex plugin installation, one-click sync, runtime UI, background watching, operating-system or background notifications, or adapters for agents outside Codex.
+Wait for a later release if you need npm distribution, an activated public marketplace release, a Public Plugin Directory listing, one-click sync, runtime UI, background watching, operating-system or background notifications, or adapters for agents outside Codex.
 
 ## Alpha Status
 
@@ -125,8 +135,8 @@ What is stable in this alpha:
 What is not included:
 
 - npm package publication.
-- Public Codex marketplace release.
-- Global Codex plugin installation or one-click sync.
+- An activated Git-backed marketplace release or Public Plugin Directory listing.
+- Real installed-marketplace calibration or one-click sync.
 - It has no background watcher, operating-system notification service, or always-on presence; bounded Lane Handoff uses available Codex task messaging only while Codex is active.
 - Runtime UI or future local app surface.
 - Hermes, Claude Code, or other agent adapters.

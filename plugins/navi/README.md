@@ -122,6 +122,14 @@ Current main includes unreleased post-`0.1.0-alpha.3` source work. The prompt/do
 
 It packages the current skill-first behavior and a prompt/docs-backed Codex Lane Handoff adapter. It does not add runtime, memory, presence, background autonomy, another-agent support, or automatic worktree orchestration. The plugin manifest version remains `0.1.0` for compatibility; the alpha label describes the GitHub source release, not a marketplace or npm publication.
 
+### Distribution feasibility candidate
+
+Current main also contains an unreleased Distribution feasibility candidate. The controlled primary design is a Git-backed `navi-source` marketplace, but the checked-in root catalog remains a local source/calibration catalog and is not an activated public release entry. One staging tool renders the immutable remote catalog and local-marketplace bundle from the same plugin bytes.
+
+Installed onboarding resolves the package-local init entry from the actually loaded skill, renders a read-only preview, and performs the fingerprint-bound write only after explicit approval. It does not require the source checkout, a hardcoded Codex cache path, or a bare `navi` command. Node or entry unavailability causes a truthful refusal, not a direct skill write or silent runtime installation.
+
+The Public Plugin Directory is optional and not a release prerequisite; Navi is not available there now. GitHub Release ZIP, checksum, update, rollback, and uninstall promises belong to a later explicit Release plan. npm publication, a Bootstrap Installer, Runtime Surface, UI, MCP, background updates, and other-agent support are not ordinary-user prerequisites. Real marketplace installation and cross-environment calibration remain unproven.
+
 ## Package layout
 
 ```text
@@ -189,7 +197,7 @@ This is a Codex-guided candidate flow: Codex first helps the user form and confi
 
 Global setup uses a recoverable transaction directory and a cooperative same-user lock. It verifies approved bytes, publishes without replacing an existing target, and preserves detected third-party content for manual resolution. This is a cooperative-concurrency boundary, not a claim of adversarial same-user atomicity; do not delete a lock or force a conflicted setup.
 
-The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope. `archive/along/src/web` is not the Navi alpha UI.
+The bootstrap block is an always-visible routing layer, not full Navi behavior. This package is ready for GitHub source alpha testing; public npm/marketplace/one-click installation remains out of scope for this implementation lane, and the current marketplace candidate is not activated. `archive/along/src/web` is not the Navi alpha UI.
 
 ### Legacy migration and removal
 
@@ -330,4 +338,4 @@ Deferred layers include:
 - Memory v2;
 - relationship modes or emotional simulation;
 - delegation or write delegation;
-- public marketplace release.
+- activated marketplace release or Public Plugin Directory listing.

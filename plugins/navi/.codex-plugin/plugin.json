@@ -1,26 +1,23 @@
 {
   "name": "navi",
   "version": "0.1.0",
-  "description": "Carry Working Thread continuity, Navi Progress Map behavior, and Challenge Layer validation across active Codex sessions.",
+  "description": "Navi helps non-expert Codex users understand project progress, decide what comes next, and initialize project-local supervision with explicit approval.",
   "skills": "./skills/",
   "author": {
     "name": "Navi Contributors"
   },
   "keywords": [
-    "along",
-    "working-thread",
-    "continuity",
     "codex",
-    "self-initiation",
-    "challenge-layer",
-    "validation",
     "navi",
-    "progress-map"
+    "progress-map",
+    "project-supervision",
+    "project-map",
+    "decision-support"
   ],
   "interface": {
     "displayName": "Navi",
-    "shortDescription": "Project progress, next-step, stop/wait, and plan-reliability guidance.",
-    "longDescription": "Navi helps Codex carry project judgment across sessions, give Progress Maps for non-expert users, notice Challenge Moment risks, and turn self-certifying momentum into lightweight validation. It provides turn-bound self-initiation, not background autonomy or always-on presence.",
+    "shortDescription": "Project progress, next-step, stop/wait, and decision guidance.",
+    "longDescription": "Navi helps non-expert Codex users understand project position, supervise bounded work, decide when to continue or stop, and initialize reliable project-local guidance through an exact approved preview.",
     "developerName": "Navi Contributors",
     "category": "Productivity",
     "capabilities": [
@@ -29,7 +26,7 @@
     "defaultPrompt": [
       "Show where this project stands, what comes next, and what I need to decide.",
       "Should we continue, stop, wait, or move to the next stage?",
-      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization."
+      "Set up Navi for this project using a read-only preview before any project write."
     ]
   }
 }

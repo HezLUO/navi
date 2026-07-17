@@ -1,15 +1,15 @@
 # Navi Post-Alpha Backlog / Roadmap
 
-Status: active backlog during the Outcome Boundary and Product Complete real-project calibration gate
-Last updated: 2026-07-16
+Status: active backlog with Product Complete calibration open and Distribution feasibility separately approved
+Last updated: 2026-07-17
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
 ## Current Phase
 
-Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. The next gate is Outcome Boundary and Product Complete real-project calibration across mature and evidence-poor project entry, supervised delivery, and closure evidence.
+Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. Outcome Boundary real-project calibration remains part of the open gate. Product Complete calibration remains open across mature and evidence-poor project entry, supervised delivery, and closure evidence.
 
-This is a Calibration gate, not release preparation. It is limited to testing whether the current prompt/docs-backed behavior helps real users set a truthful completion line and recognize Product Complete without expanding it automatically. Distribution, release, runtime, UI, and other-agent work remain outside it. Real permission, scope, risk, merge, push, tag, and release decisions remain explicit.
+Distribution feasibility is separately approved as an unreleased implementation lane. Its next Distribution gate is bounded real-installation Calibration after independent validation and explicit integration—not automatic Release preparation. Product Complete calibration is neither replaced nor declared complete. Real installation, permission, scope, risk, merge, push, tag, release, and publication decisions remain explicit.
 
 ## Product Positioning
 
@@ -64,9 +64,13 @@ Goal: learn whether Navi stays useful, self-initiating, companion-like, and non-
 
 ## Distribution Improvements
 
-Goal: make the current source alpha easier to inspect, install, and verify without overstating distribution readiness.
+Goal: carry the unreleased Distribution feasibility candidate through independent validation and later real-installation calibration without overstating release readiness.
 
 - Resolved foundation: project initialization now uses a guided confirmed baseline, one combined `.navi/project-map.md` plus managed-trigger preview, and one fingerprint-bound approved write with Map-first/trigger-last ordering.
+- Implemented candidate: one generated package-local init entry and one staging tool feed the Git-backed `navi-source` catalog and local-marketplace bundle from identical plugin bytes.
+- Open gate: prove Node availability, installed-copy path resolution, and both marketplace journeys in separately authorized real-installation Calibration.
+- Later Release work: choose version identity, create ZIP and checksums, activate the public catalog, and document update, rollback, and uninstall.
+- Optional channel: prepare Public Plugin Directory materials only after the controlled GitHub path works; Directory acceptance is not a prerequisite.
 - P0: Clarify the manual Codex plugin install path for users who already understand local Codex plugin or skill workflows.
 - P0: Add a short "verify this checkout" path that starts from a fresh clone and ends with `npm run verify:plugin-package`.
 - P0: Calibrate the confirmed-Map init journey in fresh Codex sessions, especially guided baseline questions, declined initialization, partial activation diagnosis, and natural-language supervision after activation.
@@ -74,7 +78,7 @@ Goal: make the current source alpha easier to inspect, install, and verify witho
 - P1: Add contributor basics: `CONTRIBUTING.md`, issue templates, PR template, and a short maintainer release checklist.
 - P1: Decide whether the repo should expose a public roadmap file from the root README.
 - P1: Improve installer ergonomics without broadening scope: clearer preview, conflict reporting, and source-record hints.
-- P1: Define what evidence would be required for later public distribution without preparing a release in this roadmap pass.
+- P1: Preserve the approved feasibility evidence needed before a later explicit Release plan.
 - P2: Define version policy after `0.1.0-alpha`: alpha patches for documentation/packaging fixes, minor version bumps only for meaningful capability changes.
 - P2: Decide whether future release notes should separate product behavior, package shape, and validation evidence.
 
@@ -91,7 +95,7 @@ Goal: keep larger product layers visible without letting them slip into the alph
 - Decision-point stopping: evaluate whether Navi can reduce meaningless `continue` prompts by distinguishing permission/risk/phase boundaries from ordinary execution momentum.
 - Memory v2 and relationship modes: explore long-term personalization only after the V1 process boundary remains reliable.
 - Delegation and write delegation: investigate agent-to-agent coordination only after confirmed write-back and user supervision rules are stronger.
-- Marketplace or npm packaging: treat these as separate distribution projects, not as automatic follow-ups to the alpha release.
+- Marketplace release activation or npm publication: treat these as separate Release decisions, not automatic follow-ups to feasibility implementation.
 
 ### Web UI Exploration Gate
 
@@ -116,8 +120,8 @@ That branch should start as a design/prototype branch, not a release-prep branch
 The current alpha does not include and should not imply:
 
 - npm package publication.
-- Public Codex marketplace publication.
-- Global plugin installation, one-click sync, npm distribution, or marketplace installation.
+- An activated public Git-backed catalog or Public Plugin Directory publication.
+- Real marketplace installation/calibration, one-click sync, or npm distribution.
 - Background runtime, watcher, scheduler, notifications, or always-on presence.
 - Runtime UI, local app surface, or Web UI rebrand.
 - Hermes, Claude Code, or other agent adapters.

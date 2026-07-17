@@ -4,10 +4,12 @@ This index is navigation metadata. It does not rewrite historical documents.
 
 ## Current Phase
 
-Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. The current bounded gate is Outcome Boundary and Product Complete real-project calibration. Distribution, release, runtime, UI, and other-agent work remain outside this gate.
+Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. Outcome Boundary real-project calibration remains part of the Product Complete gate. Product Complete calibration remains open. Distribution feasibility is a separately approved implementation lane; it does not complete Product Complete, activate a release, or authorize real installation calibration. Release, runtime, UI, and other-agent work remain outside the current implementation gate.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-17-navi-distribution-ready-design.md`
+- `docs/superpowers/plans/2026-07-17-navi-distribution-feasibility.md`
 - `docs/superpowers/specs/2026-07-16-navi-outcome-boundary-design.md`
 - `docs/superpowers/specs/2026-07-16-navi-codex-first-product-completion-design.md`
 - `docs/superpowers/plans/2026-07-16-navi-outcome-boundary-product-completion.md`

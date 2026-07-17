@@ -436,8 +436,8 @@ Chinese orientation prompts should still allow Chinese headings and explanations
       expect(readme).toContain(expected);
     }
 
-    expect(version).toContain("Progress/Rhythm Maps and Challenge Layer are the current V1 alpha mechanisms");
-    expect(version).toContain("documentation-only behavior update");
+    expect(version).toContain("unreleased Distribution feasibility candidate");
+    expect(version).toContain("not a runtime capability upgrade");
   });
 
   it("documents one guided confirmed-map initialization journey in every active setup document", async () => {
@@ -479,7 +479,7 @@ Chinese orientation prompts should still allow Chinese headings and explanations
     const roadmap = await readRepoText("docs/navi/roadmap.md");
 
     for (const expected of [
-      "Status: confirmed-Map initialization addressed; calibration and public distribution open",
+      "Status: confirmed-Map initialization and package-local init feasibility implemented; real installation calibration and Release work open",
       "Source-alpha bootstrap is implemented",
     ]) {
       expect(debt).toContain(expected);
@@ -487,7 +487,7 @@ Chinese orientation prompts should still allow Chinese headings and explanations
 
     for (const expected of [
       "Calibrate the confirmed-Map init journey",
-      "Global plugin installation, one-click sync, npm distribution, or marketplace installation",
+      "Real marketplace installation/calibration, one-click sync, or npm distribution",
     ]) {
       expect(roadmap).toContain(expected);
     }
@@ -511,15 +511,15 @@ Chinese orientation prompts should still allow Chinese headings and explanations
 
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.description).toContain("Navi");
-    expect(manifest.description).toContain("Progress Map");
+    expect(manifest.description).toContain("project progress");
     expect(manifest.keywords).toEqual(expect.arrayContaining(["navi", "progress-map"]));
     expect(manifest.interface.shortDescription).toContain("Project progress");
-    expect(manifest.interface.longDescription).toContain("non-expert users");
-    expect(manifest.interface.longDescription).toContain("Progress Map");
+    expect(manifest.interface.longDescription).toContain("non-expert Codex users");
+    expect(manifest.interface.longDescription).toContain("project position");
     expect(manifest.interface.defaultPrompt).toEqual([
       "Show where this project stands, what comes next, and what I need to decide.",
       "Should we continue, stop, wait, or move to the next stage?",
-      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
+      "Set up Navi for this project using a read-only preview before any project write.",
     ]);
     expect(manifest.interface.defaultPrompt).toHaveLength(3);
 
@@ -576,7 +576,7 @@ Chinese orientation prompts should still allow Chinese headings and explanations
     );
 
     expect(pluginManifest.interface.defaultPrompt).toContain(
-      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
+      "Set up Navi for this project using a read-only preview before any project write.",
     );
 
     for (const stalePhrase of [

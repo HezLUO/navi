@@ -31,7 +31,22 @@ describe("Navi source package wiring", () => {
 
   it("routes first-use supervision through confirmed Map baseline formation", () => {
     expect(pluginManifest.interface.defaultPrompt).toContain(
-      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
+      "Set up Navi for this project using a read-only preview before any project write.",
     );
+  });
+
+  it("describes Navi rather than its Historical Along origin", () => {
+    expect(pluginManifest.description).toMatch(/Navi helps non-expert Codex users/i);
+    expect(pluginManifest.description).toMatch(/progress|next step|supervis/i);
+    expect(pluginManifest.keywords).toEqual([
+      "codex",
+      "navi",
+      "progress-map",
+      "project-supervision",
+      "project-map",
+      "decision-support",
+    ]);
+    expect(pluginManifest.keywords).not.toContain("along");
+    expect(pluginManifest.keywords).not.toContain("working-thread");
   });
 });

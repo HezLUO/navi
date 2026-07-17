@@ -310,22 +310,29 @@ describe("Navi skill and package structure", () => {
     expect(manifest.version).toBe("0.1.0");
     expect(manifest.skills).toBe("./skills/");
     expect(manifest.author.name).toBe("Navi Contributors");
-    expect(manifest.description).toContain("Working Thread continuity");
-    expect(manifest.keywords).toEqual(
-      expect.arrayContaining(["along", "working-thread", "continuity", "codex", "self-initiation"]),
+    expect(manifest.description).toBe(
+      "Navi helps non-expert Codex users understand project progress, decide what comes next, and initialize project-local supervision with explicit approval.",
     );
+    expect(manifest.keywords).toEqual([
+      "codex",
+      "navi",
+      "progress-map",
+      "project-supervision",
+      "project-map",
+      "decision-support",
+    ]);
     expect(manifest.interface.displayName).toBe("Navi");
     expect(manifest.interface.developerName).toBe("Navi Contributors");
     expect(manifest.interface.shortDescription).toBe(
-      "Project progress, next-step, stop/wait, and plan-reliability guidance.",
+      "Project progress, next-step, stop/wait, and decision guidance.",
     );
-    expect(manifest.interface.longDescription).toContain("turn-bound self-initiation");
+    expect(manifest.interface.longDescription).toContain("exact approved preview");
     expect(manifest.interface.category).toBe("Productivity");
     expect(manifest.interface.capabilities).toContain("Interactive");
     expect(manifest.interface.defaultPrompt).toEqual([
       "Show where this project stands, what comes next, and what I need to decide.",
       "Should we continue, stop, wait, or move to the next stage?",
-      "Check for a confirmed .navi/project-map.md and help form the missing baseline before initialization.",
+      "Set up Navi for this project using a read-only preview before any project write.",
     ]);
     expect(manifest.interface.defaultPrompt).toHaveLength(3);
     expect(manifest.name).toBe("navi");

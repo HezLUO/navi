@@ -119,6 +119,25 @@ describe("Current Navi repository surface", () => {
     );
   });
 
+  it("records Distribution feasibility as a separate approved lane", async () => {
+    const [history, roadmap, debt] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+    ]);
+
+    expect(history).toContain(
+      "docs/superpowers/specs/2026-07-17-navi-distribution-ready-design.md",
+    );
+    expect(history).toContain(
+      "docs/superpowers/plans/2026-07-17-navi-distribution-feasibility.md",
+    );
+    expect(roadmap).toMatch(/Product Complete calibration[\s\S]*remains open/i);
+    expect(roadmap).toMatch(/Distribution feasibility[\s\S]*separately approved/i);
+    expect(debt).toMatch(/package-local init[\s\S]*real installation calibration/i);
+    expect(debt).toMatch(/Public Plugin Directory[\s\S]*not a prerequisite/i);
+  });
+
   it("keeps supervised delivery contracts in one active owner", async () => {
     const [skill, delivery, supervision] = await Promise.all([
       fs.readFile(path.join(root, ".agents/skills/navi/SKILL.md"), "utf8"),
@@ -177,6 +196,9 @@ describe("Current Navi repository surface", () => {
   it("keeps Historical Along outside Current Navi defaults", async () => {
     expect(packageJson.scripts).toEqual({
       navi: "./src/cli/navi-bin.mjs",
+      "build:plugin-init": "node scripts/build-plugin-init.mjs",
+      "check:plugin-init": "node scripts/build-plugin-init.mjs --check",
+      "stage:plugin-distribution": "node scripts/stage-plugin-distribution.mjs",
       test: "vitest run",
       "test:watch": "vitest",
       typecheck: "tsc --noEmit",
@@ -185,6 +207,7 @@ describe("Current Navi repository surface", () => {
     expect(packageJson.dependencies).toEqual({});
     expect(packageJson.devDependencies).toEqual({
       "@types/node": "^22.10.0",
+      esbuild: "^0.28.1",
       tsx: "^4.19.0",
       typescript: "^5.7.0",
       vitest: "^2.1.0",

@@ -62,6 +62,14 @@ The preview identifies the exact actions and plan fingerprint. One explicit appr
 
 If the Map write succeeds but the trigger write fails, the confirmed Map remains in place. Navi reports partial activation and directs the user to inspect `AGENTS.md` before retrying. It never rolls the Map back to hide that partial result.
 
+## Installed package entry
+
+An installed Navi plugin resolves `scripts/navi-project-init.mjs` relative to the actually loaded Navi skill directory. It does not infer the entry from the current working directory, a source checkout, a global npm link, or a hardcoded Codex cache path.
+
+The same package-local entry owns both steps: first the exact read-only preview, then the fingerprint-bound write after explicit approval. Trigger-only recovery for an existing confirmed Map uses this entry too. The package entry preserves the existing Map-first, trigger-last, freshness, symlink, and partial-activation boundaries.
+
+If Node is unavailable or the entry is not a regular file inside the loaded skill directory, report that installed Distribution feasibility is not established. Do not fall back to direct skill writes, a guessed cache path, a source-only `navi` command, or silent runtime installation. Runtime availability across supported Codex surfaces remains a real-installation calibration question.
+
 ## Direct CLI Behavior
 
 `navi init` is dry-run by default.

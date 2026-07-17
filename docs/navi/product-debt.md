@@ -77,7 +77,7 @@ Recommended fix:
 
 ### 3. Installation And Initialization Debt
 
-Status: confirmed-Map initialization addressed; calibration and public distribution open
+Status: confirmed-Map initialization and package-local init feasibility implemented; real installation calibration and Release work open
 Priority: high before broader real-use validation
 
 Problem:
@@ -92,7 +92,16 @@ global setup once
 -> fresh-session natural-language supervision
 ```
 
-Source-alpha bootstrap is implemented through explicit user-run marketplace setup (`navi-source` and `navi@navi-source`), `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Project initialization now requires a guided user-confirmed baseline, writes the canonical `.navi/project-map.md` before the managed trigger, and binds approval to the exact preview fingerprint. Legacy migration remains explicit: doctor diagnoses legacy-only and dual-install states, while the user installs or removes global plugins. Public distribution remains open: npm publication, public marketplace, stable installer, PATH management, and one-click sync are still separate work.
+Source-alpha bootstrap is implemented through explicit user-run marketplace setup (`navi-source` and `navi@navi-source`), `npm link`, `navi doctor`, global `navi setup`, and project-local `navi init`. Public distribution remains open: current `main` has an unreleased package-local init and distribution-staging candidate, but no release entry is activated. The candidate can render an immutable Git-backed catalog and a local-marketplace bundle from the same plugin bytes. Project initialization still requires a guided user-confirmed baseline, writes the canonical `.navi/project-map.md` before the managed trigger, and binds approval to the exact preview fingerprint. The Public Plugin Directory is optional and not a prerequisite for the controlled GitHub path.
+
+Remaining gates are explicit:
+
+- Node/runtime availability across supported Codex surfaces;
+- Git-backed installed-copy package-local path resolution in real installation calibration;
+- local-marketplace bundle installation calibration;
+- version identity, ZIP, and checksum work in a later explicit Release plan;
+- optional Public Plugin Directory materials and review; and
+- a Bootstrap Installer only if standard marketplace onboarding fails.
 
 Why it matters:
 
@@ -102,7 +111,7 @@ Recommended fix:
 
 - Calibrate guided baseline formation and the combined preview in real fresh sessions.
 - Keep `navi init` narrow: project-local preview by default, fingerprint-bound `--write` for the approved durable change, no global plugin install.
-- Treat global plugin installation, one-click sync, npm release, and marketplace release as separate distribution projects.
+- Treat real global plugin installation, calibration, one-click sync, npm release, and marketplace activation as separate distribution or Release work.
 
 ### 4. Architecture Boundary Debt
 

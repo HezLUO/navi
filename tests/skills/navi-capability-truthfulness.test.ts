@@ -6,6 +6,24 @@ async function readRepoText(relativePath: string): Promise<string> {
 }
 
 describe("Navi capability truthfulness", () => {
+  it("describes the unreleased Distribution feasibility candidate truthfully", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const text of [readme, pluginReadme]) {
+      expect(text).toMatch(/Git-backed[\s\S]*navi-source/i);
+      expect(text).toMatch(/package-local[\s\S]*preview[\s\S]*approval/i);
+      expect(text).toMatch(/current main[\s\S]*unreleased/i);
+      expect(text).toMatch(/Public Plugin Directory[\s\S]*optional/i);
+      expect(text).not.toMatch(/available now in the Public Plugin Directory/i);
+    }
+    expect(chineseReadme).toMatch(/Git-backed[\s\S]*navi-source/i);
+    expect(chineseReadme).toMatch(/当前 main[\s\S]*尚未发布/i);
+  });
+
   it("describes adaptive project entry without claiming runtime or authority selection", async () => {
     const [readme, chineseReadme, pluginReadme, projectInit] = await Promise.all([
       readRepoText("README.md"),
@@ -463,10 +481,9 @@ describe("Navi capability truthfulness", () => {
     const version = await readRepoText("plugins/navi/VERSION.md");
 
     expect(manifest.version).toBe("0.1.0");
-    expect(manifest.description).toContain("Challenge Layer");
-    expect(manifest.keywords).toEqual(expect.arrayContaining(["challenge-layer", "validation"]));
-    expect(manifest.interface.longDescription).toContain("Challenge Moment");
-    expect(manifest.interface.longDescription).toContain("not background autonomy");
+    expect(manifest.description).toMatch(/Navi helps non-expert Codex users/i);
+    expect(manifest.keywords).toEqual(expect.arrayContaining(["navi", "project-supervision"]));
+    expect(manifest.interface.longDescription).toContain("exact approved preview");
 
     expect(readme).toContain("## Challenge Layer");
     expect(readme).toContain("Challenge Moment");
