@@ -33,6 +33,35 @@ function extractMarkdownSection(markdown: string, heading: string): string {
 }
 
 describe("Navi Project Map contracts", () => {
+  it("owns the installed package-local initialization boundary", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/project-map-v1.md",
+    );
+    const section = extractMarkdownSection(
+      reference,
+      "#### Installed Package Init Entry",
+    );
+
+    expect(section).toContain("scripts/navi-project-init.mjs");
+    expect(section).toContain("actually loaded Navi skill directory");
+    expect(section).toMatch(/must not[\s\S]*source checkout/i);
+    expect(section).toMatch(/must not[\s\S]*Codex cache path/i);
+    expect(section).toMatch(/preview[\s\S]*fingerprint[\s\S]*explicit approval/i);
+    expect(section).toMatch(/Node[\s\S]*unavailable[\s\S]*do not write directly/i);
+  });
+
+  it("routes the trigger-only fast path through the formal package entry", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/project-map-v1.md",
+    );
+    const section = extractMarkdownSection(reference, "#### Project State First");
+
+    expect(section).toMatch(/valid confirmed[\s\S]*managed trigger is missing/i);
+    expect(section).toMatch(/formal init entry[\s\S]*trigger-only preview and activation/i);
+    expect(section).toMatch(/installed plugin[\s\S]*package-local entry below/i);
+    expect(section).not.toContain("`navi init`");
+  });
+
   it("owns the complete Response Language Selection section outside the Working Thread reference", async () => {
     const [projectMap, workingThread] = await Promise.all([
       readRepoText(".agents/skills/navi/references/project-map-v1.md"),
@@ -608,7 +637,7 @@ Chinese orientation prompts should still allow Chinese headings and explanations
       /valid confirmed `?\.navi\/project-map\.md`?[\s\S]*skip adaptive baseline formation[\s\S]*existing Project Map behavior/i,
     );
     expect(initialization).toMatch(
-      /only the managed trigger is missing[\s\S]*`navi init`[\s\S]*trigger-only preview and activation/i,
+      /only the managed trigger is missing[\s\S]*formal init entry[\s\S]*trigger-only preview and activation[\s\S]*installed plugin[\s\S]*package-local entry/i,
     );
     expect(initialization).toMatch(/do not reconfirm or regenerate the baseline/i);
   });

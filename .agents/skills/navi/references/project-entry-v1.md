@@ -14,7 +14,11 @@ Never initialize automatically. A declined entry receives explicitly uncertain b
 
 Inspect project state before forming an Evidence Profile: check `.navi/project-map.md` and the managed project-local trigger first. A valid confirmed `.navi/project-map.md` skips Evidence Profile and baseline formation and uses the existing Project Map behavior.
 
-If the Map is valid and confirmed but only the managed trigger is missing, use the existing `navi init` trigger-only preview and activation path. Navi must not reconfirm or regenerate the baseline. Form an Evidence Profile only when there is no valid confirmed Map to reuse.
+If the Map is valid and confirmed but only the managed trigger is missing, hand
+that state to `project-map-v1.md` and use its formal init entry for the
+trigger-only preview and activation. Do not copy invocation detail here. Navi
+must not reconfirm or regenerate the baseline. Form an Evidence Profile only
+when there is no valid confirmed Map to reuse.
 
 ## Evidence Profile
 
@@ -68,7 +72,11 @@ Project roadmaps own detailed product sequencing; specs own design; plans own bo
 
 ## Confirmed Exit
 
-Both strategies use one combined Map and managed-trigger preview, one fingerprint-bound explicit approval, Map first, and trigger second. Use the existing `navi init --map-file <candidate> --expect-plan <fingerprint> --write` boundary. Do not bypass the CLI, stage, commit, push, or mutate global state.
+Both strategies use one combined Map and managed-trigger preview, one
+fingerprint-bound explicit approval, Map first, and trigger second. Hand the
+confirmed candidate to the package-local init entry owned by
+`project-map-v1.md`. Do not copy its path-resolution contract here, bypass the
+formal init entry, stage, commit, push, or mutate global state.
 
 ## Material Updates
 

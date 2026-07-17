@@ -92,6 +92,14 @@ async function parseWithPyYaml(source: string): Promise<Record<string, unknown>>
 }
 
 describe("Navi skill and package structure", () => {
+  it("routes installed project writes to the Project Map owner", async () => {
+    const skill = await readRepoText(".agents/skills/navi/SKILL.md");
+    expect(skill).toMatch(
+      /installed plugin[\s\S]*project-map-v1\.md[\s\S]*package-local init/i,
+    );
+    expect(skill).not.toContain("~/.codex/plugins/cache");
+  });
+
   it("uses plugin-validator-compatible YAML frontmatter", async () => {
     const skill = await readRepoText(".agents/skills/navi/SKILL.md");
     const frontmatter = extractFrontmatter(skill);

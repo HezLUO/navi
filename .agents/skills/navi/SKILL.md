@@ -99,6 +99,9 @@ Do not load every reference for an ordinary narrow request.
 - This keeps adaptive project entry ownership in one reference.
 - Use `references/supervision-v1.md` for phase/mode, verification budget, pause/continuation, coordination, quietness, and decision-handoff policy.
 - Use `references/project-map-v1.md` for confirmed Map authority, Progress/Rhythm Map rendering, lifecycle, maintenance, language following, and initialization preview/write boundary.
+- For installed plugin project initialization, follow
+  `references/project-map-v1.md`, which owns the package-local init entry; do
+  not require the source checkout or bare `navi` CLI.
 - Use `references/challenge-v1.md` for drift challenge, anti-self-certification, lightweight validation, and professional-judgment boundaries.
 - Use `references/working-thread-v1.md` only for durable continuity records and confirmed write-back.
 - For an approved bounded implementation contract with validation preauthorization, use `references/supervised-delivery-v1.md`; create the fresh validator only at review-ready, route routine in-scope findings without asking for another `continue`, and preserve explicit user control over permission, scope, risk, merge, push, tag, release, and publication.

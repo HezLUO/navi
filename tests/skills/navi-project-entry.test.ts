@@ -19,6 +19,18 @@ function extractSection(markdown: string, heading: string): string {
 }
 
 describe("Navi adaptive project entry", () => {
+  it("hands confirmed candidates to the Project Map init owner", async () => {
+    const entry = await readRepoText(
+      ".agents/skills/navi/references/project-entry-v1.md",
+    );
+    const exit = extractSection(entry, "## Confirmed Exit");
+
+    expect(exit).toContain("project-map-v1.md");
+    expect(exit).toContain("package-local init entry");
+    expect(exit).not.toContain("scripts/navi-project-init.mjs");
+    expect(exit).not.toContain("~/.codex/plugins/cache");
+  });
+
   it("defines one visible entry and four evidence profiles", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/project-entry-v1.md",
@@ -80,8 +92,9 @@ describe("Navi adaptive project entry", () => {
     );
     expect(fastPath).toContain("existing Project Map behavior");
     expect(fastPath).toMatch(
-      /only the managed trigger is missing[\s\S]*`navi init`[\s\S]*trigger-only preview and activation/i,
+      /only the managed trigger is missing[\s\S]*project-map-v1\.md[\s\S]*formal init entry[\s\S]*trigger-only preview and activation/i,
     );
+    expect(fastPath).not.toContain("navi init");
     expect(fastPath).toMatch(/must not reconfirm or regenerate the baseline/i);
   });
 

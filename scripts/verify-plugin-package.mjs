@@ -88,6 +88,8 @@ if (!fs.existsSync(validatorPath)) {
 }
 
 assertCurrentPackageMetadata();
+console.log("Checking generated package-local Navi init entry...");
+run("node", ["scripts/build-plugin-init.mjs", "--check"]);
 console.log("Running Navi skill/package tests...");
 run("npm", ["test", "--", "tests/skills"]);
 console.log("Validating Codex plugin manifest...");

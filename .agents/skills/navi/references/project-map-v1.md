@@ -160,7 +160,9 @@ Navi Project Initialization is the minimum reliable path to configure Navi for a
 
 Inspect `.navi/project-map.md` and the managed project-local trigger before adaptive baseline formation. When a valid confirmed `.navi/project-map.md` exists, skip adaptive baseline formation and use the existing Project Map behavior.
 
-If only the managed trigger is missing, use the existing `navi init` trigger-only preview and activation path. Do not reconfirm or regenerate the baseline.
+If only the managed trigger is missing, use the formal init entry for the
+trigger-only preview and activation. For an installed plugin, use the
+package-local entry below. Do not reconfirm or regenerate the baseline.
 
 #### Adaptive Baseline Formation
 
@@ -170,7 +172,24 @@ This reference continues to own the Project Map schema, rendering, lifecycle, an
 
 #### Final Preview And Activation
 
-After a missing or invalid baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. Codex must create a private candidate file outside the target project, then run the read-only `navi init --map-file <candidate>` preview. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. It must present one combined Map+trigger preview and obtain approval. One approval may authorize both writes. Apply only with `navi init --map-file <candidate> --expect-plan <fingerprint> --write`; never bypass the CLI with direct project writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map. Codex must remove the private candidate after success or explicit abandonment.
+After a missing or invalid baseline is confirmable, Codex renders a candidate Map in the current prompt language unless the user requests another saved language. Codex must create a private candidate file outside the target project, then use the formal init entry for a read-only preview with `--map-file <candidate>`. In a source checkout, the equivalent command is `navi init --map-file <candidate>`; an installed plugin must use the package entry below and must not require a bare `navi` CLI. One final preview covers the exact `.navi/project-map.md` action and exact managed `AGENTS.md` action. It must present one combined Map+trigger preview and obtain approval. One approval may authorize both writes. Apply only through the same formal entry with `--map-file <candidate> --expect-plan <fingerprint> --write`; the source-checkout equivalent is `navi init --map-file <candidate> --expect-plan <fingerprint> --write`. Never bypass the formal entry with direct project writes. The Map is written first and the trigger last, so activation cannot claim success without a valid confirmed Map. Codex must remove the private candidate after success or explicit abandonment.
+
+#### Installed Package Init Entry
+
+For an installed Navi plugin, resolve `scripts/navi-project-init.mjs` relative
+to the actually loaded Navi skill directory. The entry must not be inferred
+from the current working directory, a Navi source checkout, or a global npm
+link, and it must not use a hardcoded Codex cache path.
+
+Use the package entry for both steps of the existing boundary: first render the
+read-only candidate preview, then invoke the same entry with the exact returned
+fingerprint only after explicit approval. The package entry does not form the
+baseline and does not install Navi again.
+
+If Node is unavailable or the package entry cannot be resolved as a regular
+file inside the loaded skill directory, report that Distribution feasibility
+is not established. Do not write directly, guess cache paths, use a source-only
+`navi` command, or silently install a runtime.
 
 ### Global Bootstrap And Project Handoff
 
