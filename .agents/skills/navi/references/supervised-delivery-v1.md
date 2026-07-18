@@ -211,6 +211,19 @@ The payload is bare plain text. Field aliases and wrapper formats are invalid. A
 
 Before sending, confirm the payload must begin exactly with `NAVI_VALIDATION_RESULT`, is bare plain text with no XML/Markdown wrapper or code fence, uses exact field names with no aliases, and includes every common findings-package field and one valid findings branch. `findings: none` must omit the record-only fields `finding:`, `severity:`, `file:`, and `evidence:`; `findings:` must contain one or more severity-ordered `finding:` records. A malformed payload is not a valid result. Correct the same transition and resend it with the same result_id; the correction is not a second review.
 
+## Delivery Completion Adoption
+
+Execution and Validation task prompts must embed the Delivery Completion Clause
+operation from `lane-handoff-v1.md`. A reference path alone is insufficient.
+Each task must call host task messaging for exact `source_task` and retain
+host success evidence.
+
+Only host-confirmed delivery allows the task to claim handoff completion. A
+local final answer remains fallback evidence, not delivery. Two failed attempts
+preserve the complete local report for one-shot Main-Task Reconciliation.
+Retry, receipt, fallback, and no-acknowledgement details remain owned by
+`lane-handoff-v1.md` and are not duplicated here.
+
 ## Validation Levels
 
 - Level 1 reads the contract, exact diff, and supplied evidence; it runs no commands by default.

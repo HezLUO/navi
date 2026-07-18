@@ -421,4 +421,27 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(quietness).toMatch(/successful path[\s\S]*quiet/i);
     expect(quietness).toMatch(/do not[\s\S]*dependency restore complete[\s\S]*continue/i);
   });
+
+  it("embeds the delivery operation in Execution and Validation prompts", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const adoption = extractSection(reference, "## Delivery Completion Adoption");
+    const normalized = adoption
+      .replace(/[|`]/gu, " ")
+      .replace(/\s+/gu, " ")
+      .trim();
+
+    expect(normalized).toContain(
+      "Execution and Validation task prompts must embed the Delivery Completion Clause operation",
+    );
+    expect(normalized).toContain("A reference path alone is insufficient");
+    expect(normalized).toContain(
+      "Only host-confirmed delivery allows the task to claim handoff completion",
+    );
+    expect(normalized).toContain(
+      "Two failed attempts preserve the complete local report for one-shot Main-Task Reconciliation",
+    );
+    expect(adoption).not.toContain("delivery_attempts: 1 | 2");
+  });
 });

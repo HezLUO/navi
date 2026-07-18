@@ -611,4 +611,54 @@ describe("Navi supervision contracts", () => {
     expect(packagedSkill).toBe(skill);
     expect(packagedSupervision).toBe(supervision);
   });
+
+  it("requires host-confirmed delivery before a task claims completion", async () => {
+    const [canonical, packaged] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
+      readRepoText("plugins/navi/skills/navi/references/lane-handoff-v1.md"),
+    ]);
+    const completion = extractMarkdownSection(
+      canonical,
+      "## Delivery Completion Clause",
+    );
+    const normalized = completion
+      .replace(/[|`]/gu, " ")
+      .replace(/\s+/gu, " ")
+      .trim();
+
+    expect(normalized).toContain(
+      "Every delegated Execution or Validation Task prompt must include this operation",
+    );
+    expect(normalized).toContain(
+      "call the available Codex host task-messaging capability",
+    );
+    expect(normalized).toContain(
+      "send to the exact source_task and obtain host success evidence",
+    );
+    expect(normalized).toContain(
+      "A payload printed only in the task's own final answer is a local report, not direct delivery",
+    );
+    expect(completion).toContain("delivery_attempts: 1 | 2");
+    expect(completion).toContain("delivery_state: delivered | failed");
+    expect(normalized).toContain(
+      "delivered requires host tool success; failed requires two reported delivery failures",
+    );
+    expect(normalized).toContain(
+      "Do not send an acknowledgement or a second message only to confirm receipt",
+    );
+    const reconciliation = extractMarkdownSection(
+      canonical,
+      "## Main-Task Reconciliation",
+    )
+      .replace(/[|`]/gu, " ")
+      .replace(/\s+/gu, " ")
+      .trim();
+    expect(reconciliation).toContain(
+      "A complete valid directly delivered event follows existing deduplication and routing without recording delivery-protocol-failure",
+    );
+    expect(reconciliation).toContain(
+      "A complete valid local fallback with delivery_state: failed is recovered and routed while recording delivery-protocol-failure",
+    );
+    expect(packaged).toBe(canonical);
+  });
 });

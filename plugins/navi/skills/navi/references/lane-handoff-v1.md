@@ -36,6 +36,33 @@ Before each send, inspect the rendered wire payload:
 
 A malformed payload is not a valid delivery. Correct the same transition and resend it with the same event_id; this correction is not a new meaningful transition or review cycle.
 
+## Delivery Completion Clause
+
+Every delegated Execution or Validation Task prompt must include this operation
+directly. A reference path alone is insufficient:
+
+1. render the complete valid event or result;
+2. call the available Codex host task-messaging capability;
+3. send to the exact `source_task` and obtain host success evidence;
+4. on a reported delivery failure, retry once immediately with the same
+   identifier and semantically identical payload; and
+5. refuse to claim handoff completion when neither attempt succeeds.
+
+A payload printed only in the task's own final answer is a local report, not
+direct delivery. It does not satisfy this completion condition.
+
+After the host call, record one local Completion Receipt:
+
+delivery_attempts: 1 | 2
+delivery_state: delivered | failed
+
+`delivered` requires host tool success; `failed` requires two reported
+delivery failures. The wire payload does not claim its own delivery outcome,
+because that outcome exists only after the send operation.
+
+Host success plus the local receipt completes the handoff. Do not send an
+acknowledgement or a second message only to confirm receipt.
+
 ## Decision Required
 
 Use `kind: decision-required` only when the lane cannot continue without a real user decision about permission, external or cross-project writes, unplanned scope, acceptance-criteria reduction, material risk, product direction, merge, push, tag, release, or publication.
@@ -81,6 +108,12 @@ Do not emit for ordinary progress, routine waiting, an in-scope failure, test pa
 ## Delivery, Retry, And Fallback
 
 Choose the event_id once, render the complete event, and use the available Codex task-messaging capability to send it to source_task. On a reported delivery failure, retry once immediately with the same event_id and identical semantic payload. Do not use timed retries, polling, a resend loop, or durable storage.
+
+The delegated task follows Delivery Completion Clause before it reports
+completion. After two failed attempts, preserve the complete local transition
+report, record `delivery_state: failed`, and stop. The Source Main Task may
+recover that report only through existing one-shot Main-Task Reconciliation at
+a relevant dependent checkpoint.
 
 A later meaningful transition after a lane resumes uses a new event_id. A second `review-ready` after bounded remediation is a new review cycle.
 
@@ -140,9 +173,18 @@ claims that the only useful remaining action is waiting; or will close the affec
 At one checkpoint, use the known `task_id` directly. Prefer a host one-shot
 completion snapshot or bounded wait when available; otherwise perform one read-only task inspection. Inspect one relevant task at most once for one checkpoint. Do not list or search tasks when the identifier is known. A task that is still running remains quiet and the Main Task must not read it again at that checkpoint.
 
-If the task completed with a valid event, recover it, deduplicate by
-`event_id`, and use the existing routing. If it completed without a valid
-event, mark `delivery-protocol-failure`; terminal facts are not user authorization. Request at most one bounded re-delivery from the same task only when a required field is missing. Do not ask the user to relay the result and do not create a duplicate task.
+A complete valid directly delivered event follows existing deduplication and
+routing without recording `delivery-protocol-failure`. A complete valid local
+fallback with `delivery_state: failed` is recovered and routed while recording
+`delivery-protocol-failure`. Terminal facts remain non-authorizing. Request at
+most one bounded redelivery from the same task only when a required field is
+missing. Do not ask the user to relay the result and do not create a duplicate
+task.
+
+For a completed task, a valid event still uses the existing routing under this
+provenance distinction. Terminal facts are not user authorization. The existing
+one bounded re-delivery allowance from the same task remains limited to a
+missing required field.
 
 On task unavailability or read failure, do not retry in a loop. Stop a
 dependent high-impact action, or continue independent work with the state
