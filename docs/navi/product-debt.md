@@ -1,6 +1,6 @@
 # Navi Product Debt Register
 
-Last updated: 2026-07-14
+Last updated: 2026-07-18
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
@@ -264,9 +264,11 @@ Priority: medium before broader model-routing claims
 
 The host model catalog remains dynamic and requires natural calibration. Current preferred model mappings are routing preferences rather than permanent host truth, so actual route application, supported reasoning combinations, entitlements, modalities, and cross-surface behavior still need bounded observation in real Codex tasks.
 
-The Main Turn Host Adapter remains a separate milestone. Its turn-boundary behavior must be designed and calibrated independently; the current Task Routing Foundation does not switch active turns or complete three-role routing.
+Task model routing remains applicable at task-creation and follow-up boundaries for bounded Execution and Validation Tasks. Stock Codex App Main turns keep the user's selected model; Navi may give one quiet recommendation when a materially stronger stage floor is needed, but it does not switch the active Main turn.
 
-This debt is not a current implementation failure or release blocker. Shadow calibration, task-level live calibration, and later main-turn calibration should remain distinct, and runtime primitives should be reconsidered only if the thin adapter proves insufficient.
+The Main Turn Host Adapter and a Navi local panel are intentionally deferred and are not part of the current Codex-first Product Complete gate. The remaining Product Complete gate is one genuine, bounded implementation journey that naturally combines project supervision, actual Execution/Validation model and reasoning routing, direct event return, bounded remediation, no meaningless continue, and a final real acceptance or integration decision. One passing joint natural sample is sufficient to close Codex-first Product Complete; do not create an artificial task merely to test routing.
+
+This debt is not a current implementation failure or release blocker. Shadow calibration, task-level live calibration, and any later main-turn calibration should remain distinct. A future local panel may still become a separate supervision or orchestration product if it proves broader value, but not solely for Main-turn model switching. Runtime primitives should be reconsidered only if later natural calibration shows that the current Codex-first boundary is insufficient.
 
 ## Suggested Order
 

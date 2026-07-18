@@ -1,13 +1,13 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: active backlog with Product Complete calibration open and Distribution feasibility separately approved
-Last updated: 2026-07-17
+Last updated: 2026-07-18
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
 ## Current Phase
 
-Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. Outcome Boundary real-project calibration remains part of the open gate. Product Complete calibration remains open across mature and evidence-poor project entry, supervised delivery, and closure evidence.
+Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. Outcome Boundary real-project calibration remains part of the open gate. Codex-first Product Complete now has one remaining gate: one genuine, bounded implementation journey that naturally combines project supervision, actual Execution/Validation model and reasoning routing, direct event return, bounded remediation, no meaningless continue, and a final real acceptance or integration decision.
 
 Distribution feasibility is separately approved as an unreleased implementation lane. Its next Distribution gate is bounded real-installation Calibration after independent validation and explicit integration—not automatic Release preparation. Product Complete calibration is neither replaced nor declared complete. Real installation, permission, scope, risk, merge, push, tag, release, and publication decisions remain explicit.
 
@@ -84,11 +84,11 @@ Goal: carry the unreleased Distribution feasibility candidate through independen
 
 ## Codex Model And Reasoning Routing
 
-Task Routing Foundation is the first bounded milestone for user-authorized Codex model and reasoning selection in Execution and Validation Tasks. Task-level completion does not complete three-role automatic routing.
+Task model routing remains applicable at task-creation and follow-up boundaries for bounded Execution and Validation Tasks. Stock Codex App Main turns keep the user's selected model; Navi may give one quiet recommendation when a materially stronger stage floor is needed, but it does not switch the active Main turn.
 
-The Main Turn Host Adapter is the next separate milestone and must apply a route only at a future turn boundary while preserving the same Main Thread. Shadow calibration, task-level natural calibration, and main-turn natural calibration remain separate gates; static contract tests do not replace them.
+The Main Turn Host Adapter and a Navi local panel are deferred and are not part of the current Codex-first Product Complete gate. One passing joint natural sample is sufficient to close Codex-first Product Complete; do not create an artificial task merely to test routing. Shadow calibration, task-level natural calibration, and any later main-turn calibration remain separate gates; static contract tests do not replace them.
 
-Runtime Surface should be reconsidered only if natural calibration shows that the thin Host Adapter cannot reliably preserve turn-boundary routing, task recovery, or concurrent-lane correctness.
+A future Navi local panel may still become a separate supervision or orchestration product if it later proves broader value, but it is not justified solely for Main-turn model switching. Runtime surfaces should be reconsidered only if future natural calibration shows that the current Codex-first boundary is insufficient for task routing, task recovery, or concurrent-lane correctness.
 
 ## Future Capability Layers
 

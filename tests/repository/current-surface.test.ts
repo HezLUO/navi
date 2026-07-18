@@ -134,8 +134,9 @@ describe("Current Navi repository surface", () => {
     expect(history).toContain(
       "docs/superpowers/plans/2026-07-17-navi-distribution-feasibility.md",
     );
-    expect(roadmap).toMatch(/Product Complete calibration[\s\S]*remains open/i);
+    expect(roadmap).toMatch(/Codex-first Product Complete[\s\S]*one remaining gate/i);
     expect(roadmap).toMatch(/Distribution feasibility[\s\S]*separately approved/i);
+    expect(roadmap).toMatch(/Product Complete calibration[\s\S]*neither replaced nor declared complete/i);
     expect(debt).toMatch(/package-local init[\s\S]*real installation calibration/i);
     expect(debt).toMatch(/Public Plugin Directory[\s\S]*not a prerequisite/i);
   });
@@ -235,7 +236,7 @@ describe("Current Navi repository surface", () => {
     }
   });
 
-  it("indexes task model routing while keeping the main adapter as a separate gate", async () => {
+  it("indexes active task routing authority while deferring main-turn switching", async () => {
     const [history, roadmap, debt] = await Promise.all([
       fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
       fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
@@ -249,9 +250,15 @@ describe("Current Navi repository surface", () => {
     expect(active).toContain(
       "`docs/superpowers/plans/2026-07-18-navi-task-model-routing-foundation.md`",
     );
-    expect(roadmap).toMatch(/Task Routing Foundation[\s\S]*Main Turn Host Adapter/i);
-    expect(roadmap).toMatch(/Task-level[\s\S]*does not complete[\s\S]*three-role/i);
+    expect(history).toMatch(/Task Routing Foundation model-routing design and plan remain Active authority/i);
+    expect(history).toMatch(/Main Turn Host Adapter[\s\S]*superseded by the current boundary/i);
+    expect(roadmap).toMatch(/task-creation and follow-up boundaries[\s\S]*Execution and Validation Tasks/i);
+    expect(roadmap).toMatch(/Main turns keep the user's selected model[\s\S]*does not switch the active Main turn/i);
+    expect(roadmap).toMatch(/Main Turn Host Adapter and a Navi local panel are deferred[\s\S]*not part of the current Codex-first Product Complete gate/i);
+    expect(roadmap).toMatch(/One passing joint natural sample is sufficient[\s\S]*do not create an artificial task merely to test routing/i);
     expect(debt).toMatch(/host model catalog[\s\S]*natural calibration/i);
-    expect(debt).toMatch(/Main Turn Host Adapter[\s\S]*separate/i);
+    expect(debt).toMatch(/Main turns keep the user's selected model[\s\S]*does not switch the active Main turn/i);
+    expect(debt).toMatch(/Main Turn Host Adapter and a Navi local panel are intentionally deferred/i);
+    expect(debt).toMatch(/One passing joint natural sample is sufficient[\s\S]*do not create an artificial task merely to test routing/i);
   });
 });
