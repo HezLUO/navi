@@ -6,10 +6,14 @@ This index is navigation metadata. It does not rewrite historical documents.
 
 Supervised Delivery Loop V1 is integrated, and adaptive project entry is integrated. Outcome Boundary real-project calibration remains part of the Product Complete gate. Product Complete calibration remains open. Distribution feasibility is a separately approved implementation lane; it does not complete Product Complete, activate a release, or authorize real installation calibration. Release, runtime, UI, and other-agent work remain outside the current implementation gate.
 
+Plan And Delivery Reliability V1 is implemented as an unreleased Codex-first contract, but one natural joint calibration remains required before it can contribute passing Product Complete evidence.
+
 The Task Routing Foundation model-routing design and plan remain Active authority for bounded Execution and Validation Task routing. Their Main Turn Host Adapter or "next milestone" portions are superseded by the current boundary in `docs/navi/roadmap.md` and `docs/navi/product-debt.md`; do not rewrite the historical design or plan files themselves.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-19-navi-plan-delivery-reliability-design.md`
+- `docs/superpowers/plans/2026-07-19-navi-plan-delivery-reliability.md`
 - `docs/superpowers/specs/2026-07-18-navi-bounded-dependency-restore-design.md`
 - `docs/superpowers/plans/2026-07-18-navi-bounded-dependency-restore.md`
 - `docs/superpowers/specs/2026-07-18-navi-codex-model-reasoning-routing-design.md`

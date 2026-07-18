@@ -283,4 +283,39 @@ describe("Current Navi repository surface", () => {
     );
     expect(dependencyRecord).not.toMatch(/Product Complete[^\n]*closed/i);
   });
+
+  it("records plan and delivery reliability as active but uncalibrated", async () => {
+    const [history, roadmap, debt, calibration] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/calibration-log.md"), "utf8"),
+    ]);
+    const active =
+      history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+
+    expect(active).toContain(
+      "`docs/superpowers/specs/2026-07-19-navi-plan-delivery-reliability-design.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-19-navi-plan-delivery-reliability.md`",
+    );
+    expect(roadmap).toMatch(
+      /Plan And Delivery Reliability V1[\s\S]*one natural joint calibration/i,
+    );
+    expect(debt).toContain("### 10. Plan And Delivery Reliability Debt");
+    expect(debt).toMatch(
+      /general Markdown parser[\s\S]*not justified[\s\S]*natural calibration/i,
+    );
+    expect(calibration).toContain(
+      "## 2026-07-18 - Repeated Unsatisfiable Plan-Artifact Decisions",
+    );
+    expect(calibration).toContain(
+      "## 2026-07-18 - Validation Result Printed But Not Delivered",
+    );
+    expect(calibration).toMatch(
+      /user relay count: 0[\s\S]*meaningless\s+continue count: 0/i,
+    );
+    expect(roadmap).not.toMatch(/Product Complete is closed/i);
+  });
 });

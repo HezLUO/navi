@@ -11,6 +11,8 @@ Supervised Delivery Loop V1 is integrated, and adaptive project entry is integra
 
 Distribution feasibility is separately approved as an unreleased implementation lane. Its next Distribution gate is bounded real-installation Calibration after independent validation and explicit integration—not automatic Release preparation. Product Complete calibration is neither replaced nor declared complete. Real installation, permission, scope, risk, merge, push, tag, release, and publication decisions remain explicit.
 
+Plan And Delivery Reliability V1 is the current bounded reliability closeout: implementation and independent validation establish the contract, then one natural joint calibration must demonstrate zero user relay, zero meaningless continue, aggregate plan-artifact handling, direct Execution and Validation delivery, and preserved real user decisions. This does not close Product Complete by itself and does not authorize Runtime or Release work.
+
 ## Product Positioning
 
 Navi should be treated as an independent product surface for non-expert users supervising expert agents.

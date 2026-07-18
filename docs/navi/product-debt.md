@@ -270,6 +270,31 @@ The Main Turn Host Adapter and a Navi local panel are intentionally deferred and
 
 This debt is not a current implementation failure or release blocker. Shadow calibration, task-level live calibration, and any later main-turn calibration should remain distinct. A future local panel may still become a separate supervision or orchestration product if it proves broader value, but not solely for Main-turn model switching. Runtime primitives should be reconsidered only if later natural calibration shows that the current Codex-first boundary is insufficient.
 
+### 10. Plan And Delivery Reliability Debt
+
+Status: contract implementation pending natural calibration
+Priority: high before Codex-first Product Complete closure
+
+Problem:
+
+Approved plans have contained mechanically unsatisfiable prose/assertion and
+command-timing artifacts, while a Validation Task has also completed locally
+without directly delivering its result. Both failures created user relay or
+approval friction without adding product control.
+
+Recommended fix:
+
+- keep one focused plan-reliability owner and the existing Lane Handoff
+  delivery owner;
+- require pre-submission and Execution-preflight checks;
+- allow one aggregate semantics-preserving correction round;
+- require host-confirmed direct delivery before task completion; and
+- run one natural joint calibration after integration.
+
+A general Markdown parser is not justified by current evidence. Reconsider a
+parser or Runtime Surface only if natural calibration shows that contract-first
+checks and host task messaging remain insufficient.
+
 ## Suggested Order
 
 1. Make public naming Navi-first while preserving legacy ids.

@@ -1,9 +1,42 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-17
+Last updated: 2026-07-19
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-18 - Repeated Unsatisfiable Plan-Artifact Decisions
+
+Mode: Implementation planning and bounded implementation
+
+Observed: one approved plan prescribed Markdown and assertions that could not
+match after ordinary line wrapping. The Execution Task surfaced equivalent
+regex defects one at a time, requiring repeated user approvals. A later batch
+scan also found one real design-to-plan omission, which correctly required Main
+Thread judgment.
+
+Judgment: mechanical plan-artifact defects should be checked before dispatch,
+aggregated, and corrected once without user interruption. Semantic omissions,
+scope changes, permission changes, risk changes, or weaker acceptance remain
+real decisions. This sample motivated Plan Satisfiability Check,
+Whitespace-Safe Assertions, and Plan-Artifact Correction Class.
+
+## 2026-07-18 - Validation Result Printed But Not Delivered
+
+Mode: Independent Validation and task coordination
+
+Observed: the Validation Task produced a valid `NAVI_VALIDATION_RESULT` in
+its own final answer but did not call host task messaging. The user noticed
+that the result had not reached the Main Thread. A bounded redelivery proved
+the host messaging capability worked.
+
+Judgment: a local final answer is not delivery. Direct host messaging and host
+success evidence are task completion conditions. This failed sample does not
+close Product Complete even though bounded redelivery later succeeded.
+
+Natural follow-up acceptance remains: user relay count: 0; meaningless
+continue count: 0; related plan-artifact decisions are aggregated; Execution
+and Validation both deliver directly; ordinary progress is not polled.
 
 ## 2026-07-17 - Git-Backed Distribution Completed The Minimum Value Loop
 
