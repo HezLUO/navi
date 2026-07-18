@@ -32,6 +32,52 @@ handoff_format: NAVI_LANE_HANDOFF_EVENT V1 review-ready
 
 Preauthorization covers creating one fresh independent Validation Thread only for the initial valid review-ready transition and reusing the same Validation Thread for up to two in-scope remediation re-reviews. It does not authorize permissions, scope expansion, risk acceptance, merge, push, tag, release, publication, or reduced acceptance criteria.
 
+## Dependency Restore Extension
+
+Dependency restore is an optional additive part of the approved Execution
+Contract. It records exactly:
+
+dependency_restore:
+  preauthorized: true
+  package_manager: npm
+  command: npm ci
+  trusted_baseline: exact commit SHA
+  lockfile: package-lock.json
+  lockfile_digest: SHA-256
+  expected_state: node_modules absent
+  lifecycle_scripts: allowed
+  network: host-mediated
+  allowed_install_write: node_modules
+  immutable_files:
+    - package.json
+    - package-lock.json
+  post_install_audit: required
+
+Every field is required. Missing, additional, ambiguous, or conflicting values
+make the preauthorization unavailable. The approval applies to one Execution
+Task, the exact baseline and lockfile digest, and one install attempt. It does
+not survive a new task, changed baseline, changed lockfile, or later plan.
+
+This extension does not grant persistent project permission, Validation Task
+write authority, another package manager, package changes, global npm changes,
+credential changes, merge, push, release, or publication authority.
+
+## Dependency Restore Preflight
+
+Before running the restore, the Execution Task confirms that HEAD equals
+`trusted_baseline`, the worktree is clean, `package.json` and
+`package-lock.json` exist, the lockfile digest matches, `node_modules` is
+absent, and the exact command is `npm ci` with no unapproved flags.
+
+The install must be project-local. It uses no `sudo`, `-g`, global npm
+configuration, private registry change, credential change, dependency edit,
+or lockfile regeneration. The contract must explicitly allow lifecycle scripts
+and host-mediated network access.
+
+An existing or suspected-broken `node_modules` tree is not an eligible restore.
+Do not reinterpret it as absent, delete it, switch commands, or widen the
+contract when preflight fails.
+
 ## Model Routing Extension
 
 Model routing is additive to the existing Execution Contract, which remains valid. This opt-in extension records exactly:

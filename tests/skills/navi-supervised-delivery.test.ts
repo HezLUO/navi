@@ -59,6 +59,53 @@ describe("Navi Supervised Delivery Loop V1", () => {
     );
   });
 
+  it("defines one additive dependency restore extension", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const extension = extractSection(reference, "## Dependency Restore Extension");
+
+    for (const field of [
+      "dependency_restore:",
+      "preauthorized: true",
+      "package_manager: npm",
+      "command: npm ci",
+      "trusted_baseline: exact commit SHA",
+      "lockfile: package-lock.json",
+      "lockfile_digest: SHA-256",
+      "expected_state: node_modules absent",
+      "lifecycle_scripts: allowed",
+      "network: host-mediated",
+      "allowed_install_write: node_modules",
+      "immutable_files:",
+      "- package.json",
+      "- package-lock.json",
+      "post_install_audit: required",
+    ]) {
+      expect(extension).toContain(field);
+    }
+    expect(extension).toMatch(/optional[\s\S]*additive/i);
+    expect(extension).toMatch(/every field[\s\S]*required/i);
+    expect(extension).toMatch(/one Execution\s+Task[\s\S]*one install attempt/i);
+    expect(extension).toMatch(/does\s+not survive[\s\S]*new task[\s\S]*changed baseline/i);
+  });
+
+  it("limits dependency restore to an exact trusted npm ci preflight", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const preflight = extractSection(reference, "## Dependency Restore Preflight");
+
+    expect(preflight).toMatch(/HEAD[\s\S]*trusted_baseline/i);
+    expect(preflight).toMatch(/worktree\s+is\s+clean/i);
+    expect(preflight).toMatch(/lockfile[\s\S]*digest/i);
+    expect(preflight).toMatch(/node_modules[\s\S]*absent/i);
+    expect(preflight).toMatch(/exact command[\s\S]*`npm ci`/i);
+    expect(preflight).toMatch(/no `sudo`[\s\S]*`-g`[\s\S]*global npm/i);
+    expect(preflight).toMatch(/private registry[\s\S]*credential[\s\S]*dependency edit/i);
+    expect(preflight).toMatch(/existing[\s\S]*node_modules[\s\S]*not an eligible restore/i);
+  });
+
   it("creates one validator and reuses it for bounded remediation", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/supervised-delivery-v1.md",
