@@ -261,4 +261,26 @@ describe("Current Navi repository surface", () => {
     expect(debt).toMatch(/Main Turn Host Adapter and a Navi local panel are intentionally deferred/i);
     expect(debt).toMatch(/One passing joint natural sample is sufficient[\s\S]*do not create an artificial task merely to test routing/i);
   });
+
+  it("records bounded dependency restore as active but uncalibrated", async () => {
+    const [history, calibration] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/calibration-log.md"), "utf8"),
+    ]);
+    const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+    const dependencyRecord = calibration.match(
+      /## 2026-07-16 - Bounded Project-Local `npm ci` Preauthorization\n(?<entry>[\s\S]*?)(?=\n## |$)/,
+    )?.groups?.entry ?? "";
+
+    expect(active).toContain(
+      "`docs/superpowers/specs/2026-07-18-navi-bounded-dependency-restore-design.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-18-navi-bounded-dependency-restore.md`",
+    );
+    expect(dependencyRecord).toMatch(
+      /implemented in current source[\s\S]*natural calibration pending/i,
+    );
+    expect(dependencyRecord).not.toMatch(/Product Complete[^\n]*closed/i);
+  });
 });

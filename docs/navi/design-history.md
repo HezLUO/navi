@@ -10,6 +10,8 @@ The Task Routing Foundation model-routing design and plan remain Active authorit
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-18-navi-bounded-dependency-restore-design.md`
+- `docs/superpowers/plans/2026-07-18-navi-bounded-dependency-restore.md`
 - `docs/superpowers/specs/2026-07-18-navi-codex-model-reasoning-routing-design.md`
 - `docs/superpowers/plans/2026-07-18-navi-task-model-routing-foundation.md`
 - `docs/superpowers/specs/2026-07-17-navi-distribution-ready-design.md`

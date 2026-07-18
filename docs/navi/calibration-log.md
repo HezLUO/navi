@@ -185,8 +185,7 @@ Product follow-up:
 
 Target project: Navi
 Mode: design decision from implementation coordination
-Status: approved workflow decision; not yet incorporated into the active Navi
-skill contract
+Status: implemented in current source; natural calibration pending
 
 Prompt shape:
 
@@ -224,14 +223,13 @@ authoritative and cannot be bypassed by Navi.
 
 Product follow-up:
 
-- Add a narrowly named dependency-restore policy to a future Supervised
-  Delivery contract revision rather than hiding it in general permission text.
-- Record the exact command, baseline, lockfile evidence, allowed writes, script
-  policy, network expectation, and post-install audit in the Execution
-  Contract.
-- Do not retrofit this rule into an already active implementation lane or claim
-  it is implemented until its canonical owner and focused contract coverage are
-  approved.
+- Use the active Supervised Delivery dependency-restore extension only when
+  every exact contract and preflight condition is present.
+- Keep Codex host permissions authoritative and preserve direct
+  `decision-required` routing for failed premises, failed commands, or drift.
+- Do not claim the remaining joint natural Product Complete sample passed until
+  one accepted and integrated implementation journey satisfies every recorded
+  calibration criterion.
 
 ## 2026-07-16 - Adaptive Entry Validation Did Not Return To The Main Task
 
