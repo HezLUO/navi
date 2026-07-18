@@ -112,4 +112,34 @@ describe("Navi Plan Reliability V1", () => {
     ]);
     expect(packaged).toBe(canonical);
   });
+
+  it("is adopted without duplicating the detailed owner", async () => {
+    const [skill, delivery, owner, packagedSkill, packagedDelivery] =
+      await Promise.all([
+        readRepoText(".agents/skills/navi/SKILL.md"),
+        readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
+        readRepoText(".agents/skills/navi/references/plan-reliability-v1.md"),
+        readRepoText("plugins/navi/skills/navi/SKILL.md"),
+        readRepoText(
+          "plugins/navi/skills/navi/references/supervised-delivery-v1.md",
+        ),
+      ]);
+    const adoption = normalizeWhitespace(
+      extractSection(delivery, "## Plan Reliability Adoption"),
+    );
+
+    expect(skill).toContain("references/plan-reliability-v1.md");
+    expect(skill).toContain("plan_satisfiability_check: required");
+    expect(skill).toContain("plan_artifact_correction: bounded");
+    expect(adoption).toContain(
+      "Before plan approval use the pre-submission check; before production edits use the Execution preflight check",
+    );
+    expect(adoption).toContain(
+      "The detailed eligibility, aggregate correction, evidence, and quietness rules remain owned by plan-reliability-v1.md",
+    );
+    expect(delivery).not.toContain("## Classification Fixtures");
+    expect(owner).toContain("## Classification Fixtures");
+    expect(packagedSkill).toBe(skill);
+    expect(packagedDelivery).toBe(delivery);
+  });
 });

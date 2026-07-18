@@ -23,6 +23,8 @@ baseline: exact commit or immutable snapshot
 allowed_scope: files, components, and behavior the executor may change
 forbidden_scope: excluded files, actions, and escalation boundaries
 implementation_plan: expected implementation plan or bounded task list
+plan_satisfiability_check: required
+plan_artifact_correction: bounded
 verification_budget: exact required checks and maximum expansion
 validation_level: 1 | 2 | 3
 validation_preauthorized: true
@@ -31,6 +33,19 @@ stop_conditions: decision-required, formally blocked, or review-ready
 handoff_format: NAVI_LANE_HANDOFF_EVENT V1 review-ready
 
 Preauthorization covers creating one fresh independent Validation Thread only for the initial valid review-ready transition and reusing the same Validation Thread for up to two in-scope remediation re-reviews. It does not authorize permissions, scope expansion, risk acceptance, merge, push, tag, release, publication, or reduced acceptance criteria.
+
+## Plan Reliability Adoption
+
+Every implementation-plan contract adopts `plan-reliability-v1.md`. Before
+plan approval use the pre-submission check; before production edits use the
+Execution preflight check. A clean result continues quietly. An eligible
+mechanical defect set may use one aggregate correction round; every semantic,
+scope, permission, risk, acceptance, or verification change returns to Main
+Thread judgment.
+
+The detailed eligibility, aggregate correction, evidence, and quietness rules
+remain owned by `plan-reliability-v1.md`. Do not copy its fixtures or create a
+second correction schema here.
 
 ## Dependency Restore Extension
 

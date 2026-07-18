@@ -30,6 +30,8 @@ describe("Navi Supervised Delivery Loop V1", () => {
       "allowed_scope",
       "forbidden_scope",
       "implementation_plan: expected implementation plan or bounded task list",
+      "plan_satisfiability_check: required",
+      "plan_artifact_correction: bounded",
       "verification_budget",
       "validation_level: 1 | 2 | 3",
       "validation_preauthorized: true",
