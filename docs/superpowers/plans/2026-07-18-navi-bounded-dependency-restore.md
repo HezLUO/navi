@@ -22,7 +22,8 @@
 - Do not edit `package.json`, `package-lock.json`, `plugins/navi/VERSION.md`, `archive/along`, `src/`, or `work/`.
 - Use targeted tests, `npm run verify:plugin-package`, mirror checks, and `git diff --check`; do not run full `npm test` unless targeted evidence exposes a broader regression.
 - The implementation candidate must use one true Codex worktree Execution Task and one true read-only Validation Task. The Main Thread owns final integration, push, release, and Product Complete judgment.
-- Route the Execution Task as `standard + medium` and the Level 2 Validation Task independently as `standard + high`, resolving those abstract routes through the available Codex host catalog.
+- Route the Execution Task as `strong + high` and the independent Level 3 Validation Task as `strong + high`; permission-bearing dependency installation and acceptance both require the strong floor.
+- On the current local Codex host, use the already probed and accepted `gpt-5.6-sol + high` combination for both Tasks. On another destination host, apply it only after that host accepts the exact combination; if it rejects the route, report `recommended-not-applied` and return `decision-required` before using the compatible `gpt-5.5 + high` fallback. Never claim that an unaccepted route was applied or silently fall below the strong floor.
 - Count the journey as the remaining joint natural Product Complete sample only if direct event return, route application, bounded remediation, zero user relay, zero meaningless `continue`, and final accepted integration all succeed.
 
 ## Main-Thread Pre-Dispatch Gate
