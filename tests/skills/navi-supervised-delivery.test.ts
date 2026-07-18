@@ -365,4 +365,58 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(failure).toMatch(/must not claim[\s\S]*automatic switching/i);
     expect(failure).toMatch(/must not silently[\s\S]*lower tier/i);
   });
+
+  it("runs one host-mediated restore and audits the result", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const lifecycle = extractSection(reference, "## Dependency Restore Lifecycle");
+
+    expect(lifecycle).toMatch(/run `npm ci` once/i);
+    expect(lifecycle).toMatch(/lifecycle scripts[\s\S]*not risk-free/i);
+    expect(lifecycle).toMatch(/host[\s\S]*network or sandbox[\s\S]*authoritative/i);
+    expect(lifecycle).toMatch(/package\.json[\s\S]*package-lock\.json[\s\S]*byte-identical/i);
+    expect(lifecycle).toMatch(/no tracked file changed/i);
+    expect(lifecycle).toMatch(/no untracked path[\s\S]*outside[\s\S]*node_modules/i);
+    expect(lifecycle).toMatch(/no global npm[\s\S]*shell-profile[\s\S]*credential[\s\S]*external-project state[\s\S]*intentionally changed/i);
+    expect(lifecycle).toMatch(/worktree remains suitable[\s\S]*approved implementation plan/i);
+    expect(lifecycle).toMatch(/continue[\s\S]*approved implementation plan[\s\S]*without[\s\S]*continue/i);
+  });
+
+  it("routes every restore failure without redefining blocked", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const failure = extractSection(reference, "## Dependency Restore Failure Routing");
+
+    for (const cause of [
+      "preflight mismatch",
+      "host permission",
+      "nonzero",
+      "post-install drift",
+    ]) {
+      expect(failure.toLowerCase()).toContain(cause);
+    }
+    expect(failure).toMatch(/decision-required/i);
+    expect(failure).toMatch(/exhausts[\s\S]*one preauthorized attempt/i);
+    expect(failure).toMatch(/do not[\s\S]*retry[\s\S]*`npm install`/i);
+    expect(failure).toMatch(/do not[\s\S]*commit[\s\S]*auto-revert[\s\S]*clean/i);
+    expect(failure).toMatch(/formal `blocked`[\s\S]*existing[\s\S]*lifecycle rule/i);
+  });
+
+  it("keeps dependency restore execution-only and quiet", async () => {
+    const [skill, reference] = await Promise.all([
+      readRepoText(".agents/skills/navi/SKILL.md"),
+      readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
+    ]);
+    const roles = extractSection(reference, "## Dependency Restore Role Boundaries");
+    const quietness = extractSection(reference, "## Dependency Restore Quietness");
+
+    expect(skill).toMatch(/dependency restore[\s\S]*supervised-delivery-v1\.md/i);
+    expect(skill).toMatch(/must not[\s\S]*permanent[\s\S]*project permission/i);
+    expect(roles).toMatch(/Execution\s+Task alone/i);
+    expect(roles).toMatch(/Validation Task[\s\S]*read-only[\s\S]*must not install/i);
+    expect(quietness).toMatch(/successful path[\s\S]*quiet/i);
+    expect(quietness).toMatch(/do not[\s\S]*dependency restore complete[\s\S]*continue/i);
+  });
 });

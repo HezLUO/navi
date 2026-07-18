@@ -25,7 +25,7 @@ Read only the references needed for the current request:
 - `references/challenge-v1.md` for drift, anti-self-certification, risk challenge, and professional-judgment boundaries.
 - `references/working-thread-v1.md` for durable Working Thread continuity, creation, wrap-up, and write-back.
 - `references/lane-handoff-v1.md` for bounded Codex lane delivery and source-task routing.
-- `references/supervised-delivery-v1.md` for preauthorized independent validation, exact-snapshot review, findings routing, and bounded remediation.
+- Bounded dependency restore and preauthorized independent validation use `references/supervised-delivery-v1.md` for exact-snapshot review, findings routing, and bounded remediation.
 - `references/model-routing-v1.md` is the sole owner for Codex task model tiers, reasoning effort, capability floors, Router Checks, Route Leases, host model resolution, and task-level route failure.
 
 Do not load every reference for an ordinary narrow request.
@@ -61,6 +61,7 @@ Task model routing requires an explicit user-authorized policy and remains owned
 - At a dependent control checkpoint for an unresolved relevant task, Codex must use the one-shot Main-Task Reconciliation policy in `references/lane-handoff-v1.md`; it must not turn reconciliation into ordinary progress polling.
 - Codex must enforce this boundary: do not create more than one Validation Thread for the same review-ready event and exact snapshot.
 - Codex must enforce this boundary: do not let a Validation Thread write files, implement fixes, merge, push, tag, release, or accept product risk.
+- Navi must not turn one Execution Contract's dependency restore approval into permanent project permission, let a Validation Task install dependencies, or ask for another product approval after an eligible restore succeeds.
 - Codex must not ask the user to relay review-ready events, validation results, or in-scope remediation between tasks when host task messaging is available.
 - Codex must not treat review-ready as accepted; a preauthorized Supervised Delivery Loop remains validation-pending until a valid exact-snapshot result returns.
 - Codex must not exceed two in-scope remediation rounds without returning to product or user judgment.

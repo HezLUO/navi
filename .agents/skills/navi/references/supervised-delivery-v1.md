@@ -78,6 +78,56 @@ An existing or suspected-broken `node_modules` tree is not an eligible restore.
 Do not reinterpret it as absent, delete it, switch commands, or widen the
 contract when preflight fails.
 
+## Dependency Restore Lifecycle
+
+After preflight passes, run `npm ci` once. Normal lifecycle scripts are allowed
+because the exact baseline was explicitly trusted, but they are not risk-free.
+Codex host network or sandbox permission remains authoritative. If the host
+asks, request that tool permission directly; approval resumes the same command
+and does not create a second Navi product decision.
+
+After a zero exit, prove `package.json` and `package-lock.json` remain
+byte-identical, the lockfile digest is unchanged, no tracked file changed, and
+no untracked path appeared outside the allowed project-local `node_modules`.
+Also confirm no global npm, shell-profile, credential, or external-project state was intentionally changed and the worktree remains suitable for the approved implementation plan.
+Record the command, baseline, digest, exit status, and audit result as lane
+evidence. Then continue the approved implementation plan without asking the
+user for another `continue`.
+
+## Dependency Restore Failure Routing
+
+- A preflight mismatch does not run the command and emits `decision-required`
+  with the changed premise.
+- A denied or unavailable host permission emits `decision-required` for the
+  concrete authorization, environment-change, or lane-closure decision.
+- A nonzero command exhausts the one preauthorized attempt and emits
+  `decision-required` with its exit status and credential-safe summary.
+- Post-install drift stops implementation and emits `decision-required` with
+  the exact changed-path summary.
+
+Do not retry automatically or use `npm install`. Do not regenerate the
+lockfile, run an audit fix, commit, auto-revert, or clean unexpected effects. Dependency restore
+does not redefine formal `blocked`; use it only when the existing host goal
+lifecycle rule is independently satisfied.
+
+## Dependency Restore Role Boundaries
+
+The Main Thread decides whether the repository and exact baseline are trusted
+and includes the extension in the approved Execution Contract. The Execution
+Task alone performs preflight, the one install attempt, audit, evidence, and
+direct failure handoff.
+
+The Validation Task remains read-only and must not install dependencies or
+inherit dependency restore authority. It reviews the contract, exact snapshot,
+executor-reported planned-test evidence, and available static evidence.
+
+## Dependency Restore Quietness
+
+The successful path is quiet. Do not add a status table, repeat lifecycle
+warnings, or stop with "dependency restore complete; continue?" Surface only
+the initial contract approval, a real host permission, changed premise,
+command failure, unexpected effect, or acceptance-relevant final evidence.
+
 ## Model Routing Extension
 
 Model routing is additive to the existing Execution Contract, which remains valid. This opt-in extension records exactly:
