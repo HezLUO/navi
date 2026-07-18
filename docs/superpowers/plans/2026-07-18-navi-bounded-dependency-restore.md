@@ -590,9 +590,11 @@ and do not request generic continuation.
 ## Independent Validation Contract
 
 After source-side scope and snapshot audit, the Main Thread creates one true
-Level 2 read-only Validation Task for the exact review-ready event and snapshot:
+Level 3 read-only Validation Task for the exact review-ready event and snapshot:
 
-- resolve and apply `standard + high` independently from the Execution route;
+- resolve and apply the current-host-confirmed `gpt-5.6-sol + high`
+  independently from the Execution route, using the visible fallback rule in
+  Global Constraints only if the destination host rejects that exact route;
 - provide the approved Execution Contract, design, plan, exact snapshot,
   changed scope, and executor evidence;
 - do not install dependencies or write the validator worktree;
