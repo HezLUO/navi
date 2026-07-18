@@ -278,6 +278,7 @@ describe("Navi skill and package structure", () => {
       "plugins/navi/skills/navi/agents/openai.yaml",
       "plugins/navi/skills/navi/references/challenge-v1.md",
       "plugins/navi/skills/navi/references/lane-handoff-v1.md",
+      "plugins/navi/skills/navi/references/plan-reliability-v1.md",
       "plugins/navi/skills/navi/references/project-entry-v1.md",
       "plugins/navi/skills/navi/references/project-map-v1.md",
       "plugins/navi/skills/navi/references/supervision-v1.md",
