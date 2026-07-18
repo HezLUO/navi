@@ -5,6 +5,57 @@ Last updated: 2026-07-17
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
 
+## 2026-07-17 - Git-Backed Distribution Completed The Minimum Value Loop
+
+Target project: sanitized temporary copy of a mature coding project
+Mode: bounded Distribution calibration
+Status: passed; private evidence approved for deletion
+
+Prompt shape:
+
+An unfamiliar fresh Codex task received one natural project-progress question
+without naming Navi. After Navi offered initialization, the same task received
+one read-only preview request. The user then approved the exact fingerprint for
+the temporary target, and a second genuinely fresh task asked for the project's
+next step after activation.
+
+Observed behavior:
+
+- The Git-backed marketplace resolved the exact pushed candidate, and the
+  installed plugin entry came from that verified checkout.
+- The unnamed natural prompt activated Navi and produced an evidence-based
+  project judgment.
+- The package-local initialization preview left the target unchanged and
+  declared only the Project Map plus bounded `AGENTS.md` managed block.
+- The fingerprint-approved write changed only those declared project surfaces.
+- A second fresh task used the confirmed Map, answered without proposing
+  initialization again, and made no additional project change.
+- Official commands restored the original local Navi marketplace and plugin.
+- Codex's exact temporary project-trust entry was removed with parsed semantic
+  equality, preserved file mode, unchanged normalized doctor checks, and no
+  effect on other configuration.
+- The original project and Navi candidate worktree remained unchanged.
+
+Calibration judgment:
+
+The minimum Git-backed Distribution value loop passed with acceptable guidance:
+immutable installation, natural activation, read-only preview, exact approved
+write, second-session Map use, and restoration all worked. The earlier config
+drift was a harness and Codex host-state issue, not a Navi product failure.
+
+This result does not prove release readiness, Public Plugin Directory
+acceptance, update or rollback behavior, cross-platform support, the local
+marketplace channel, or full-product completion. It does not justify repeating
+the same Git-backed journey merely to collect another green transcript.
+
+Product follow-up:
+
+- Accept Git-backed Distribution feasibility for the minimum real value loop.
+- Keep local-marketplace dual-channel calibration as a separate later design
+  decision rather than an automatic next action.
+- Delete the exact private calibration artifacts after this redacted record is
+  accepted.
+
 ## 2026-07-17 - Semantic Config Drift Was Codex Host State, Not Navi
 
 Target project: Navi
