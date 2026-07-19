@@ -523,6 +523,19 @@ it("requires host-confirmed delivery before a task claims completion", async () 
   expect(normalized).toContain(
     "Do not send an acknowledgement or a second message only to confirm receipt",
   );
+  const reconciliation = extractMarkdownSection(
+    canonical,
+    "## Main-Task Reconciliation",
+  )
+    .replace(/[|`]/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+  expect(reconciliation).toContain(
+    "A complete valid directly delivered event follows existing deduplication and routing without recording delivery-protocol-failure",
+  );
+  expect(reconciliation).toContain(
+    "A complete valid local fallback with delivery_state: failed is recovered and routed while recording delivery-protocol-failure",
+  );
   expect(packaged).toBe(canonical);
 });
 ```
@@ -608,6 +621,18 @@ completion. After two failed attempts, preserve the complete local transition
 report, record `delivery_state: failed`, and stop. The Source Main Task may
 recover that report only through existing one-shot Main-Task Reconciliation at
 a relevant dependent checkpoint.
+```
+
+In Main-Task Reconciliation, replace the valid-event recovery sentence with
+this provenance-aware distinction:
+
+```markdown
+A complete valid directly delivered event follows existing deduplication and
+routing without recording `delivery-protocol-failure`. A complete valid local
+fallback with `delivery_state: failed` is recovered and routed while recording
+`delivery-protocol-failure`. Terminal facts remain non-authorizing. Request at
+most one bounded redelivery from the same task only when a required field is
+missing.
 ```
 
 - [ ] **Step 5: Add Supervised Delivery adoption**
