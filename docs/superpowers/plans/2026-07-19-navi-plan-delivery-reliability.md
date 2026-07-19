@@ -161,6 +161,9 @@ describe("Navi Plan Reliability V1", () => {
       "plan_corrections: none | concise bounded list",
     );
     expect(normalizeWhitespace(evidence)).toContain(
+      "corrected must name the equivalent artifacts or command timing and the bounded evidence used to prove equivalence",
+    );
+    expect(normalizeWhitespace(evidence)).toContain(
       "must not request continue after a passing check or successful bounded correction",
     );
   });
@@ -287,6 +290,10 @@ Review-ready evidence records only:
 
 plan_check: passed | corrected
 plan_corrections: none | concise bounded list
+
+`corrected` must name the equivalent artifacts or command timing and the
+bounded evidence used to prove equivalence. It must not contain hidden
+reasoning or a full execution transcript.
 
 A passing check and successful bounded correction are quiet. The task must not
 request `continue` after a passing check or successful bounded correction.
