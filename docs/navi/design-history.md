@@ -15,6 +15,7 @@ Native Plugin Update Calibration is approved as the next bounded distribution in
 ## Active
 
 - `docs/superpowers/specs/2026-07-19-navi-native-plugin-update-calibration-design.md`
+- `docs/superpowers/plans/2026-07-19-navi-native-plugin-update-calibration.md`
 - `docs/superpowers/specs/2026-07-19-navi-plan-delivery-reliability-design.md`
 - `docs/superpowers/plans/2026-07-19-navi-plan-delivery-reliability.md`
 - `docs/superpowers/specs/2026-07-18-navi-bounded-dependency-restore-design.md`
