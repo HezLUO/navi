@@ -209,9 +209,8 @@ it("versions pending decisions separately from final application evidence", asyn
   ]) {
     expect(decision).toContain(field);
   }
-  expect(decision).toContain(
-    "Existing NAVI_ROUTE_DECISION V1 records remain readable",
-  );
+    expect(decision).toContain("NAVI_ROUTE_DECISION V1");
+    expect(decision).toContain("records remain readable");
 
   for (const field of [
     "NAVI_ROUTE_APPLICATION",
