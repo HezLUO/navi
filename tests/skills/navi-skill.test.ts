@@ -419,4 +419,18 @@ describe("Navi skill and package structure", () => {
     expect(skill).toContain("must not silently inherit the host default");
     expect(skill).not.toContain("NAVI_ROUTE_APPLICATION version: 1");
   });
+
+  it("requires post-delivery continuity without duplicating its schema", async () => {
+    const skill = normalizeWhitespace(
+      await readRepoText(".agents/skills/navi/SKILL.md"),
+    );
+
+    expect(skill).toContain(
+      "Before ending a Main Thread turn after accepted bounded delivery, Codex must apply the Post-Delivery Continuity Gate",
+    );
+    expect(skill).toContain(
+      "must not treat bounded-task completion as automatic source-task closure",
+    );
+    expect(skill).not.toContain("NAVI_POST_DELIVERY_CONTINUITY version: 1");
+  });
 });

@@ -47,6 +47,7 @@ Task model routing requires an explicit user-authorized policy and remains owned
 - Codex must not default the main session to waiting for every worktree when the result is non-blocking.
 - Codex must not silently escalate a bounded implementation task into full tests, tag, push, or release preparation.
 - Codex must not require user continuation for local sub-step completion when the next action, boundary, and acceptance point are already clear.
+- Before ending a Main Thread turn after accepted bounded delivery, Codex must apply the Post-Delivery Continuity Gate in `references/supervision-v1.md`; it must not treat bounded-task completion as automatic source-task closure, manufacture low-priority work, or bypass a real user decision.
 - Codex must not treat lane-level waiting as whole-session waiting when non-conflicting main-session work can continue.
 - Codex must not use pause semantics to bypass user approval, tool approval, write gates, commit/push/tag/release gates, mode changes, scope expansion, validation-budget escalation, or cross-project modification.
 - Codex must not stop after a valid completed action and leave the user with no visible next decision except `continue` when the session is still active.

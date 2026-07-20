@@ -257,6 +257,11 @@ No validation level silently enters Release mode or repeats the executor's compl
 
 For one valid preauthorized review-ready transition, the active Main Thread creates one fresh Validation Thread for one reviewed_event_id and exact reviewed_snapshot. Mark the lane validation-pending until a valid result returns; review-ready alone is not acceptance.
 
+After accepted validation closes the bounded delivery, the Main Thread applies
+the Post-Delivery Continuity Gate before a terminal response;
+`supervision-v1.md` remains the detailed owner. This does not authorize a new
+task, implementation, merge, push, release, or publication action.
+
 The initial valid review-ready event creates one fresh Validation Thread. Each bounded remediation re-review reuses that same Validation Thread rather than creating a replacement.
 
 Duplicate handoff event IDs: ignore them idempotently. Duplicate validation result IDs: ignore them idempotently. A result with the wrong reviewed_event_id or wrong reviewed_snapshot is stale evidence and cannot change acceptance state. A second review-ready event after bounded remediation uses a new event ID and snapshot.

@@ -488,4 +488,27 @@ describe("Navi Supervised Delivery Loop V1", () => {
     );
     expect(adoption).not.toContain("delivery_attempts: 1 | 2");
   });
+
+  it("adopts post-delivery continuity after accepted validation", async () => {
+    const [delivery, supervision, packagedDelivery] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/supervised-delivery-v1.md"),
+      readRepoText(".agents/skills/navi/references/supervision-v1.md"),
+      readRepoText(
+        "plugins/navi/skills/navi/references/supervised-delivery-v1.md",
+      ),
+    ]);
+    const lifecycle = normalizeWhitespace(
+      extractSection(delivery, "## Lifecycle And Identity"),
+    );
+
+    expect(lifecycle).toContain(
+      "After accepted validation closes the bounded delivery, the Main Thread applies the Post-Delivery Continuity Gate before a terminal response",
+    );
+    expect(lifecycle).toContain(
+      "`supervision-v1.md` remains the detailed owner",
+    );
+    expect(delivery).not.toContain("NAVI_POST_DELIVERY_CONTINUITY");
+    expect(supervision).toContain("NAVI_POST_DELIVERY_CONTINUITY");
+    expect(packagedDelivery).toBe(delivery);
+  });
 });
