@@ -1,9 +1,28 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-20 - Accepted Gate Delivery Still Required Continue
+
+Mode: implementation closeout and supervision
+Status: negative baseline; Post-Delivery Continuity Gate V1 implemented but natural calibration pending
+
+Task Route Application Gate V1 reached an exact accepted snapshot. Its focused
+tests, typecheck, package verification, scope audit, and independent Level 2
+validation passed. The Validation Task used an explicit accepted model and
+reasoning route, so user relay count was 0.
+
+The Main Thread then emitted a terminal completion report while the wider Navi
+product lane remained active. The user supplied a content-free `continue` and
+identified it as meaningless. Meaningless continue count: 1.
+
+This is a negative baseline, not a passing Product Complete sample. The missing
+action was one pre-final continuity check: continue the highest-priority
+non-conflicting supervision work, stop at a real decision, wait meaningfully,
+or end only when the wider objective is complete.
 
 ## 2026-07-18 - Repeated Unsatisfiable Plan-Artifact Decisions
 

@@ -15,12 +15,18 @@ fail-closed boundary for routing-authorized Execution, Validation, and Router
 Task creation plus route-changing follow-ups. It is naturally uncalibrated and
 does not implement Main Turn Host Adapter or Runtime Surface enforcement.
 
+Post-Delivery Continuity Gate V1 is implemented as the prompt/docs-backed
+pre-final boundary after accepted bounded delivery. Natural calibration remains
+open; it does not implement Runtime Surface or Main Turn Host Adapter behavior.
+
 Native Plugin Update Calibration established an accepted `HOST-LIMITED` boundary: the configured marketplace checkout and versioned plugin cache reached B, while a natural resumed turn in the exact original task remained on A. This blocks a natural same-thread reload claim but does not establish that the task is permanently unable to use B.
 
 Same-Thread Explicit Skill Reload Calibration is the next approved bounded distribution investigation. It tests the official `marketplace/upgrade`, forced Skill discovery, and explicit Skill-input path in one existing task, then separately tests natural B persistence and invalid-update A preservation. No calibration execution, `stable` or `preview` ref, Release action, custom Update Host, successor-task migration, Stock App capability claim, or automatic-update implementation is authorized by this design and plan.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-20-navi-post-delivery-continuity-gate-design.md`
+- `docs/superpowers/plans/2026-07-20-navi-post-delivery-continuity-gate.md`
 - `docs/superpowers/specs/2026-07-20-navi-task-route-application-gate-design.md`
 - `docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md`
 - `docs/superpowers/specs/2026-07-20-navi-same-thread-explicit-skill-reload-calibration-design.md`

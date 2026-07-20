@@ -1,7 +1,7 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: active backlog with Product Complete calibration open and Distribution feasibility separately approved
-Last updated: 2026-07-18
+Last updated: 2026-07-20
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
@@ -12,6 +12,10 @@ Supervised Delivery Loop V1 is integrated, and adaptive project entry is integra
 Distribution feasibility is separately approved as an unreleased implementation lane. Its next Distribution gate is bounded real-installation Calibration after independent validation and explicit integration—not automatic Release preparation. Product Complete calibration is neither replaced nor declared complete. Real installation, permission, scope, risk, merge, push, tag, release, and publication decisions remain explicit.
 
 Plan And Delivery Reliability V1 is the current bounded reliability closeout: implementation and independent validation establish the contract, then one natural joint calibration must demonstrate zero user relay, zero meaningless continue, aggregate plan-artifact handling, direct Execution and Validation delivery, and preserved real user decisions. This does not close Product Complete by itself and does not authorize Runtime or Release work.
+
+Post-Delivery Continuity Gate V1 adds one pre-final Main Thread check after
+accepted bounded delivery. It is naturally uncalibrated and does not close the
+remaining joint Product Complete gate by itself.
 
 ## Product Positioning
 

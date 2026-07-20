@@ -336,4 +336,36 @@ describe("Current Navi repository surface", () => {
     );
     expect(roadmap).not.toMatch(/Product Complete is closed/i);
   });
+
+  it("records post-delivery continuity as implemented but uncalibrated", async () => {
+    const [history, roadmap, debt, calibration] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/calibration-log.md"), "utf8"),
+    ]);
+
+    expect(history).toMatch(
+      /Post-Delivery Continuity Gate V1[\s\S]*implemented[\s\S]*natural calibration/i,
+    );
+    expect(history).toContain(
+      "`docs/superpowers/specs/2026-07-20-navi-post-delivery-continuity-gate-design.md`",
+    );
+    expect(history).toContain(
+      "`docs/superpowers/plans/2026-07-20-navi-post-delivery-continuity-gate.md`",
+    );
+    expect(roadmap).toMatch(
+      /Post-Delivery Continuity Gate V1[\s\S]*pre-final[\s\S]*naturally uncalibrated/i,
+    );
+    expect(debt).toMatch(
+      /Task Route Application Gate V1[\s\S]*completion report[\s\S]*content-free `continue`/i,
+    );
+    expect(calibration).toContain(
+      "## 2026-07-20 - Accepted Gate Delivery Still Required Continue",
+    );
+    expect(calibration).toMatch(
+      /negative baseline[\s\S]*user relay count was 0[\s\S]*meaningless continue count: 1/i,
+    );
+    expect(roadmap).not.toMatch(/Product Complete is closed/i);
+  });
 });

@@ -1,6 +1,6 @@
 # Navi Product Debt Register
 
-Last updated: 2026-07-18
+Last updated: 2026-07-20
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
@@ -224,6 +224,13 @@ The same pattern repeated once more after the completion-pause example itself wa
 It repeated yet again after an additional completion-pause sample was written but not committed. The response treated "the docs now have modified files; should we commit?" as the next stop. Commit is normally a real boundary, but in this specific loop the user had already asked to keep recording meaningless `continue` samples until the next meaningful decision. Navi should be able to batch evidence collection instead of forcing a commit decision after every small observation.
 
 Another variant appeared after `main` was pushed successfully. The response correctly reported the push result and that no release/tag had happened, but it did not offer the next decision. The user then had to type `continue` to explain that the missing next-step decision was the problem. This shows that a stop can still create friction even when the previous action was valid: if the agent stops, it should make the next decision visible, not leave the user to ask what the decision is.
+
+After Task Route Application Gate V1 was implemented and independently
+accepted, the Main Thread returned only a completion report. The wider product
+lane remained active, but the user had to provide a content-free `continue` to
+restart non-conflicting supervision. This is evidence that descriptive pause
+rules need one pre-final application gate; it is not evidence for automatic
+implementation or Runtime Surface authority.
 
 Why it matters:
 
