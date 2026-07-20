@@ -395,16 +395,23 @@ async function forceDiscovery(expectedSkillPath) {
   const result = await send("skills/list", { cwds: [config.sessionRoot], forceReload: true });
   const row = (result.data ?? []).find((entry) => path.resolve(entry.cwd) === path.resolve(config.sessionRoot));
   if (!row || (row.errors ?? []).length) throw new Error(`Skill discovery failed: ${JSON.stringify(row?.errors)}`);
-  const skill = (row.skills ?? []).find((entry) => entry.name === config.skillName);
-  if (!skill || skill.enabled !== true) throw new Error("fixture Skill is not enabled");
+  const authoritativePath = fs.realpathSync(expectedSkillPath);
+  const matches = (row.skills ?? []).filter((entry) => {
+    if (typeof entry.path !== "string") return false;
+    try { return fs.realpathSync(entry.path) === authoritativePath; }
+    catch { return false; }
+  });
+  if (matches.length !== 1) throw new Error(`expected one fixture Skill at the authoritative path, received ${matches.length}`);
+  const [skill] = matches;
+  if (skill.enabled !== true) throw new Error("fixture Skill is not enabled");
+  if (typeof skill.name !== "string" || !skill.name.trim()) throw new Error("fixture Skill name is missing");
   const discoveredPath = fs.realpathSync(skill.path);
-  if (discoveredPath !== fs.realpathSync(expectedSkillPath)) throw new Error("forced discovery returned the wrong Skill path");
   return { name: skill.name, enabled: skill.enabled, path: discoveredPath, errors: 0 };
 }
 
-async function runTurn(threadId, challenge, skillPath = null) {
+async function runTurn(threadId, challenge, discoveredSkill = null) {
   const input = [{ type: "text", text: challenge }];
-  if (skillPath) input.push({ type: "skill", name: config.skillName, path: skillPath });
+  if (discoveredSkill) input.push({ type: "skill", name: discoveredSkill.name, path: discoveredSkill.path });
   const started = await send("turn/start", { threadId, input });
   const turn = await waitForTurn(started.turn.id);
   if (turn.status !== "completed") throw new Error(`turn status ${turn.status}`);
@@ -416,8 +423,9 @@ async function runTurn(threadId, challenge, skillPath = null) {
     turnId: turn.id,
     marker: turnMessages.get(turn.id) ?? null,
     itemTypes,
-    explicitSkill: Boolean(skillPath),
-    explicitSkillPath: skillPath,
+    explicitSkill: Boolean(discoveredSkill),
+    explicitSkillName: discoveredSkill?.name ?? null,
+    explicitSkillPath: discoveredSkill?.path ?? null,
   };
 }
 
@@ -442,7 +450,7 @@ try {
   const discoveryA = await forceDiscovery(aStorage.installedSkillPath);
   const started = await send("thread/start", { cwd: config.sessionRoot, approvalPolicy: "never", sandbox: "read-only" });
   const threadId = started.thread.id;
-  const aTurn = await runTurn(threadId, "EXPLICIT_RELOAD_A_START", aStorage.installedSkillPath);
+  const aTurn = await runTurn(threadId, "EXPLICIT_RELOAD_A_START", discoveryA);
   if (aTurn.marker !== "NAVI_EXPLICIT_RELOAD_A_START") throw new Error("initial A marker mismatch");
 
   if (config.caseType === "positive") {
@@ -451,7 +459,7 @@ try {
     if (hasUpgradeError(upgrade)) throw new Error(`positive upgrade error: ${JSON.stringify(upgrade.errors)}`);
     const bStorage = await waitForStorage(config.b);
     const discoveryB = await forceDiscovery(bStorage.installedSkillPath);
-    const bTurn = await runTurn(threadId, "EXPLICIT_RELOAD_B_ACTIVATE", bStorage.installedSkillPath);
+    const bTurn = await runTurn(threadId, "EXPLICIT_RELOAD_B_ACTIVATE", discoveryB);
     const naturalTurn = await runTurn(threadId, "EXPLICIT_RELOAD_POST_B");
     result = { caseType: config.caseType, threadId, aStorage, bStorage, discoveryA, discoveryB, upgrade, skillsChanged, turns: [aTurn, bTurn, naturalTurn] };
   } else if (config.caseType === "failure") {
@@ -507,11 +515,70 @@ node --check "$CAL_ROOT/harness/explicit-reload-case.mjs"
 node --check "$CAL_ROOT/harness/write-fixture.mjs"
 rg -n 'marketplace/upgrade|forceReload|type: "skill"|gpt-5.6-sol|model_reasoning_effort="low"' "$CAL_ROOT/harness"
 rg -n 'writeFileSync|execFileSync|spawn' "$CAL_ROOT/harness/explicit-reload-case.mjs"
+if rg -n 'entry\.name === config\.skillName|name: config\.skillName' "$CAL_ROOT/harness/explicit-reload-case.mjs"; then
+  echo 'unqualified Skill-name matching remains in the harness' >&2
+  exit 1
+fi
+node --input-type=module - "$CAL_ROOT/harness/explicit-reload-case.mjs" <<'NODE'
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import vm from "node:vm";
+
+const [harnessPath] = process.argv.slice(2);
+const source = fs.readFileSync(harnessPath, "utf8");
+const start = source.indexOf("async function forceDiscovery(");
+const end = source.indexOf("\nasync function runTurn(", start);
+if (start < 0 || end < 0) throw new Error("forceDiscovery extraction failed");
+
+const probeRoot = fs.mkdtempSync(path.join(os.tmpdir(), "navi-explicit-reload-discovery-probe."));
+try {
+  const sessionRoot = path.join(probeRoot, "session");
+  const skillRoot = path.join(probeRoot, "cache", "skills", "fixture");
+  const skillPath = path.join(skillRoot, "SKILL.md");
+  fs.mkdirSync(sessionRoot, { recursive: true });
+  fs.mkdirSync(skillRoot, { recursive: true });
+  fs.writeFileSync(skillPath, "fixture\n");
+
+  const namespaced = {
+    name: "fixture-marketplace:fixture-skill",
+    path: skillPath,
+    enabled: true,
+  };
+  const context = {
+    fs,
+    path,
+    config: { sessionRoot, skillName: "fixture-skill" },
+    send: async () => ({ data: [{ cwd: sessionRoot, skills: [namespaced], errors: [] }] }),
+  };
+  vm.createContext(context);
+  vm.runInContext(`${source.slice(start, end)}\nglobalThis.forceDiscovery = forceDiscovery;`, context);
+
+  const discovered = await context.forceDiscovery(skillPath);
+  assert.equal(discovered.name, namespaced.name);
+  assert.equal(discovered.path, fs.realpathSync(skillPath));
+  assert.equal(discovered.enabled, true);
+
+  context.send = async () => ({
+    data: [{
+      cwd: sessionRoot,
+      skills: [namespaced, { ...namespaced, name: "duplicate:fixture-skill" }],
+      errors: [],
+    }],
+  });
+  await assert.rejects(context.forceDiscovery(skillPath), /expected one fixture Skill/);
+} finally {
+  fs.rmSync(probeRoot, { recursive: true, force: true });
+}
+NODE
 (cd "$CAL_ROOT" && shasum -a 256 harness/*.mjs > evidence/harness-sha256.txt)
 ```
 
 Expected: only the declared result write, Codex/Git read-or-isolated-update
-commands, and one App Server spawn appear. No target-project path is present.
+commands, and one App Server spawn appear. The namespaced-discovery probe passes,
+duplicate canonical identities are rejected, no unqualified Skill-name matcher
+remains, and no target-project path is present.
 
 - [ ] **Step 9: Record protected real-state baselines**
 

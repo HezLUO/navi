@@ -136,14 +136,18 @@ agree.
 
 The App Server Skill inventory returned after `skills/list` with
 `forceReload: true`. Discovery success requires the expected Navi fixture to be
-enabled and free of loading errors. It does not by itself prove that a task uses
-the discovered Skill.
+enabled, free of loading errors, and uniquely identified by the canonical
+installed-cache `SKILL.md` path already accepted by the storage verifier. The
+inventory-returned Skill name may be namespaced and is the authoritative name
+for explicit turn input. Discovery does not by itself prove that a task uses the
+discovered Skill.
 
 ### Turn Plane
 
 The exact thread and turn behavior. Explicit turn-plane activation supplies a
-`skill` input item with the verified installed-cache Skill path. Natural
-turn-plane behavior supplies only text and no Skill item.
+`skill` input item with the inventory-returned Skill name and the verified
+installed-cache Skill path. Natural turn-plane behavior supplies only text and
+no Skill item.
 
 ### Same Task
 
@@ -233,9 +237,12 @@ is insufficient because it would not exercise invalid-content preservation.
 2. Add the configured Git marketplace at A and install the fixture plugin.
 3. Verify checkout A and installed-cache A before any model turn.
 4. Call `skills/list` with `forceReload: true` for the empty session root.
+   Select exactly one enabled fixture by canonical equality with the verified
+   installed-cache A `SKILL.md`; retain the nonempty inventory-returned name.
 5. Start one fresh thread.
 6. Start the first turn with text challenge `EXPLICIT_RELOAD_A_START` and one
-   explicit Skill item pointing to the verified installed-cache A `SKILL.md`.
+   explicit Skill item carrying that returned name and pointing to the verified
+   installed-cache A `SKILL.md`.
 7. Require exact response `NAVI_EXPLICIT_RELOAD_A_START`.
 
 ### B Materialization And Discovery
@@ -250,14 +257,16 @@ is insufficient because it would not exercise invalid-content preservation.
 5. Record whether `skills/changed` was emitted. Its absence is diagnostic only
    and does not fail the case.
 6. Call `skills/list` with `forceReload: true` and require the fixture Skill to
-   be enabled with no discovery error.
+   be uniquely selected by the authoritative installed-cache B path, enabled,
+   and free of discovery errors; retain its inventory-returned name.
 
 ### Explicit B Activation
 
 1. Reuse the exact A thread ID.
 2. Start a distinct second turn with challenge
    `EXPLICIT_RELOAD_B_ACTIVATE` and one explicit Skill item pointing to the
-   authoritative installed-cache B `SKILL.md`.
+   authoritative installed-cache B `SKILL.md` and carrying the name returned by
+   B discovery.
 3. Require exact response `NAVI_EXPLICIT_RELOAD_B_ACTIVE`.
 4. Reject any tool item, alternate path read, task fork, or successor task.
 
@@ -283,8 +292,9 @@ is insufficient because it would not exercise invalid-content preservation.
    successful activation.
 6. Verify checkout/cache remain or return to valid, byte-identical A with no B
    marker in active storage.
-7. Call `skills/list` with `forceReload: true`; require valid enabled A and no
-   discovery error.
+7. Call `skills/list` with `forceReload: true`; require exactly one enabled A
+   selected by the authoritative installed-cache A path, retain its returned
+   name, and require no discovery error.
 8. Reuse the exact A thread ID for a natural turn containing only
    `EXPLICIT_RELOAD_A_AFTER_INVALID`.
 9. Require exact response `NAVI_EXPLICIT_RELOAD_A_PRESERVED`.
