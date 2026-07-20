@@ -227,6 +227,11 @@ actually load for the installed plugin. Their Skill bytes must be identical at
 each checkpoint. This avoids misclassifying either a startup race or a
 checkout/cache split as a stable installed version.
 
+Readiness polling is bounded and read only. It may repeat the storage check
+while checkout activation or cache materialization is incomplete, but after
+both copies are ready the harness performs one fresh authoritative storage
+verification before starting or resuming the turn.
+
 If the user submits a turn before the background update finishes, that turn
 may still use the old snapshot. V1 does not interrupt, replay, or mutate an
 already-started turn. The following turn after completed activation is the
@@ -385,6 +390,12 @@ For each relevant checkpoint, record bounded evidence for:
 - separate checkout and cache Skill paths plus byte equality;
 - marker file or Skill content digest for both copies; and
 - absence of mixed A/B files.
+
+Every resolved path is checked from the outside in before Git inspection or
+Skill-content reads: checkout roots and leaves must remain under the isolated
+marketplace checkout, while cache roots and leaves must remain under the exact
+isolated version directory. Symlink containment cannot be inferred from a
+later broad `CODEX_HOME` check.
 
 Raw authentication content, model credentials, unrelated user config, and
 machine-wide file listings are forbidden evidence.

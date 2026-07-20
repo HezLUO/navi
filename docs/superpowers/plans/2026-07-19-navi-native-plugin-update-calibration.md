@@ -399,6 +399,24 @@ async function waitForExpectedStderr() {
   throw new Error(`timed out waiting for stderr pattern ${options.expectedStderrPattern}`);
 }
 
+async function waitForStorageReady() {
+  const deadline = Date.now() + 60_000;
+  let lastError;
+  while (Date.now() < deadline) {
+    try {
+      execFileSync(process.execPath, [options.storageVerifierPath, options.storageInputFile], {
+        env: { ...process.env, CODEX_HOME: options.codexHome },
+        stdio: "pipe",
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`timed out waiting for checkout/cache storage readiness: ${lastError?.message ?? "unknown verifier failure"}`);
+}
+
 const timeout = setTimeout(() => completedReject(new Error("turn timed out")), 120_000);
 
 try {
@@ -412,6 +430,7 @@ try {
   notify("initialized");
   await waitForExpectedSkill();
   await waitForExpectedStderr();
+  await waitForStorageReady();
   execFileSync(process.execPath, [options.storageVerifierPath, options.storageInputFile], {
     env: { ...process.env, CODEX_HOME: options.codexHome },
     stdio: "pipe",
@@ -490,7 +509,8 @@ try {
 
 Expected: one process performs exactly one turn, rejects server requests and
 all tool activity except zero or one exact storage-verified plugin-cache Skill
-read, requires the exact marker, passes the supplied storage verifier before
+read, requires the exact marker, waits boundedly for both checkout and cache
+storage readiness, performs one fresh authoritative verifier pass before
 starting or resuming the thread, records the thread and turn IDs plus bounded
 read count, and always terminates its App Server child.
 
@@ -518,19 +538,24 @@ if (marketplace.marketplaceSource?.source !== expected.sourceUrl) throw new Erro
 if (plugin.installed !== true || plugin.enabled !== true) throw new Error("plugin is not installed and enabled");
 if (plugin.version !== expected.version) throw new Error(`expected plugin version ${expected.version}, received ${plugin.version}`);
 if (plugin.source?.source !== "local" || !plugin.source?.path) throw new Error("plugin source is not a resolved local path");
+if (plugin.name !== "navi-update-calibration") throw new Error("plugin name mismatch");
 if (plugin.marketplaceName !== marketplace.name) throw new Error("plugin marketplace association mismatch");
+const within = (root, candidate) => candidate === root || candidate.startsWith(`${root}${path.sep}`);
+const resolvedHome = fs.realpathSync(expected.codexHome);
+const marketplacesRoot = fs.realpathSync(path.join(resolvedHome, ".tmp/marketplaces"));
 const marketplaceRoot = fs.realpathSync(marketplace.root);
+if (!within(resolvedHome, marketplacesRoot)) throw new Error("marketplace storage escaped isolated CODEX_HOME");
+if (!within(marketplacesRoot, marketplaceRoot)) throw new Error("marketplace root escaped isolated marketplace storage");
 const pluginRoot = fs.realpathSync(plugin.source.path);
-if (pluginRoot !== marketplaceRoot && !pluginRoot.startsWith(`${marketplaceRoot}${path.sep}`)) {
-  throw new Error("plugin source escaped the verified marketplace checkout");
-}
+if (!within(marketplaceRoot, pluginRoot)) throw new Error("plugin source escaped the verified marketplace checkout");
 const checkoutSkillPath = fs.realpathSync(path.join(pluginRoot, "skills/navi-update-calibration/SKILL.md"));
-const cacheRoot = fs.realpathSync(path.join(expected.codexHome, "plugins/cache"));
+if (!within(pluginRoot, checkoutSkillPath)) throw new Error("checkout Skill escaped the verified plugin source");
+const cacheRoot = fs.realpathSync(path.join(resolvedHome, "plugins/cache"));
+if (!within(resolvedHome, cacheRoot)) throw new Error("plugin cache escaped isolated CODEX_HOME");
 const installedPluginRoot = fs.realpathSync(path.join(cacheRoot, marketplace.name, plugin.name, plugin.version));
-if (installedPluginRoot !== cacheRoot && !installedPluginRoot.startsWith(`${cacheRoot}${path.sep}`)) {
-  throw new Error("installed plugin escaped the isolated versioned cache");
-}
+if (!within(cacheRoot, installedPluginRoot)) throw new Error("installed plugin escaped the isolated cache");
 const installedSkillPath = fs.realpathSync(path.join(installedPluginRoot, "skills/navi-update-calibration/SKILL.md"));
+if (!within(installedPluginRoot, installedSkillPath)) throw new Error("plugin-cache Skill escaped the exact version root");
 const checkoutHead = execFileSync("git", ["-C", marketplaceRoot, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 if (checkoutHead !== expected.revision) throw new Error("marketplace checkout revision mismatch");
 const checkoutSkillText = fs.readFileSync(checkoutSkillPath, "utf8");
@@ -540,9 +565,6 @@ if (!checkoutSkillText.includes(expected.marker)) throw new Error("checkout Skil
 if (checkoutSkillText.includes(expected.forbiddenMarker)) throw new Error("checkout Skill contains mixed A/B markers");
 if (!installedSkillText.includes(expected.marker)) throw new Error("plugin-cache Skill marker mismatch");
 if (installedSkillText.includes(expected.forbiddenMarker)) throw new Error("plugin-cache Skill contains mixed A/B markers");
-const resolvedHome = fs.realpathSync(expected.codexHome);
-if (!checkoutSkillPath.startsWith(`${resolvedHome}${path.sep}`)) throw new Error("checkout Skill escaped isolated CODEX_HOME");
-if (!installedSkillPath.startsWith(`${resolvedHome}${path.sep}`)) throw new Error("plugin-cache Skill escaped isolated CODEX_HOME");
 fs.writeFileSync(
   expected.outputFile,
   `${JSON.stringify({
@@ -904,7 +926,9 @@ node "$CAL_ROOT/harness/app-server-turn.mjs" "$CASE_EVIDENCE/turn-b-options.json
 ```
 
 Expected: the harness starts a distinct App Server process, waits for B's
-checkout Skill marker, resumes the exact stored thread, and returns exactly B.
+checkout marker and byte-identical versioned cache Skill, performs one fresh
+authoritative storage verification, resumes the exact stored thread, and
+returns exactly B.
 
 - [ ] **Step 9: Verify B storage and same-thread identity**
 
@@ -1523,6 +1547,7 @@ Before emitting the operator result, all of these must be explicit:
 [ ] file:// was not used
 [ ] configured sources were classified as Git
 [ ] positive remote and active storage moved A -> B
+[ ] B resume waited for both checkout activation and versioned cache materialization
 [ ] positive turns share one thread ID and return A then B
 [ ] failure remote moved A -> invalid B
 [ ] failure active storage and same thread remained A
@@ -1546,6 +1571,10 @@ Before dispatch, the Main Thread must verify:
   generated App Server schema and plugin CLI JSON;
 - the storage verifier separately resolves checkout and versioned plugin-cache
   Skill paths, requires byte equality, and records both paths;
+- every resolved checkout/cache root and Skill leaf is proven inside its exact
+  parent before Git inspection or content reads;
+- the B turn waits boundedly for both checkout and cache readiness, then runs a
+  fresh authoritative storage verifier before `thread/resume`;
 - the bounded Skill-load exception checks structured `commandActions`, exact
   storage-verifier `installedSkillPath`, isolated `cwd`, exit status, and exact
   bytes;
