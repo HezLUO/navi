@@ -245,6 +245,74 @@ The option set should usually be 2-4 short choices.
 
 Next Decision Visibility does not force a Progress Map. Use a Progress Map or Rhythm Map only when the user asks where the project is, asks what comes next, or says they do not understand the broader project state.
 
+## Post-Delivery Continuity Gate
+
+Before the Main Thread emits a terminal response after accepted bounded
+delivery, run one turn-local continuity check. Bounded-task completion is not
+wider source-task completion. A completion report alone is not evidence that
+the Main Thread should stop.
+
+NAVI_POST_DELIVERY_CONTINUITY
+version: 1
+completed_boundary: concise accepted delivery
+source_task_state: active | complete | uncertain
+highest_priority_candidate: concrete action or none
+candidate_class: covered-action | read-only-design | read-only-supervision | real-decision | dependent-wait | natural-end
+conflict_state: none | file-scope | premise | acceptance | lane | unknown
+authority_state: covered | user-required | none
+result: continue | decision-required | wait | end
+stop_point: next concrete acceptance or decision boundary
+
+The record is ephemeral turn-local coordination evidence. Do not print it by
+default or persist it in project files, `.navi`, `AGENTS.md`, or global state.
+
+Apply this order exactly once:
+
+1. Continue an already-approved action to its declared acceptance point.
+2. Handle a premise-changing event before unrelated work.
+3. Continue useful non-conflicting work when one concrete high-priority
+   read-only design or supervision action remains.
+4. Stop at a real decision and name the action, boundary, consequence, and
+   recommendation; do not offer bare `continue`.
+5. Enter a meaningful wait only when wait requires every useful action to
+   depend on an unresolved relevant event.
+6. End naturally only when end requires the wider source objective to be
+   complete and no user-relevant decision remains.
+
+If source_task_state is uncertain, use at most one short read-only orientation
+pass from already relevant authority. If uncertainty remains, continuation must
+not proceed and the result is `decision-required` with the concrete missing
+premise. Do not broaden reads beyond already relevant authority merely to make
+continuation look available.
+
+If conflict_state is `unknown`, use at most one short read-only clarification
+pass from already relevant authority. If conflict remains `unknown`,
+continuation must not proceed and the result is `decision-required` with the
+concrete unresolved conflict premise.
+
+Any `file-scope`, `premise`, `acceptance`, or `lane` conflict prevents
+`continue`. Conflict or user-required authority prevents `continue`. The Main
+Thread must not start implementation, create a task or worktree, change
+external state, commit, push, tag, release, publish, expand scope, or
+increase verification budget through this gate. It must not manufacture
+low-priority cleanup, unrelated features, extra validation, or speculative
+runtime work merely to avoid waiting or ending.
+
+Awaiting Direct Event remains the no-polling state. Before claiming `wait` or
+closing an affected lane with an unresolved relevant task, use the existing
+one-shot Main-Task Reconciliation checkpoint. Task creation remains separately
+subject to the Route Application Gate.
+
+A successful ordinary check is quiet: do not print the schema, announce that
+the gate passed, or add a Progress Map merely because delivery completed.
+Missing the check when the user must provide a content-free `continue` is a
+supervision-protocol failure and should become calibration evidence.
+
+This prompt/docs-backed gate is not runtime, a database, daemon, scheduler,
+queue, watcher, or background service. Repeated natural failures are evidence
+for later Host Adapter or Runtime Surface judgment, not implementation
+authority.
+
 ## Alpha 6 Stage And Vision Supervision Layer
 
 Alpha.6 adds stage-and-vision supervision to the alpha.4 supervision layer and alpha.5 pause semantics layer.

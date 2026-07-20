@@ -19,6 +19,13 @@ function extractMarkdownSection(markdown: string, heading: string): string {
   return markdown.slice(contentStart, match?.index ?? markdown.length);
 }
 
+function normalizeWhitespace(text: string): string {
+  return text
+    .replace(/[|`]/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
 describe("Navi supervision contracts", () => {
   it("documents tightened drift behavior and bounded write-back rules", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/working-thread-v1.md");
@@ -191,6 +198,90 @@ describe("Navi supervision contracts", () => {
     ]) {
       expect(reference).toContain(expected);
     }
+  });
+
+  it("gates terminal delivery on one turn-local continuity decision", async () => {
+    const [canonical, packaged] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/supervision-v1.md"),
+      readRepoText("plugins/navi/skills/navi/references/supervision-v1.md"),
+    ]);
+    const section = extractMarkdownSection(
+      canonical,
+      "## Post-Delivery Continuity Gate",
+    );
+    const normalized = normalizeWhitespace(section);
+
+    for (const field of [
+      "NAVI_POST_DELIVERY_CONTINUITY",
+      "version: 1",
+      "completed_boundary",
+      "source_task_state",
+      "highest_priority_candidate",
+      "candidate_class",
+      "conflict_state",
+      "authority_state",
+      "result",
+      "stop_point",
+      "file-scope",
+      "premise",
+      "acceptance",
+      "lane",
+      "unknown",
+    ]) {
+      expect(section).toContain(field);
+    }
+
+    expect(normalized).toContain(
+      "Before the Main Thread emits a terminal response after accepted bounded delivery",
+    );
+    expect(normalized).toContain(
+      "Bounded-task completion is not wider source-task completion",
+    );
+    const decisionOrder = [
+      "Continue an already-approved action",
+      "Handle a premise-changing event",
+      "Continue useful non-conflicting work",
+      "Stop at a real decision",
+      "Enter a meaningful wait",
+      "End naturally",
+    ];
+    for (const phrase of decisionOrder) expect(normalized).toContain(phrase);
+    for (let index = 1; index < decisionOrder.length; index += 1) {
+      expect(normalized.indexOf(decisionOrder[index - 1])).toBeLessThan(
+        normalized.indexOf(decisionOrder[index]),
+      );
+    }
+    expect(normalized).toContain(
+      "If source_task_state is uncertain, use at most one short read-only orientation pass from already relevant authority",
+    );
+    expect(normalized).toContain(
+      "If uncertainty remains, continuation must not proceed and the result is decision-required with the concrete missing premise",
+    );
+    expect(normalized).toMatch(
+      /If conflict_state is unknown .* use at most one short read-only clarification pass from already relevant authority/i,
+    );
+    expect(normalized).toMatch(
+      /If conflict remains unknown .* continuation must not proceed and the result is decision-required with the concrete unresolved conflict premise/i,
+    );
+    expect(normalized).toMatch(
+      /file-scope .* premise .* acceptance .* lane conflict prevents continue/i,
+    );
+    expect(normalized).toContain(
+      "wait requires every useful action to depend on an unresolved relevant event",
+    );
+    expect(normalized).toContain(
+      "end requires the wider source objective to be complete",
+    );
+    expect(normalized).toMatch(
+      /do not print the schema.*announce that the gate passed.*add a Progress Map/i,
+    );
+    expect(normalized).toMatch(
+      /must not.*implementation.*task.*worktree.*external.*commit.*push.*release/i,
+    );
+    expect(normalized).toMatch(
+      /not.*runtime.*database.*daemon.*scheduler.*queue.*watcher.*background service/i,
+    );
+    expect(packaged).toBe(canonical);
   });
 
   it("documents alpha 6 stage and vision supervision", async () => {
