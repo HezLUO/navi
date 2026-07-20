@@ -221,8 +221,11 @@ next turn receives version B Skill snapshot
 ```
 
 The calibration waits for both marketplace checkout and installed plugin cache
-evidence before resuming the thread. This avoids misclassifying a startup race
-as a stable old-version lease.
+evidence before resuming the thread. The checkout proves the configured Git
+source and activated revision. The versioned cache proves the bytes Codex can
+actually load for the installed plugin. Their Skill bytes must be identical at
+each checkpoint. This avoids misclassifying either a startup race or a
+checkout/cache split as a stable installed version.
 
 If the user submits a turn before the background update finishes, that turn
 may still use the old snapshot. V1 does not interrupt, replay, or mutate an
@@ -307,13 +310,14 @@ The skill instruction requires the exact marker for one deterministic prompt.
 The prompt, model, reasoning level, task metadata, and plugin identity remain
 the same between A and B. Only the fixture version and marker change.
 
-Codex activates an external Skill by reading its installed `SKILL.md`. Each
-marker turn may therefore contain zero or one bounded `commandExecution`, but
-only when its structured command action is one successful read of the exact
-installed calibration Skill already proved by the storage plane. The action
-must run from the isolated session root, return bytes identical to that Skill,
-and perform no other command action. Every other command, tool item, server
-request, target-project access, or write remains forbidden.
+Codex activates an external Skill by reading the versioned plugin-cache
+`SKILL.md`, not the marketplace-checkout source copy. Each marker turn may
+therefore contain zero or one bounded `commandExecution`, but only when its
+structured command action is one successful read of the exact cache Skill
+already proved by the storage plane. The action must run from the isolated
+session root, return bytes identical to both verified Skill copies, and perform
+no other command action. Every other command, tool item, server request,
+target-project access, or write remains forbidden.
 
 Model output alone is not update proof. The fixture supports a two-plane audit.
 
@@ -326,7 +330,8 @@ The positive scenario uses one isolated home and one persistent thread:
 2. Add the HTTP source as a configured Git marketplace and install the
    calibration plugin.
 3. Verify the configured source type is Git, checkout revision is A, plugin
-   version is A, and installed marker bytes are A.
+   version is A, checkout and cache Skill bytes are identical, and both carry
+   only the A marker.
 4. Start one App Server and one new thread.
 5. Send the deterministic calibration prompt and require exactly the A marker.
 6. Record the thread ID and a bounded A evidence package.
@@ -334,8 +339,9 @@ The positive scenario uses one isolated home and one persistent thread:
 8. Advance the same Git ref to valid version B and refresh HTTP Git metadata.
 9. Start a new App Server process against the same isolated home.
 10. Wait until native startup update has completed and independently verify the
-    marketplace checkout, recorded revision, plugin cache, manifest version,
-    and marker bytes are all B.
+    marketplace checkout, recorded revision, versioned plugin cache, manifest
+    version, and marker bytes are all B, with byte-identical checkout and cache
+    Skill files.
 11. Resume the original thread ID.
 12. Send the same deterministic prompt and require exactly the B marker, with
     no A marker.
@@ -375,8 +381,9 @@ For each relevant checkpoint, record bounded evidence for:
 - actual checkout HEAD;
 - marketplace install metadata revision;
 - plugin ID and enabled state;
-- installed plugin version and resolved root;
-- marker file or Skill content digest; and
+- installed plugin version, checkout source root, and versioned cache root;
+- separate checkout and cache Skill paths plus byte equality;
+- marker file or Skill content digest for both copies; and
 - absence of mixed A/B files.
 
 Raw authentication content, model credentials, unrelated user config, and
@@ -393,7 +400,7 @@ Record:
 - proof that both turns belong to the same thread;
 - proof that no successor thread was created by the harness; and
 - proof that each turn used no tool activity except zero or one bounded read of
-  the exact storage-verified installed calibration Skill; and
+  the exact storage-verified plugin-cache calibration Skill; and
 - proof that no target-project access or write occurred.
 
 ### Protected State
@@ -418,7 +425,7 @@ PASS requires every positive and failure-preservation assertion:
 
 - A storage and task evidence agree before update;
 - the valid ref moves from A to B;
-- marketplace checkout and installed plugin state agree on B;
+- marketplace checkout and versioned plugin cache agree byte-for-byte on B;
 - the same thread returns B on its next post-update turn;
 - no task migration, `navi init`, or target write occurs;
 - invalid B is rejected;

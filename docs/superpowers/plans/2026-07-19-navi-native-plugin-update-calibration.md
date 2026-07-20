@@ -418,7 +418,7 @@ try {
   });
   const storageInput = JSON.parse(fs.readFileSync(options.storageInputFile, "utf8"));
   const storageResult = JSON.parse(fs.readFileSync(storageInput.outputFile, "utf8"));
-  const expectedLoadedSkillPath = fs.realpathSync(storageResult.skillPath);
+  const expectedLoadedSkillPath = fs.realpathSync(storageResult.installedSkillPath);
   const expectedLoadedSkillBytes = fs.readFileSync(expectedLoadedSkillPath, "utf8");
 
   let thread;
@@ -460,8 +460,8 @@ try {
     if (actions.length !== 1 || actions[0]?.type !== "read" || !actions[0]?.path) {
       throw new Error("Skill-load command was not one structured read action");
     }
-    if (fs.realpathSync(actions[0].path) !== expectedLoadedSkillPath) throw new Error("Skill-load read targeted the wrong path");
-    if (item.aggregatedOutput !== expectedLoadedSkillBytes) throw new Error("Skill-load output differed from installed Skill bytes");
+    if (fs.realpathSync(actions[0].path) !== expectedLoadedSkillPath) throw new Error("Skill-load read did not target the verified plugin-cache Skill");
+    if (item.aggregatedOutput !== expectedLoadedSkillBytes) throw new Error("Skill-load output differed from verified plugin-cache Skill bytes");
   }
   if (finalMessage !== options.expectedMarker) {
     throw new Error(`expected ${options.expectedMarker}, received ${JSON.stringify(finalMessage)}`);
@@ -489,10 +489,10 @@ try {
 ```
 
 Expected: one process performs exactly one turn, rejects server requests and
-all tool activity except zero or one exact storage-verified Skill read, requires
-the exact marker, passes the supplied storage verifier before starting or
-resuming the thread, records the thread and turn IDs plus bounded read count,
-and always terminates its App Server child.
+all tool activity except zero or one exact storage-verified plugin-cache Skill
+read, requires the exact marker, passes the supplied storage verifier before
+starting or resuming the thread, records the thread and turn IDs plus bounded
+read count, and always terminates its App Server child.
 
 - [ ] **Step 6: Create the storage verifier harness**
 
@@ -518,20 +518,31 @@ if (marketplace.marketplaceSource?.source !== expected.sourceUrl) throw new Erro
 if (plugin.installed !== true || plugin.enabled !== true) throw new Error("plugin is not installed and enabled");
 if (plugin.version !== expected.version) throw new Error(`expected plugin version ${expected.version}, received ${plugin.version}`);
 if (plugin.source?.source !== "local" || !plugin.source?.path) throw new Error("plugin source is not a resolved local path");
+if (plugin.marketplaceName !== marketplace.name) throw new Error("plugin marketplace association mismatch");
 const marketplaceRoot = fs.realpathSync(marketplace.root);
 const pluginRoot = fs.realpathSync(plugin.source.path);
 if (pluginRoot !== marketplaceRoot && !pluginRoot.startsWith(`${marketplaceRoot}${path.sep}`)) {
   throw new Error("plugin source escaped the verified marketplace checkout");
 }
-const expectedSkillPath = path.join(pluginRoot, "skills/navi-update-calibration/SKILL.md");
-const resolvedExpectedSkill = fs.realpathSync(expectedSkillPath);
+const checkoutSkillPath = fs.realpathSync(path.join(pluginRoot, "skills/navi-update-calibration/SKILL.md"));
+const cacheRoot = fs.realpathSync(path.join(expected.codexHome, "plugins/cache"));
+const installedPluginRoot = fs.realpathSync(path.join(cacheRoot, marketplace.name, plugin.name, plugin.version));
+if (installedPluginRoot !== cacheRoot && !installedPluginRoot.startsWith(`${cacheRoot}${path.sep}`)) {
+  throw new Error("installed plugin escaped the isolated versioned cache");
+}
+const installedSkillPath = fs.realpathSync(path.join(installedPluginRoot, "skills/navi-update-calibration/SKILL.md"));
 const checkoutHead = execFileSync("git", ["-C", marketplaceRoot, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 if (checkoutHead !== expected.revision) throw new Error("marketplace checkout revision mismatch");
-const skillText = fs.readFileSync(resolvedExpectedSkill, "utf8");
-if (!skillText.includes(expected.marker)) throw new Error("installed Skill marker mismatch");
-if (skillText.includes(expected.forbiddenMarker)) throw new Error("installed Skill contains mixed A/B markers");
+const checkoutSkillText = fs.readFileSync(checkoutSkillPath, "utf8");
+const installedSkillText = fs.readFileSync(installedSkillPath, "utf8");
+if (checkoutSkillText !== installedSkillText) throw new Error("marketplace checkout and plugin-cache Skill bytes differ");
+if (!checkoutSkillText.includes(expected.marker)) throw new Error("checkout Skill marker mismatch");
+if (checkoutSkillText.includes(expected.forbiddenMarker)) throw new Error("checkout Skill contains mixed A/B markers");
+if (!installedSkillText.includes(expected.marker)) throw new Error("plugin-cache Skill marker mismatch");
+if (installedSkillText.includes(expected.forbiddenMarker)) throw new Error("plugin-cache Skill contains mixed A/B markers");
 const resolvedHome = fs.realpathSync(expected.codexHome);
-if (!resolvedExpectedSkill.startsWith(`${resolvedHome}${path.sep}`)) throw new Error("installed Skill escaped isolated CODEX_HOME");
+if (!checkoutSkillPath.startsWith(`${resolvedHome}${path.sep}`)) throw new Error("checkout Skill escaped isolated CODEX_HOME");
+if (!installedSkillPath.startsWith(`${resolvedHome}${path.sep}`)) throw new Error("plugin-cache Skill escaped isolated CODEX_HOME");
 fs.writeFileSync(
   expected.outputFile,
   `${JSON.stringify({
@@ -544,7 +555,9 @@ fs.writeFileSync(
     installed: plugin.installed,
     enabled: plugin.enabled,
     marker: expected.marker,
-    skillPath: resolvedExpectedSkill,
+    checkoutSkillPath,
+    installedPluginRoot,
+    installedSkillPath,
   }, null, 2)}\n`,
   { mode: 0o600 },
 );
@@ -728,7 +741,9 @@ CODEX_HOME="$ISO_HOME" codex plugin list --json > "$CASE_EVIDENCE/plugins-a.json
 ```
 
 Expected: exactly one configured Git marketplace and one installed/enabled
-calibration plugin in the isolated home.
+calibration plugin in the isolated home. Official plugin JSON identifies the
+checkout source; the storage verifier separately resolves the versioned runtime
+cache from the isolated home, marketplace name, plugin name, and plugin version.
 
 - [ ] **Step 5: Verify A storage before the first turn**
 
@@ -751,24 +766,22 @@ if (plugin?.source?.source !== "local" || !plugin.source.path) throw new Error("
 console.log(plugin.source.path);
 NODE
 )"
-A_SKILL="$PLUGIN_ROOT/skills/navi-update-calibration/SKILL.md"
+A_CHECKOUT_SKILL="$PLUGIN_ROOT/skills/navi-update-calibration/SKILL.md"
 ```
 
 Generate the verifier input mechanically from the recorded variables, then run
 it:
 
 ```bash
-node --input-type=module - "$ISO_HOME" "$SOURCE_URL" "$A_SHA" "$MARKETPLACE_ROOT" "$A_SKILL" "$CASE_EVIDENCE" <<'NODE'
+node --input-type=module - "$ISO_HOME" "$SOURCE_URL" "$A_SHA" "$CASE_EVIDENCE" <<'NODE'
 import fs from "node:fs";
 import path from "node:path";
-const [codexHome, sourceUrl, revision, marketplaceRoot, skillPath, evidence] = process.argv.slice(2);
+const [codexHome, sourceUrl, revision, evidence] = process.argv.slice(2);
 const input = {
   codexHome,
   sourceUrl,
   version: "0.0.0-calibration.1",
   revision,
-  marketplaceRoot,
-  skillPath,
   marker: "NAVI_UPDATE_CALIBRATION_A",
   forbiddenMarker: "NAVI_UPDATE_CALIBRATION_B",
   outputFile: path.join(evidence, "storage-a.json"),
@@ -785,7 +798,7 @@ Expected: storage A verifier exits 0.
 Generate the exact A options and run:
 
 ```bash
-node --input-type=module - "$ISO_HOME" "$SESSION_ROOT" "$A_SKILL" "$CASE_EVIDENCE" "$CAL_ROOT" <<'NODE'
+node --input-type=module - "$ISO_HOME" "$SESSION_ROOT" "$A_CHECKOUT_SKILL" "$CASE_EVIDENCE" "$CAL_ROOT" <<'NODE'
 import fs from "node:fs";
 import path from "node:path";
 const [codexHome, sessionRoot, expectedSkillPath, evidence, calibrationRoot] = process.argv.slice(2);
@@ -809,7 +822,8 @@ node "$CAL_ROOT/harness/app-server-turn.mjs" "$CASE_EVIDENCE/turn-a-options.json
 ```
 
 Expected: one completed turn, exact A marker, no server request, at most one
-validated installed-Skill read, no other tool item, and one durable thread ID.
+validated read of the versioned plugin-cache Skill recorded by the storage
+verifier, no other tool item, and one durable thread ID.
 
 - [ ] **Step 7: Commit fixture B and advance the same ref**
 
@@ -1058,18 +1072,16 @@ if (plugin?.source?.source !== "local" || !plugin.source.path) throw new Error("
 console.log(plugin.source.path);
 NODE
 )"
-A_SKILL="$PLUGIN_ROOT/skills/navi-update-calibration/SKILL.md"
-node --input-type=module - "$ISO_HOME" "$SOURCE_URL" "$A_SHA" "$MARKETPLACE_ROOT" "$A_SKILL" "$CASE_EVIDENCE" <<'NODE'
+A_CHECKOUT_SKILL="$PLUGIN_ROOT/skills/navi-update-calibration/SKILL.md"
+node --input-type=module - "$ISO_HOME" "$SOURCE_URL" "$A_SHA" "$CASE_EVIDENCE" <<'NODE'
 import fs from "node:fs";
 import path from "node:path";
-const [codexHome, sourceUrl, revision, marketplaceRoot, skillPath, evidence] = process.argv.slice(2);
+const [codexHome, sourceUrl, revision, evidence] = process.argv.slice(2);
 const input = {
   codexHome,
   sourceUrl,
   version: "0.0.0-calibration.1",
   revision,
-  marketplaceRoot,
-  skillPath,
   marker: "NAVI_UPDATE_CALIBRATION_A",
   forbiddenMarker: "NAVI_UPDATE_CALIBRATION_B",
   outputFile: path.join(evidence, "storage-a.json"),
@@ -1087,7 +1099,7 @@ and the new thread has not yet been created.
 Generate a fresh A-turn contract and run it:
 
 ```bash
-node --input-type=module - "$ISO_HOME" "$SESSION_ROOT" "$A_SKILL" "$CASE_EVIDENCE" "$CAL_ROOT" <<'NODE'
+node --input-type=module - "$ISO_HOME" "$SESSION_ROOT" "$A_CHECKOUT_SKILL" "$CASE_EVIDENCE" "$CAL_ROOT" <<'NODE'
 import fs from "node:fs";
 import path from "node:path";
 const [codexHome, sessionRoot, expectedSkillPath, evidence, calibrationRoot] = process.argv.slice(2);
@@ -1158,7 +1170,7 @@ const input = {
 };
 fs.writeFileSync(path.join(evidence, "verify-preserved-a-input.json"), `${JSON.stringify(input, null, 2)}\n`, { mode: 0o600 });
 NODE
-node --input-type=module - "$ISO_HOME" "$SESSION_ROOT" "$A_SKILL" "$CASE_EVIDENCE" "$CAL_ROOT" <<'NODE'
+node --input-type=module - "$ISO_HOME" "$SESSION_ROOT" "$A_CHECKOUT_SKILL" "$CASE_EVIDENCE" "$CAL_ROOT" <<'NODE'
 import fs from "node:fs";
 import path from "node:path";
 const [codexHome, sessionRoot, expectedSkillPath, evidence, calibrationRoot] = process.argv.slice(2);
@@ -1515,7 +1527,8 @@ Before emitting the operator result, all of these must be explicit:
 [ ] failure remote moved A -> invalid B
 [ ] failure active storage and same thread remained A
 [ ] exactly four turns completed
-[ ] each turn used at most one validated exact installed-Skill read and no other tool
+[ ] checkout and versioned plugin-cache Skill bytes matched at every storage checkpoint
+[ ] each turn used at most one validated exact plugin-cache Skill read and no other tool
 [ ] no writes, navi init, retries, target-project access, or successor threads occurred
 [ ] real Codex marketplace, plugin, config, and auth source are unchanged
 [ ] Navi repository tracked state is unchanged
@@ -1531,8 +1544,11 @@ Before dispatch, the Main Thread must verify:
 - every prescribed fixture marker matches the prescribed assertion;
 - every JSON field used by the harness matches the installed Codex version's
   generated App Server schema and plugin CLI JSON;
+- the storage verifier separately resolves checkout and versioned plugin-cache
+  Skill paths, requires byte equality, and records both paths;
 - the bounded Skill-load exception checks structured `commandActions`, exact
-  storage-verifier `skillPath`, isolated `cwd`, exit status, and exact bytes;
+  storage-verifier `installedSkillPath`, isolated `cwd`, exit status, and exact
+  bytes;
 - Markdown or line wrapping cannot affect any semantic assertion;
 - all temporary write paths are under the one private calibration root;
 - the App Server harness performs one turn per process;
