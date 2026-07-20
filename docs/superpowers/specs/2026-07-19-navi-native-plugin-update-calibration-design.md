@@ -307,6 +307,14 @@ The skill instruction requires the exact marker for one deterministic prompt.
 The prompt, model, reasoning level, task metadata, and plugin identity remain
 the same between A and B. Only the fixture version and marker change.
 
+Codex activates an external Skill by reading its installed `SKILL.md`. Each
+marker turn may therefore contain zero or one bounded `commandExecution`, but
+only when its structured command action is one successful read of the exact
+installed calibration Skill already proved by the storage plane. The action
+must run from the isolated session root, return bytes identical to that Skill,
+and perform no other command action. Every other command, tool item, server
+request, target-project access, or write remains forbidden.
+
 Model output alone is not update proof. The fixture supports a two-plane audit.
 
 ## Positive Scenario
@@ -384,7 +392,9 @@ Record:
 - B turn ID and exact B marker;
 - proof that both turns belong to the same thread;
 - proof that no successor thread was created by the harness; and
-- proof that no tool or target-project write occurred.
+- proof that each turn used no tool activity except zero or one bounded read of
+  the exact storage-verified installed calibration Skill; and
+- proof that no target-project access or write occurred.
 
 ### Protected State
 

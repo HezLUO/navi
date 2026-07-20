@@ -322,6 +322,7 @@ const completed = new Promise((resolve, reject) => {
 });
 let finalMessage = null;
 let unexpectedToolItem = null;
+const skillLoadCommands = [];
 
 function send(method, params) {
   const id = nextId++;
@@ -359,7 +360,9 @@ lines.on("line", (line) => {
   if (message.method === "item/completed") {
     const item = message.params?.item;
     if (item?.type === "agentMessage") finalMessage = item.text;
-    if (item?.type && !["userMessage", "agentMessage", "reasoning"].includes(item.type)) {
+    if (item?.type === "commandExecution") {
+      skillLoadCommands.push(item);
+    } else if (item?.type && !["userMessage", "agentMessage", "reasoning"].includes(item.type)) {
       unexpectedToolItem = item.type;
     }
   }
@@ -413,6 +416,10 @@ try {
     env: { ...process.env, CODEX_HOME: options.codexHome },
     stdio: "pipe",
   });
+  const storageInput = JSON.parse(fs.readFileSync(options.storageInputFile, "utf8"));
+  const storageResult = JSON.parse(fs.readFileSync(storageInput.outputFile, "utf8"));
+  const expectedLoadedSkillPath = fs.realpathSync(storageResult.skillPath);
+  const expectedLoadedSkillBytes = fs.readFileSync(expectedLoadedSkillPath, "utf8");
 
   let thread;
   if (options.mode === "start") {
@@ -444,13 +451,30 @@ try {
   const turn = await completed;
   if (turn?.status !== "completed") throw new Error(`unexpected turn status ${turn?.status}`);
   if (unexpectedToolItem) throw new Error(`forbidden tool activity: ${unexpectedToolItem}`);
+  if (skillLoadCommands.length > 1) throw new Error("more than one Skill-load commandExecution occurred");
+  if (skillLoadCommands.length === 1) {
+    const item = skillLoadCommands[0];
+    const actions = item.commandActions ?? [];
+    if (item.status !== "completed" || item.exitCode !== 0) throw new Error("Skill-load command did not complete successfully");
+    if (fs.realpathSync(item.cwd) !== fs.realpathSync(options.sessionRoot)) throw new Error("Skill-load command escaped the isolated session root");
+    if (actions.length !== 1 || actions[0]?.type !== "read" || !actions[0]?.path) {
+      throw new Error("Skill-load command was not one structured read action");
+    }
+    if (fs.realpathSync(actions[0].path) !== expectedLoadedSkillPath) throw new Error("Skill-load read targeted the wrong path");
+    if (item.aggregatedOutput !== expectedLoadedSkillBytes) throw new Error("Skill-load output differed from installed Skill bytes");
+  }
   if (finalMessage !== options.expectedMarker) {
     throw new Error(`expected ${options.expectedMarker}, received ${JSON.stringify(finalMessage)}`);
   }
   fs.writeFileSync(options.lastMessageFile, `${finalMessage}\n`, { mode: 0o600 });
   fs.writeFileSync(
     options.resultFile,
-    `${JSON.stringify({ threadId: thread.id, turnId: turn.id, marker: finalMessage }, null, 2)}\n`,
+    `${JSON.stringify({
+      threadId: thread.id,
+      turnId: turn.id,
+      marker: finalMessage,
+      boundedSkillLoadReads: skillLoadCommands.length,
+    }, null, 2)}\n`,
     { mode: 0o600 },
   );
 } finally {
@@ -464,10 +488,11 @@ try {
 }
 ```
 
-Expected: one process performs exactly one turn, rejects tool requests, requires
+Expected: one process performs exactly one turn, rejects server requests and
+all tool activity except zero or one exact storage-verified Skill read, requires
 the exact marker, passes the supplied storage verifier before starting or
-resuming the thread, records the thread and turn IDs, and always terminates its
-App Server child.
+resuming the thread, records the thread and turn IDs plus bounded read count,
+and always terminates its App Server child.
 
 - [ ] **Step 6: Create the storage verifier harness**
 
@@ -519,6 +544,7 @@ fs.writeFileSync(
     installed: plugin.installed,
     enabled: plugin.enabled,
     marker: expected.marker,
+    skillPath: resolvedExpectedSkill,
   }, null, 2)}\n`,
   { mode: 0o600 },
 );
@@ -782,8 +808,8 @@ NODE
 node "$CAL_ROOT/harness/app-server-turn.mjs" "$CASE_EVIDENCE/turn-a-options.json"
 ```
 
-Expected: one completed turn, exact A marker, no server request or tool item,
-and one durable thread ID.
+Expected: one completed turn, exact A marker, no server request, at most one
+validated installed-Skill read, no other tool item, and one durable thread ID.
 
 - [ ] **Step 7: Commit fixture B and advance the same ref**
 
@@ -1489,7 +1515,8 @@ Before emitting the operator result, all of these must be explicit:
 [ ] failure remote moved A -> invalid B
 [ ] failure active storage and same thread remained A
 [ ] exactly four turns completed
-[ ] no tools, writes, navi init, retries, or successor threads occurred
+[ ] each turn used at most one validated exact installed-Skill read and no other tool
+[ ] no writes, navi init, retries, target-project access, or successor threads occurred
 [ ] real Codex marketplace, plugin, config, and auth source are unchanged
 [ ] Navi repository tracked state is unchanged
 [ ] auth copies, App Servers, HTTP services, fixtures, and isolated homes are removed
@@ -1504,6 +1531,8 @@ Before dispatch, the Main Thread must verify:
 - every prescribed fixture marker matches the prescribed assertion;
 - every JSON field used by the harness matches the installed Codex version's
   generated App Server schema and plugin CLI JSON;
+- the bounded Skill-load exception checks structured `commandActions`, exact
+  storage-verifier `skillPath`, isolated `cwd`, exit status, and exact bytes;
 - Markdown or line wrapping cannot affect any semantic assertion;
 - all temporary write paths are under the one private calibration root;
 - the App Server harness performs one turn per process;
