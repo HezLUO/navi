@@ -10,10 +10,14 @@ Plan And Delivery Reliability V1 is implemented as an unreleased Codex-first con
 
 The Task Routing Foundation model-routing design and plan remain Active authority for bounded Execution and Validation Task routing. Their Main Turn Host Adapter or "next milestone" portions are superseded by the current boundary in `docs/navi/roadmap.md` and `docs/navi/product-debt.md`; do not rewrite the historical design or plan files themselves.
 
-Native Plugin Update Calibration is approved as the next bounded distribution investigation. It revises only the Distribution Ready design's explicit-only Git-backed update assumption: Codex-native App Server startup update is now the preferred V1 direction, pending one isolated positive and failed-update preservation calibration. No `stable` or `preview` ref, Release action, calibration execution, custom Update Host, or automatic-update capability claim is authorized by the design.
+Native Plugin Update Calibration established an accepted `HOST-LIMITED` boundary: the configured marketplace checkout and versioned plugin cache reached B, while a natural resumed turn in the exact original task remained on A. This blocks a natural same-thread reload claim but does not establish that the task is permanently unable to use B.
+
+Same-Thread Explicit Skill Reload Calibration is the next approved bounded distribution investigation. It tests the official `marketplace/upgrade`, forced Skill discovery, and explicit Skill-input path in one existing task, then separately tests natural B persistence and invalid-update A preservation. No calibration execution, `stable` or `preview` ref, Release action, custom Update Host, successor-task migration, Stock App capability claim, or automatic-update implementation is authorized by this design and plan.
 
 ## Active
 
+- `docs/superpowers/specs/2026-07-20-navi-same-thread-explicit-skill-reload-calibration-design.md`
+- `docs/superpowers/plans/2026-07-20-navi-same-thread-explicit-skill-reload-calibration.md`
 - `docs/superpowers/specs/2026-07-19-navi-native-plugin-update-calibration-design.md`
 - `docs/superpowers/plans/2026-07-19-navi-native-plugin-update-calibration.md`
 - `docs/superpowers/specs/2026-07-19-navi-plan-delivery-reliability-design.md`

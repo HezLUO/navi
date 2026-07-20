@@ -1249,14 +1249,21 @@ publication.
 Before execution dispatch, run:
 
 ```bash
-git diff --check HEAD~1..HEAD
-test "$(git diff --name-only HEAD~1..HEAD | wc -l | tr -d ' ')" = '1'
-git diff --name-only HEAD~1..HEAD
+BASELINE='b740d458a39ac26f6460ebbcc93b9caf461e6b1c'
+git diff --check "$BASELINE"..HEAD
+printf '%s\n' \
+  docs/navi/design-history.md \
+  docs/superpowers/plans/2026-07-20-navi-same-thread-explicit-skill-reload-calibration.md \
+  docs/superpowers/specs/2026-07-20-navi-same-thread-explicit-skill-reload-calibration-design.md \
+  > /private/tmp/navi-explicit-reload-expected-paths.txt
+git diff --name-only "$BASELINE"..HEAD | sort > /private/tmp/navi-explicit-reload-actual-paths.txt
+diff -u /private/tmp/navi-explicit-reload-expected-paths.txt /private/tmp/navi-explicit-reload-actual-paths.txt
 rg -n '[T]BD|[T]ODO|implement[[:space:]]+later|fill[[:space:]]+in[[:space:]]+details' docs/superpowers/plans/2026-07-20-navi-same-thread-explicit-skill-reload-calibration.md
 ```
 
-Expected: the plan commit changes only this plan; diff check passes; the
-placeholder scan is empty.
+Expected: the complete approved documentation delta contains exactly the
+design, plan, and active-authority index; diff check passes; the placeholder
+scan is empty.
 
 Before emitting the calibration result, confirm:
 
