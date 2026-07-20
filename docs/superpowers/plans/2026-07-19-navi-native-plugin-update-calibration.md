@@ -866,7 +866,7 @@ NODE
 git -C "$SOURCE" add .
 git -C "$SOURCE" commit -m 'fixture: calibration version b'
 B_SHA="$(git -C "$SOURCE" rev-parse HEAD)"
-git -C "$SOURCE" push "$BARE" "$B_SHA:refs/heads/calibration"
+git -C "$SOURCE" push "$BARE" "${B_SHA}:refs/heads/calibration"
 git -C "$BARE" update-server-info
 git ls-remote "$SOURCE_URL" refs/heads/calibration > "$CASE_EVIDENCE/ls-remote-b.txt"
 test "$(awk '{print $1}' "$CASE_EVIDENCE/ls-remote-b.txt")" = "$B_SHA"
@@ -1164,7 +1164,7 @@ rm "$SOURCE/.agents/plugins/marketplace.json"
 git -C "$SOURCE" add -u
 git -C "$SOURCE" commit -m 'fixture: invalid marketplace version b'
 INVALID_B_SHA="$(git -C "$SOURCE" rev-parse HEAD)"
-git -C "$SOURCE" push "$BARE" "$INVALID_B_SHA:refs/heads/calibration"
+git -C "$SOURCE" push "$BARE" "${INVALID_B_SHA}:refs/heads/calibration"
 git -C "$BARE" update-server-info
 git ls-remote "$SOURCE_URL" refs/heads/calibration > "$CASE_EVIDENCE/ls-remote-invalid-b.txt"
 test "$(awk '{print $1}' "$CASE_EVIDENCE/ls-remote-invalid-b.txt")" = "$INVALID_B_SHA"
@@ -1579,6 +1579,8 @@ Before dispatch, the Main Thread must verify:
   storage-verifier `installedSkillPath`, isolated `cwd`, exit status, and exact
   bytes;
 - Markdown or line wrapping cannot affect any semantic assertion;
+- shell variables adjacent to refspec colons use braced expansion and a
+  shell-specific expansion probe preserves the literal colon;
 - all temporary write paths are under the one private calibration root;
 - the App Server harness performs one turn per process;
 - the B turn uses `thread/resume`, not `thread/start`;
