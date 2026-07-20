@@ -250,14 +250,32 @@ describe("Current Navi repository surface", () => {
     expect(active).toContain(
       "`docs/superpowers/plans/2026-07-18-navi-task-model-routing-foundation.md`",
     );
+    expect(active).toContain(
+      "`docs/superpowers/specs/2026-07-20-navi-task-route-application-gate-design.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md`",
+    );
     expect(history).toMatch(/Task Routing Foundation model-routing design and plan remain Active authority/i);
     expect(history).toMatch(/Main Turn Host Adapter[\s\S]*superseded by the current boundary/i);
+    expect(history).toMatch(
+      /Task Route Application Gate V1[\s\S]*implemented[\s\S]*naturally uncalibrated/i,
+    );
     expect(roadmap).toMatch(/task-creation and follow-up boundaries[\s\S]*Execution and Validation Tasks/i);
     expect(roadmap).toMatch(/Main turns keep the user's selected model[\s\S]*does not switch the active Main turn/i);
+    expect(roadmap).toMatch(
+      /Route Application Gate V1[\s\S]*fail closed[\s\S]*host default/i,
+    );
+    expect(roadmap).toMatch(
+      /does not implement[\s\S]*Main Turn Host Adapter[\s\S]*Runtime Surface/i,
+    );
     expect(roadmap).toMatch(/Main Turn Host Adapter and a Navi local panel are deferred[\s\S]*not part of the current Codex-first Product Complete gate/i);
     expect(roadmap).toMatch(/One passing joint natural sample is sufficient[\s\S]*do not create an artificial task merely to test routing/i);
     expect(debt).toMatch(/host model catalog[\s\S]*natural calibration/i);
     expect(debt).toMatch(/Main turns keep the user's selected model[\s\S]*does not switch the active Main turn/i);
+    expect(debt).toMatch(
+      /application gate[\s\S]*prompt\/docs-backed[\s\S]*natural joint calibration/i,
+    );
     expect(debt).toMatch(/Main Turn Host Adapter and a Navi local panel are intentionally deferred/i);
     expect(debt).toMatch(/One passing joint natural sample is sufficient[\s\S]*do not create an artificial task merely to test routing/i);
   });

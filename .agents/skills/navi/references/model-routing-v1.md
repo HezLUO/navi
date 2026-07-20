@@ -80,6 +80,13 @@ recommended-not-applied` meanings. New routing-authorized task creation and
 route-changing follow-up boundaries use V2. Do not rewrite historical task
 prompts, handoffs, calibration evidence, or committed records.
 
+Legacy-readable V1 evidence begins with this header:
+
+```
+NAVI_ROUTE_DECISION
+version: 1
+```
+
 ## Route Application Result
 
 After the host operation returns, the Main Thread records exactly one result

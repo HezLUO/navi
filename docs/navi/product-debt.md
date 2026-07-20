@@ -268,6 +268,14 @@ Task model routing remains applicable at task-creation and follow-up boundaries 
 
 The Main Turn Host Adapter and a Navi local panel are intentionally deferred and are not part of the current Codex-first Product Complete gate. The remaining Product Complete gate is one genuine, bounded implementation journey that naturally combines project supervision, actual Execution/Validation model and reasoning routing, direct event return, bounded remediation, no meaningless continue, and a final real acceptance or integration decision. One passing joint natural sample is sufficient to close Codex-first Product Complete; do not create an artificial task merely to test routing.
 
+The application gate closes the known omission path at the contract level, but
+it remains prompt/docs-backed. One natural joint calibration must still show
+that the Main Task consistently emits V2, passes exact model and reasoning
+arguments, receives host acceptance, and records truthful application evidence
+for independent Execution and Validation routes. Repeated omission after this
+gate, rather than static implementation alone, would justify reconsidering a
+Host Adapter or Runtime Surface.
+
 This debt is not a current implementation failure or release blocker. Shadow calibration, task-level live calibration, and any later main-turn calibration should remain distinct. A future local panel may still become a separate supervision or orchestration product if it proves broader value, but not solely for Main-turn model switching. Runtime primitives should be reconsidered only if later natural calibration shows that the current Codex-first boundary is insufficient.
 
 ### 10. Plan And Delivery Reliability Debt

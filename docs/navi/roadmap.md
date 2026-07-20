@@ -88,6 +88,13 @@ Goal: carry the unreleased Distribution feasibility candidate through independen
 
 Task model routing remains applicable at task-creation and follow-up boundaries for bounded Execution and Validation Tasks. Stock Codex App Main turns keep the user's selected model; Navi may give one quiet recommendation when a materially stronger stage floor is needed, but it does not switch the active Main turn.
 
+Route Application Gate V1 makes authorized task creation and route-changing
+follow-ups fail closed when the explicit host model or reasoning arguments are
+missing or do not match the selected route; Navi must not silently inherit the
+host default. This remains prompt/docs-backed enforcement and does not implement
+the Main Turn Host Adapter, Runtime Surface, task persistence, or active Main
+turn switching.
+
 The Main Turn Host Adapter and a Navi local panel are deferred and are not part of the current Codex-first Product Complete gate. One passing joint natural sample is sufficient to close Codex-first Product Complete; do not create an artificial task merely to test routing. Shadow calibration, task-level natural calibration, and any later main-turn calibration remain separate gates; static contract tests do not replace them.
 
 A future Navi local panel may still become a separate supervision or orchestration product if it later proves broader value, but it is not justified solely for Main-turn model switching. Runtime surfaces should be reconsidered only if future natural calibration shows that the current Codex-first boundary is insufficient for task routing, task recovery, or concurrent-lane correctness.
