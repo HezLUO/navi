@@ -33,7 +33,7 @@ Do not load every reference for an ordinary narrow request.
 
 ## Hard Boundaries
 
-Task model routing requires an explicit user-authorized policy and remains owned by `references/model-routing-v1.md`. Navi must not switch an active turn, and a fast model must not approve its own downgrade or extend its own lease. Navi must not enable Fast mode or change service tier. The Main Turn Host Adapter is not implemented. Do not turn task routing into runtime, persistence, polling, or a visible route report on every response.
+Task model routing requires an explicit user-authorized policy and remains owned by `references/model-routing-v1.md`. Navi must not switch an active turn, and a fast model must not approve its own downgrade or extend its own lease. Navi must not enable Fast mode or change service tier. The Main Turn Host Adapter is not implemented. Do not turn task routing into runtime, persistence, polling, or a visible route report on every response. When routing is authorized, Navi must pass the Route Application Gate before creating an Execution, Validation, or Router Task or sending a route-changing follow-up. It must not silently inherit the host default. Detailed gate and application-result semantics remain owned by `references/model-routing-v1.md`.
 
 - This skill may be considered by default in any installed, active Codex project when the user request matches Navi Progress Map, Challenge Layer, or Working Thread behavior.
 - Codex must not silently create durable Working Thread docs.

@@ -64,7 +64,7 @@ goal: implement Navi Task Route Application Gate V1
 user_value: routing-authorized Execution and Validation Tasks cannot accidentally inherit the host default because model or reasoning arguments were omitted
 source_task: 019f1cc8-2630-7d72-94ba-d12f5b12508b
 baseline: exact clean main commit containing the approved Gate V1 design and this plan
-allowed_scope: exactly the 13 canonical/package route-owner, adoption, focused-test, and current-authority paths listed in Tasks 1-3
+allowed_scope: exactly the 14 canonical/package route-owner, adoption, focused-test, current-authority, and bounded plan-artifact paths listed in Tasks 1-3
 forbidden_scope: runtime, Main Turn Host Adapter, active Main turn switching, Fast mode, service tier, global config, persistence, polling, background retry, CLI, dependency, package metadata, Distribution, Update Host, external project, work/, Historical Along, merge, push, tag, release, publication, natural calibration
 implementation_plan: docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md
 verification_budget: exact focused tests, typecheck, plugin-package verification, mirror checks, diff and exact scope audits; no full npm test
@@ -133,6 +133,9 @@ Expected: PASS before production edits.
 - `tests/skills/navi-supervised-delivery.test.ts`: independent role and
   lifecycle adoption tests.
 - `tests/skills/navi-skill.test.ts`: concise boundary and no-duplication test.
+- `docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md`:
+  records only bounded whitespace/coverage-equivalent plan-artifact corrections
+  discovered during Task 1-2 TDD.
 
 ### Task 3: current authority
 
@@ -446,6 +449,7 @@ git commit -m "feat: gate navi task route application"
 - Modify: `plugins/navi/skills/navi/SKILL.md`
 - Modify: `tests/skills/navi-supervised-delivery.test.ts`
 - Modify: `tests/skills/navi-skill.test.ts`
+- Modify: `docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md`
 
 **Interfaces:**
 - Consumes: `NAVI_ROUTE_DECISION V2`, `NAVI_ROUTE_APPLICATION V1`, and the
@@ -464,6 +468,12 @@ function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/gu, " ").trim();
 }
 ```
+
+In the existing `keeps model routing additive and explicitly authorized` test,
+replace `execution_route: NAVI_ROUTE_DECISION V1` with
+`execution_route: NAVI_ROUTE_DECISION V2` and add
+`route_application: NAVI_ROUTE_APPLICATION V1 after host response` to the
+required extension fields.
 
 Replace the existing two routing lifecycle tests beginning with
 `routes execution and validation independently before task creation` with:
@@ -514,11 +524,15 @@ it("fails closed and distinguishes unchanged from changed follow-ups", async () 
   expect(lifecycle).toContain(
     "route-changing follow-up must create a new V2 decision and pass the gate",
   );
+  expect(lifecycle).toContain(
+    "Reuse the same Validation Thread for bounded remediation re-review",
+  );
   expect(failure).toContain(
     "missing or mismatched model or thinking argument is a pre-send failure",
   );
   expect(failure).toContain("must not create a host-default task");
   expect(failure).toContain("decision-required");
+  expect(failure).toContain("must not silently lower tier");
 });
 
 it("keeps validation floors and truthful application evidence", async () => {
@@ -682,7 +696,7 @@ Critical and Important findings before committing.
 - [ ] **Step 8: Commit Task 2**
 
 ```bash
-git add .agents/skills/navi/SKILL.md .agents/skills/navi/references/supervised-delivery-v1.md plugins/navi/skills/navi/SKILL.md plugins/navi/skills/navi/references/supervised-delivery-v1.md tests/skills/navi-supervised-delivery.test.ts tests/skills/navi-skill.test.ts
+git add .agents/skills/navi/SKILL.md .agents/skills/navi/references/supervised-delivery-v1.md docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md plugins/navi/skills/navi/SKILL.md plugins/navi/skills/navi/references/supervised-delivery-v1.md tests/skills/navi-supervised-delivery.test.ts tests/skills/navi-skill.test.ts
 git commit -m "feat: enforce navi route application"
 ```
 
@@ -839,7 +853,7 @@ Expected:
 - all three mirror comparisons print nothing;
 - diff check prints nothing;
 - commit count is exactly 3;
-- implementation scope is exactly these 13 paths:
+- implementation scope is exactly these 14 paths:
 
 ```text
 .agents/skills/navi/SKILL.md
@@ -848,6 +862,7 @@ Expected:
 docs/navi/design-history.md
 docs/navi/product-debt.md
 docs/navi/roadmap.md
+docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md
 plugins/navi/skills/navi/SKILL.md
 plugins/navi/skills/navi/references/model-routing-v1.md
 plugins/navi/skills/navi/references/supervised-delivery-v1.md

@@ -15,6 +15,10 @@ function extractSection(markdown: string, heading: string): string {
     : markdown.slice(start, bodyStart + next);
 }
 
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/gu, " ").trim();
+}
+
 describe("Navi Supervised Delivery Loop V1", () => {
   it("defines one canonical execution and validation contract", async () => {
     const reference = await readRepoText(
@@ -324,8 +328,9 @@ describe("Navi Supervised Delivery Loop V1", () => {
     for (const field of [
       "model_routing_policy: balanced",
       "model_routing_authorized: true",
-      "execution_route: NAVI_ROUTE_DECISION V1",
+      "execution_route: NAVI_ROUTE_DECISION V2",
       "validation_route: derive at review-ready from validation_level",
+      "route_application: NAVI_ROUTE_APPLICATION V1 after host response",
       "router_check_preauthorized: true",
     ]) {
       expect(extension).toContain(field);
@@ -335,37 +340,76 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(extension).toMatch(/does not authorize[\s\S]*experimental[\s\S]*Fast mode/i);
   });
 
-  it("routes execution and validation independently before task creation", async () => {
+  it("gates execution and validation independently before task creation", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/supervised-delivery-v1.md",
     );
-    const lifecycle = extractSection(reference, "## Task Route Lifecycle");
+    const extension = normalizeWhitespace(
+      extractSection(reference, "## Model Routing Extension"),
+    );
+    const lifecycle = normalizeWhitespace(
+      extractSection(reference, "## Task Route Lifecycle"),
+    );
 
-    expect(lifecycle).toMatch(
-      /before creating[\s\S]*Execution Thread[\s\S]*NAVI_ROUTE_DECISION/i,
+    expect(extension).toContain("execution_route: NAVI_ROUTE_DECISION V2");
+    expect(extension).toContain(
+      "route_application: NAVI_ROUTE_APPLICATION V1 after host response",
     );
-    expect(lifecycle).toMatch(
-      /review-ready[\s\S]*validation_level[\s\S]*independent[\s\S]*Validation Thread/i,
+    expect(lifecycle).toContain(
+      "Before creating the Execution Thread's Codex task",
     );
-    expect(lifecycle).toMatch(/Codex host[\s\S]*model[\s\S]*thinking/i);
-    expect(lifecycle).toMatch(/application_state: applied[\s\S]*host accepted/i);
-    expect(lifecycle).toMatch(/must not[\s\S]*inherit[\s\S]*Execution[\s\S]*fast lease/i);
-    expect(lifecycle).toMatch(/same Validation Thread[\s\S]*follow-up turn boundary/i);
+    expect(lifecycle).toContain("Pass the Route Application Gate");
+    expect(lifecycle).toContain("exact model and thinking arguments");
+    expect(lifecycle).toContain(
+      "derive the Validation route from validation_level independently",
+    );
+    expect(lifecycle).toContain(
+      "must not inherit the Execution Thread's Route Decision or application result",
+    );
   });
 
-  it("preserves validation-level floors and truthful routing failure", async () => {
+  it("fails closed and distinguishes unchanged from changed follow-ups", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/supervised-delivery-v1.md",
     );
-    const lifecycle = extractSection(reference, "## Task Route Lifecycle");
-    const failure = extractSection(reference, "## Failure Handling");
+    const lifecycle = normalizeWhitespace(
+      extractSection(reference, "## Task Route Lifecycle"),
+    );
+    const failure = normalizeWhitespace(
+      extractSection(reference, "## Failure Handling"),
+    );
 
-    expect(lifecycle).toMatch(/Level 1[\s\S]*fast \+ medium/i);
-    expect(lifecycle).toMatch(/Level 2[\s\S]*standard \+ high/i);
-    expect(lifecycle).toMatch(/Level 3[\s\S]*strong \+ high/i);
-    expect(failure).toMatch(/required route[\s\S]*cannot be applied[\s\S]*decision-required/i);
-    expect(failure).toMatch(/must not claim[\s\S]*automatic switching/i);
-    expect(failure).toMatch(/must not silently[\s\S]*lower tier/i);
+    expect(lifecycle).toContain(
+      "unchanged valid Route Lease omits model and thinking overrides",
+    );
+    expect(lifecycle).toContain(
+      "route-changing follow-up must create a new V2 decision and pass the gate",
+    );
+    expect(lifecycle).toContain(
+      "Reuse the same Validation Thread for bounded remediation re-review",
+    );
+    expect(failure).toContain(
+      "missing or mismatched model or thinking argument is a pre-send failure",
+    );
+    expect(failure).toContain("must not create a host-default task");
+    expect(failure).toContain("decision-required");
+    expect(failure).toContain("must not silently lower tier");
+  });
+
+  it("keeps validation floors and truthful application evidence", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const lifecycle = normalizeWhitespace(
+      extractSection(reference, "## Task Route Lifecycle"),
+    );
+
+    expect(lifecycle).toContain("Level 1 uses fast + medium");
+    expect(lifecycle).toContain("Level 2 uses standard + high");
+    expect(lifecycle).toContain("Level 3 uses strong + high");
+    expect(lifecycle).toContain(
+      "applied only after the host accepts the exact requested combination",
+    );
   });
 
   it("runs one host-mediated restore and audits the result", async () => {

@@ -9,6 +9,10 @@ async function readRepoText(relativePath: string): Promise<string> {
   return fs.readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
 }
 
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/gu, " ").trim();
+}
+
 const repoRoot = path.resolve(fileURLToPath(new URL("../..", import.meta.url)));
 
 async function repoPathExists(relativePath: string): Promise<boolean> {
@@ -402,5 +406,17 @@ describe("Navi skill and package structure", () => {
     expect(skill).toMatch(/fast model[\s\S]*must not[\s\S]*downgrade[\s\S]*extend/i);
     expect(skill).toMatch(/must not enable[\s\S]*Fast mode/i);
     expect(skill).toMatch(/Main Turn Host Adapter[\s\S]*not implemented/i);
+  });
+
+  it("requires the route application gate without duplicating its schema", async () => {
+    const skill = normalizeWhitespace(
+      await readRepoText(".agents/skills/navi/SKILL.md"),
+    );
+
+    expect(skill).toContain(
+      "routing is authorized, Navi must pass the Route Application Gate before creating",
+    );
+    expect(skill).toContain("must not silently inherit the host default");
+    expect(skill).not.toContain("NAVI_ROUTE_APPLICATION version: 1");
   });
 });
