@@ -48,10 +48,10 @@ A Router Check is short-lived, read-only, tool-free, receives only NAVI_ROUTING_
 
 ## Route Decision
 
-Emit exactly one decision for one task-and-stage boundary:
+Emit exactly one pending decision for one task-and-stage boundary:
 
 NAVI_ROUTE_DECISION
-version: 1
+version: 2
 route_id: one stable identifier for this task-and-stage route
 source_task: persistent Main Thread task identifier
 target_role: main | execution | validation | router
@@ -67,9 +67,73 @@ visibility: quiet | explain | decision-required
 escalate_on: stage-invalidating conditions
 downgrade_after: explicit completed stage condition
 fallback: same-tier-then-upward
-application_state: applied | host-default | recommended-not-applied
+application_state: pending | host-default
 
-`applied` is valid only after the Codex host accepts the requested model-and-reasoning combination. `host-default` is valid only when model routing was not authorized. `recommended-not-applied` records truthful failure evidence and must not be described as automatic routing.
+`pending` is valid only after routing is authorized and the complete route is
+ready for the matching host operation. It must not be described as completed
+automatic routing. `host-default` is valid only when model routing was not
+authorized; no Router Check or application gate is created for that path.
+
+Existing `NAVI_ROUTE_DECISION V1` records remain readable as historical
+evidence with their original `applied | host-default |
+recommended-not-applied` meanings. New routing-authorized task creation and
+route-changing follow-up boundaries use V2. Do not rewrite historical task
+prompts, handoffs, calibration evidence, or committed records.
+
+## Route Application Result
+
+After the host operation returns, the Main Thread records exactly one result
+for the same route id:
+
+NAVI_ROUTE_APPLICATION
+version: 1
+route_id: matching NAVI_ROUTE_DECISION V2 identifier
+boundary: task-create | route-changing-follow-up
+target_role: execution | validation | router
+target_task: created or continued Codex task identifier, or unavailable
+requested_model: exact resolved model identifier
+requested_reasoning: exact host-supported reasoning effort
+host_operation: create-task | send-follow-up
+application_state: applied | recommended-not-applied
+host_evidence: concise successful task identity or rejection evidence
+
+`applied` is valid only after the Codex host accepts a request carrying the
+exact requested model and reasoning effort. Host acceptance is bounded request
+evidence, not a runtime attestation for every generated token or later turn.
+`recommended-not-applied` records rejection, an unsupported combination, or an
+unresolved route and must not be described as automatic switching.
+
+The application result is ephemeral coordination evidence. Do not write it to
+a project file, `.navi`, `AGENTS.md`, or global route state.
+
+## Route Application Gate
+
+Run this gate immediately before every routing-authorized task creation or
+route-changing follow-up. It passes only when routing is explicitly authorized,
+one complete NAVI_ROUTE_DECISION V2 exists for the exact role and stage,
+application_state is pending, resolved_model and reasoning_effort are concrete,
+the host request includes model and thinking arguments that exactly equal
+resolved_model and reasoning_effort and neither value is unavailable, the route
+is at or above the deterministic floor and satisfies required capabilities and
+user overrides, and the task prompt carries the same route_id.
+
+If any condition fails, the Main Thread must not send the host operation. It
+may resolve an allowed same-tier substitute, move upward, or return
+decision-required. It must not omit the overrides and inherit host default.
+
+## Route Application Lifecycle
+
+For a new task, build the Routing Context, resolve one V2 decision with
+application_state pending, pass the gate against the exact host arguments, and
+then send the task. Host acceptance of the exact request produces applied with
+the created task identity. Host rejection or an unsupported combination
+produces recommended-not-applied and follows same-tier-then-upward fallback;
+it does not create a host-default task.
+
+An ordinary follow-up inside an unchanged valid Route Lease omits model and
+thinking overrides and does not reroute. A route-changing follow-up creates a
+new V2 decision and repeats the gate before sending explicit model and thinking
+arguments. The result records boundary route-changing-follow-up.
 
 ## Route Lease
 
@@ -94,6 +158,9 @@ Apply the route only at task creation or an existing-task follow-up turn boundar
 The user may override model or reasoning for the current task, stage, or session. Apply an override at or above the floor directly. An override below the floor requires one concise risk explanation and one explicit confirmation. It may govern approved reversible exploration, but it cannot replace required independent validation or final acceptance. Expire the override at its stated scope; do not turn it into a global preference.
 
 ## Quietness
+
+A passed ordinary Route Application Gate is quiet and does not add a visible
+route report merely because explicit host arguments were accepted.
 
 Keep ordinary routes and valid same-tier substitutions quiet. Explain only a material stage change, policy or budget exceedance, experimental selection, unavailable required tier, below-floor override, or a material cost, delay, capability, target, scope, or risk change. Keep the explanation concise. Do not print a route table, score, private reasoning, or repeated route status unless the user asks and it creates control gain.
 

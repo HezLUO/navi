@@ -15,6 +15,10 @@ function extractSection(markdown: string, heading: string): string {
     : markdown.slice(start, bodyStart + next);
 }
 
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/gu, " ").trim();
+}
+
 describe("Navi Task Model Routing V1", () => {
   it("defines the exact bounded routing context", async () => {
     const reference = await readRepoText(
@@ -46,15 +50,20 @@ describe("Navi Task Model Routing V1", () => {
     );
   });
 
-  it("defines one exact route decision and truthful application state", async () => {
+  it("versions pending decisions separately from final application evidence", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/model-routing-v1.md",
     );
-    const decision = extractSection(reference, "## Route Decision");
+    const decision = normalizeWhitespace(
+      extractSection(reference, "## Route Decision"),
+    );
+    const application = normalizeWhitespace(
+      extractSection(reference, "## Route Application Result"),
+    );
 
     for (const field of [
       "NAVI_ROUTE_DECISION",
-      "version: 1",
+      "version: 2",
       "route_id",
       "source_task",
       "target_role",
@@ -69,11 +78,85 @@ describe("Navi Task Model Routing V1", () => {
       "visibility: quiet | explain | decision-required",
       "escalate_on",
       "downgrade_after",
-      "fallback: same-tier-then-upward",
-      "application_state: applied | host-default | recommended-not-applied",
+      "fallback",
+      "application_state: pending | host-default",
     ]) {
       expect(decision).toContain(field);
     }
+    expect(decision).toContain("NAVI_ROUTE_DECISION V1");
+    expect(decision).toContain("records remain readable");
+
+    for (const field of [
+      "NAVI_ROUTE_APPLICATION",
+      "version: 1",
+      "route_id",
+      "boundary: task-create | route-changing-follow-up",
+      "target_role: execution | validation | router",
+      "target_task",
+      "requested_model",
+      "requested_reasoning",
+      "host_operation: create-task | send-follow-up",
+      "application_state: applied | recommended-not-applied",
+      "host_evidence",
+    ]) {
+      expect(application).toContain(field);
+    }
+    expect(application).toContain("ephemeral coordination evidence");
+    expect(application).toContain("Do not write it to a project file");
+  });
+
+  it("fails closed before a route-authorized host operation", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/model-routing-v1.md",
+    );
+    const gate = normalizeWhitespace(
+      extractSection(reference, "## Route Application Gate"),
+    );
+
+    for (const requirement of [
+      "routing is explicitly authorized",
+      "one complete NAVI_ROUTE_DECISION V2",
+      "application_state is pending",
+      "model and thinking arguments",
+      "exactly equal resolved_model and reasoning_effort",
+      "neither value is unavailable",
+      "at or above the deterministic floor",
+      "same route_id",
+    ]) {
+      expect(gate).toContain(requirement);
+    }
+    expect(gate).toContain("must not send the host operation");
+    expect(gate).toContain(
+      "must not omit the overrides and inherit host default",
+    );
+  });
+
+  it("records application only after host acceptance", async () => {
+    const reference = await readRepoText(
+      ".agents/skills/navi/references/model-routing-v1.md",
+    );
+    const lifecycle = normalizeWhitespace(
+      extractSection(reference, "## Route Application Lifecycle"),
+    );
+    const quietness = normalizeWhitespace(
+      extractSection(reference, "## Quietness"),
+    );
+
+    expect(lifecycle).toContain(
+      "Host acceptance of the exact request produces applied",
+    );
+    expect(lifecycle).toContain(
+      "Host rejection or an unsupported combination produces recommended-not-applied",
+    );
+    expect(lifecycle).toContain(
+      "unchanged valid Route Lease omits model and thinking overrides",
+    );
+    expect(lifecycle).toContain(
+      "route-changing follow-up creates a new V2 decision and repeats the gate",
+    );
+    expect(quietness).toContain(
+      "A passed ordinary Route Application Gate is quiet",
+    );
   });
 
   it("sets deterministic role and validation floors", async () => {
