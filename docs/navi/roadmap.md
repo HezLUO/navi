@@ -1,7 +1,7 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: active backlog with Product Complete calibration open and Distribution feasibility separately approved
-Last updated: 2026-07-20
+Last updated: 2026-07-21
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
@@ -16,6 +16,14 @@ Plan And Delivery Reliability V1 is the current bounded reliability closeout: im
 Post-Delivery Continuity Gate V1 adds one pre-final Main Thread check after
 accepted bounded delivery. It is naturally uncalibrated and does not close the
 remaining joint Product Complete gate by itself.
+
+The accepted Stock App capability result is `Native Absent`. Manual Update
+Fallback V1 is the supported current update path: a directly approved official
+Git-backed marketplace upgrade, verification, and a new Codex task for the
+updated version. Startup scheduling and cache-readiness ordering remain
+unknown. Same-task automatic activation is unavailable on the inspected host.
+Update Host remains deferred until natural user evidence shows that the manual
+and new-task continuity cost is materially unacceptable.
 
 ## Product Positioning
 

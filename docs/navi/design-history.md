@@ -19,14 +19,38 @@ Post-Delivery Continuity Gate V1 is implemented as the prompt/docs-backed
 pre-final boundary after accepted bounded delivery. Natural calibration remains
 open; it does not implement Runtime Surface or Main Turn Host Adapter behavior.
 
-Native Plugin Update Calibration established an accepted `HOST-LIMITED` boundary: the configured marketplace checkout and versioned plugin cache reached B, while a natural resumed turn in the exact original task remained on A. This blocks a natural same-thread reload claim but does not establish that the task is permanently unable to use B.
+Native Plugin Update Calibration established an accepted `HOST-LIMITED`
+boundary: the configured marketplace checkout and versioned plugin cache
+reached B, while a natural resumed turn in the exact original task remained on
+A. This blocks a natural same-thread reload claim but does not establish that
+the task is permanently unable to use B.
 
-Same-Thread Explicit Skill Reload Calibration is the next approved bounded distribution investigation. It tests the official `marketplace/upgrade`, forced Skill discovery, and explicit Skill-input path in one existing task, then separately tests natural B persistence and invalid-update A preservation. No calibration execution, `stable` or `preview` ref, Release action, custom Update Host, successor-task migration, Stock App capability claim, or automatic-update implementation is authorized by this design and plan.
+Same-Thread Explicit Skill Reload Calibration established an accepted
+`FULL-SAME-THREAD` boundary for explicit update-checkpoint behavior: one
+official `marketplace/upgrade`, forced Skill discovery, and explicit
+Skill-input path can activate an updated Skill in one existing task, with
+natural B persistence and invalid-update A preservation covered by the accepted
+result. It does not establish Stock App startup scheduling, cache-readiness
+ordering, release channels, automatic marketplace upgrade, or a visible
+notification path.
+
+Stock App Update Capability inspection and validation established the current
+version-scoped `Native Absent` boundary: C1 scheduling and C2 upgrade and
+cache-readiness ordering remain unknown, C3 forced discovery is present, and
+C4 existing-task structured Skill input is absent on the inspected host. The
+current supported update path is Manual Update Fallback V1: a directly approved
+official Git-backed marketplace upgrade, verification, and a genuinely new
+Codex task for updated-version activation. Update Host, Product Complete,
+Distribution Release, Runtime, release, and publication remain open or
+deferred under their existing gates.
 
 ## Active
 
 - `docs/superpowers/specs/2026-07-20-navi-post-delivery-continuity-gate-design.md`
 - `docs/superpowers/plans/2026-07-20-navi-post-delivery-continuity-gate.md`
+- `docs/superpowers/specs/2026-07-21-navi-explicit-update-checkpoint-design.md`
+- `docs/superpowers/plans/2026-07-21-navi-stock-app-update-capability-inspection.md`
+- `docs/superpowers/plans/2026-07-21-navi-manual-update-fallback.md`
 - `docs/superpowers/specs/2026-07-20-navi-task-route-application-gate-design.md`
 - `docs/superpowers/plans/2026-07-20-navi-task-route-application-gate.md`
 - `docs/superpowers/specs/2026-07-20-navi-same-thread-explicit-skill-reload-calibration-design.md`

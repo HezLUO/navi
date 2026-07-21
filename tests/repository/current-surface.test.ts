@@ -368,4 +368,32 @@ describe("Current Navi repository surface", () => {
     );
     expect(roadmap).not.toMatch(/Product Complete is closed/i);
   });
+
+  it("records the accepted Native Absent update boundary and manual fallback", async () => {
+    const [history, roadmap, debt, calibration] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/calibration-log.md"), "utf8"),
+    ]);
+    const active = history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+    const normalizedRoadmap = roadmap.replace(/\s+/gu, " ").trim();
+
+    expect(active).toContain(
+      "`docs/superpowers/specs/2026-07-21-navi-explicit-update-checkpoint-design.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-21-navi-stock-app-update-capability-inspection.md`",
+    );
+    expect(active).toContain(
+      "`docs/superpowers/plans/2026-07-21-navi-manual-update-fallback.md`",
+    );
+    expect(calibration).toContain("navi-stock-update-validation-result-20260721-01");
+    expect(calibration).toMatch(/C1[^\n]*unknown[\s\S]*C2[^\n]*unknown[\s\S]*C3[^\n]*present[\s\S]*C4[^\n]*absent/i);
+    expect(normalizedRoadmap).toMatch(/Native Absent.*manual update fallback/i);
+    expect(normalizedRoadmap).toMatch(/Update Host.*deferred/i);
+    expect(debt).toMatch(/existing-task structured Skill input[\s\S]*new Codex task/i);
+    expect(debt).toMatch(/startup scheduling[\s\S]*cache-readiness ordering[\s\S]*unknown/i);
+    expect(roadmap).not.toMatch(/Product Complete is closed/i);
+  });
 });

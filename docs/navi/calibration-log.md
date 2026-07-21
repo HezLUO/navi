@@ -1,9 +1,35 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-20
+Last updated: 2026-07-21
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-21 - Stock App Update Capability Is Native Absent
+
+Mode: read-only Stock App capability inspection and independent validation
+
+Status: independently accepted `Native Absent`; manual update fallback selected
+
+Evidence:
+
+- inspection event: `navi-stock-update-inspection-result-20260721-01`;
+- validation result: `navi-stock-update-validation-result-20260721-01`;
+- reviewed snapshot: `dcd869581e827cd0ebd9d91bee9661abc62c6f7e`;
+- inspected host: Stock App `26.715.52143` build `5591`, Codex CLI `0.144.5`;
+- C1 scheduling: `unknown`;
+- C2 upgrade and cache-readiness ordering: `unknown`;
+- C3 forced discovery: `present`;
+- C4 existing-task structured Skill input: `absent`; and
+- `on_demand_chain: incomplete`.
+
+Independent Level 2 validation accepted the classification and confirmed that
+protected Stock App, Codex, repository, and private evidence boundaries stayed
+unchanged. The supported current path is an explicit official manual update
+for a verified Git-backed `navi-source`, followed by a genuinely new Codex task
+for updated-version activation. This version-scoped result does not authorize
+automatic update claims, Update Host, release, or publication. C1 and C2 remain
+unknown.
 
 ## 2026-07-21 - Explicit Reload Preserved One Main Task
 

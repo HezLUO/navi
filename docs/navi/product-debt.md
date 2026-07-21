@@ -1,6 +1,6 @@
 # Navi Product Debt Register
 
-Last updated: 2026-07-20
+Last updated: 2026-07-21
 
 This document tracks known debt that should be handled before Navi is treated as a clear public product surface.
 
@@ -309,6 +309,19 @@ Recommended fix:
 A general Markdown parser is not justified by current evidence. Reconsider a
 parser or Runtime Surface only if natural calibration shows that contract-first
 checks and host task messaging remain insufficient.
+
+### 12. Manual Update Continuity Debt
+
+The accepted version-scoped `Native Absent` result proves that the inspected
+Stock App has no connected existing-task structured Skill input from forced
+discovery. Startup scheduling and cache-readiness ordering remain unknown. A
+genuinely new Codex task is therefore the narrowest proved boundary for using
+the updated version after a manual official update.
+
+This fallback has a one-main-task continuity cost. Reinspect after a material
+Stock App update. Reconsider Update Host only if natural user evidence shows
+that this cost is materially unacceptable; feature attractiveness alone is not
+sufficient product evidence.
 
 ## Suggested Order
 
