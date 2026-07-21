@@ -5,6 +5,100 @@ Last updated: 2026-07-20
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
 
+## 2026-07-21 - Explicit Reload Preserved One Main Task
+
+Mode: Distribution calibration and update-behavior supervision
+Status: independently accepted `FULL-SAME-THREAD`; Stock App scheduling unproven
+
+The same-thread explicit Skill reload calibration completed all five bounded
+`gpt-5.6-sol` plus low probes. In the positive case, forced discovery and one
+explicit installed-cache Skill input activated B in the exact A task, and a
+distinct later natural turn without a Skill input continued to return B. In
+the failure case, an invalid B update was rejected and the same task continued
+to use preserved A. Protected real Codex state, repository state, and auth
+source were unchanged, credential copies were removed, and process cleanup
+passed. Independent Level 3 validation accepted the bounded result.
+
+This establishes that one explicit reload and injection at an update
+checkpoint can preserve one-main-task continuity; no successor task and no
+per-turn Skill injection are required. `skills_changed_observed` remained
+`no`, so the result does not establish Stock App update scheduling,
+background checks, release channels, automatic marketplace upgrade, or a
+visible notification path. The next product step is to design the minimum
+explicit update-checkpoint behavior, followed by one separately authorized
+read-only Stock App capability inspection. Update Host, panel, release, and
+publication remain outside this evidence.
+
+One pre-existing private schema directory with matching naming remains as
+unrelated provenance debt. Its timestamp predates this calibration and the
+accepted contract corrections, so it is not evidence of reviewed-run cleanup
+failure and is not removed automatically.
+
+## 2026-07-20 - Explicit Reload Rerun Stopped Before Product Behavior
+
+Mode: Distribution calibration and harness supervision
+Status: independently accepted `HARNESS-INVALID`; no product conclusion
+
+The corrected same-thread explicit Skill reload operator mechanically extracted
+three JavaScript harness bodies and ten `NODE` heredocs. Pairing, byte
+materialization, harness hashes, and syntax checks passed. Before any service,
+credential copy, isolated marketplace mutation, App Server, or model turn, an
+operator-authored NODE coverage predicate incorrectly required the literal
+`preflight.json` path inside the extracted heredoc body. The authoritative plan
+passes that path in the shell wrapper and the body consumes it through the
+`output` argument. The operator stopped with model-turn count 0 and completed
+cleanup. Independent Level 2 validation accepted the earliest failure boundary
+as an operator-only predicate defect; real Codex state, repository state, auth
+source, and Source Main uncommitted paths remained unchanged.
+
+This result says nothing about explicit B activation, natural B persistence,
+failed-update preservation, or automatic-update viability. The offline
+correction validates each observed NODE opener/body pair structurally, runs a
+module-aware syntax check, and treats the preflight wrapper path plus body
+`output` consumption/write as one composite contract. It does not compare
+against a fixed heredoc count or require wrapper literals inside a body. Any
+new calibration run remains a fresh sensitive authorization.
+
+## 2026-07-20 - First Integrated Continuity Closeout Still Required Continue
+
+Mode: implementation closeout and post-integration supervision
+Status: natural negative sample; activation versus adherence remains unresolved
+
+Post-Delivery Continuity Gate V1 reached an exact accepted snapshot, was
+fast-forwarded into `main`, and was pushed to `origin/main`. The Main Thread
+then reported the completed delivery and stated only that a future genuine
+product task should provide the remaining Product Complete calibration. The
+wider source task was still active, and one concrete high-priority supervision
+action remained: classify the first post-integration continuity result and
+route the next real product decision. Instead, the response ended. The user had
+to provide a content-free `continue` and identified it as meaningless.
+Meaningless continue count: 1.
+
+The integrated owner and focused tests already require `source_task_state:
+active` to avoid natural end while useful non-conflicting work or a real
+decision remains. This sample therefore does not establish another static
+contract omission. It occurred in the same long-lived Main Thread that loaded
+Navi guidance before the gate was fast-forwarded, while native same-thread
+Skill reload remains unproven. The evidence cannot distinguish stale host
+instruction context from agent adherence failure, but either path is a real
+supervision-protocol failure for the user.
+
+Do not add more owner prose from this single confounded sample. Reload the
+integrated owner explicitly in the active Main Thread, use the next genuine
+bounded product task as the clean natural sample, and require zero user relay
+and zero meaningless continue. Repeated natural failures after a confirmed
+reload become evidence for Main Turn Host Adapter or Runtime Surface judgment;
+they do not authorize either implementation automatically.
+
+The immediate recovery then overcorrected in the opposite direction. When the
+user asked whether useful non-conflicting design remained, the Main Thread
+proposed a new-user installation and first-use journey even though Adaptive
+Project Entry, Project Map initialization, the package-local init entry, and
+the real Git-backed installation calibration already covered that journey.
+The user identified the duplication. Avoiding an early stop does not authorize
+manufactured work: after one short authority check, the correct classification
+was a meaningful wait for the premise-changing explicit-reload calibration.
+
 ## 2026-07-20 - Accepted Gate Delivery Still Required Continue
 
 Mode: implementation closeout and supervision
