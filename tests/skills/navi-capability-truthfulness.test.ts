@@ -6,6 +6,34 @@ async function readRepoText(relativePath: string): Promise<string> {
 }
 
 describe("Navi capability truthfulness", () => {
+  it("documents the accepted manual update fallback without overstating Stock App support", async () => {
+    const [readme, chineseReadme, pluginReadme, updateGuide] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+      readRepoText("docs/navi/update.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme, updateGuide]) {
+      const normalized = surface.replace(/\s+/gu, " ").trim();
+
+      expect(normalized).toContain("codex plugin marketplace upgrade navi-source --json");
+      expect(normalized).toContain("codex plugin list --marketplace navi-source --available --json");
+      expect(normalized).toMatch(/current task.*existing Navi version/i);
+      expect(normalized).toMatch(/new Codex task.*updated version/i);
+      expect(normalized).toMatch(/does not require `navi init`/i);
+      expect(normalized).toMatch(/local-source.*does not update the source checkout/i);
+      expect(normalized).not.toContain("codex plugin marketplace update");
+      expect(normalized).not.toMatch(/Stock App automatically checks|restart Codex to update the same task/i);
+    }
+
+    const normalizedChineseReadme = chineseReadme.replace(/\s+/gu, " ").trim();
+    expect(normalizedChineseReadme).toContain("codex plugin marketplace upgrade navi-source --json");
+    expect(normalizedChineseReadme).toMatch(/当前任务.*原有 Navi 版本/);
+    expect(normalizedChineseReadme).toMatch(/新建一个 Codex 任务.*更新后的版本/);
+    expect(normalizedChineseReadme).toMatch(/不需要\s*重新运行 `navi init`/);
+  });
+
   it("describes the unreleased Distribution feasibility candidate truthfully", async () => {
     const [readme, chineseReadme, pluginReadme] = await Promise.all([
       readRepoText("README.md"),

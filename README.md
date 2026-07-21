@@ -24,6 +24,23 @@ Installed onboarding uses a package-local init entry resolved from the actually 
 
 The Public Plugin Directory is optional and is not a release prerequisite; Navi is not available there now. A GitHub Release local-marketplace ZIP, checksums, update, rollback, and uninstall promises belong to a later explicit Release plan. Bare `navi`, npm publication, a Bootstrap Installer, Runtime Surface, UI, MCP, background updates, and other-agent support are not ordinary-user prerequisites for this candidate. Real marketplace installation and cross-environment calibration have not happened in this implementation lane.
 
+## Updating Navi
+
+For a verified Git-backed `navi-source` installation, finish the current
+bounded delivery group and obtain direct approval before running:
+
+```bash
+codex plugin marketplace upgrade navi-source --json
+codex plugin list --marketplace navi-source --available --json
+```
+
+The current task may continue using its existing Navi version. After successful
+verification, start a new Codex task to use the updated version. A local-source
+marketplace upgrade does not update the source checkout. Navi is not available
+in the Public Plugin Directory now. A plugin update does not require `navi init`
+or rewrite project-local Navi guidance. See the
+[update guide](docs/navi/update.md) for channel and failure boundaries.
+
 ## Source-alpha setup
 
 This alpha is a GitHub source package for Codex users and developers who are comfortable testing from a repository. Public npm/marketplace/one-click installation remains out of scope for this implementation lane; the current-main marketplace candidate is staged but not activated or released.
