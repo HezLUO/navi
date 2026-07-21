@@ -28,6 +28,7 @@ Read only the references needed for the current request:
 - `references/plan-reliability-v1.md` is the sole owner for implementation-plan satisfiability checks, bounded mechanical plan-artifact correction, correction evidence, and plan-reliability quietness.
 - Bounded dependency restore and preauthorized independent validation use `references/supervised-delivery-v1.md` for exact-snapshot review, findings routing, and bounded remediation.
 - `references/model-routing-v1.md` is the sole owner for Codex task model tiers, reasoning effort, capability floors, Router Checks, Route Leases, host model resolution, and task-level route failure.
+- `references/update-checkpoint-v1.md` is the sole owner for explicit Navi update requests, channel-specific manual guidance, current-task continuity, failure preservation, and the accepted Native Absent host boundary.
 
 Do not load every reference for an ordinary narrow request.
 
@@ -62,6 +63,7 @@ Task model routing requires an explicit user-authorized policy and remains owned
 - After successful direct task-message delivery, Codex must enter the `Awaiting Direct Event` state owned by `references/lane-handoff-v1.md`; it must not poll the task for ordinary progress.
 - At a dependent control checkpoint for an unresolved relevant task, Codex must use the one-shot Main-Task Reconciliation policy in `references/lane-handoff-v1.md`; it must not turn reconciliation into ordinary progress polling.
 - For implementation plans, Navi must require `plan_satisfiability_check: required` and `plan_artifact_correction: bounded`; it must not turn mechanical plan-artifact correction into semantic, scope, permission, risk, acceptance, or verification authority.
+- For an explicit Navi update request, use `references/update-checkpoint-v1.md`; under the accepted Native Absent boundary, Navi must not claim automatic or same-task update, silently run a global marketplace mutation, guess an installation channel, or require project reinitialization.
 - Codex must enforce this boundary: do not create more than one Validation Thread for the same review-ready event and exact snapshot.
 - Codex must enforce this boundary: do not let a Validation Thread write files, implement fixes, merge, push, tag, release, or accept product risk.
 - Navi must not turn one Execution Contract's dependency restore approval into permanent project permission, let a Validation Task install dependencies, or ask for another product approval after an eligible restore succeeds.
@@ -115,6 +117,7 @@ Task model routing requires an explicit user-authorized policy and remains owned
 - Use `references/working-thread-v1.md` only for durable continuity records and confirmed write-back.
 - For an approved bounded implementation contract with validation preauthorization, use `references/supervised-delivery-v1.md`; create the fresh validator only at review-ready, route routine in-scope findings without asking for another `continue`, and preserve explicit user control over permission, scope, risk, merge, push, tag, release, and publication.
 - Before plan approval and before Execution production edits, use `references/plan-reliability-v1.md`; keep passing checks and one successful bounded mechanical correction quiet, and aggregate real plan decisions before surfacing them.
+- Route an explicit Navi update request to `references/update-checkpoint-v1.md`. Keep ordinary supervision quiet and do not surface update guidance without an explicit request or a separately approved release/migration decision.
 
 ## Output Style
 

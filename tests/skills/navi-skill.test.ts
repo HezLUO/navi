@@ -182,6 +182,18 @@ describe("Navi skill and package structure", () => {
     expect(behaviorGuardrails).not.toContain("initialization baseline policy");
   });
 
+  it("routes explicit Navi update requests to one truthful owner", async () => {
+    const skill = normalizeWhitespace(
+      await readRepoText(".agents/skills/navi/SKILL.md"),
+    );
+
+    expect(skill).toContain("references/update-checkpoint-v1.md");
+    expect(skill).toContain("explicit Navi update request");
+    expect(skill).toContain("accepted Native Absent boundary");
+    expect(skill).toContain("must not claim automatic or same-task update");
+    expect(skill).not.toContain("codex plugin marketplace upgrade navi-source --json");
+  });
+
   it("documents project-local Navi trigger sources", async () => {
     const reference = await readRepoText(".agents/skills/navi/references/project-map-v1.md");
     const readme = await readRepoText("plugins/navi/README.md");
@@ -286,6 +298,7 @@ describe("Navi skill and package structure", () => {
       "plugins/navi/skills/navi/references/project-entry-v1.md",
       "plugins/navi/skills/navi/references/project-map-v1.md",
       "plugins/navi/skills/navi/references/supervision-v1.md",
+      "plugins/navi/skills/navi/references/update-checkpoint-v1.md",
       "plugins/navi/skills/navi/references/working-thread-v1.md",
     ]) {
       expect(await repoPathExists(requiredPath), requiredPath).toBe(true);
