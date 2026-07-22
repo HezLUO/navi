@@ -67,8 +67,10 @@ commands, private `/private/tmp` evidence, and Codex direct task messaging.
 - Every formal task creation and any conditionally permitted probe must pass
   the Navi Route Application Gate with explicit model and reasoning arguments.
   `host-default` is not accepted as applied routing evidence.
-- Inspection route: `gpt-5.6-sol` plus `high`, because complete-tool-surface
+- Inspection route: `strong` plus `high`, because complete-tool-surface
   negative evidence and host-enforcement distinctions are premise-changing.
+  Prefer `gpt-5.6-sol`; apply the existing same-tier host fallback to
+  `gpt-5.5` when the current task API cannot accept explicit 5.6 reasoning.
 - Validation route: `gpt-5.6-terra` plus `high` at Validation Level 2. The
   validator reviews retained evidence and does not repeat the inspection.
 - No result authorizes Delegation Gate implementation. The accepted result
@@ -81,7 +83,7 @@ goal: classify current Codex host support for Navi Delegation Gate V1 automatic 
 source_task: 019f1cc8-2630-7d72-94ba-d12f5b12508b
 baseline: exact clean main commit containing the approved design and this plan
 operator_count: 1 fresh formal read-only Inspection Task
-operator_route: gpt-5.6-sol + high, application_state applied
+operator_route: strong + high resolved by the current host, application_state applied
 validator_count: 1 fresh formal read-only Validation Task
 validator_route: gpt-5.6-terra + high, application_state applied
 validation_level: 2
@@ -199,7 +201,9 @@ permission to guess values.
 
 Before creating the Inspection Task, the Main Task must:
 
-- record a `NAVI_ROUTE_DECISION V2` for `gpt-5.6-sol + high`;
+- record a `NAVI_ROUTE_DECISION V2` for `strong + high`, preferring
+  `gpt-5.6-sol` and using only the existing same-tier `gpt-5.5` fallback when
+  required by the current task API;
 - pass explicit `model` and reasoning arguments to the task API;
 - record `NAVI_ROUTE_APPLICATION V1` with `application_state: applied`;
 - receive one explicit user authorization covering this exact read-only plan,
