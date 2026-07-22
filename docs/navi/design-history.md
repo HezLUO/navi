@@ -44,8 +44,18 @@ Codex task for updated-version activation. Update Host, Product Complete,
 Distribution Release, Runtime, release, and publication remain open or
 deferred under their existing gates.
 
+Delegation Gate V1 host inspection established the accepted suggestion-only
+boundary: role-local creation plus explicit model/reasoning inputs are present,
+but enforceable read-only, approved wave count, and non-recursion controls are
+absent, while structured completion remains unknown. Delegation Suggestion
+Gate V1 implements judgment and fail-closed contracts without calling
+`spawn_agent`; automatic Evidence delegation remains inactive.
+
 ## Active
 
+- `docs/superpowers/specs/2026-07-22-navi-delegation-gate-design.md`
+- `docs/superpowers/plans/2026-07-22-navi-delegation-host-capability-inspection.md`
+- `docs/superpowers/plans/2026-07-22-navi-delegation-suggestion-gate.md`
 - `docs/superpowers/specs/2026-07-20-navi-post-delivery-continuity-gate-design.md`
 - `docs/superpowers/plans/2026-07-20-navi-post-delivery-continuity-gate.md`
 - `docs/superpowers/specs/2026-07-21-navi-explicit-update-checkpoint-design.md`

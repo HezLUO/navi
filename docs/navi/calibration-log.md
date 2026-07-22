@@ -1,9 +1,26 @@
 # Navi Calibration Log
 
 Status: working evidence log
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
 This log records real or semi-real Navi calibration observations. It is not a release checklist and does not prove full product correctness. Each entry should capture the target project, prompt shape, observed behavior, user judgment, and product follow-up.
+
+## 2026-07-22 - Delegation Host Capability Is Suggestion-Only
+
+The accepted Level 2 result
+`navi-delegation-host-inspection-validation-20260722-01` reviewed snapshot
+`657c70702e58d88959d5e80101df36ca9b679e6f` and classified the current
+`multi_agent_v1` surface as follows:
+
+- C1-C3 creation and explicit model/reasoning inputs: present;
+- C4-C6 enforceable read-only, approved count, and non-recursion controls:
+  absent; and
+- C7 structured completion and result delivery: unknown.
+
+The Static Safety Gate failed and no behavioral subagent probe ran. The
+accepted product branch is suggestion-only and fail-closed. This result does
+not establish automatic Evidence delegation, authorize `spawn_agent`, or
+justify Runtime Surface or `agent-delegate` integration.
 
 ## 2026-07-21 - Stock App Update Capability Is Native Absent
 

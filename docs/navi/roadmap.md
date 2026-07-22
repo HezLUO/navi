@@ -1,7 +1,7 @@
 # Navi Post-Alpha Backlog / Roadmap
 
 Status: active backlog with Product Complete calibration open and Distribution feasibility separately approved
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
 This roadmap records what remains after the first Navi open-source alpha. It is not implementation approval. Each future implementation pass still needs an explicit scope, boundary, and verification gate.
 
@@ -111,6 +111,19 @@ The Main Turn Host Adapter and a Navi local panel are deferred and are not part 
 
 A future Navi local panel may still become a separate supervision or orchestration product if it later proves broader value, but it is not justified solely for Main-turn model switching. Runtime surfaces should be reconsidered only if future natural calibration shows that the current Codex-first boundary is insufficient for task routing, task recovery, or concurrent-lane correctness.
 
+## Delegation Suggestion Gate
+
+Delegation Suggestion Gate V1 is an unreleased, prompt/docs-backed,
+suggestion-only capability for Main and Execution. With task-local user
+authorization, Navi can decide whether bounded read-only evidence questions
+have clear net delegation value and can preserve the approved brief/result
+contracts without creating a worker.
+
+The accepted host lacks enforceable read-only, approved count, and
+non-recursion controls. Navi does not call `spawn_agent`; Validation does not
+inherit the lease; and automatic Evidence delegation remains inactive. A fresh accepted host capability gate proving C1-C7 present is required before any
+automatic branch or natural positive delegation calibration.
+
 ## Future Capability Layers
 
 Goal: keep larger product layers visible without letting them slip into the alpha maintenance scope.
@@ -154,7 +167,8 @@ The current alpha does not include and should not imply:
 - Background runtime, watcher, scheduler, notifications, or always-on presence.
 - Runtime UI, local app surface, or Web UI rebrand.
 - Hermes, Claude Code, or other agent adapters.
-- Memory v2, relationship modes, delegation, or write delegation.
+- Memory v2, relationship modes, automatic Evidence delegation, recursive
+  delegation, or write delegation.
 - Automatic final decision-making across every professional domain.
 - Replacement for legal, medical, financial, engineering, or other expert review.
 - A claim that implementation success, tests passing, or package verification proves product feeling.

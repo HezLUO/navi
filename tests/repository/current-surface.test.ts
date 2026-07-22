@@ -396,4 +396,44 @@ describe("Current Navi repository surface", () => {
     expect(debt).toMatch(/startup scheduling[\s\S]*cache-readiness ordering[\s\S]*unknown/i);
     expect(roadmap).not.toMatch(/Product Complete is closed/i);
   });
+
+  it("records delegation as suggestion-only under the accepted host boundary", async () => {
+    const [history, roadmap, debt, calibration] = await Promise.all([
+      fs.readFile(path.join(root, "docs/navi/design-history.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/roadmap.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/product-debt.md"), "utf8"),
+      fs.readFile(path.join(root, "docs/navi/calibration-log.md"), "utf8"),
+    ]);
+    const active =
+      history.match(/## Active\n(?<entries>[\s\S]*?)\n## /)?.groups?.entries ?? "";
+
+    for (const authority of [
+      "`docs/superpowers/specs/2026-07-22-navi-delegation-gate-design.md`",
+      "`docs/superpowers/plans/2026-07-22-navi-delegation-host-capability-inspection.md`",
+      "`docs/superpowers/plans/2026-07-22-navi-delegation-suggestion-gate.md`",
+    ]) {
+      expect(active).toContain(authority);
+    }
+    expect(calibration).toContain(
+      "navi-delegation-host-inspection-validation-20260722-01",
+    );
+    expect(calibration).toMatch(
+      /C1-C3[\s\S]*present[\s\S]*C4-C6[\s\S]*absent[\s\S]*C7[\s\S]*unknown/i,
+    );
+    expect(roadmap).toMatch(
+      /Delegation Suggestion Gate V1[\s\S]*suggestion-only[\s\S]*does not call `spawn_agent`/i,
+    );
+    expect(roadmap).toMatch(
+      /automatic Evidence delegation[\s\S]*fresh accepted host capability gate/i,
+    );
+    expect(debt).toContain("### 11. Delegation Host Enforcement Debt");
+    expect(debt).toMatch(
+      /read-only[\s\S]*count[\s\S]*non-recursion[\s\S]*C7[\s\S]*unknown/i,
+    );
+    expect(debt).toMatch(
+      /instruction-density[\s\S]*control gain[\s\S]*simplify or remove/i,
+    );
+    expect(roadmap).not.toMatch(/automatic Evidence delegation is active/i);
+    expect(roadmap).not.toMatch(/Product Complete is closed/i);
+  });
 });

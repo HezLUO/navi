@@ -310,6 +310,27 @@ A general Markdown parser is not justified by current evidence. Reconsider a
 parser or Runtime Surface only if natural calibration shows that contract-first
 checks and host task messaging remain insufficient.
 
+### 11. Delegation Host Enforcement Debt
+
+Status: suggestion-only contract active; automatic Evidence delegation blocked
+Priority: re-inspect only after a material Codex host capability change
+
+The accepted host surface can create role-local subagents and accept explicit
+model and reasoning inputs, but it cannot enforce the approved read-only,
+per-wave count, or non-recursion boundaries. C7 structured completion remains
+unknown because the safety gate correctly prohibited a behavioral probe.
+
+Navi therefore keeps delegation judgment task-local and fail-closed. Do not
+add prompt-only automatic creation, a Runtime Surface, or an `agent-delegate`
+dependency to work around missing host controls. Reconsider activation only
+after a fresh bounded inspection proves C1-C7 present and natural positive and
+negative samples satisfy the approved design.
+
+This owner also adds instruction-density cost before it can create a worker.
+Natural use must show that it improves restraint or user control rather than
+merely adding schemas. If it repeatedly produces no control gain, simplify or remove
+the suggestion surface instead of adding more routing rules.
+
 ### 12. Manual Update Continuity Debt
 
 The accepted version-scoped `Native Absent` result proves that the inspected
