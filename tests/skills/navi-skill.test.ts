@@ -182,6 +182,18 @@ describe("Navi skill and package structure", () => {
     expect(behaviorGuardrails).not.toContain("initialization baseline policy");
   });
 
+  it("routes delegation judgment to one suggestion-only owner", async () => {
+    const rawSkill = await readRepoText(".agents/skills/navi/SKILL.md");
+    const skill = normalizeWhitespace(rawSkill);
+
+    expect(skill).toContain("references/delegation-v1.md");
+    expect(skill).toContain("sole owner for delegation judgment");
+    expect(skill).toContain("automatic Evidence delegation is unavailable");
+    expect(skill).toContain("must not call `spawn_agent`");
+    expect(rawSkill).not.toContain("NAVI_DELEGATION_CONTEXT\nversion: 1");
+    expect(rawSkill).not.toContain("NAVI_EVIDENCE_BRIEF\nversion: 1");
+  });
+
   it("routes explicit Navi update requests to one truthful owner", async () => {
     const skill = normalizeWhitespace(
       await readRepoText(".agents/skills/navi/SKILL.md"),

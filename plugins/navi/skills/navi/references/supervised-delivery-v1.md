@@ -47,6 +47,18 @@ The detailed eligibility, aggregate correction, evidence, and quietness rules
 remain owned by `plan-reliability-v1.md`. Do not copy its fixtures or create a
 second correction schema here.
 
+## Delegation Suggestion Extension
+
+An Execution task may evaluate `delegation-v1.md` only when its prompt
+explicitly carried an active Delegation Lease from the source Main task. The
+lease does not broaden the Execution Contract, add write or external-state
+authority, or authorize another task.
+
+On the accepted current host, Execution must not create an Evidence subagent;
+it continues in-role or returns a real decision under the delegation owner.
+Validation does not inherit the lease and directly owns its independent
+verdict.
+
 ## Dependency Restore Extension
 
 Dependency restore is an optional additive part of the approved Execution

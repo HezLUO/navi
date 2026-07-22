@@ -28,6 +28,10 @@ Read only the references needed for the current request:
 - `references/plan-reliability-v1.md` is the sole owner for implementation-plan satisfiability checks, bounded mechanical plan-artifact correction, correction evidence, and plan-reliability quietness.
 - Bounded dependency restore and preauthorized independent validation use `references/supervised-delivery-v1.md` for exact-snapshot review, findings routing, and bounded remediation.
 - `references/model-routing-v1.md` is the sole owner for Codex task model tiers, reasoning effort, capability floors, Router Checks, Route Leases, host model resolution, and task-level route failure.
+- `references/delegation-v1.md` is the sole owner for delegation judgment,
+  the task-local Delegation Lease, eligibility and benefit checks, decision,
+  Evidence Brief/Result contracts, current host capability state, limits, and
+  quiet fail-closed behavior.
 - `references/update-checkpoint-v1.md` is the sole owner for explicit Navi update requests, channel-specific manual guidance, current-task continuity, failure preservation, and the accepted Native Absent host boundary.
 
 Do not load every reference for an ordinary narrow request.
@@ -35,6 +39,13 @@ Do not load every reference for an ordinary narrow request.
 ## Hard Boundaries
 
 Task model routing requires an explicit user-authorized policy and remains owned by `references/model-routing-v1.md`. Navi must not switch an active turn, and a fast model must not approve its own downgrade or extend its own lease. Navi must not enable Fast mode or change service tier. The Main Turn Host Adapter is not implemented. Do not turn task routing into runtime, persistence, polling, or a visible route report on every response. When routing is authorized, Navi must pass the Route Application Gate before creating an Execution, Validation, or Router Task or sending a route-changing follow-up. It must not silently inherit the host default. Detailed gate and application-result semantics remain owned by `references/model-routing-v1.md`.
+
+Delegation judgment requires an explicitly authorized task-local lease and
+remains owned by `references/delegation-v1.md`. On the accepted current host,
+automatic Evidence delegation is unavailable: Navi must not call
+`spawn_agent`, create a role-local worker, or emit `delegate_evidence`. Main or
+Execution may continue under the owner's suggestion-only decision; Validation
+does not inherit the lease.
 
 - This skill may be considered by default in any installed, active Codex project when the user request matches Navi Progress Map, Challenge Layer, or Working Thread behavior.
 - Codex must not silently create durable Working Thread docs.
@@ -117,6 +128,9 @@ Task model routing requires an explicit user-authorized policy and remains owned
 - Use `references/working-thread-v1.md` only for durable continuity records and confirmed write-back.
 - For an approved bounded implementation contract with validation preauthorization, use `references/supervised-delivery-v1.md`; create the fresh validator only at review-ready, route routine in-scope findings without asking for another `continue`, and preserve explicit user control over permission, scope, risk, merge, push, tag, release, and publication.
 - Before plan approval and before Execution production edits, use `references/plan-reliability-v1.md`; keep passing checks and one successful bounded mechanical correction quiet, and aggregate real plan decisions before surfacing them.
+- When an active Delegation Lease and bounded evidence questions make
+  delegation judgment relevant, use `references/delegation-v1.md`; keep
+  ordinary continue-in-role outcomes quiet and do not copy its schemas here.
 - Route an explicit Navi update request to `references/update-checkpoint-v1.md`. Keep ordinary supervision quiet and do not surface update guidance without an explicit request or a separately approved release/migration decision.
 
 ## Output Style

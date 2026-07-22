@@ -340,6 +340,25 @@ describe("Navi Supervised Delivery Loop V1", () => {
     expect(extension).toMatch(/does not authorize[\s\S]*experimental[\s\S]*Fast mode/i);
   });
 
+  it("keeps the delegation suggestion lease additive and validation excluded", async () => {
+    const rawDelivery = await readRepoText(
+      ".agents/skills/navi/references/supervised-delivery-v1.md",
+    );
+    const delivery = normalizeWhitespace(rawDelivery);
+
+    expect(delivery).toMatch(
+      /Delegation Suggestion Extension[\s\S]*delegation-v1\.md/i,
+    );
+    expect(delivery).toMatch(
+      /Execution[\s\S]*explicitly carried[\s\S]*active Delegation Lease/i,
+    );
+    expect(delivery).toMatch(
+      /does not broaden[\s\S]*Execution Contract[\s\S]*must not create/i,
+    );
+    expect(delivery).toMatch(/Validation[\s\S]*does not inherit/i);
+    expect(rawDelivery).not.toContain("NAVI_EVIDENCE_BRIEF\nversion: 1");
+  });
+
   it("gates execution and validation independently before task creation", async () => {
     const reference = await readRepoText(
       ".agents/skills/navi/references/supervised-delivery-v1.md",

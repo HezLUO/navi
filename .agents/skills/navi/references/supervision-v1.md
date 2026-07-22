@@ -576,6 +576,18 @@ Alpha.7 is not automatic creation of worktrees, automatic creation of Codex thre
 
 Alpha.7 should improve coordination judgment in the current chat-based alpha surface. It should not become an orchestration engine.
 
+### Delegation Suggestion Routing
+
+When an explicitly authorized Main or Execution task has separable evidence
+questions, route delegation judgment to `delegation-v1.md`. That reference
+solely owns the lease, eligibility, benefit, decision, brief/result, limits,
+host capability, and quietness contracts.
+
+Validation does not inherit the Delegation Lease. Automatic Evidence
+delegation is unavailable on the accepted current host, so this coordination
+layer must not create a worker, duplicate the schemas, or present a suggestion
+as completed delegation.
+
 ### Codex-First Supervised Delivery
 
 For approved bounded implementation delivery, Lane Handoff transports execution transitions and `supervised-delivery-v1.md` owns independent validation contracts, results, and remediation routing. This is a User Supervision workflow state, not a fifth Work Mode, a release lane, or Runtime Surface.

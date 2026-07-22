@@ -703,6 +703,25 @@ describe("Navi supervision contracts", () => {
     expect(packagedSupervision).toBe(supervision);
   });
 
+  it("routes role-local delegation without duplicating its contracts", async () => {
+    const [supervision, delegation, packagedSupervision] = await Promise.all([
+      readRepoText(".agents/skills/navi/references/supervision-v1.md"),
+      readRepoText(".agents/skills/navi/references/delegation-v1.md"),
+      readRepoText("plugins/navi/skills/navi/references/supervision-v1.md"),
+    ]);
+    const normalized = normalizeWhitespace(supervision);
+
+    expect(normalized).toMatch(
+      /Delegation Suggestion Routing[\s\S]*delegation-v1\.md[\s\S]*Main[\s\S]*Execution/i,
+    );
+    expect(normalized).toMatch(
+      /Validation[\s\S]*does not inherit[\s\S]*automatic Evidence delegation[\s\S]*unavailable/i,
+    );
+    expect(supervision).not.toContain("NAVI_DELEGATION_DECISION\nversion: 1");
+    expect(delegation).toContain("NAVI_DELEGATION_DECISION\nversion: 1");
+    expect(packagedSupervision).toBe(supervision);
+  });
+
   it("requires host-confirmed delivery before a task claims completion", async () => {
     const [canonical, packaged] = await Promise.all([
       readRepoText(".agents/skills/navi/references/lane-handoff-v1.md"),
