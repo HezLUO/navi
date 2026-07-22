@@ -622,4 +622,44 @@ describe("Navi capability truthfulness", () => {
     expect(chineseReadme).toMatch(/用户明确授权[\s\S]*模型[\s\S]*reasoning/i);
     expect(chineseReadme).toMatch(/Main Turn Host Adapter[\s\S]*尚未实现/i);
   });
+
+  it("describes delegation judgment without claiming automatic subagents", async () => {
+    const [readme, chineseReadme, pluginReadme] = await Promise.all([
+      readRepoText("README.md"),
+      readRepoText("README.zh-CN.md"),
+      readRepoText("plugins/navi/README.md"),
+    ]);
+
+    for (const surface of [readme, pluginReadme]) {
+      expect(surface).toMatch(
+        /unreleased[\s\S]*Delegation Suggestion Gate[\s\S]*Main[\s\S]*Execution/i,
+      );
+      expect(surface).toMatch(
+        /task-local[\s\S]*user authorization[\s\S]*net value/i,
+      );
+      expect(surface).toMatch(
+        /does not call `spawn_agent`[\s\S]*does not automatically create/i,
+      );
+      expect(surface).toMatch(
+        /read-only[\s\S]*count[\s\S]*non-recursion[\s\S]*host/i,
+      );
+    }
+
+    expect(chineseReadme).toMatch(
+      /尚未发布[\s\S]*Delegation Suggestion Gate[\s\S]*Main[\s\S]*Execution/i,
+    );
+    expect(chineseReadme).toMatch(
+      /task-local[\s\S]*用户授权[\s\S]*净收益/i,
+    );
+    expect(chineseReadme).toMatch(
+      /不会调用 `spawn_agent`[\s\S]*不会自动创建/i,
+    );
+    expect(readme).not.toContain(
+      "- Memory v2, relationship modes, delegation, or write delegation.",
+    );
+    expect(chineseReadme).not.toContain(
+      "- Memory v2、relationship modes、delegation 或 write delegation。",
+    );
+    expect(pluginReadme).not.toContain("- delegation or write delegation;");
+  });
 });

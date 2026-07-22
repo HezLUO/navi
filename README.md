@@ -157,7 +157,8 @@ What is not included:
 - It has no background watcher, operating-system notification service, or always-on presence; bounded Lane Handoff uses available Codex task messaging only while Codex is active.
 - Runtime UI or future local app surface.
 - Hermes, Claude Code, or other agent adapters.
-- Memory v2, relationship modes, delegation, or write delegation.
+- Memory v2, relationship modes, automatic Evidence delegation, recursive
+  delegation, or write delegation.
 
 The root `package.json` intentionally remains `"private": true` to prevent accidental npm publication. The source is available under the MIT license for GitHub alpha use.
 
@@ -192,6 +193,20 @@ The loop uses Codex host task creation and task-to-task messaging during the act
 Current main contains an unreleased, prompt/docs-backed Task Routing Foundation for Supervised Delivery work with an explicit user-authorized routing policy. It can resolve and apply model plus reasoning choices when Codex creates bounded Execution and Validation Tasks. Validation derives its route independently from Validation Level rather than inheriting the executor's route.
 
 This is not complete three-role automatic routing. The Main Turn Host Adapter is not implemented, active turns cannot switch models, Navi does not control Fast mode, and it does not provide a runtime scheduler, database, queue, daemon, or background service. Real host behavior still requires post-integration natural calibration.
+
+### Delegation suggestion on current main
+
+Current main includes an unreleased, prompt/docs-backed Delegation Suggestion Gate
+for Main and Execution. With task-local user authorization, Navi can judge
+whether separable read-only evidence questions have enough net value to justify
+delegation and can prepare a bounded Evidence Brief when that improves a real
+user decision.
+
+The accepted current host does not expose enforceable read-only, approved
+count, or non-recursion controls for role-local subagents. Navi therefore does not call `spawn_agent`, does not automatically create an Evidence subagent, and
+does not let Validation inherit the delegation lease. Ordinary cases continue
+in the current role; automatic activation requires a new accepted host
+capability gate.
 
 ## What Navi Does
 

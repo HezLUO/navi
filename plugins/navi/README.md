@@ -28,6 +28,20 @@ Current main contains an unreleased, prompt/docs-backed Task Routing Foundation 
 
 This is not complete three-role automatic routing. The Main Turn Host Adapter is not implemented, active turns cannot switch models, Navi does not control Fast mode, and it does not provide a runtime scheduler, database, queue, daemon, or background service. Real host behavior still requires post-integration natural calibration.
 
+### Delegation suggestion on current main
+
+Current main includes an unreleased, prompt/docs-backed Delegation Suggestion Gate
+for Main and Execution. With task-local user authorization, Navi can judge
+whether separable read-only evidence questions have enough net value to justify
+delegation and can prepare a bounded Evidence Brief when that improves a real
+user decision.
+
+The accepted current host does not expose enforceable read-only, approved
+count, or non-recursion controls for role-local subagents. Navi therefore does not call `spawn_agent`, does not automatically create an Evidence subagent, and
+does not let Validation inherit the delegation lease. Ordinary cases continue
+in the current role; automatic activation requires a new accepted host
+capability gate.
+
 ## Navi
 
 Navi helps users understand, supervise, and steer expert agents. When a user asks what is happening, what comes next, whether to continue, or says they do not understand the current progress, Navi should give a **Progress Map** before recommending more work.
@@ -360,5 +374,5 @@ Deferred layers include:
 - Hermes, Claude Code, and other agent adapters;
 - Memory v2;
 - relationship modes or emotional simulation;
-- delegation or write delegation;
+- automatic Evidence delegation, recursive delegation, or write delegation;
 - activated marketplace release or Public Plugin Directory listing.
